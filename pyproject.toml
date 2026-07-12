@@ -26,7 +26,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://ibee.ai"
 Documentation = "https://ibee.ai/docs/api-reference"
-Repository = "https://github.com/IBEE/ibee-python"
+Repository = "https://github.com/devs-ibee/ibee-python"
 
 [tool.setuptools.packages.find]
 where = ["src"]
