@@ -63,6 +63,19 @@ template or image. `ssh_key_ids` are the SSH keys to inject at first boot.
 In the current SDK, `cpu` and `ram_mb` are still required fallback fields even
 when `plan_id` is provided.
 
+## Environments
+
+The client defaults to the production API (`https://api.ibee.ai/v1`). To use the development environment:
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(token="IBEE_DEV_TOKEN", environment=IbeeEnvironment.DEVELOPMENT)
+```
+
+Requires Python 3.10+.
+
 ## Async usage
 
 ```python

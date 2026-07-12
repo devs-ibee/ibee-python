@@ -5,3 +5,4 @@ import enum
 
 class IbeeEnvironment(enum.Enum):
     DEFAULT = "https://api.ibee.ai/v1"
+    DEVELOPMENT = "https://api.ibee.co.in/v1"
