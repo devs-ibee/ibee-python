@@ -7,7 +7,7 @@ import typing
 import httpx
 from .core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from .core.logging import LogConfig, Logger
-from .environment import IbeeSolutionsEnvironment
+from .environment import IbeeEnvironment
 
 if typing.TYPE_CHECKING:
     from .cloud_vms.client import AsyncCloudVmsClient, CloudVmsClient
@@ -16,7 +16,7 @@ if typing.TYPE_CHECKING:
     from .secret_store.client import AsyncSecretStoreClient, SecretStoreClient
 
 
-class IbeeSolutions:
+class Ibee:
     """
     Use this class to access the different functions within the SDK. You can instantiate any number of clients with different configuration that will propagate to these functions.
 
@@ -25,12 +25,12 @@ class IbeeSolutions:
     base_url : typing.Optional[str]
         The base url to use for requests from the client.
 
-    environment : IbeeSolutionsEnvironment
-        The environment to use for requests from the client. from .environment import IbeeSolutionsEnvironment
+    environment : IbeeEnvironment
+        The environment to use for requests from the client. from .environment import IbeeEnvironment
 
 
 
-        Defaults to IbeeSolutionsEnvironment.DEFAULT
+        Defaults to IbeeEnvironment.DEFAULT
 
 
 
@@ -61,9 +61,9 @@ class IbeeSolutions:
 
     Examples
     --------
-    from ibeesolutions import IbeeSolutions
+    from ibee import Ibee
 
-    client = IbeeSolutions(
+    client = Ibee(
         token="YOUR_TOKEN",
     )
     """
@@ -72,7 +72,7 @@ class IbeeSolutions:
         self,
         *,
         base_url: typing.Optional[str] = None,
-        environment: IbeeSolutionsEnvironment = IbeeSolutionsEnvironment.DEFAULT,
+        environment: IbeeEnvironment = IbeeEnvironment.DEFAULT,
         token: typing.Union[str, typing.Callable[[], str]],
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -156,7 +156,7 @@ def _make_default_async_client(
     return httpx.AsyncClient(timeout=timeout)
 
 
-class AsyncIbeeSolutions:
+class AsyncIbee:
     """
     Use this class to access the different functions within the SDK. You can instantiate any number of clients with different configuration that will propagate to these functions.
 
@@ -165,12 +165,12 @@ class AsyncIbeeSolutions:
     base_url : typing.Optional[str]
         The base url to use for requests from the client.
 
-    environment : IbeeSolutionsEnvironment
-        The environment to use for requests from the client. from .environment import IbeeSolutionsEnvironment
+    environment : IbeeEnvironment
+        The environment to use for requests from the client. from .environment import IbeeEnvironment
 
 
 
-        Defaults to IbeeSolutionsEnvironment.DEFAULT
+        Defaults to IbeeEnvironment.DEFAULT
 
 
 
@@ -204,9 +204,9 @@ class AsyncIbeeSolutions:
 
     Examples
     --------
-    from ibeesolutions import AsyncIbeeSolutions
+    from ibee import AsyncIbee
 
-    client = AsyncIbeeSolutions(
+    client = AsyncIbee(
         token="YOUR_TOKEN",
     )
     """
@@ -215,7 +215,7 @@ class AsyncIbeeSolutions:
         self,
         *,
         base_url: typing.Optional[str] = None,
-        environment: IbeeSolutionsEnvironment = IbeeSolutionsEnvironment.DEFAULT,
+        environment: IbeeEnvironment = IbeeEnvironment.DEFAULT,
         token: typing.Union[str, typing.Callable[[], str]],
         headers: typing.Optional[typing.Dict[str, str]] = None,
         async_token: typing.Optional[typing.Callable[[], typing.Awaitable[str]]] = None,
@@ -281,7 +281,7 @@ class AsyncIbeeSolutions:
         return self._gpu_vms
 
 
-def _get_base_url(*, base_url: typing.Optional[str] = None, environment: IbeeSolutionsEnvironment) -> str:
+def _get_base_url(*, base_url: typing.Optional[str] = None, environment: IbeeEnvironment) -> str:
     if base_url is not None:
         return base_url
     elif environment is not None:

@@ -38,12 +38,12 @@ if typing.TYPE_CHECKING:
     from .errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError, UnauthorizedError
     from . import cloud_vms, gpu_vms, object_storage, secret_store
     from ._default_clients import DefaultAioHttpClient, DefaultAsyncHttpxClient
-    from .client import AsyncIbeeSolutions, IbeeSolutions
+    from .client import AsyncIbee, Ibee
     from .cloud_vms import CreateCloudVmRequestOsType
-    from .environment import IbeeSolutionsEnvironment
+    from .environment import IbeeEnvironment
     from .gpu_vms import CreateGpuVmRequestOsType
 _dynamic_imports: typing.Dict[str, str] = {
-    "AsyncIbeeSolutions": ".client",
+    "AsyncIbee": ".client",
     "AttachNetworkRequest": ".types",
     "BadRequestError": ".errors",
     "Bucket": ".types",
@@ -62,8 +62,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ForbiddenError": ".errors",
     "GpuVm": ".types",
     "GpuVmStatus": ".types",
-    "IbeeSolutions": ".client",
-    "IbeeSolutionsEnvironment": ".environment",
+    "Ibee": ".client",
+    "IbeeEnvironment": ".environment",
     "NetworkInterface": ".types",
     "NetworkInterfaceStatus": ".types",
     "NotFoundError": ".errors",
@@ -111,7 +111,7 @@ def __dir__():
 
 
 __all__ = [
-    "AsyncIbeeSolutions",
+    "AsyncIbee",
     "AttachNetworkRequest",
     "BadRequestError",
     "Bucket",
@@ -130,8 +130,8 @@ __all__ = [
     "ForbiddenError",
     "GpuVm",
     "GpuVmStatus",
-    "IbeeSolutions",
-    "IbeeSolutionsEnvironment",
+    "Ibee",
+    "IbeeEnvironment",
     "NetworkInterface",
     "NetworkInterfaceStatus",
     "NotFoundError",

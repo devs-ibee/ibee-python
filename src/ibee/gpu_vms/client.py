@@ -52,9 +52,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.list_gpu_vms(
@@ -140,9 +140,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.create_gpu_vm(
@@ -200,9 +200,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.get_gpu_vm(
@@ -245,9 +245,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.delete_gpu_vm(
@@ -297,9 +297,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.update_gpu_vm(
@@ -348,9 +348,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.start_gpu_vm(
@@ -404,9 +404,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.stop_gpu_vm(
@@ -460,9 +460,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.reboot_gpu_vm(
@@ -504,9 +504,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.get_gpu_vm_metrics(
@@ -543,9 +543,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.list_gpu_vm_network_interfaces(
@@ -594,9 +594,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.attach_gpu_vm_network(
@@ -647,9 +647,9 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.gpu_vms.detach_gpu_vm_network(
@@ -702,9 +702,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -798,9 +798,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -866,9 +866,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -919,9 +919,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -979,9 +979,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1038,9 +1038,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1102,9 +1102,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1166,9 +1166,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1218,9 +1218,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1265,9 +1265,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1324,9 +1324,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1385,9 +1385,9 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 

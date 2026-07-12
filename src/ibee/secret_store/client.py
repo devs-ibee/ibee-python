@@ -66,9 +66,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.list_secret_stores(
@@ -114,9 +114,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.create_secret_store(
@@ -154,9 +154,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.get_secret_store(
@@ -203,9 +203,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.update_secret_store(
@@ -242,9 +242,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.archive_secret_store(
@@ -297,9 +297,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.list_secrets(
@@ -348,9 +348,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.create_secret(
@@ -389,9 +389,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.get_secret(
@@ -426,9 +426,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.delete_secret(
@@ -465,9 +465,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.get_secret_value(
@@ -516,9 +516,9 @@ class SecretStoreClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.secret_store.update_secret_value(
@@ -587,9 +587,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -643,9 +643,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -691,9 +691,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -748,9 +748,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -795,9 +795,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -858,9 +858,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -917,9 +917,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -966,9 +966,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1013,9 +1013,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1060,9 +1060,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1119,9 +1119,9 @@ class AsyncSecretStoreClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 

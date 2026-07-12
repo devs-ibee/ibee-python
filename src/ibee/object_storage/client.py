@@ -60,9 +60,9 @@ class ObjectStorageClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.object_storage.list_buckets(
@@ -109,9 +109,9 @@ class ObjectStorageClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.object_storage.create_bucket(
@@ -149,9 +149,9 @@ class ObjectStorageClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.object_storage.delete_bucket(
@@ -214,9 +214,9 @@ class AsyncObjectStorageClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -271,9 +271,9 @@ class AsyncObjectStorageClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -319,9 +319,9 @@ class AsyncObjectStorageClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 

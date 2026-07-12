@@ -1,6 +1,6 @@
 # Reference
 ## Secret Store
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">list_secret_stores</a>(...) -> SecretStoreList</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">list_secret_stores</a>(...) -> SecretStoreList</code></summary>
 <dl>
 <dd>
 
@@ -27,12 +27,12 @@ Lists secret stores in a workspace. Requires scope: secret-store.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.list_secret_stores(
@@ -97,7 +97,7 @@ client.secret_store.list_secret_stores(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">create_secret_store</a>(...) -> SecretStore</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">create_secret_store</a>(...) -> SecretStore</code></summary>
 <dl>
 <dd>
 
@@ -124,12 +124,12 @@ Creates a secret store in a workspace. Requires scope: secret-store.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.create_secret_store(
@@ -188,7 +188,7 @@ client.secret_store.create_secret_store(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">get_secret_store</a>(...) -> SecretStore</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">get_secret_store</a>(...) -> SecretStore</code></summary>
 <dl>
 <dd>
 
@@ -215,12 +215,12 @@ Gets one secret store. Requires scope: secret-store.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.get_secret_store(
@@ -270,7 +270,7 @@ client.secret_store.get_secret_store(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">update_secret_store</a>(...) -> SecretStore</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">update_secret_store</a>(...) -> SecretStore</code></summary>
 <dl>
 <dd>
 
@@ -297,12 +297,12 @@ Updates store name or description. Requires scope: secret-store.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.update_secret_store(
@@ -368,7 +368,7 @@ client.secret_store.update_secret_store(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">archive_secret_store</a>(...) -> SecretStore</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">archive_secret_store</a>(...) -> SecretStore</code></summary>
 <dl>
 <dd>
 
@@ -395,12 +395,12 @@ Archives a secret store. Requires scope: secret-store.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.archive_secret_store(
@@ -450,7 +450,7 @@ client.secret_store.archive_secret_store(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">list_secrets</a>(...) -> SecretList</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">list_secrets</a>(...) -> SecretList</code></summary>
 <dl>
 <dd>
 
@@ -477,12 +477,12 @@ Lists secret metadata in a store. Secret values are not returned. Requires scope
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.list_secrets(
@@ -556,7 +556,7 @@ client.secret_store.list_secrets(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">create_secret</a>(...) -> Secret</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">create_secret</a>(...) -> Secret</code></summary>
 <dl>
 <dd>
 
@@ -583,12 +583,12 @@ Creates a secret in a store. Requires scope: secret-store.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.create_secret(
@@ -658,7 +658,7 @@ client.secret_store.create_secret(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">get_secret</a>(...) -> Secret</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">get_secret</a>(...) -> Secret</code></summary>
 <dl>
 <dd>
 
@@ -685,12 +685,12 @@ Gets one secret metadata record. Secret value is not returned. Requires scope: s
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.get_secret(
@@ -740,7 +740,7 @@ client.secret_store.get_secret(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">delete_secret</a>(...) -> Secret</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">delete_secret</a>(...) -> Secret</code></summary>
 <dl>
 <dd>
 
@@ -767,12 +767,12 @@ Soft-deletes a secret. Requires scope: secret-store.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.delete_secret(
@@ -822,7 +822,7 @@ client.secret_store.delete_secret(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">get_secret_value</a>(...) -> SecretValue</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">get_secret_value</a>(...) -> SecretValue</code></summary>
 <dl>
 <dd>
 
@@ -849,12 +849,12 @@ Gets the latest value for a secret. Requires scope: secret-store.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.get_secret_value(
@@ -904,7 +904,7 @@ client.secret_store.get_secret_value(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibeesolutions/secret_store/client.py">update_secret_value</a>(...) -> SecretValue</code></summary>
+<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">update_secret_value</a>(...) -> SecretValue</code></summary>
 <dl>
 <dd>
 
@@ -931,12 +931,12 @@ Creates a new version of the secret value. Requires scope: secret-store.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.secret_store.update_secret_value(
@@ -1007,7 +1007,7 @@ client.secret_store.update_secret_value(
 </details>
 
 ## Object Storage
-<details><summary><code>client.object_storage.<a href="src/ibeesolutions/object_storage/client.py">list_buckets</a>(...) -> BucketList</code></summary>
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">list_buckets</a>(...) -> BucketList</code></summary>
 <dl>
 <dd>
 
@@ -1034,12 +1034,12 @@ Lists object storage buckets in a workspace. Requires scope: object-storage.read
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.object_storage.list_buckets(
@@ -1096,7 +1096,7 @@ client.object_storage.list_buckets(
 </dl>
 </details>
 
-<details><summary><code>client.object_storage.<a href="src/ibeesolutions/object_storage/client.py">create_bucket</a>(...) -> Bucket</code></summary>
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">create_bucket</a>(...) -> Bucket</code></summary>
 <dl>
 <dd>
 
@@ -1123,12 +1123,12 @@ Creates an object storage bucket. Requires scope: object-storage.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.object_storage.create_bucket(
@@ -1187,7 +1187,7 @@ client.object_storage.create_bucket(
 </dl>
 </details>
 
-<details><summary><code>client.object_storage.<a href="src/ibeesolutions/object_storage/client.py">delete_bucket</a>(...) -> DeleteResponse</code></summary>
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket</a>(...) -> DeleteResponse</code></summary>
 <dl>
 <dd>
 
@@ -1214,12 +1214,12 @@ Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.object_storage.delete_bucket(
@@ -1270,7 +1270,7 @@ client.object_storage.delete_bucket(
 </details>
 
 ## CloudVms
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">list_cloud_vms</a>(...) -> typing.List[CloudVm]</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">list_cloud_vms</a>(...) -> typing.List[CloudVm]</code></summary>
 <dl>
 <dd>
 
@@ -1297,12 +1297,12 @@ Returns all cloud VMs in the workspace. Requires scope: vm.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.list_cloud_vms(
@@ -1343,7 +1343,7 @@ client.cloud_vms.list_cloud_vms(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">create_cloud_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">create_cloud_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -1370,12 +1370,12 @@ Creates a cloud VM. Returns an operation you can poll for status. Requires scope
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.create_cloud_vm(
@@ -1510,7 +1510,7 @@ client.cloud_vms.create_cloud_vm(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">get_cloud_vm</a>(...) -> CloudVm</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">get_cloud_vm</a>(...) -> CloudVm</code></summary>
 <dl>
 <dd>
 
@@ -1537,12 +1537,12 @@ Returns a single cloud VM. Requires scope: vm.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.get_cloud_vm(
@@ -1592,7 +1592,7 @@ client.cloud_vms.get_cloud_vm(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">delete_cloud_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">delete_cloud_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -1619,12 +1619,12 @@ Deletes a cloud VM. Returns an operation you can poll for status. Requires scope
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.delete_cloud_vm(
@@ -1683,7 +1683,7 @@ client.cloud_vms.delete_cloud_vm(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">update_cloud_vm</a>(...) -> CloudVm</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">update_cloud_vm</a>(...) -> CloudVm</code></summary>
 <dl>
 <dd>
 
@@ -1710,12 +1710,12 @@ Updates mutable properties of a cloud VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.update_cloud_vm(
@@ -1773,7 +1773,7 @@ client.cloud_vms.update_cloud_vm(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">start_cloud_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">start_cloud_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -1800,12 +1800,12 @@ Starts a stopped cloud VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.start_cloud_vm(
@@ -1872,7 +1872,7 @@ client.cloud_vms.start_cloud_vm(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">stop_cloud_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">stop_cloud_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -1899,12 +1899,12 @@ Stops a running cloud VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.stop_cloud_vm(
@@ -1971,7 +1971,7 @@ client.cloud_vms.stop_cloud_vm(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">reboot_cloud_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">reboot_cloud_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -1998,12 +1998,12 @@ Reboots a cloud VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.reboot_cloud_vm(
@@ -2070,7 +2070,7 @@ client.cloud_vms.reboot_cloud_vm(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">get_cloud_vm_metrics</a>(...) -> VmMetrics</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">get_cloud_vm_metrics</a>(...) -> VmMetrics</code></summary>
 <dl>
 <dd>
 
@@ -2097,12 +2097,12 @@ Returns current resource-usage metrics for a cloud VM. Requires scope: vm.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.get_cloud_vm_metrics(
@@ -2152,7 +2152,7 @@ client.cloud_vms.get_cloud_vm_metrics(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">list_cloud_vm_network_interfaces</a>(...) -> typing.List[NetworkInterface]</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">list_cloud_vm_network_interfaces</a>(...) -> typing.List[NetworkInterface]</code></summary>
 <dl>
 <dd>
 
@@ -2179,12 +2179,12 @@ Returns network interfaces attached to a cloud VM. Requires scope: vm.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.list_cloud_vm_network_interfaces(
@@ -2234,7 +2234,7 @@ client.cloud_vms.list_cloud_vm_network_interfaces(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">attach_cloud_vm_network</a>(...) -> NetworkInterface</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">attach_cloud_vm_network</a>(...) -> NetworkInterface</code></summary>
 <dl>
 <dd>
 
@@ -2261,12 +2261,12 @@ Attaches a network to a cloud VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.attach_cloud_vm_network(
@@ -2334,7 +2334,7 @@ client.cloud_vms.attach_cloud_vm_network(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">detach_cloud_vm_network</a>(...) -> DeleteResponse</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">detach_cloud_vm_network</a>(...) -> DeleteResponse</code></summary>
 <dl>
 <dd>
 
@@ -2361,12 +2361,12 @@ Detaches a network interface from a cloud VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.detach_cloud_vm_network(
@@ -2425,7 +2425,7 @@ client.cloud_vms.detach_cloud_vm_network(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibeesolutions/cloud_vms/client.py">get_compute_operation</a>(...) -> OperationStatus</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">get_compute_operation</a>(...) -> OperationStatus</code></summary>
 <dl>
 <dd>
 
@@ -2452,12 +2452,12 @@ Returns the status of an async compute operation (create, delete, start, stop, r
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.cloud_vms.get_compute_operation(
@@ -2508,7 +2508,7 @@ client.cloud_vms.get_compute_operation(
 </details>
 
 ## GpuVms
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">list_gpu_vms</a>(...) -> typing.List[GpuVm]</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">list_gpu_vms</a>(...) -> typing.List[GpuVm]</code></summary>
 <dl>
 <dd>
 
@@ -2535,12 +2535,12 @@ Returns all GPU VMs in the workspace. Requires scope: vm.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.list_gpu_vms(
@@ -2581,7 +2581,7 @@ client.gpu_vms.list_gpu_vms(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">create_gpu_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">create_gpu_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -2608,12 +2608,12 @@ Creates a GPU VM. Returns an operation you can poll for status. Requires scope: 
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.create_gpu_vm(
@@ -2766,7 +2766,7 @@ client.gpu_vms.create_gpu_vm(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">get_gpu_vm</a>(...) -> GpuVm</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">get_gpu_vm</a>(...) -> GpuVm</code></summary>
 <dl>
 <dd>
 
@@ -2793,12 +2793,12 @@ Returns a single GPU VM. Requires scope: vm.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.get_gpu_vm(
@@ -2848,7 +2848,7 @@ client.gpu_vms.get_gpu_vm(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">delete_gpu_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">delete_gpu_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -2875,12 +2875,12 @@ Deletes a GPU VM. Returns an operation you can poll for status. Requires scope: 
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.delete_gpu_vm(
@@ -2939,7 +2939,7 @@ client.gpu_vms.delete_gpu_vm(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">update_gpu_vm</a>(...) -> GpuVm</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">update_gpu_vm</a>(...) -> GpuVm</code></summary>
 <dl>
 <dd>
 
@@ -2966,12 +2966,12 @@ Updates mutable properties of a GPU VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.update_gpu_vm(
@@ -3029,7 +3029,7 @@ client.gpu_vms.update_gpu_vm(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">start_gpu_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">start_gpu_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -3056,12 +3056,12 @@ Starts a stopped GPU VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.start_gpu_vm(
@@ -3128,7 +3128,7 @@ client.gpu_vms.start_gpu_vm(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">stop_gpu_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">stop_gpu_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -3155,12 +3155,12 @@ Stops a running GPU VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.stop_gpu_vm(
@@ -3227,7 +3227,7 @@ client.gpu_vms.stop_gpu_vm(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">reboot_gpu_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">reboot_gpu_vm</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
 
@@ -3254,12 +3254,12 @@ Reboots a GPU VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.reboot_gpu_vm(
@@ -3326,7 +3326,7 @@ client.gpu_vms.reboot_gpu_vm(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">get_gpu_vm_metrics</a>(...) -> VmMetrics</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">get_gpu_vm_metrics</a>(...) -> VmMetrics</code></summary>
 <dl>
 <dd>
 
@@ -3353,12 +3353,12 @@ Returns current resource-usage metrics for a GPU VM. Requires scope: vm.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.get_gpu_vm_metrics(
@@ -3408,7 +3408,7 @@ client.gpu_vms.get_gpu_vm_metrics(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">list_gpu_vm_network_interfaces</a>(...) -> typing.List[NetworkInterface]</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">list_gpu_vm_network_interfaces</a>(...) -> typing.List[NetworkInterface]</code></summary>
 <dl>
 <dd>
 
@@ -3435,12 +3435,12 @@ Returns network interfaces attached to a GPU VM. Requires scope: vm.read.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.list_gpu_vm_network_interfaces(
@@ -3490,7 +3490,7 @@ client.gpu_vms.list_gpu_vm_network_interfaces(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">attach_gpu_vm_network</a>(...) -> NetworkInterface</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">attach_gpu_vm_network</a>(...) -> NetworkInterface</code></summary>
 <dl>
 <dd>
 
@@ -3517,12 +3517,12 @@ Attaches a network to a GPU VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.attach_gpu_vm_network(
@@ -3590,7 +3590,7 @@ client.gpu_vms.attach_gpu_vm_network(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibeesolutions/gpu_vms/client.py">detach_gpu_vm_network</a>(...) -> DeleteResponse</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">detach_gpu_vm_network</a>(...) -> DeleteResponse</code></summary>
 <dl>
 <dd>
 
@@ -3617,12 +3617,12 @@ Detaches a network interface from a GPU VM. Requires scope: vm.write.
 <dd>
 
 ```python
-from ibeesolutions import IbeeSolutions
-from ibeesolutions.environment import IbeeSolutionsEnvironment
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
 
-client = IbeeSolutions(
+client = Ibee(
     token="<token>",
-    environment=IbeeSolutionsEnvironment.DEFAULT,
+    environment=IbeeEnvironment.DEFAULT,
 )
 
 client.gpu_vms.detach_gpu_vm_network(

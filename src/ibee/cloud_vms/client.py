@@ -53,9 +53,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.list_cloud_vms(
@@ -133,9 +133,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.create_cloud_vm(
@@ -189,9 +189,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.get_cloud_vm(
@@ -234,9 +234,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.delete_cloud_vm(
@@ -286,9 +286,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.update_cloud_vm(
@@ -337,9 +337,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.start_cloud_vm(
@@ -393,9 +393,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.stop_cloud_vm(
@@ -449,9 +449,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.reboot_cloud_vm(
@@ -493,9 +493,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.get_cloud_vm_metrics(
@@ -532,9 +532,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.list_cloud_vm_network_interfaces(
@@ -583,9 +583,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.attach_cloud_vm_network(
@@ -636,9 +636,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.detach_cloud_vm_network(
@@ -676,9 +676,9 @@ class CloudVmsClient:
 
         Examples
         --------
-        from ibeesolutions import IbeeSolutions
+        from ibee import Ibee
 
-        client = IbeeSolutions(
+        client = Ibee(
             token="YOUR_TOKEN",
         )
         client.cloud_vms.get_compute_operation(
@@ -730,9 +730,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -818,9 +818,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -882,9 +882,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -937,9 +937,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -997,9 +997,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1056,9 +1056,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1120,9 +1120,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1184,9 +1184,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1236,9 +1236,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1283,9 +1283,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1342,9 +1342,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1403,9 +1403,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
@@ -1451,9 +1451,9 @@ class AsyncCloudVmsClient:
         --------
         import asyncio
 
-        from ibeesolutions import AsyncIbeeSolutions
+        from ibee import AsyncIbee
 
-        client = AsyncIbeeSolutions(
+        client = AsyncIbee(
             token="YOUR_TOKEN",
         )
 
