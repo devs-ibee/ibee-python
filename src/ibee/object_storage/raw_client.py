@@ -114,6 +114,7 @@ class RawObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Bucket]:
@@ -147,6 +148,7 @@ class RawObjectStorageClient:
             },
             json={
                 "name": name,
+                "region": region,
                 "is_public": is_public,
             },
             headers={
@@ -380,6 +382,7 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Bucket]:
@@ -413,6 +416,7 @@ class AsyncRawObjectStorageClient:
             },
             json={
                 "name": name,
+                "region": region,
                 "is_public": is_public,
             },
             headers={

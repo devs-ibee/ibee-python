@@ -82,6 +82,7 @@ class ObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
@@ -121,7 +122,7 @@ class ObjectStorageClient:
         )
         """
         _response = self._raw_client.create_bucket(
-            workspace_id=workspace_id, name=name, is_public=is_public, request_options=request_options
+            workspace_id=workspace_id, name=name, region=region, is_public=is_public, request_options=request_options
         )
         return _response.data
 
@@ -242,6 +243,7 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
@@ -289,7 +291,7 @@ class AsyncObjectStorageClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.create_bucket(
-            workspace_id=workspace_id, name=name, is_public=is_public, request_options=request_options
+            workspace_id=workspace_id, name=name, region=region, is_public=is_public, request_options=request_options
         )
         return _response.data
 
