@@ -53,7 +53,7 @@ class RawCloudVmsClient:
             Cloud VMs returned successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
-            "compute/cloud-vms",
+            "compute/cloud-vms/",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -168,7 +168,7 @@ class RawCloudVmsClient:
             VM creation accepted.
         """
         _response = self._client_wrapper.httpx_client.request(
-            "compute/cloud-vms",
+            "compute/cloud-vms/",
             method="POST",
             params={
                 "workspace_id": workspace_id,
@@ -1378,7 +1378,7 @@ class AsyncRawCloudVmsClient:
             Cloud VMs returned successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "compute/cloud-vms",
+            "compute/cloud-vms/",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -1493,7 +1493,7 @@ class AsyncRawCloudVmsClient:
             VM creation accepted.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "compute/cloud-vms",
+            "compute/cloud-vms/",
             method="POST",
             params={
                 "workspace_id": workspace_id,

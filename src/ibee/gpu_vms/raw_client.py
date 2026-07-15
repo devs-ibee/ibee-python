@@ -52,7 +52,7 @@ class RawGpuVmsClient:
             GPU VMs returned successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
-            "compute/gpu-vms",
+            "compute/gpu-vms/",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -175,7 +175,7 @@ class RawGpuVmsClient:
             VM creation accepted.
         """
         _response = self._client_wrapper.httpx_client.request(
-            "compute/gpu-vms",
+            "compute/gpu-vms/",
             method="POST",
             params={
                 "workspace_id": workspace_id,
@@ -1305,7 +1305,7 @@ class AsyncRawGpuVmsClient:
             GPU VMs returned successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "compute/gpu-vms",
+            "compute/gpu-vms/",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -1428,7 +1428,7 @@ class AsyncRawGpuVmsClient:
             VM creation accepted.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "compute/gpu-vms",
+            "compute/gpu-vms/",
             method="POST",
             params={
                 "workspace_id": workspace_id,
