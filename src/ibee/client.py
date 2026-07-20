@@ -11,6 +11,7 @@ from .environment import IbeeEnvironment
 
 if typing.TYPE_CHECKING:
     from .cloud_vms.client import AsyncCloudVmsClient, CloudVmsClient
+    from .compute_catalog.client import AsyncComputeCatalogClient, ComputeCatalogClient
     from .gpu_vms.client import AsyncGpuVmsClient, GpuVmsClient
     from .object_storage.client import AsyncObjectStorageClient, ObjectStorageClient
     from .secret_store.client import AsyncSecretStoreClient, SecretStoreClient
@@ -104,6 +105,7 @@ class Ibee:
         self._object_storage: typing.Optional[ObjectStorageClient] = None
         self._cloud_vms: typing.Optional[CloudVmsClient] = None
         self._gpu_vms: typing.Optional[GpuVmsClient] = None
+        self._compute_catalog: typing.Optional[ComputeCatalogClient] = None
 
     @property
     def secret_store(self):
@@ -112,6 +114,14 @@ class Ibee:
 
             self._secret_store = SecretStoreClient(client_wrapper=self._client_wrapper)
         return self._secret_store
+
+    @property
+    def compute_catalog(self):
+        if self._compute_catalog is None:
+            from .compute_catalog.client import ComputeCatalogClient  # noqa: E402
+
+            self._compute_catalog = ComputeCatalogClient(client_wrapper=self._client_wrapper)
+        return self._compute_catalog
 
     @property
     def object_storage(self):
@@ -247,6 +257,7 @@ class AsyncIbee:
         self._object_storage: typing.Optional[AsyncObjectStorageClient] = None
         self._cloud_vms: typing.Optional[AsyncCloudVmsClient] = None
         self._gpu_vms: typing.Optional[AsyncGpuVmsClient] = None
+        self._compute_catalog: typing.Optional[AsyncComputeCatalogClient] = None
 
     @property
     def secret_store(self):
@@ -255,6 +266,14 @@ class AsyncIbee:
 
             self._secret_store = AsyncSecretStoreClient(client_wrapper=self._client_wrapper)
         return self._secret_store
+
+    @property
+    def compute_catalog(self):
+        if self._compute_catalog is None:
+            from .compute_catalog.client import AsyncComputeCatalogClient  # noqa: E402
+
+            self._compute_catalog = AsyncComputeCatalogClient(client_wrapper=self._client_wrapper)
+        return self._compute_catalog
 
     @property
     def object_storage(self):
