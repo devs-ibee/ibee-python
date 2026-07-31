@@ -15,10 +15,8 @@ from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.not_found_error import NotFoundError
 from ..errors.unauthorized_error import UnauthorizedError
-from ..types.delete_response import DeleteResponse
 from ..types.error import Error
 from ..types.gpu_vm import GpuVm
-from ..types.network_interface import NetworkInterface
 from ..types.operation_accepted import OperationAccepted
 from ..types.vm_metrics import VmMetrics
 from .types.create_gpu_vm_request_os_type import CreateGpuVmRequestOsType
@@ -52,7 +50,7 @@ class RawGpuVmsClient:
             GPU VMs returned successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
-            "compute/gpu-vms/",
+            "compute/gpu-vms",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -106,15 +104,16 @@ class RawGpuVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
+        template_id: str,
         cpu: int,
         ram_mb: int,
         gpu_count: int,
         gpu_model: str,
-        template_id: typing.Optional[str] = OMIT,
+        plan_id: str,
         disk_gb: typing.Optional[int] = OMIT,
-        plan_id: typing.Optional[str] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -133,11 +132,17 @@ class RawGpuVmsClient:
         name : str
             Display name for the virtual machine.
 
+        site_id : str
+            Placement site ID returned by the compute catalog.
+
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
 
         os_type : CreateGpuVmRequestOsType
             Operating system family.
+
+        template_id : str
+            GPU-compatible template ID returned by the compute catalog.
 
         cpu : int
             Number of vCPUs.
@@ -151,14 +156,11 @@ class RawGpuVmsClient:
         gpu_model : str
             GPU model (e.g. A100, H100, L40S, RTX4090).
 
-        template_id : typing.Optional[str]
-            OS template or image ID with GPU drivers pre-installed.
+        plan_id : str
+            Billable GPU plan ID returned by the compute catalog.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
-
-        plan_id : typing.Optional[str]
-            Pre-configured GPU plan ID.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
             SSH key IDs to inject into the VM.
@@ -175,13 +177,14 @@ class RawGpuVmsClient:
             VM creation accepted.
         """
         _response = self._client_wrapper.httpx_client.request(
-            "compute/gpu-vms/",
+            "compute/gpu-vms",
             method="POST",
             params={
                 "workspace_id": workspace_id,
             },
             json={
                 "name": name,
+                "site_id": site_id,
                 "os_distro": os_distro,
                 "os_type": os_type,
                 "template_id": template_id,
@@ -432,119 +435,6 @@ class RawGpuVmsClient:
                 )
             if _response.status_code == 409:
                 raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def update_gpu_vm(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        name: typing.Optional[str] = OMIT,
-        tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[GpuVm]:
-        """
-        Updates mutable properties of a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        name : typing.Optional[str]
-            New display name for the VM.
-
-        tags : typing.Optional[typing.Sequence[str]]
-            Updated tags. Replaces all existing tags.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[GpuVm]
-            GPU VM updated successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"compute/gpu-vms/{encode_path_param(vm_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "tags": tags,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    GpuVm,
-                    parse_obj_as(
-                        type_=GpuVm,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -984,302 +874,6 @@ class RawGpuVmsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def list_gpu_vm_network_interfaces(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> HttpResponse[typing.List[NetworkInterface]]:
-        """
-        Returns network interfaces attached to a GPU VM. Requires scope: vm.read.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[typing.List[NetworkInterface]]
-            Network interfaces returned successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"compute/gpu-vms/{encode_path_param(vm_id)}/network-interfaces",
-            method="GET",
-            params={
-                "workspace_id": workspace_id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    typing.List[NetworkInterface],
-                    parse_obj_as(
-                        type_=typing.List[NetworkInterface],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def attach_gpu_vm_network(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        idempotency_key: str,
-        network_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[NetworkInterface]:
-        """
-        Attaches a network to a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        idempotency_key : str
-            Unique key used to safely retry write operations.
-
-        network_id : str
-            ID of the network to attach.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[NetworkInterface]
-            Network attached successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"compute/gpu-vms/{encode_path_param(vm_id)}/network-interfaces",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "network_id": network_id,
-            },
-            headers={
-                "content-type": "application/json",
-                "X-Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    NetworkInterface,
-                    parse_obj_as(
-                        type_=NetworkInterface,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def detach_gpu_vm_network(
-        self,
-        vm_id: str,
-        interface_id: str,
-        *,
-        workspace_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[DeleteResponse]:
-        """
-        Detaches a network interface from a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        interface_id : str
-            Network interface ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[DeleteResponse]
-            Network detached successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"compute/gpu-vms/{encode_path_param(vm_id)}/network-interfaces/{encode_path_param(interface_id)}",
-            method="DELETE",
-            params={
-                "workspace_id": workspace_id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    DeleteResponse,
-                    parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
 
 class AsyncRawGpuVmsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -1305,7 +899,7 @@ class AsyncRawGpuVmsClient:
             GPU VMs returned successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "compute/gpu-vms/",
+            "compute/gpu-vms",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -1359,15 +953,16 @@ class AsyncRawGpuVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
+        template_id: str,
         cpu: int,
         ram_mb: int,
         gpu_count: int,
         gpu_model: str,
-        template_id: typing.Optional[str] = OMIT,
+        plan_id: str,
         disk_gb: typing.Optional[int] = OMIT,
-        plan_id: typing.Optional[str] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -1386,11 +981,17 @@ class AsyncRawGpuVmsClient:
         name : str
             Display name for the virtual machine.
 
+        site_id : str
+            Placement site ID returned by the compute catalog.
+
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
 
         os_type : CreateGpuVmRequestOsType
             Operating system family.
+
+        template_id : str
+            GPU-compatible template ID returned by the compute catalog.
 
         cpu : int
             Number of vCPUs.
@@ -1404,14 +1005,11 @@ class AsyncRawGpuVmsClient:
         gpu_model : str
             GPU model (e.g. A100, H100, L40S, RTX4090).
 
-        template_id : typing.Optional[str]
-            OS template or image ID with GPU drivers pre-installed.
+        plan_id : str
+            Billable GPU plan ID returned by the compute catalog.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
-
-        plan_id : typing.Optional[str]
-            Pre-configured GPU plan ID.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
             SSH key IDs to inject into the VM.
@@ -1428,13 +1026,14 @@ class AsyncRawGpuVmsClient:
             VM creation accepted.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "compute/gpu-vms/",
+            "compute/gpu-vms",
             method="POST",
             params={
                 "workspace_id": workspace_id,
             },
             json={
                 "name": name,
+                "site_id": site_id,
                 "os_distro": os_distro,
                 "os_type": os_type,
                 "template_id": template_id,
@@ -1685,119 +1284,6 @@ class AsyncRawGpuVmsClient:
                 )
             if _response.status_code == 409:
                 raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def update_gpu_vm(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        name: typing.Optional[str] = OMIT,
-        tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[GpuVm]:
-        """
-        Updates mutable properties of a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        name : typing.Optional[str]
-            New display name for the VM.
-
-        tags : typing.Optional[typing.Sequence[str]]
-            Updated tags. Replaces all existing tags.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[GpuVm]
-            GPU VM updated successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"compute/gpu-vms/{encode_path_param(vm_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "tags": tags,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    GpuVm,
-                    parse_obj_as(
-                        type_=GpuVm,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2191,302 +1677,6 @@ class AsyncRawGpuVmsClient:
                     VmMetrics,
                     parse_obj_as(
                         type_=VmMetrics,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def list_gpu_vm_network_interfaces(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> AsyncHttpResponse[typing.List[NetworkInterface]]:
-        """
-        Returns network interfaces attached to a GPU VM. Requires scope: vm.read.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[typing.List[NetworkInterface]]
-            Network interfaces returned successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"compute/gpu-vms/{encode_path_param(vm_id)}/network-interfaces",
-            method="GET",
-            params={
-                "workspace_id": workspace_id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    typing.List[NetworkInterface],
-                    parse_obj_as(
-                        type_=typing.List[NetworkInterface],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def attach_gpu_vm_network(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        idempotency_key: str,
-        network_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[NetworkInterface]:
-        """
-        Attaches a network to a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        idempotency_key : str
-            Unique key used to safely retry write operations.
-
-        network_id : str
-            ID of the network to attach.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[NetworkInterface]
-            Network attached successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"compute/gpu-vms/{encode_path_param(vm_id)}/network-interfaces",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "network_id": network_id,
-            },
-            headers={
-                "content-type": "application/json",
-                "X-Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    NetworkInterface,
-                    parse_obj_as(
-                        type_=NetworkInterface,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def detach_gpu_vm_network(
-        self,
-        vm_id: str,
-        interface_id: str,
-        *,
-        workspace_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[DeleteResponse]:
-        """
-        Detaches a network interface from a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        interface_id : str
-            Network interface ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[DeleteResponse]
-            Network detached successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"compute/gpu-vms/{encode_path_param(vm_id)}/network-interfaces/{encode_path_param(interface_id)}",
-            method="DELETE",
-            params={
-                "workspace_id": workspace_id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    DeleteResponse,
-                    parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

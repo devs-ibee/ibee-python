@@ -18,6 +18,11 @@ from ..types.bucket import Bucket
 from ..types.bucket_list import BucketList
 from ..types.delete_response import DeleteResponse
 from ..types.error import Error
+from ..types.s3credential import S3Credential
+from ..types.s3credential_created import S3CredentialCreated
+from ..types.s3credential_list import S3CredentialList
+from ..types.s3credential_revoked import S3CredentialRevoked
+from .types.create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -114,8 +119,14 @@ class RawObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        region: str,
+        site_id: str,
+        site_name: typing.Optional[str] = OMIT,
+        region: typing.Optional[str] = OMIT,
+        plan: typing.Optional[str] = OMIT,
         is_public: typing.Optional[bool] = OMIT,
+        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        tags: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Bucket]:
         """
@@ -129,8 +140,23 @@ class RawObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
+        site_id : str
+            Site/datacenter ID for the bucket.
+
+        site_name : typing.Optional[str]
+
+        region : typing.Optional[str]
+
+        plan : typing.Optional[str]
+
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
+
+        bucket_lock_enabled : typing.Optional[bool]
+
+        tags : typing.Optional[typing.Sequence[str]]
+
+        metadata : typing.Optional[typing.Dict[str, typing.Any]]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -148,8 +174,14 @@ class RawObjectStorageClient:
             },
             json={
                 "name": name,
+                "site_id": site_id,
+                "site_name": site_name,
                 "region": region,
+                "plan": plan,
                 "is_public": is_public,
+                "bucket_lock_enabled": bucket_lock_enabled,
+                "tags": tags,
+                "metadata": metadata,
             },
             headers={
                 "content-type": "application/json",
@@ -209,6 +241,88 @@ class RawObjectStorageClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    def get_bucket(
+        self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[Bucket]:
+        """
+        Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[Bucket]
+            Bucket returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    Bucket,
+                    parse_obj_as(
+                        type_=Bucket,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
     def delete_bucket(
         self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[DeleteResponse]:
@@ -245,6 +359,449 @@ class RawObjectStorageClient:
                     DeleteResponse,
                     parse_obj_as(
                         type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def update_bucket(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: str,
+        is_public: bool,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[Bucket]:
+        """
+        Updates mutable bucket settings. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        is_public : bool
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[Bucket]
+            Bucket updated successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}",
+            method="PATCH",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "is_public": is_public,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    Bucket,
+                    parse_obj_as(
+                        type_=Bucket,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def list_s3credentials(
+        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[S3CredentialList]:
+        """
+        Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[S3CredentialList]
+            Credentials returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "object-storage/credentials",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3CredentialList,
+                    parse_obj_as(
+                        type_=S3CredentialList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def create_s3credential(
+        self,
+        *,
+        workspace_id: str,
+        name: typing.Optional[str] = OMIT,
+        permission_type: typing.Optional[str] = OMIT,
+        bucket_scope: typing.Optional[CreateS3CredentialRequestBucketScope] = OMIT,
+        allowed_buckets: typing.Optional[typing.Sequence[str]] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[S3CredentialCreated]:
+        """
+        Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        name : typing.Optional[str]
+
+        permission_type : typing.Optional[str]
+
+        bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
+
+        allowed_buckets : typing.Optional[typing.Sequence[str]]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[S3CredentialCreated]
+            Credential created successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "object-storage/credentials",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "name": name,
+                "permission_type": permission_type,
+                "bucket_scope": bucket_scope,
+                "allowed_buckets": allowed_buckets,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3CredentialCreated,
+                    parse_obj_as(
+                        type_=S3CredentialCreated,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_s3credential(
+        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[S3Credential]:
+        """
+        Returns credential metadata without the secret key. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[S3Credential]
+            Credential returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/credentials/{encode_path_param(access_key_id)}",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3Credential,
+                    parse_obj_as(
+                        type_=S3Credential,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def revoke_s3credential(
+        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[S3CredentialRevoked]:
+        """
+        Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[S3CredentialRevoked]
+            Credential revoked successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/credentials/{encode_path_param(access_key_id)}",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3CredentialRevoked,
+                    parse_obj_as(
+                        type_=S3CredentialRevoked,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -382,8 +939,14 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        region: str,
+        site_id: str,
+        site_name: typing.Optional[str] = OMIT,
+        region: typing.Optional[str] = OMIT,
+        plan: typing.Optional[str] = OMIT,
         is_public: typing.Optional[bool] = OMIT,
+        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        tags: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Bucket]:
         """
@@ -397,8 +960,23 @@ class AsyncRawObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
+        site_id : str
+            Site/datacenter ID for the bucket.
+
+        site_name : typing.Optional[str]
+
+        region : typing.Optional[str]
+
+        plan : typing.Optional[str]
+
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
+
+        bucket_lock_enabled : typing.Optional[bool]
+
+        tags : typing.Optional[typing.Sequence[str]]
+
+        metadata : typing.Optional[typing.Dict[str, typing.Any]]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -416,8 +994,14 @@ class AsyncRawObjectStorageClient:
             },
             json={
                 "name": name,
+                "site_id": site_id,
+                "site_name": site_name,
                 "region": region,
+                "plan": plan,
                 "is_public": is_public,
+                "bucket_lock_enabled": bucket_lock_enabled,
+                "tags": tags,
+                "metadata": metadata,
             },
             headers={
                 "content-type": "application/json",
@@ -477,6 +1061,88 @@ class AsyncRawObjectStorageClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    async def get_bucket(
+        self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[Bucket]:
+        """
+        Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[Bucket]
+            Bucket returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    Bucket,
+                    parse_obj_as(
+                        type_=Bucket,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
     async def delete_bucket(
         self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[DeleteResponse]:
@@ -513,6 +1179,449 @@ class AsyncRawObjectStorageClient:
                     DeleteResponse,
                     parse_obj_as(
                         type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def update_bucket(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: str,
+        is_public: bool,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[Bucket]:
+        """
+        Updates mutable bucket settings. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        is_public : bool
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[Bucket]
+            Bucket updated successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}",
+            method="PATCH",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "is_public": is_public,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    Bucket,
+                    parse_obj_as(
+                        type_=Bucket,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def list_s3credentials(
+        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[S3CredentialList]:
+        """
+        Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[S3CredentialList]
+            Credentials returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "object-storage/credentials",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3CredentialList,
+                    parse_obj_as(
+                        type_=S3CredentialList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def create_s3credential(
+        self,
+        *,
+        workspace_id: str,
+        name: typing.Optional[str] = OMIT,
+        permission_type: typing.Optional[str] = OMIT,
+        bucket_scope: typing.Optional[CreateS3CredentialRequestBucketScope] = OMIT,
+        allowed_buckets: typing.Optional[typing.Sequence[str]] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[S3CredentialCreated]:
+        """
+        Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        name : typing.Optional[str]
+
+        permission_type : typing.Optional[str]
+
+        bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
+
+        allowed_buckets : typing.Optional[typing.Sequence[str]]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[S3CredentialCreated]
+            Credential created successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "object-storage/credentials",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "name": name,
+                "permission_type": permission_type,
+                "bucket_scope": bucket_scope,
+                "allowed_buckets": allowed_buckets,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3CredentialCreated,
+                    parse_obj_as(
+                        type_=S3CredentialCreated,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_s3credential(
+        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[S3Credential]:
+        """
+        Returns credential metadata without the secret key. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[S3Credential]
+            Credential returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/credentials/{encode_path_param(access_key_id)}",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3Credential,
+                    parse_obj_as(
+                        type_=S3Credential,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def revoke_s3credential(
+        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[S3CredentialRevoked]:
+        """
+        Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[S3CredentialRevoked]
+            Credential revoked successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/credentials/{encode_path_param(access_key_id)}",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3CredentialRevoked,
+                    parse_obj_as(
+                        type_=S3CredentialRevoked,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

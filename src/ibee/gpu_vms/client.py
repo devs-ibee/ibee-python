@@ -4,9 +4,7 @@ import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
-from ..types.delete_response import DeleteResponse
 from ..types.gpu_vm import GpuVm
-from ..types.network_interface import NetworkInterface
 from ..types.operation_accepted import OperationAccepted
 from ..types.vm_metrics import VmMetrics
 from .raw_client import AsyncRawGpuVmsClient, RawGpuVmsClient
@@ -70,15 +68,16 @@ class GpuVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
+        template_id: str,
         cpu: int,
         ram_mb: int,
         gpu_count: int,
         gpu_model: str,
-        template_id: typing.Optional[str] = OMIT,
+        plan_id: str,
         disk_gb: typing.Optional[int] = OMIT,
-        plan_id: typing.Optional[str] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -97,11 +96,17 @@ class GpuVmsClient:
         name : str
             Display name for the virtual machine.
 
+        site_id : str
+            Placement site ID returned by the compute catalog.
+
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
 
         os_type : CreateGpuVmRequestOsType
             Operating system family.
+
+        template_id : str
+            GPU-compatible template ID returned by the compute catalog.
 
         cpu : int
             Number of vCPUs.
@@ -115,14 +120,11 @@ class GpuVmsClient:
         gpu_model : str
             GPU model (e.g. A100, H100, L40S, RTX4090).
 
-        template_id : typing.Optional[str]
-            OS template or image ID with GPU drivers pre-installed.
+        plan_id : str
+            Billable GPU plan ID returned by the compute catalog.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
-
-        plan_id : typing.Optional[str]
-            Pre-configured GPU plan ID.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
             SSH key IDs to inject into the VM.
@@ -149,27 +151,31 @@ class GpuVmsClient:
             idempotency_key="X-Idempotency-Key",
             workspace_id="workspace_id",
             name="ml-training-01",
+            site_id="site_id",
             os_distro="ubuntu",
             os_type="linux",
+            template_id="tmpl_ubuntu_2204_cuda",
             cpu=8,
             ram_mb=32768,
             gpu_count=1,
             gpu_model="A100",
+            plan_id="plan_id",
         )
         """
         _response = self._raw_client.create_gpu_vm(
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             name=name,
+            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
+            template_id=template_id,
             cpu=cpu,
             ram_mb=ram_mb,
             gpu_count=gpu_count,
             gpu_model=gpu_model,
-            template_id=template_id,
-            disk_gb=disk_gb,
             plan_id=plan_id,
+            disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             tags=tags,
             request_options=request_options,
@@ -258,57 +264,6 @@ class GpuVmsClient:
         """
         _response = self._raw_client.delete_gpu_vm(
             vm_id, workspace_id=workspace_id, idempotency_key=idempotency_key, request_options=request_options
-        )
-        return _response.data
-
-    def update_gpu_vm(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        name: typing.Optional[str] = OMIT,
-        tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> GpuVm:
-        """
-        Updates mutable properties of a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        name : typing.Optional[str]
-            New display name for the VM.
-
-        tags : typing.Optional[typing.Sequence[str]]
-            Updated tags. Replaces all existing tags.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        GpuVm
-            GPU VM updated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.update_gpu_vm(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
-        """
-        _response = self._raw_client.update_gpu_vm(
-            vm_id, workspace_id=workspace_id, name=name, tags=tags, request_options=request_options
         )
         return _response.data
 
@@ -519,150 +474,6 @@ class GpuVmsClient:
         )
         return _response.data
 
-    def list_gpu_vm_network_interfaces(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[NetworkInterface]:
-        """
-        Returns network interfaces attached to a GPU VM. Requires scope: vm.read.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.List[NetworkInterface]
-            Network interfaces returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.list_gpu_vm_network_interfaces(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
-        """
-        _response = self._raw_client.list_gpu_vm_network_interfaces(
-            vm_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    def attach_gpu_vm_network(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        idempotency_key: str,
-        network_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> NetworkInterface:
-        """
-        Attaches a network to a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        idempotency_key : str
-            Unique key used to safely retry write operations.
-
-        network_id : str
-            ID of the network to attach.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        NetworkInterface
-            Network attached successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.attach_gpu_vm_network(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-            network_id="net_456",
-        )
-        """
-        _response = self._raw_client.attach_gpu_vm_network(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            network_id=network_id,
-            request_options=request_options,
-        )
-        return _response.data
-
-    def detach_gpu_vm_network(
-        self,
-        vm_id: str,
-        interface_id: str,
-        *,
-        workspace_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
-        """
-        Detaches a network interface from a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        interface_id : str
-            Network interface ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        DeleteResponse
-            Network detached successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.detach_gpu_vm_network(
-            vm_id="vm_id",
-            interface_id="interface_id",
-            workspace_id="workspace_id",
-        )
-        """
-        _response = self._raw_client.detach_gpu_vm_network(
-            vm_id, interface_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
 
 class AsyncGpuVmsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -726,15 +537,16 @@ class AsyncGpuVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
+        template_id: str,
         cpu: int,
         ram_mb: int,
         gpu_count: int,
         gpu_model: str,
-        template_id: typing.Optional[str] = OMIT,
+        plan_id: str,
         disk_gb: typing.Optional[int] = OMIT,
-        plan_id: typing.Optional[str] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -753,11 +565,17 @@ class AsyncGpuVmsClient:
         name : str
             Display name for the virtual machine.
 
+        site_id : str
+            Placement site ID returned by the compute catalog.
+
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
 
         os_type : CreateGpuVmRequestOsType
             Operating system family.
+
+        template_id : str
+            GPU-compatible template ID returned by the compute catalog.
 
         cpu : int
             Number of vCPUs.
@@ -771,14 +589,11 @@ class AsyncGpuVmsClient:
         gpu_model : str
             GPU model (e.g. A100, H100, L40S, RTX4090).
 
-        template_id : typing.Optional[str]
-            OS template or image ID with GPU drivers pre-installed.
+        plan_id : str
+            Billable GPU plan ID returned by the compute catalog.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
-
-        plan_id : typing.Optional[str]
-            Pre-configured GPU plan ID.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
             SSH key IDs to inject into the VM.
@@ -810,12 +625,15 @@ class AsyncGpuVmsClient:
                 idempotency_key="X-Idempotency-Key",
                 workspace_id="workspace_id",
                 name="ml-training-01",
+                site_id="site_id",
                 os_distro="ubuntu",
                 os_type="linux",
+                template_id="tmpl_ubuntu_2204_cuda",
                 cpu=8,
                 ram_mb=32768,
                 gpu_count=1,
                 gpu_model="A100",
+                plan_id="plan_id",
             )
 
 
@@ -825,15 +643,16 @@ class AsyncGpuVmsClient:
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             name=name,
+            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
+            template_id=template_id,
             cpu=cpu,
             ram_mb=ram_mb,
             gpu_count=gpu_count,
             gpu_model=gpu_model,
-            template_id=template_id,
-            disk_gb=disk_gb,
             plan_id=plan_id,
+            disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             tags=tags,
             request_options=request_options,
@@ -938,65 +757,6 @@ class AsyncGpuVmsClient:
         """
         _response = await self._raw_client.delete_gpu_vm(
             vm_id, workspace_id=workspace_id, idempotency_key=idempotency_key, request_options=request_options
-        )
-        return _response.data
-
-    async def update_gpu_vm(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        name: typing.Optional[str] = OMIT,
-        tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> GpuVm:
-        """
-        Updates mutable properties of a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        name : typing.Optional[str]
-            New display name for the VM.
-
-        tags : typing.Optional[typing.Sequence[str]]
-            Updated tags. Replaces all existing tags.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        GpuVm
-            GPU VM updated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.update_gpu_vm(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.update_gpu_vm(
-            vm_id, workspace_id=workspace_id, name=name, tags=tags, request_options=request_options
         )
         return _response.data
 
@@ -1236,173 +996,5 @@ class AsyncGpuVmsClient:
         """
         _response = await self._raw_client.get_gpu_vm_metrics(
             vm_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    async def list_gpu_vm_network_interfaces(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[NetworkInterface]:
-        """
-        Returns network interfaces attached to a GPU VM. Requires scope: vm.read.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.List[NetworkInterface]
-            Network interfaces returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.list_gpu_vm_network_interfaces(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.list_gpu_vm_network_interfaces(
-            vm_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    async def attach_gpu_vm_network(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        idempotency_key: str,
-        network_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> NetworkInterface:
-        """
-        Attaches a network to a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        idempotency_key : str
-            Unique key used to safely retry write operations.
-
-        network_id : str
-            ID of the network to attach.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        NetworkInterface
-            Network attached successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.attach_gpu_vm_network(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-                network_id="net_456",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.attach_gpu_vm_network(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            network_id=network_id,
-            request_options=request_options,
-        )
-        return _response.data
-
-    async def detach_gpu_vm_network(
-        self,
-        vm_id: str,
-        interface_id: str,
-        *,
-        workspace_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
-        """
-        Detaches a network interface from a GPU VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        interface_id : str
-            Network interface ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        DeleteResponse
-            Network detached successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.detach_gpu_vm_network(
-                vm_id="vm_id",
-                interface_id="interface_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.detach_gpu_vm_network(
-            vm_id, interface_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data

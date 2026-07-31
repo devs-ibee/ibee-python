@@ -5,16 +5,31 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .vm_metrics_monitoring_status import VmMetricsMonitoringStatus
+from .vm_metrics_vm_type import VmMetricsVmType
 
 
 class VmMetrics(UniversalBaseModel):
-    cpu_usage_percent: typing.Optional[float] = None
-    memory_usage_percent: typing.Optional[float] = None
-    disk_read_bytes: typing.Optional[int] = None
-    disk_write_bytes: typing.Optional[int] = None
-    network_in_bytes: typing.Optional[int] = None
-    network_out_bytes: typing.Optional[int] = None
-    collected_at: typing.Optional[dt.datetime] = None
+    vm_id: str
+    vm_type: VmMetricsVmType
+    power_state: str
+    monitoring_status: VmMetricsMonitoringStatus
+    last_collected_at: typing.Optional[dt.datetime] = None
+    cpu_percent: typing.Optional[float] = None
+    memory_used_bytes: typing.Optional[int] = None
+    memory_used_percent: typing.Optional[float] = None
+    storage_used_bytes: typing.Optional[int] = None
+    storage_total_bytes: typing.Optional[int] = None
+    storage_used_percent: typing.Optional[float] = None
+    storage_provisioned_bytes: typing.Optional[int] = None
+    disk_read_bps: typing.Optional[float] = None
+    disk_write_bps: typing.Optional[float] = None
+    disk_read_iops: typing.Optional[float] = None
+    disk_write_iops: typing.Optional[float] = None
+    net_rx_bps: typing.Optional[float] = None
+    net_tx_bps: typing.Optional[float] = None
+    month_rx_bytes: int
+    month_tx_bytes: int
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

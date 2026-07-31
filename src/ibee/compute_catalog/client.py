@@ -1,11 +1,12 @@
 # Compute catalog client (sites / plans / images). Mirrors the Fern-generated
 # resource clients: a thin wrapper over the raw client that returns the parsed
-# payload. Discovery data is returned as parsed JSON (typing.Any).
+# payload. Discovery responses are validated into typed catalog models.
 
 import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
+from .models import ComputeImageList, ComputePlanList, ComputeSiteList
 from .raw_client import AsyncRawComputeCatalogClient, RawComputeCatalogClient
 
 
@@ -21,13 +22,11 @@ class ComputeCatalogClient:
         self,
         *,
         workspace_id: str,
-        region_id: typing.Optional[str] = None,
-        country_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> ComputeSiteList:
         """Return sites where cloud and GPU VMs can be placed. Requires scope: vm.read."""
         return self._raw_client.list_compute_sites(
-            workspace_id=workspace_id, region_id=region_id, country_id=country_id,
+            workspace_id=workspace_id,
             request_options=request_options,
         ).data
 
@@ -35,12 +34,12 @@ class ComputeCatalogClient:
         self,
         *,
         workspace_id: str,
-        vm_type: typing.Optional[str] = None,
+        vm_type: typing.Literal["cloud", "gpu"],
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> ComputePlanList:
         """Return billable plans for cloud or GPU VMs. Requires scope: vm.read."""
         return self._raw_client.list_compute_plans(
             workspace_id=workspace_id, vm_type=vm_type, site_id=site_id,
@@ -52,13 +51,13 @@ class ComputeCatalogClient:
         self,
         *,
         workspace_id: str,
-        vm_type: typing.Optional[str] = None,
-        currency: typing.Optional[str] = None,
+        vm_type: typing.Literal["cloud", "gpu"],
+        site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> ComputeImageList:
         """Return OS templates compatible with cloud or GPU VMs. Requires scope: vm.read."""
         return self._raw_client.list_compute_images(
-            workspace_id=workspace_id, vm_type=vm_type, currency=currency,
+            workspace_id=workspace_id, vm_type=vm_type, site_id=site_id,
             request_options=request_options,
         ).data
 
@@ -75,13 +74,11 @@ class AsyncComputeCatalogClient:
         self,
         *,
         workspace_id: str,
-        region_id: typing.Optional[str] = None,
-        country_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> ComputeSiteList:
         """Return sites where cloud and GPU VMs can be placed. Requires scope: vm.read."""
         return (await self._raw_client.list_compute_sites(
-            workspace_id=workspace_id, region_id=region_id, country_id=country_id,
+            workspace_id=workspace_id,
             request_options=request_options,
         )).data
 
@@ -89,12 +86,12 @@ class AsyncComputeCatalogClient:
         self,
         *,
         workspace_id: str,
-        vm_type: typing.Optional[str] = None,
+        vm_type: typing.Literal["cloud", "gpu"],
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> ComputePlanList:
         """Return billable plans for cloud or GPU VMs. Requires scope: vm.read."""
         return (await self._raw_client.list_compute_plans(
             workspace_id=workspace_id, vm_type=vm_type, site_id=site_id,
@@ -106,12 +103,12 @@ class AsyncComputeCatalogClient:
         self,
         *,
         workspace_id: str,
-        vm_type: typing.Optional[str] = None,
-        currency: typing.Optional[str] = None,
+        vm_type: typing.Literal["cloud", "gpu"],
+        site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> ComputeImageList:
         """Return OS templates compatible with cloud or GPU VMs. Requires scope: vm.read."""
         return (await self._raw_client.list_compute_images(
-            workspace_id=workspace_id, vm_type=vm_type, currency=currency,
+            workspace_id=workspace_id, vm_type=vm_type, site_id=site_id,
             request_options=request_options,
         )).data

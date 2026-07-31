@@ -5,13 +5,23 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .bucket_stats import BucketStats
 
 
 class Bucket(UniversalBaseModel):
-    name: typing.Optional[str] = None
-    is_public: typing.Optional[bool] = None
+    bucket_name: typing.Optional[str] = None
+    minio_id: typing.Optional[str] = None
+    public: typing.Optional[bool] = None
+    region: typing.Optional[str] = None
+    plan: typing.Optional[str] = None
+    status: typing.Optional[str] = None
+    site_id: typing.Optional[str] = None
+    site: typing.Optional[str] = None
+    tags: typing.Optional[typing.List[str]] = None
+    metadata: typing.Optional[typing.Dict[str, typing.Any]] = None
+    stats: typing.Optional[BucketStats] = None
     created_at: typing.Optional[dt.datetime] = None
-    updated_at: typing.Optional[dt.datetime] = None
+    last_modified: typing.Optional[dt.datetime] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
