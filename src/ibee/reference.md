@@ -1,4 +1,72 @@
 # Reference
+
+## SDK 0.3 Resources
+
+The following typed resources were added or expanded in SDK 0.3. Every method
+is also available from `AsyncIbee` with the same arguments.
+
+### Compute Catalog
+
+| Method | Return type |
+|---|---|
+| `client.compute_catalog.list_compute_sites(...)` | `ComputeSiteList` |
+| `client.compute_catalog.list_compute_plans(...)` | `ComputePlanList` |
+| `client.compute_catalog.list_compute_images(...)` | `ComputeImageList` |
+
+`list_compute_plans` requires `vm_type` and accepts `site_id`, `currency`, and
+`billing_interval`. `list_compute_images` requires `vm_type` and accepts
+`site_id`.
+
+### Object Storage
+
+| Method | Return type |
+|---|---|
+| `client.object_storage.get_bucket(...)` | `Bucket` |
+| `client.object_storage.update_bucket(...)` | `Bucket` |
+| `client.object_storage.list_s3credentials(...)` | `S3CredentialList` |
+| `client.object_storage.create_s3credential(...)` | `S3CredentialCreated` |
+| `client.object_storage.get_s3credential(...)` | `S3Credential` |
+| `client.object_storage.revoke_s3credential(...)` | `S3CredentialRevoked` |
+
+The secret access key in `S3CredentialCreated` is returned only once.
+
+### VPCs
+
+`client.vpcs` exposes:
+
+- `list_networking_sites`
+- `list_vpcs`, `create_vpc`, `get_vpc`, `update_vpc`, `delete_vpc`
+- `list_vpc_subnets`, `create_vpc_subnet`, `get_vpc_subnet`,
+  `update_vpc_subnet`, `delete_vpc_subnet`
+- `list_vpc_nodes`, `attach_vpc_node`, `detach_vpc_node`
+- `list_nat_gateways`, `create_nat_gateway`, `delete_nat_gateway`
+- `list_nat_port_forwarding_rules`, `create_nat_port_forwarding_rule`,
+  `update_nat_port_forwarding_rule`, `delete_nat_port_forwarding_rule`
+
+### Reserved IPs
+
+`client.reserved_ips` exposes `list_reserved_ips`, `reserve_ip`,
+`get_reserved_ip`, `update_reserved_ip`, `release_reserved_ip`,
+`attach_reserved_ip`, `move_reserved_ip`, and `detach_reserved_ip`.
+
+### Firewalls
+
+`client.firewalls` exposes firewall group list/create/get/delete, rule
+create/update/delete, and attachment list/attach/detach through:
+
+- `list_firewall_groups`, `create_firewall_group`, `get_firewall_group`,
+  `delete_firewall_group`
+- `create_firewall_rule`, `update_firewall_rule`, `delete_firewall_rule`
+- `list_firewall_group_attachments`, `attach_firewall_group`,
+  `detach_firewall_group`
+
+### Load Balancers
+
+`client.load_balancers` exposes `list_load_balancers`,
+`create_l4load_balancer`, `create_l7load_balancer`, `get_load_balancer`,
+`update_l4load_balancer`, `update_l7load_balancer`,
+`delete_load_balancer`, and `get_load_balancer_status`.
+
 ## Secret Store
 <details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">list_secret_stores</a>(...) -> SecretStoreList</code></summary>
 <dl>
@@ -54,7 +122,7 @@ client.secret_store.list_secret_stores(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -62,7 +130,7 @@ client.secret_store.list_secret_stores(
 <dd>
 
 **page:** `typing.Optional[int]` — Page number.
-    
+
 </dd>
 </dl>
 
@@ -70,7 +138,7 @@ client.secret_store.list_secret_stores(
 <dd>
 
 **limit:** `typing.Optional[int]` — Maximum number of records to return.
-    
+
 </dd>
 </dl>
 
@@ -78,7 +146,7 @@ client.secret_store.list_secret_stores(
 <dd>
 
 **include_archived:** `typing.Optional[bool]` — Include archived stores in the result.
-    
+
 </dd>
 </dl>
 
@@ -86,7 +154,7 @@ client.secret_store.list_secret_stores(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -153,23 +221,23 @@ client.secret_store.create_secret_store(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**name:** `str` 
-    
+**name:** `str`
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**description:** `typing.Optional[str]` 
-    
+**description:** `typing.Optional[str]`
+
 </dd>
 </dl>
 
@@ -177,7 +245,7 @@ client.secret_store.create_secret_store(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -243,7 +311,7 @@ client.secret_store.get_secret_store(
 <dd>
 
 **store_id:** `str` — Secret store ID.
-    
+
 </dd>
 </dl>
 
@@ -251,7 +319,7 @@ client.secret_store.get_secret_store(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -259,7 +327,7 @@ client.secret_store.get_secret_store(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -325,7 +393,7 @@ client.secret_store.update_secret_store(
 <dd>
 
 **store_id:** `str` — Secret store ID.
-    
+
 </dd>
 </dl>
 
@@ -333,23 +401,23 @@ client.secret_store.update_secret_store(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**name:** `typing.Optional[str]` 
-    
+**name:** `typing.Optional[str]`
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**description:** `typing.Optional[str]` 
-    
+**description:** `typing.Optional[str]`
+
 </dd>
 </dl>
 
@@ -357,7 +425,7 @@ client.secret_store.update_secret_store(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -423,7 +491,7 @@ client.secret_store.archive_secret_store(
 <dd>
 
 **store_id:** `str` — Secret store ID.
-    
+
 </dd>
 </dl>
 
@@ -431,7 +499,7 @@ client.secret_store.archive_secret_store(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -439,7 +507,7 @@ client.secret_store.archive_secret_store(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -505,7 +573,7 @@ client.secret_store.list_secrets(
 <dd>
 
 **store_id:** `str` — Secret store ID.
-    
+
 </dd>
 </dl>
 
@@ -513,7 +581,7 @@ client.secret_store.list_secrets(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -521,7 +589,7 @@ client.secret_store.list_secrets(
 <dd>
 
 **q:** `typing.Optional[str]` — Optional search query.
-    
+
 </dd>
 </dl>
 
@@ -529,7 +597,7 @@ client.secret_store.list_secrets(
 <dd>
 
 **page:** `typing.Optional[int]` — Page number.
-    
+
 </dd>
 </dl>
 
@@ -537,7 +605,7 @@ client.secret_store.list_secrets(
 <dd>
 
 **limit:** `typing.Optional[int]` — Maximum number of records to return.
-    
+
 </dd>
 </dl>
 
@@ -545,7 +613,7 @@ client.secret_store.list_secrets(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -615,7 +683,7 @@ client.secret_store.create_secret(
 <dd>
 
 **store_id:** `str` — Secret store ID.
-    
+
 </dd>
 </dl>
 
@@ -623,7 +691,7 @@ client.secret_store.create_secret(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -631,7 +699,7 @@ client.secret_store.create_secret(
 <dd>
 
 **secret_name:** `str` — Unique name for the secret within the store. Lowercase alphanumeric and hyphens only.
-    
+
 </dd>
 </dl>
 
@@ -639,7 +707,7 @@ client.secret_store.create_secret(
 <dd>
 
 **value:** `typing.Dict[str, typing.Any]` — Key-value pairs containing the secret data.
-    
+
 </dd>
 </dl>
 
@@ -647,7 +715,7 @@ client.secret_store.create_secret(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -713,7 +781,7 @@ client.secret_store.get_secret(
 <dd>
 
 **secret_id:** `str` — Secret ID.
-    
+
 </dd>
 </dl>
 
@@ -721,7 +789,7 @@ client.secret_store.get_secret(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -729,7 +797,7 @@ client.secret_store.get_secret(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -795,7 +863,7 @@ client.secret_store.delete_secret(
 <dd>
 
 **secret_id:** `str` — Secret ID.
-    
+
 </dd>
 </dl>
 
@@ -803,7 +871,7 @@ client.secret_store.delete_secret(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -811,7 +879,7 @@ client.secret_store.delete_secret(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -877,7 +945,7 @@ client.secret_store.get_secret_value(
 <dd>
 
 **secret_id:** `str` — Secret ID.
-    
+
 </dd>
 </dl>
 
@@ -885,7 +953,7 @@ client.secret_store.get_secret_value(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -893,7 +961,7 @@ client.secret_store.get_secret_value(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -963,7 +1031,7 @@ client.secret_store.update_secret_value(
 <dd>
 
 **secret_id:** `str` — Secret ID.
-    
+
 </dd>
 </dl>
 
@@ -971,7 +1039,7 @@ client.secret_store.update_secret_value(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -979,7 +1047,7 @@ client.secret_store.update_secret_value(
 <dd>
 
 **value:** `typing.Dict[str, typing.Any]` — Key-value pairs containing the new secret data. Creates a new version.
-    
+
 </dd>
 </dl>
 
@@ -987,7 +1055,7 @@ client.secret_store.update_secret_value(
 <dd>
 
 **cas:** `typing.Optional[int]` — Check-and-set: only update if the current version matches this number. Prevents overwriting concurrent changes.
-    
+
 </dd>
 </dl>
 
@@ -995,7 +1063,7 @@ client.secret_store.update_secret_value(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1061,7 +1129,7 @@ client.object_storage.list_buckets(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -1069,7 +1137,7 @@ client.object_storage.list_buckets(
 <dd>
 
 **limit:** `typing.Optional[int]` — Maximum number of buckets to return.
-    
+
 </dd>
 </dl>
 
@@ -1077,7 +1145,7 @@ client.object_storage.list_buckets(
 <dd>
 
 **continuation_token:** `typing.Optional[str]` — Pagination token from the previous response.
-    
+
 </dd>
 </dl>
 
@@ -1085,7 +1153,7 @@ client.object_storage.list_buckets(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1152,7 +1220,7 @@ client.object_storage.create_bucket(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -1160,7 +1228,7 @@ client.object_storage.create_bucket(
 <dd>
 
 **name:** `str` — Unique bucket name within the workspace.
-    
+
 </dd>
 </dl>
 
@@ -1168,7 +1236,7 @@ client.object_storage.create_bucket(
 <dd>
 
 **is_public:** `typing.Optional[bool]` — Whether the bucket allows unauthenticated read access.
-    
+
 </dd>
 </dl>
 
@@ -1176,7 +1244,7 @@ client.object_storage.create_bucket(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1242,7 +1310,7 @@ client.object_storage.delete_bucket(
 <dd>
 
 **bucket_name:** `str` — Logical bucket name.
-    
+
 </dd>
 </dl>
 
@@ -1250,7 +1318,7 @@ client.object_storage.delete_bucket(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -1258,7 +1326,7 @@ client.object_storage.delete_bucket(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1324,7 +1392,7 @@ client.cloud_vms.list_cloud_vms(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -1332,7 +1400,7 @@ client.cloud_vms.list_cloud_vms(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1403,7 +1471,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -1411,7 +1479,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
@@ -1419,7 +1487,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **name:** `str` — Display name for the virtual machine.
-    
+
 </dd>
 </dl>
 
@@ -1427,7 +1495,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **os_distro:** `str` — Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
-    
+
 </dd>
 </dl>
 
@@ -1435,7 +1503,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **os_type:** `CreateCloudVmRequestOsType` — Operating system family.
-    
+
 </dd>
 </dl>
 
@@ -1443,7 +1511,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **cpu:** `int` — Number of vCPUs.
-    
+
 </dd>
 </dl>
 
@@ -1451,7 +1519,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **ram_mb:** `int` — RAM in megabytes.
-    
+
 </dd>
 </dl>
 
@@ -1459,7 +1527,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **template_id:** `typing.Optional[str]` — OS template or image ID.
-    
+
 </dd>
 </dl>
 
@@ -1467,7 +1535,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **disk_gb:** `typing.Optional[int]` — Root disk size in gigabytes.
-    
+
 </dd>
 </dl>
 
@@ -1475,7 +1543,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **plan_id:** `typing.Optional[str]` — Pre-configured plan ID. Overrides cpu, ram_mb, and disk_gb when set.
-    
+
 </dd>
 </dl>
 
@@ -1483,7 +1551,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **ssh_key_ids:** `typing.Optional[typing.List[str]]` — SSH key IDs to inject into the VM.
-    
+
 </dd>
 </dl>
 
@@ -1491,7 +1559,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **tags:** `typing.Optional[typing.List[str]]` — Arbitrary tags for filtering and organization.
-    
+
 </dd>
 </dl>
 
@@ -1499,7 +1567,7 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1565,7 +1633,7 @@ client.cloud_vms.get_cloud_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -1573,7 +1641,7 @@ client.cloud_vms.get_cloud_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -1581,7 +1649,7 @@ client.cloud_vms.get_cloud_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1648,7 +1716,7 @@ client.cloud_vms.delete_cloud_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -1656,7 +1724,7 @@ client.cloud_vms.delete_cloud_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -1664,7 +1732,7 @@ client.cloud_vms.delete_cloud_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
@@ -1672,97 +1740,7 @@ client.cloud_vms.delete_cloud_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
 
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">update_cloud_vm</a>(...) -> CloudVm</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Updates mutable properties of a cloud VM. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.DEFAULT,
-)
-
-client.cloud_vms.update_cloud_vm(
-    vm_id="vm_id",
-    workspace_id="workspace_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `str` — The workspace ID to scope this request to.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `UpdateVmRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
 </dd>
 </dl>
 </dd>
@@ -1829,7 +1807,7 @@ client.cloud_vms.start_cloud_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -1837,7 +1815,7 @@ client.cloud_vms.start_cloud_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -1845,15 +1823,15 @@ client.cloud_vms.start_cloud_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `PowerActionRequest` 
-    
+**request:** `PowerActionRequest`
+
 </dd>
 </dl>
 
@@ -1861,7 +1839,7 @@ client.cloud_vms.start_cloud_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1928,7 +1906,7 @@ client.cloud_vms.stop_cloud_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -1936,7 +1914,7 @@ client.cloud_vms.stop_cloud_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -1944,15 +1922,15 @@ client.cloud_vms.stop_cloud_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `PowerActionRequest` 
-    
+**request:** `PowerActionRequest`
+
 </dd>
 </dl>
 
@@ -1960,7 +1938,7 @@ client.cloud_vms.stop_cloud_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2027,7 +2005,7 @@ client.cloud_vms.reboot_cloud_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -2035,7 +2013,7 @@ client.cloud_vms.reboot_cloud_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -2043,15 +2021,15 @@ client.cloud_vms.reboot_cloud_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `PowerActionRequest` 
-    
+**request:** `PowerActionRequest`
+
 </dd>
 </dl>
 
@@ -2059,7 +2037,7 @@ client.cloud_vms.reboot_cloud_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2125,7 +2103,7 @@ client.cloud_vms.get_cloud_vm_metrics(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -2133,7 +2111,7 @@ client.cloud_vms.get_cloud_vm_metrics(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -2141,280 +2119,7 @@ client.cloud_vms.get_cloud_vm_metrics(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
 
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">list_cloud_vm_network_interfaces</a>(...) -> typing.List[NetworkInterface]</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Returns network interfaces attached to a cloud VM. Requires scope: vm.read.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.DEFAULT,
-)
-
-client.cloud_vms.list_cloud_vm_network_interfaces(
-    vm_id="vm_id",
-    workspace_id="workspace_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `str` — The workspace ID to scope this request to.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">attach_cloud_vm_network</a>(...) -> NetworkInterface</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Attaches a network to a cloud VM. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.DEFAULT,
-)
-
-client.cloud_vms.attach_cloud_vm_network(
-    vm_id="vm_id",
-    workspace_id="workspace_id",
-    idempotency_key="X-Idempotency-Key",
-    network_id="net_456",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `str` — The workspace ID to scope this request to.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `AttachNetworkRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">detach_cloud_vm_network</a>(...) -> DeleteResponse</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Detaches a network interface from a cloud VM. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.DEFAULT,
-)
-
-client.cloud_vms.detach_cloud_vm_network(
-    vm_id="vm_id",
-    interface_id="interface_id",
-    workspace_id="workspace_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**interface_id:** `str` — Network interface ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `str` — The workspace ID to scope this request to.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
 </dd>
 </dl>
 </dd>
@@ -2480,7 +2185,7 @@ client.cloud_vms.get_compute_operation(
 <dd>
 
 **operation_id:** `str` — Operation ID returned by a create, delete, or power-action request.
-    
+
 </dd>
 </dl>
 
@@ -2488,7 +2193,7 @@ client.cloud_vms.get_compute_operation(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -2496,7 +2201,7 @@ client.cloud_vms.get_compute_operation(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2562,7 +2267,7 @@ client.gpu_vms.list_gpu_vms(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -2570,7 +2275,7 @@ client.gpu_vms.list_gpu_vms(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2643,7 +2348,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -2651,7 +2356,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
@@ -2659,7 +2364,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **name:** `str` — Display name for the virtual machine.
-    
+
 </dd>
 </dl>
 
@@ -2667,7 +2372,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **os_distro:** `str` — Operating system distribution (e.g. ubuntu, centos, debian, rocky).
-    
+
 </dd>
 </dl>
 
@@ -2675,7 +2380,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **os_type:** `CreateGpuVmRequestOsType` — Operating system family.
-    
+
 </dd>
 </dl>
 
@@ -2683,7 +2388,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **cpu:** `int` — Number of vCPUs.
-    
+
 </dd>
 </dl>
 
@@ -2691,7 +2396,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **ram_mb:** `int` — RAM in megabytes.
-    
+
 </dd>
 </dl>
 
@@ -2699,7 +2404,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **gpu_count:** `int` — Number of GPUs to attach.
-    
+
 </dd>
 </dl>
 
@@ -2707,7 +2412,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **gpu_model:** `str` — GPU model (e.g. A100, H100, L40S, RTX4090).
-    
+
 </dd>
 </dl>
 
@@ -2715,7 +2420,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **template_id:** `typing.Optional[str]` — OS template or image ID with GPU drivers pre-installed.
-    
+
 </dd>
 </dl>
 
@@ -2723,7 +2428,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **disk_gb:** `typing.Optional[int]` — Root disk size in gigabytes.
-    
+
 </dd>
 </dl>
 
@@ -2731,7 +2436,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **plan_id:** `typing.Optional[str]` — Pre-configured GPU plan ID.
-    
+
 </dd>
 </dl>
 
@@ -2739,7 +2444,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **ssh_key_ids:** `typing.Optional[typing.List[str]]` — SSH key IDs to inject into the VM.
-    
+
 </dd>
 </dl>
 
@@ -2747,7 +2452,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **tags:** `typing.Optional[typing.List[str]]` — Arbitrary tags for filtering and organization.
-    
+
 </dd>
 </dl>
 
@@ -2755,7 +2460,7 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2821,7 +2526,7 @@ client.gpu_vms.get_gpu_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -2829,7 +2534,7 @@ client.gpu_vms.get_gpu_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -2837,7 +2542,7 @@ client.gpu_vms.get_gpu_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2904,7 +2609,7 @@ client.gpu_vms.delete_gpu_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -2912,7 +2617,7 @@ client.gpu_vms.delete_gpu_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -2920,7 +2625,7 @@ client.gpu_vms.delete_gpu_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
@@ -2928,97 +2633,7 @@ client.gpu_vms.delete_gpu_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
 
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">update_gpu_vm</a>(...) -> GpuVm</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Updates mutable properties of a GPU VM. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.DEFAULT,
-)
-
-client.gpu_vms.update_gpu_vm(
-    vm_id="vm_id",
-    workspace_id="workspace_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `str` — The workspace ID to scope this request to.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `UpdateVmRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
 </dd>
 </dl>
 </dd>
@@ -3085,7 +2700,7 @@ client.gpu_vms.start_gpu_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -3093,7 +2708,7 @@ client.gpu_vms.start_gpu_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -3101,15 +2716,15 @@ client.gpu_vms.start_gpu_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `PowerActionRequest` 
-    
+**request:** `PowerActionRequest`
+
 </dd>
 </dl>
 
@@ -3117,7 +2732,7 @@ client.gpu_vms.start_gpu_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3184,7 +2799,7 @@ client.gpu_vms.stop_gpu_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -3192,7 +2807,7 @@ client.gpu_vms.stop_gpu_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -3200,15 +2815,15 @@ client.gpu_vms.stop_gpu_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `PowerActionRequest` 
-    
+**request:** `PowerActionRequest`
+
 </dd>
 </dl>
 
@@ -3216,7 +2831,7 @@ client.gpu_vms.stop_gpu_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3283,7 +2898,7 @@ client.gpu_vms.reboot_gpu_vm(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -3291,7 +2906,7 @@ client.gpu_vms.reboot_gpu_vm(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -3299,15 +2914,15 @@ client.gpu_vms.reboot_gpu_vm(
 <dd>
 
 **idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `PowerActionRequest` 
-    
+**request:** `PowerActionRequest`
+
 </dd>
 </dl>
 
@@ -3315,7 +2930,7 @@ client.gpu_vms.reboot_gpu_vm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3381,7 +2996,7 @@ client.gpu_vms.get_gpu_vm_metrics(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
+
 </dd>
 </dl>
 
@@ -3389,7 +3004,7 @@ client.gpu_vms.get_gpu_vm_metrics(
 <dd>
 
 **workspace_id:** `str` — The workspace ID to scope this request to.
-    
+
 </dd>
 </dl>
 
@@ -3397,7 +3012,7 @@ client.gpu_vms.get_gpu_vm_metrics(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3407,277 +3022,3 @@ client.gpu_vms.get_gpu_vm_metrics(
 </dd>
 </dl>
 </details>
-
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">list_gpu_vm_network_interfaces</a>(...) -> typing.List[NetworkInterface]</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Returns network interfaces attached to a GPU VM. Requires scope: vm.read.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.DEFAULT,
-)
-
-client.gpu_vms.list_gpu_vm_network_interfaces(
-    vm_id="vm_id",
-    workspace_id="workspace_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `str` — The workspace ID to scope this request to.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">attach_gpu_vm_network</a>(...) -> NetworkInterface</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Attaches a network to a GPU VM. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.DEFAULT,
-)
-
-client.gpu_vms.attach_gpu_vm_network(
-    vm_id="vm_id",
-    workspace_id="workspace_id",
-    idempotency_key="X-Idempotency-Key",
-    network_id="net_456",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `str` — The workspace ID to scope this request to.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**idempotency_key:** `str` — Unique key used to safely retry write operations.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `AttachNetworkRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">detach_gpu_vm_network</a>(...) -> DeleteResponse</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Detaches a network interface from a GPU VM. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.DEFAULT,
-)
-
-client.gpu_vms.detach_gpu_vm_network(
-    vm_id="vm_id",
-    interface_id="interface_id",
-    workspace_id="workspace_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**interface_id:** `str` — Network interface ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `str` — The workspace ID to scope this request to.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-

@@ -5,8 +5,6 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.cloud_vm import CloudVm
-from ..types.delete_response import DeleteResponse
-from ..types.network_interface import NetworkInterface
 from ..types.operation_accepted import OperationAccepted
 from ..types.operation_status import OperationStatus
 from ..types.vm_metrics import VmMetrics
@@ -71,13 +69,14 @@ class CloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
+        template_id: str,
         cpu: int,
         ram_mb: int,
-        template_id: typing.Optional[str] = OMIT,
+        plan_id: str,
         disk_gb: typing.Optional[int] = OMIT,
-        plan_id: typing.Optional[str] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -96,11 +95,17 @@ class CloudVmsClient:
         name : str
             Display name for the virtual machine.
 
+        site_id : str
+            Placement site ID returned by the compute catalog.
+
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
 
         os_type : CreateCloudVmRequestOsType
             Operating system family.
+
+        template_id : str
+            OS template or image ID returned by the compute catalog.
 
         cpu : int
             Number of vCPUs.
@@ -108,14 +113,11 @@ class CloudVmsClient:
         ram_mb : int
             RAM in megabytes.
 
-        template_id : typing.Optional[str]
-            OS template or image ID.
+        plan_id : str
+            Billable compute plan ID returned by the compute catalog.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
-
-        plan_id : typing.Optional[str]
-            Pre-configured plan ID. Overrides cpu, ram_mb, and disk_gb when set.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
             SSH key IDs to inject into the VM.
@@ -142,23 +144,27 @@ class CloudVmsClient:
             idempotency_key="X-Idempotency-Key",
             workspace_id="workspace_id",
             name="web-server-01",
+            site_id="site_id",
             os_distro="ubuntu",
             os_type="linux",
+            template_id="tmpl_ubuntu_2204",
             cpu=2,
             ram_mb=4096,
+            plan_id="plan_id",
         )
         """
         _response = self._raw_client.create_cloud_vm(
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             name=name,
+            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
+            template_id=template_id,
             cpu=cpu,
             ram_mb=ram_mb,
-            template_id=template_id,
-            disk_gb=disk_gb,
             plan_id=plan_id,
+            disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             tags=tags,
             request_options=request_options,
@@ -247,57 +253,6 @@ class CloudVmsClient:
         """
         _response = self._raw_client.delete_cloud_vm(
             vm_id, workspace_id=workspace_id, idempotency_key=idempotency_key, request_options=request_options
-        )
-        return _response.data
-
-    def update_cloud_vm(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        name: typing.Optional[str] = OMIT,
-        tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> CloudVm:
-        """
-        Updates mutable properties of a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        name : typing.Optional[str]
-            New display name for the VM.
-
-        tags : typing.Optional[typing.Sequence[str]]
-            Updated tags. Replaces all existing tags.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        CloudVm
-            Cloud VM updated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.cloud_vms.update_cloud_vm(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
-        """
-        _response = self._raw_client.update_cloud_vm(
-            vm_id, workspace_id=workspace_id, name=name, tags=tags, request_options=request_options
         )
         return _response.data
 
@@ -508,150 +463,6 @@ class CloudVmsClient:
         )
         return _response.data
 
-    def list_cloud_vm_network_interfaces(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[NetworkInterface]:
-        """
-        Returns network interfaces attached to a cloud VM. Requires scope: vm.read.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.List[NetworkInterface]
-            Network interfaces returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.cloud_vms.list_cloud_vm_network_interfaces(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
-        """
-        _response = self._raw_client.list_cloud_vm_network_interfaces(
-            vm_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    def attach_cloud_vm_network(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        idempotency_key: str,
-        network_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> NetworkInterface:
-        """
-        Attaches a network to a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        idempotency_key : str
-            Unique key used to safely retry write operations.
-
-        network_id : str
-            ID of the network to attach.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        NetworkInterface
-            Network attached successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.cloud_vms.attach_cloud_vm_network(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-            network_id="net_456",
-        )
-        """
-        _response = self._raw_client.attach_cloud_vm_network(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            network_id=network_id,
-            request_options=request_options,
-        )
-        return _response.data
-
-    def detach_cloud_vm_network(
-        self,
-        vm_id: str,
-        interface_id: str,
-        *,
-        workspace_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
-        """
-        Detaches a network interface from a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        interface_id : str
-            Network interface ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        DeleteResponse
-            Network detached successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.cloud_vms.detach_cloud_vm_network(
-            vm_id="vm_id",
-            interface_id="interface_id",
-            workspace_id="workspace_id",
-        )
-        """
-        _response = self._raw_client.detach_cloud_vm_network(
-            vm_id, interface_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
     def get_compute_operation(
         self, operation_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> OperationStatus:
@@ -754,13 +565,14 @@ class AsyncCloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
+        template_id: str,
         cpu: int,
         ram_mb: int,
-        template_id: typing.Optional[str] = OMIT,
+        plan_id: str,
         disk_gb: typing.Optional[int] = OMIT,
-        plan_id: typing.Optional[str] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -779,11 +591,17 @@ class AsyncCloudVmsClient:
         name : str
             Display name for the virtual machine.
 
+        site_id : str
+            Placement site ID returned by the compute catalog.
+
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
 
         os_type : CreateCloudVmRequestOsType
             Operating system family.
+
+        template_id : str
+            OS template or image ID returned by the compute catalog.
 
         cpu : int
             Number of vCPUs.
@@ -791,14 +609,11 @@ class AsyncCloudVmsClient:
         ram_mb : int
             RAM in megabytes.
 
-        template_id : typing.Optional[str]
-            OS template or image ID.
+        plan_id : str
+            Billable compute plan ID returned by the compute catalog.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
-
-        plan_id : typing.Optional[str]
-            Pre-configured plan ID. Overrides cpu, ram_mb, and disk_gb when set.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
             SSH key IDs to inject into the VM.
@@ -830,10 +645,13 @@ class AsyncCloudVmsClient:
                 idempotency_key="X-Idempotency-Key",
                 workspace_id="workspace_id",
                 name="web-server-01",
+                site_id="site_id",
                 os_distro="ubuntu",
                 os_type="linux",
+                template_id="tmpl_ubuntu_2204",
                 cpu=2,
                 ram_mb=4096,
+                plan_id="plan_id",
             )
 
 
@@ -843,13 +661,14 @@ class AsyncCloudVmsClient:
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             name=name,
+            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
+            template_id=template_id,
             cpu=cpu,
             ram_mb=ram_mb,
-            template_id=template_id,
-            disk_gb=disk_gb,
             plan_id=plan_id,
+            disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             tags=tags,
             request_options=request_options,
@@ -956,65 +775,6 @@ class AsyncCloudVmsClient:
         """
         _response = await self._raw_client.delete_cloud_vm(
             vm_id, workspace_id=workspace_id, idempotency_key=idempotency_key, request_options=request_options
-        )
-        return _response.data
-
-    async def update_cloud_vm(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        name: typing.Optional[str] = OMIT,
-        tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> CloudVm:
-        """
-        Updates mutable properties of a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        name : typing.Optional[str]
-            New display name for the VM.
-
-        tags : typing.Optional[typing.Sequence[str]]
-            Updated tags. Replaces all existing tags.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        CloudVm
-            Cloud VM updated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.cloud_vms.update_cloud_vm(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.update_cloud_vm(
-            vm_id, workspace_id=workspace_id, name=name, tags=tags, request_options=request_options
         )
         return _response.data
 
@@ -1254,174 +1014,6 @@ class AsyncCloudVmsClient:
         """
         _response = await self._raw_client.get_cloud_vm_metrics(
             vm_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    async def list_cloud_vm_network_interfaces(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[NetworkInterface]:
-        """
-        Returns network interfaces attached to a cloud VM. Requires scope: vm.read.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.List[NetworkInterface]
-            Network interfaces returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.cloud_vms.list_cloud_vm_network_interfaces(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.list_cloud_vm_network_interfaces(
-            vm_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    async def attach_cloud_vm_network(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        idempotency_key: str,
-        network_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> NetworkInterface:
-        """
-        Attaches a network to a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        idempotency_key : str
-            Unique key used to safely retry write operations.
-
-        network_id : str
-            ID of the network to attach.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        NetworkInterface
-            Network attached successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.cloud_vms.attach_cloud_vm_network(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-                network_id="net_456",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.attach_cloud_vm_network(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            network_id=network_id,
-            request_options=request_options,
-        )
-        return _response.data
-
-    async def detach_cloud_vm_network(
-        self,
-        vm_id: str,
-        interface_id: str,
-        *,
-        workspace_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
-        """
-        Detaches a network interface from a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        interface_id : str
-            Network interface ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        DeleteResponse
-            Network detached successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.cloud_vms.detach_cloud_vm_network(
-                vm_id="vm_id",
-                interface_id="interface_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.detach_cloud_vm_network(
-            vm_id, interface_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 

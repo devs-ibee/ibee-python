@@ -1,7 +1,7 @@
 # Compute catalog raw client. Mirrors the Fern-generated resource clients
 # (e.g. cloud_vms/raw_client.py) so it uses the same shared core, error
 # handling, and request pipeline. Endpoints are read-only GETs; the payload is
-# returned as parsed JSON (typing.Any) rather than a typed model.
+# validated into the public compute catalog response models.
 
 import typing
 from json.decoder import JSONDecodeError
@@ -14,6 +14,7 @@ from ..core.request_options import RequestOptions
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.error import Error
+from .models import ComputeImageList, ComputePlanList, ComputeSiteList
 
 
 def _params(workspace_id: str, extra: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
@@ -22,10 +23,13 @@ def _params(workspace_id: str, extra: typing.Dict[str, typing.Any]) -> typing.Di
     return params
 
 
-def _handle(_response: typing.Any) -> HttpResponse[typing.Any]:
+def _handle(_response: typing.Any, response_type: typing.Any) -> HttpResponse[typing.Any]:
     try:
         if 200 <= _response.status_code < 300:
-            return HttpResponse(response=_response, data=_response.json())
+            return HttpResponse(
+                response=_response,
+                data=parse_obj_as(type_=response_type, object_=_response.json()),  # type: ignore
+            )
         if _response.status_code == 401:
             raise UnauthorizedError(
                 headers=dict(_response.headers),
@@ -50,28 +54,26 @@ class RawComputeCatalogClient:
         self,
         *,
         workspace_id: str,
-        region_id: typing.Optional[str] = None,
-        country_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.Any]:
+    ) -> HttpResponse[ComputeSiteList]:
         _response = self._client_wrapper.httpx_client.request(
             "compute/sites",
             method="GET",
-            params=_params(workspace_id, {"region_id": region_id, "country_id": country_id}),
+            params=_params(workspace_id, {}),
             request_options=request_options,
         )
-        return _handle(_response)
+        return typing.cast(HttpResponse[ComputeSiteList], _handle(_response, ComputeSiteList))
 
     def list_compute_plans(
         self,
         *,
         workspace_id: str,
-        vm_type: typing.Optional[str] = None,
+        vm_type: typing.Literal["cloud", "gpu"],
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.Any]:
+    ) -> HttpResponse[ComputePlanList]:
         _response = self._client_wrapper.httpx_client.request(
             "compute/plans",
             method="GET",
@@ -81,23 +83,23 @@ class RawComputeCatalogClient:
             }),
             request_options=request_options,
         )
-        return _handle(_response)
+        return typing.cast(HttpResponse[ComputePlanList], _handle(_response, ComputePlanList))
 
     def list_compute_images(
         self,
         *,
         workspace_id: str,
-        vm_type: typing.Optional[str] = None,
-        currency: typing.Optional[str] = None,
+        vm_type: typing.Literal["cloud", "gpu"],
+        site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.Any]:
+    ) -> HttpResponse[ComputeImageList]:
         _response = self._client_wrapper.httpx_client.request(
             "compute/images",
             method="GET",
-            params=_params(workspace_id, {"vm_type": vm_type, "currency": currency}),
+            params=_params(workspace_id, {"vm_type": vm_type, "site_id": site_id}),
             request_options=request_options,
         )
-        return _handle(_response)
+        return typing.cast(HttpResponse[ComputeImageList], _handle(_response, ComputeImageList))
 
 
 class AsyncRawComputeCatalogClient:
@@ -108,29 +110,27 @@ class AsyncRawComputeCatalogClient:
         self,
         *,
         workspace_id: str,
-        region_id: typing.Optional[str] = None,
-        country_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.Any]:
+    ) -> AsyncHttpResponse[ComputeSiteList]:
         _response = await self._client_wrapper.httpx_client.request(
             "compute/sites",
             method="GET",
-            params=_params(workspace_id, {"region_id": region_id, "country_id": country_id}),
+            params=_params(workspace_id, {}),
             request_options=request_options,
         )
-        _sync = _handle(_response)
+        _sync = _handle(_response, ComputeSiteList)
         return AsyncHttpResponse(response=_response, data=_sync.data)
 
     async def list_compute_plans(
         self,
         *,
         workspace_id: str,
-        vm_type: typing.Optional[str] = None,
+        vm_type: typing.Literal["cloud", "gpu"],
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.Any]:
+    ) -> AsyncHttpResponse[ComputePlanList]:
         _response = await self._client_wrapper.httpx_client.request(
             "compute/plans",
             method="GET",
@@ -140,22 +140,22 @@ class AsyncRawComputeCatalogClient:
             }),
             request_options=request_options,
         )
-        _sync = _handle(_response)
+        _sync = _handle(_response, ComputePlanList)
         return AsyncHttpResponse(response=_response, data=_sync.data)
 
     async def list_compute_images(
         self,
         *,
         workspace_id: str,
-        vm_type: typing.Optional[str] = None,
-        currency: typing.Optional[str] = None,
+        vm_type: typing.Literal["cloud", "gpu"],
+        site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.Any]:
+    ) -> AsyncHttpResponse[ComputeImageList]:
         _response = await self._client_wrapper.httpx_client.request(
             "compute/images",
             method="GET",
-            params=_params(workspace_id, {"vm_type": vm_type, "currency": currency}),
+            params=_params(workspace_id, {"vm_type": vm_type, "site_id": site_id}),
             request_options=request_options,
         )
-        _sync = _handle(_response)
+        _sync = _handle(_response, ComputeImageList)
         return AsyncHttpResponse(response=_response, data=_sync.data)

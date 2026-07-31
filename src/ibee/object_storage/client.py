@@ -7,7 +7,12 @@ from ..core.request_options import RequestOptions
 from ..types.bucket import Bucket
 from ..types.bucket_list import BucketList
 from ..types.delete_response import DeleteResponse
+from ..types.s3credential import S3Credential
+from ..types.s3credential_created import S3CredentialCreated
+from ..types.s3credential_list import S3CredentialList
+from ..types.s3credential_revoked import S3CredentialRevoked
 from .raw_client import AsyncRawObjectStorageClient, RawObjectStorageClient
+from .types.create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -82,8 +87,14 @@ class ObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        region: str,
+        site_id: str,
+        site_name: typing.Optional[str] = OMIT,
+        region: typing.Optional[str] = OMIT,
+        plan: typing.Optional[str] = OMIT,
         is_public: typing.Optional[bool] = OMIT,
+        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        tags: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
@@ -97,8 +108,23 @@ class ObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
+        site_id : str
+            Site/datacenter ID for the bucket.
+
+        site_name : typing.Optional[str]
+
+        region : typing.Optional[str]
+
+        plan : typing.Optional[str]
+
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
+
+        bucket_lock_enabled : typing.Optional[bool]
+
+        tags : typing.Optional[typing.Sequence[str]]
+
+        metadata : typing.Optional[typing.Dict[str, typing.Any]]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -118,12 +144,60 @@ class ObjectStorageClient:
         client.object_storage.create_bucket(
             workspace_id="workspace_id",
             name="production-assets",
+            site_id="68b99bd78a8eda32ff3f16ea",
             is_public=False,
         )
         """
         _response = self._raw_client.create_bucket(
-            workspace_id=workspace_id, name=name, region=region, is_public=is_public, request_options=request_options
+            workspace_id=workspace_id,
+            name=name,
+            site_id=site_id,
+            site_name=site_name,
+            region=region,
+            plan=plan,
+            is_public=is_public,
+            bucket_lock_enabled=bucket_lock_enabled,
+            tags=tags,
+            metadata=metadata,
+            request_options=request_options,
         )
+        return _response.data
+
+    def get_bucket(
+        self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> Bucket:
+        """
+        Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        Bucket
+            Bucket returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.get_bucket(
+            bucket_name="bucket_name",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.get_bucket(bucket_name, workspace_id=workspace_id, request_options=request_options)
         return _response.data
 
     def delete_bucket(
@@ -162,6 +236,219 @@ class ObjectStorageClient:
         """
         _response = self._raw_client.delete_bucket(
             bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def update_bucket(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: str,
+        is_public: bool,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> Bucket:
+        """
+        Updates mutable bucket settings. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        is_public : bool
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        Bucket
+            Bucket updated successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.update_bucket(
+            bucket_name="bucket_name",
+            workspace_id="workspace_id",
+            is_public=True,
+        )
+        """
+        _response = self._raw_client.update_bucket(
+            bucket_name, workspace_id=workspace_id, is_public=is_public, request_options=request_options
+        )
+        return _response.data
+
+    def list_s3credentials(
+        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> S3CredentialList:
+        """
+        Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3CredentialList
+            Credentials returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.list_s3credentials(
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.list_s3credentials(workspace_id=workspace_id, request_options=request_options)
+        return _response.data
+
+    def create_s3credential(
+        self,
+        *,
+        workspace_id: str,
+        name: typing.Optional[str] = OMIT,
+        permission_type: typing.Optional[str] = OMIT,
+        bucket_scope: typing.Optional[CreateS3CredentialRequestBucketScope] = OMIT,
+        allowed_buckets: typing.Optional[typing.Sequence[str]] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> S3CredentialCreated:
+        """
+        Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        name : typing.Optional[str]
+
+        permission_type : typing.Optional[str]
+
+        bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
+
+        allowed_buckets : typing.Optional[typing.Sequence[str]]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3CredentialCreated
+            Credential created successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.create_s3credential(
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.create_s3credential(
+            workspace_id=workspace_id,
+            name=name,
+            permission_type=permission_type,
+            bucket_scope=bucket_scope,
+            allowed_buckets=allowed_buckets,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def get_s3credential(
+        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> S3Credential:
+        """
+        Returns credential metadata without the secret key. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3Credential
+            Credential returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.get_s3credential(
+            access_key_id="access_key_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.get_s3credential(
+            access_key_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def revoke_s3credential(
+        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> S3CredentialRevoked:
+        """
+        Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3CredentialRevoked
+            Credential revoked successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.revoke_s3credential(
+            access_key_id="access_key_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.revoke_s3credential(
+            access_key_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -243,8 +530,14 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        region: str,
+        site_id: str,
+        site_name: typing.Optional[str] = OMIT,
+        region: typing.Optional[str] = OMIT,
+        plan: typing.Optional[str] = OMIT,
         is_public: typing.Optional[bool] = OMIT,
+        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        tags: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
@@ -258,8 +551,23 @@ class AsyncObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
+        site_id : str
+            Site/datacenter ID for the bucket.
+
+        site_name : typing.Optional[str]
+
+        region : typing.Optional[str]
+
+        plan : typing.Optional[str]
+
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
+
+        bucket_lock_enabled : typing.Optional[bool]
+
+        tags : typing.Optional[typing.Sequence[str]]
+
+        metadata : typing.Optional[typing.Dict[str, typing.Any]]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -284,6 +592,7 @@ class AsyncObjectStorageClient:
             await client.object_storage.create_bucket(
                 workspace_id="workspace_id",
                 name="production-assets",
+                site_id="68b99bd78a8eda32ff3f16ea",
                 is_public=False,
             )
 
@@ -291,7 +600,64 @@ class AsyncObjectStorageClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.create_bucket(
-            workspace_id=workspace_id, name=name, region=region, is_public=is_public, request_options=request_options
+            workspace_id=workspace_id,
+            name=name,
+            site_id=site_id,
+            site_name=site_name,
+            region=region,
+            plan=plan,
+            is_public=is_public,
+            bucket_lock_enabled=bucket_lock_enabled,
+            tags=tags,
+            metadata=metadata,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def get_bucket(
+        self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> Bucket:
+        """
+        Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        Bucket
+            Bucket returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.get_bucket(
+                bucket_name="bucket_name",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_bucket(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -339,5 +705,260 @@ class AsyncObjectStorageClient:
         """
         _response = await self._raw_client.delete_bucket(
             bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def update_bucket(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: str,
+        is_public: bool,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> Bucket:
+        """
+        Updates mutable bucket settings. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        is_public : bool
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        Bucket
+            Bucket updated successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.update_bucket(
+                bucket_name="bucket_name",
+                workspace_id="workspace_id",
+                is_public=True,
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.update_bucket(
+            bucket_name, workspace_id=workspace_id, is_public=is_public, request_options=request_options
+        )
+        return _response.data
+
+    async def list_s3credentials(
+        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> S3CredentialList:
+        """
+        Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3CredentialList
+            Credentials returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.list_s3credentials(
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.list_s3credentials(
+            workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def create_s3credential(
+        self,
+        *,
+        workspace_id: str,
+        name: typing.Optional[str] = OMIT,
+        permission_type: typing.Optional[str] = OMIT,
+        bucket_scope: typing.Optional[CreateS3CredentialRequestBucketScope] = OMIT,
+        allowed_buckets: typing.Optional[typing.Sequence[str]] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> S3CredentialCreated:
+        """
+        Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        name : typing.Optional[str]
+
+        permission_type : typing.Optional[str]
+
+        bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
+
+        allowed_buckets : typing.Optional[typing.Sequence[str]]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3CredentialCreated
+            Credential created successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.create_s3credential(
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.create_s3credential(
+            workspace_id=workspace_id,
+            name=name,
+            permission_type=permission_type,
+            bucket_scope=bucket_scope,
+            allowed_buckets=allowed_buckets,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def get_s3credential(
+        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> S3Credential:
+        """
+        Returns credential metadata without the secret key. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3Credential
+            Credential returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.get_s3credential(
+                access_key_id="access_key_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_s3credential(
+            access_key_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def revoke_s3credential(
+        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> S3CredentialRevoked:
+        """
+        Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3CredentialRevoked
+            Credential revoked successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.revoke_s3credential(
+                access_key_id="access_key_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.revoke_s3credential(
+            access_key_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data

@@ -6,24 +6,59 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .attach_network_request import AttachNetworkRequest
     from .bucket import Bucket
     from .bucket_list import BucketList
+    from .bucket_stats import BucketStats
     from .bucket_summary import BucketSummary
     from .cloud_vm import CloudVm
     from .cloud_vm_status import CloudVmStatus
+    from .create_firewall_rule_request import CreateFirewallRuleRequest
+    from .create_nat_port_forwarding_rule_request import CreateNatPortForwardingRuleRequest
+    from .create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
     from .delete_response import DeleteResponse
     from .error import Error
     from .error_detail import ErrorDetail
+    from .firewall_attachment import FirewallAttachment
+    from .firewall_group import FirewallGroup
+    from .firewall_rule import FirewallRule
+    from .firewall_rule_fields import FirewallRuleFields
+    from .firewall_rule_fields_action import FirewallRuleFieldsAction
+    from .firewall_rule_fields_direction import FirewallRuleFieldsDirection
+    from .firewall_rule_fields_protocol import FirewallRuleFieldsProtocol
     from .gpu_vm import GpuVm
     from .gpu_vm_status import GpuVmStatus
-    from .network_interface import NetworkInterface
-    from .network_interface_status import NetworkInterfaceStatus
+    from .load_balancer import LoadBalancer
+    from .load_balancer_backend import LoadBalancerBackend
+    from .load_balancer_backend_type import LoadBalancerBackendType
+    from .load_balancer_endpoint import LoadBalancerEndpoint
+    from .load_balancer_layer import LoadBalancerLayer
+    from .load_balancer_protocol import LoadBalancerProtocol
+    from .load_balancer_routing import LoadBalancerRouting
+    from .load_balancer_routing_algorithm import LoadBalancerRoutingAlgorithm
+    from .load_balancer_rule import LoadBalancerRule
+    from .load_balancer_status import LoadBalancerStatus
+    from .load_balancer_status_response import LoadBalancerStatusResponse
+    from .load_balancer_tls import LoadBalancerTls
+    from .load_balancer_tls_mode import LoadBalancerTlsMode
+    from .nat_gateway import NatGateway
+    from .nat_port_forwarding_rule import NatPortForwardingRule
+    from .nat_pricing import NatPricing
+    from .network_allocation import NetworkAllocation
+    from .network_allocation_connectivity import NetworkAllocationConnectivity
+    from .networking_resource_status import NetworkingResourceStatus
+    from .networking_site import NetworkingSite
     from .operation_accepted import OperationAccepted
     from .operation_status import OperationStatus
     from .operation_status_action import OperationStatusAction
     from .operation_status_status import OperationStatusStatus
     from .power_action_request import PowerActionRequest
+    from .reserved_ip import ReservedIp
+    from .reserved_ip_reservation_type import ReservedIpReservationType
+    from .s3credential import S3Credential
+    from .s3credential_created import S3CredentialCreated
+    from .s3credential_list import S3CredentialList
+    from .s3credential_revoked import S3CredentialRevoked
+    from .s3credential_status import S3CredentialStatus
     from .secret import Secret
     from .secret_list import SecretList
     from .secret_status import SecretStatus
@@ -31,27 +66,70 @@ if typing.TYPE_CHECKING:
     from .secret_store_list import SecretStoreList
     from .secret_store_status import SecretStoreStatus
     from .secret_value import SecretValue
-    from .update_vm_request import UpdateVmRequest
+    from .subnet import Subnet
     from .vm_metrics import VmMetrics
+    from .vm_metrics_monitoring_status import VmMetricsMonitoringStatus
+    from .vm_metrics_vm_type import VmMetricsVmType
+    from .vpc import Vpc
+    from .vpc_attached_node import VpcAttachedNode
+    from .vpc_attached_node_connectivity import VpcAttachedNodeConnectivity
+    from .vpc_connectivity_type import VpcConnectivityType
+    from .vpc_detail import VpcDetail
+    from .vpc_summary import VpcSummary
 _dynamic_imports: typing.Dict[str, str] = {
-    "AttachNetworkRequest": ".attach_network_request",
     "Bucket": ".bucket",
     "BucketList": ".bucket_list",
+    "BucketStats": ".bucket_stats",
     "BucketSummary": ".bucket_summary",
     "CloudVm": ".cloud_vm",
     "CloudVmStatus": ".cloud_vm_status",
+    "CreateFirewallRuleRequest": ".create_firewall_rule_request",
+    "CreateNatPortForwardingRuleRequest": ".create_nat_port_forwarding_rule_request",
+    "CreateNatPortForwardingRuleRequestProtocol": ".create_nat_port_forwarding_rule_request_protocol",
     "DeleteResponse": ".delete_response",
     "Error": ".error",
     "ErrorDetail": ".error_detail",
+    "FirewallAttachment": ".firewall_attachment",
+    "FirewallGroup": ".firewall_group",
+    "FirewallRule": ".firewall_rule",
+    "FirewallRuleFields": ".firewall_rule_fields",
+    "FirewallRuleFieldsAction": ".firewall_rule_fields_action",
+    "FirewallRuleFieldsDirection": ".firewall_rule_fields_direction",
+    "FirewallRuleFieldsProtocol": ".firewall_rule_fields_protocol",
     "GpuVm": ".gpu_vm",
     "GpuVmStatus": ".gpu_vm_status",
-    "NetworkInterface": ".network_interface",
-    "NetworkInterfaceStatus": ".network_interface_status",
+    "LoadBalancer": ".load_balancer",
+    "LoadBalancerBackend": ".load_balancer_backend",
+    "LoadBalancerBackendType": ".load_balancer_backend_type",
+    "LoadBalancerEndpoint": ".load_balancer_endpoint",
+    "LoadBalancerLayer": ".load_balancer_layer",
+    "LoadBalancerProtocol": ".load_balancer_protocol",
+    "LoadBalancerRouting": ".load_balancer_routing",
+    "LoadBalancerRoutingAlgorithm": ".load_balancer_routing_algorithm",
+    "LoadBalancerRule": ".load_balancer_rule",
+    "LoadBalancerStatus": ".load_balancer_status",
+    "LoadBalancerStatusResponse": ".load_balancer_status_response",
+    "LoadBalancerTls": ".load_balancer_tls",
+    "LoadBalancerTlsMode": ".load_balancer_tls_mode",
+    "NatGateway": ".nat_gateway",
+    "NatPortForwardingRule": ".nat_port_forwarding_rule",
+    "NatPricing": ".nat_pricing",
+    "NetworkAllocation": ".network_allocation",
+    "NetworkAllocationConnectivity": ".network_allocation_connectivity",
+    "NetworkingResourceStatus": ".networking_resource_status",
+    "NetworkingSite": ".networking_site",
     "OperationAccepted": ".operation_accepted",
     "OperationStatus": ".operation_status",
     "OperationStatusAction": ".operation_status_action",
     "OperationStatusStatus": ".operation_status_status",
     "PowerActionRequest": ".power_action_request",
+    "ReservedIp": ".reserved_ip",
+    "ReservedIpReservationType": ".reserved_ip_reservation_type",
+    "S3Credential": ".s3credential",
+    "S3CredentialCreated": ".s3credential_created",
+    "S3CredentialList": ".s3credential_list",
+    "S3CredentialRevoked": ".s3credential_revoked",
+    "S3CredentialStatus": ".s3credential_status",
     "Secret": ".secret",
     "SecretList": ".secret_list",
     "SecretStatus": ".secret_status",
@@ -59,8 +137,16 @@ _dynamic_imports: typing.Dict[str, str] = {
     "SecretStoreList": ".secret_store_list",
     "SecretStoreStatus": ".secret_store_status",
     "SecretValue": ".secret_value",
-    "UpdateVmRequest": ".update_vm_request",
+    "Subnet": ".subnet",
     "VmMetrics": ".vm_metrics",
+    "VmMetricsMonitoringStatus": ".vm_metrics_monitoring_status",
+    "VmMetricsVmType": ".vm_metrics_vm_type",
+    "Vpc": ".vpc",
+    "VpcAttachedNode": ".vpc_attached_node",
+    "VpcAttachedNodeConnectivity": ".vpc_attached_node_connectivity",
+    "VpcConnectivityType": ".vpc_connectivity_type",
+    "VpcDetail": ".vpc_detail",
+    "VpcSummary": ".vpc_summary",
 }
 
 
@@ -86,24 +172,59 @@ def __dir__():
 
 
 __all__ = [
-    "AttachNetworkRequest",
     "Bucket",
     "BucketList",
+    "BucketStats",
     "BucketSummary",
     "CloudVm",
     "CloudVmStatus",
+    "CreateFirewallRuleRequest",
+    "CreateNatPortForwardingRuleRequest",
+    "CreateNatPortForwardingRuleRequestProtocol",
     "DeleteResponse",
     "Error",
     "ErrorDetail",
+    "FirewallAttachment",
+    "FirewallGroup",
+    "FirewallRule",
+    "FirewallRuleFields",
+    "FirewallRuleFieldsAction",
+    "FirewallRuleFieldsDirection",
+    "FirewallRuleFieldsProtocol",
     "GpuVm",
     "GpuVmStatus",
-    "NetworkInterface",
-    "NetworkInterfaceStatus",
+    "LoadBalancer",
+    "LoadBalancerBackend",
+    "LoadBalancerBackendType",
+    "LoadBalancerEndpoint",
+    "LoadBalancerLayer",
+    "LoadBalancerProtocol",
+    "LoadBalancerRouting",
+    "LoadBalancerRoutingAlgorithm",
+    "LoadBalancerRule",
+    "LoadBalancerStatus",
+    "LoadBalancerStatusResponse",
+    "LoadBalancerTls",
+    "LoadBalancerTlsMode",
+    "NatGateway",
+    "NatPortForwardingRule",
+    "NatPricing",
+    "NetworkAllocation",
+    "NetworkAllocationConnectivity",
+    "NetworkingResourceStatus",
+    "NetworkingSite",
     "OperationAccepted",
     "OperationStatus",
     "OperationStatusAction",
     "OperationStatusStatus",
     "PowerActionRequest",
+    "ReservedIp",
+    "ReservedIpReservationType",
+    "S3Credential",
+    "S3CredentialCreated",
+    "S3CredentialList",
+    "S3CredentialRevoked",
+    "S3CredentialStatus",
     "Secret",
     "SecretList",
     "SecretStatus",
@@ -111,6 +232,14 @@ __all__ = [
     "SecretStoreList",
     "SecretStoreStatus",
     "SecretValue",
-    "UpdateVmRequest",
+    "Subnet",
     "VmMetrics",
+    "VmMetricsMonitoringStatus",
+    "VmMetricsVmType",
+    "Vpc",
+    "VpcAttachedNode",
+    "VpcAttachedNodeConnectivity",
+    "VpcConnectivityType",
+    "VpcDetail",
+    "VpcSummary",
 ]

@@ -4,18 +4,14 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .load_balancer_backend import LoadBalancerBackend
 
 
-class UpdateVmRequest(UniversalBaseModel):
-    name: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    New display name for the VM.
-    """
-
-    tags: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
-    """
-    Updated tags. Replaces all existing tags.
-    """
+class LoadBalancerRule(UniversalBaseModel):
+    priority: typing.Optional[int] = None
+    path_prefix: typing.Optional[str] = None
+    headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = None
+    backends: typing.Optional[typing.List[LoadBalancerBackend]] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -12,9 +12,13 @@ from .environment import IbeeEnvironment
 if typing.TYPE_CHECKING:
     from .cloud_vms.client import AsyncCloudVmsClient, CloudVmsClient
     from .compute_catalog.client import AsyncComputeCatalogClient, ComputeCatalogClient
+    from .firewalls.client import AsyncFirewallsClient, FirewallsClient
     from .gpu_vms.client import AsyncGpuVmsClient, GpuVmsClient
+    from .load_balancers.client import AsyncLoadBalancersClient, LoadBalancersClient
     from .object_storage.client import AsyncObjectStorageClient, ObjectStorageClient
+    from .reserved_ips.client import AsyncReservedIpsClient, ReservedIpsClient
     from .secret_store.client import AsyncSecretStoreClient, SecretStoreClient
+    from .vpcs.client import AsyncVpcsClient, VpcsClient
 
 
 class Ibee:
@@ -103,9 +107,13 @@ class Ibee:
         )
         self._secret_store: typing.Optional[SecretStoreClient] = None
         self._object_storage: typing.Optional[ObjectStorageClient] = None
+        self._compute_catalog: typing.Optional[ComputeCatalogClient] = None
+        self._vpcs: typing.Optional[VpcsClient] = None
+        self._reserved_ips: typing.Optional[ReservedIpsClient] = None
+        self._firewalls: typing.Optional[FirewallsClient] = None
+        self._load_balancers: typing.Optional[LoadBalancersClient] = None
         self._cloud_vms: typing.Optional[CloudVmsClient] = None
         self._gpu_vms: typing.Optional[GpuVmsClient] = None
-        self._compute_catalog: typing.Optional[ComputeCatalogClient] = None
 
     @property
     def secret_store(self):
@@ -116,6 +124,14 @@ class Ibee:
         return self._secret_store
 
     @property
+    def object_storage(self):
+        if self._object_storage is None:
+            from .object_storage.client import ObjectStorageClient  # noqa: E402
+
+            self._object_storage = ObjectStorageClient(client_wrapper=self._client_wrapper)
+        return self._object_storage
+
+    @property
     def compute_catalog(self):
         if self._compute_catalog is None:
             from .compute_catalog.client import ComputeCatalogClient  # noqa: E402
@@ -124,12 +140,36 @@ class Ibee:
         return self._compute_catalog
 
     @property
-    def object_storage(self):
-        if self._object_storage is None:
-            from .object_storage.client import ObjectStorageClient  # noqa: E402
+    def vpcs(self):
+        if self._vpcs is None:
+            from .vpcs.client import VpcsClient  # noqa: E402
 
-            self._object_storage = ObjectStorageClient(client_wrapper=self._client_wrapper)
-        return self._object_storage
+            self._vpcs = VpcsClient(client_wrapper=self._client_wrapper)
+        return self._vpcs
+
+    @property
+    def reserved_ips(self):
+        if self._reserved_ips is None:
+            from .reserved_ips.client import ReservedIpsClient  # noqa: E402
+
+            self._reserved_ips = ReservedIpsClient(client_wrapper=self._client_wrapper)
+        return self._reserved_ips
+
+    @property
+    def firewalls(self):
+        if self._firewalls is None:
+            from .firewalls.client import FirewallsClient  # noqa: E402
+
+            self._firewalls = FirewallsClient(client_wrapper=self._client_wrapper)
+        return self._firewalls
+
+    @property
+    def load_balancers(self):
+        if self._load_balancers is None:
+            from .load_balancers.client import LoadBalancersClient  # noqa: E402
+
+            self._load_balancers = LoadBalancersClient(client_wrapper=self._client_wrapper)
+        return self._load_balancers
 
     @property
     def cloud_vms(self):
@@ -255,9 +295,13 @@ class AsyncIbee:
         )
         self._secret_store: typing.Optional[AsyncSecretStoreClient] = None
         self._object_storage: typing.Optional[AsyncObjectStorageClient] = None
+        self._compute_catalog: typing.Optional[AsyncComputeCatalogClient] = None
+        self._vpcs: typing.Optional[AsyncVpcsClient] = None
+        self._reserved_ips: typing.Optional[AsyncReservedIpsClient] = None
+        self._firewalls: typing.Optional[AsyncFirewallsClient] = None
+        self._load_balancers: typing.Optional[AsyncLoadBalancersClient] = None
         self._cloud_vms: typing.Optional[AsyncCloudVmsClient] = None
         self._gpu_vms: typing.Optional[AsyncGpuVmsClient] = None
-        self._compute_catalog: typing.Optional[AsyncComputeCatalogClient] = None
 
     @property
     def secret_store(self):
@@ -268,6 +312,14 @@ class AsyncIbee:
         return self._secret_store
 
     @property
+    def object_storage(self):
+        if self._object_storage is None:
+            from .object_storage.client import AsyncObjectStorageClient  # noqa: E402
+
+            self._object_storage = AsyncObjectStorageClient(client_wrapper=self._client_wrapper)
+        return self._object_storage
+
+    @property
     def compute_catalog(self):
         if self._compute_catalog is None:
             from .compute_catalog.client import AsyncComputeCatalogClient  # noqa: E402
@@ -276,12 +328,36 @@ class AsyncIbee:
         return self._compute_catalog
 
     @property
-    def object_storage(self):
-        if self._object_storage is None:
-            from .object_storage.client import AsyncObjectStorageClient  # noqa: E402
+    def vpcs(self):
+        if self._vpcs is None:
+            from .vpcs.client import AsyncVpcsClient  # noqa: E402
 
-            self._object_storage = AsyncObjectStorageClient(client_wrapper=self._client_wrapper)
-        return self._object_storage
+            self._vpcs = AsyncVpcsClient(client_wrapper=self._client_wrapper)
+        return self._vpcs
+
+    @property
+    def reserved_ips(self):
+        if self._reserved_ips is None:
+            from .reserved_ips.client import AsyncReservedIpsClient  # noqa: E402
+
+            self._reserved_ips = AsyncReservedIpsClient(client_wrapper=self._client_wrapper)
+        return self._reserved_ips
+
+    @property
+    def firewalls(self):
+        if self._firewalls is None:
+            from .firewalls.client import AsyncFirewallsClient  # noqa: E402
+
+            self._firewalls = AsyncFirewallsClient(client_wrapper=self._client_wrapper)
+        return self._firewalls
+
+    @property
+    def load_balancers(self):
+        if self._load_balancers is None:
+            from .load_balancers.client import AsyncLoadBalancersClient  # noqa: E402
+
+            self._load_balancers = AsyncLoadBalancersClient(client_wrapper=self._client_wrapper)
+        return self._load_balancers
 
     @property
     def cloud_vms(self):

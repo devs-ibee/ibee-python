@@ -16,9 +16,7 @@ from ..errors.forbidden_error import ForbiddenError
 from ..errors.not_found_error import NotFoundError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.cloud_vm import CloudVm
-from ..types.delete_response import DeleteResponse
 from ..types.error import Error
-from ..types.network_interface import NetworkInterface
 from ..types.operation_accepted import OperationAccepted
 from ..types.operation_status import OperationStatus
 from ..types.vm_metrics import VmMetrics
@@ -53,7 +51,7 @@ class RawCloudVmsClient:
             Cloud VMs returned successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
-            "compute/cloud-vms/",
+            "compute/cloud-vms",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -107,13 +105,14 @@ class RawCloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
+        template_id: str,
         cpu: int,
         ram_mb: int,
-        template_id: typing.Optional[str] = OMIT,
+        plan_id: str,
         disk_gb: typing.Optional[int] = OMIT,
-        plan_id: typing.Optional[str] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -132,11 +131,17 @@ class RawCloudVmsClient:
         name : str
             Display name for the virtual machine.
 
+        site_id : str
+            Placement site ID returned by the compute catalog.
+
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
 
         os_type : CreateCloudVmRequestOsType
             Operating system family.
+
+        template_id : str
+            OS template or image ID returned by the compute catalog.
 
         cpu : int
             Number of vCPUs.
@@ -144,14 +149,11 @@ class RawCloudVmsClient:
         ram_mb : int
             RAM in megabytes.
 
-        template_id : typing.Optional[str]
-            OS template or image ID.
+        plan_id : str
+            Billable compute plan ID returned by the compute catalog.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
-
-        plan_id : typing.Optional[str]
-            Pre-configured plan ID. Overrides cpu, ram_mb, and disk_gb when set.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
             SSH key IDs to inject into the VM.
@@ -168,13 +170,14 @@ class RawCloudVmsClient:
             VM creation accepted.
         """
         _response = self._client_wrapper.httpx_client.request(
-            "compute/cloud-vms/",
+            "compute/cloud-vms",
             method="POST",
             params={
                 "workspace_id": workspace_id,
             },
             json={
                 "name": name,
+                "site_id": site_id,
                 "os_distro": os_distro,
                 "os_type": os_type,
                 "template_id": template_id,
@@ -423,119 +426,6 @@ class RawCloudVmsClient:
                 )
             if _response.status_code == 409:
                 raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def update_cloud_vm(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        name: typing.Optional[str] = OMIT,
-        tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[CloudVm]:
-        """
-        Updates mutable properties of a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        name : typing.Optional[str]
-            New display name for the VM.
-
-        tags : typing.Optional[typing.Sequence[str]]
-            Updated tags. Replaces all existing tags.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[CloudVm]
-            Cloud VM updated successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"compute/cloud-vms/{encode_path_param(vm_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "tags": tags,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    CloudVm,
-                    parse_obj_as(
-                        type_=CloudVm,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -975,302 +865,6 @@ class RawCloudVmsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def list_cloud_vm_network_interfaces(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> HttpResponse[typing.List[NetworkInterface]]:
-        """
-        Returns network interfaces attached to a cloud VM. Requires scope: vm.read.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[typing.List[NetworkInterface]]
-            Network interfaces returned successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"compute/cloud-vms/{encode_path_param(vm_id)}/network-interfaces",
-            method="GET",
-            params={
-                "workspace_id": workspace_id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    typing.List[NetworkInterface],
-                    parse_obj_as(
-                        type_=typing.List[NetworkInterface],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def attach_cloud_vm_network(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        idempotency_key: str,
-        network_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[NetworkInterface]:
-        """
-        Attaches a network to a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        idempotency_key : str
-            Unique key used to safely retry write operations.
-
-        network_id : str
-            ID of the network to attach.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[NetworkInterface]
-            Network attached successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"compute/cloud-vms/{encode_path_param(vm_id)}/network-interfaces",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "network_id": network_id,
-            },
-            headers={
-                "content-type": "application/json",
-                "X-Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    NetworkInterface,
-                    parse_obj_as(
-                        type_=NetworkInterface,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def detach_cloud_vm_network(
-        self,
-        vm_id: str,
-        interface_id: str,
-        *,
-        workspace_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[DeleteResponse]:
-        """
-        Detaches a network interface from a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        interface_id : str
-            Network interface ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[DeleteResponse]
-            Network detached successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"compute/cloud-vms/{encode_path_param(vm_id)}/network-interfaces/{encode_path_param(interface_id)}",
-            method="DELETE",
-            params={
-                "workspace_id": workspace_id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    DeleteResponse,
-                    parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     def get_compute_operation(
         self, operation_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[OperationStatus]:
@@ -1378,7 +972,7 @@ class AsyncRawCloudVmsClient:
             Cloud VMs returned successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "compute/cloud-vms/",
+            "compute/cloud-vms",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -1432,13 +1026,14 @@ class AsyncRawCloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
+        template_id: str,
         cpu: int,
         ram_mb: int,
-        template_id: typing.Optional[str] = OMIT,
+        plan_id: str,
         disk_gb: typing.Optional[int] = OMIT,
-        plan_id: typing.Optional[str] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -1457,11 +1052,17 @@ class AsyncRawCloudVmsClient:
         name : str
             Display name for the virtual machine.
 
+        site_id : str
+            Placement site ID returned by the compute catalog.
+
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
 
         os_type : CreateCloudVmRequestOsType
             Operating system family.
+
+        template_id : str
+            OS template or image ID returned by the compute catalog.
 
         cpu : int
             Number of vCPUs.
@@ -1469,14 +1070,11 @@ class AsyncRawCloudVmsClient:
         ram_mb : int
             RAM in megabytes.
 
-        template_id : typing.Optional[str]
-            OS template or image ID.
+        plan_id : str
+            Billable compute plan ID returned by the compute catalog.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
-
-        plan_id : typing.Optional[str]
-            Pre-configured plan ID. Overrides cpu, ram_mb, and disk_gb when set.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
             SSH key IDs to inject into the VM.
@@ -1493,13 +1091,14 @@ class AsyncRawCloudVmsClient:
             VM creation accepted.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "compute/cloud-vms/",
+            "compute/cloud-vms",
             method="POST",
             params={
                 "workspace_id": workspace_id,
             },
             json={
                 "name": name,
+                "site_id": site_id,
                 "os_distro": os_distro,
                 "os_type": os_type,
                 "template_id": template_id,
@@ -1748,119 +1347,6 @@ class AsyncRawCloudVmsClient:
                 )
             if _response.status_code == 409:
                 raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def update_cloud_vm(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        name: typing.Optional[str] = OMIT,
-        tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[CloudVm]:
-        """
-        Updates mutable properties of a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        name : typing.Optional[str]
-            New display name for the VM.
-
-        tags : typing.Optional[typing.Sequence[str]]
-            Updated tags. Replaces all existing tags.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[CloudVm]
-            Cloud VM updated successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"compute/cloud-vms/{encode_path_param(vm_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "tags": tags,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    CloudVm,
-                    parse_obj_as(
-                        type_=CloudVm,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2254,302 +1740,6 @@ class AsyncRawCloudVmsClient:
                     VmMetrics,
                     parse_obj_as(
                         type_=VmMetrics,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def list_cloud_vm_network_interfaces(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> AsyncHttpResponse[typing.List[NetworkInterface]]:
-        """
-        Returns network interfaces attached to a cloud VM. Requires scope: vm.read.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[typing.List[NetworkInterface]]
-            Network interfaces returned successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"compute/cloud-vms/{encode_path_param(vm_id)}/network-interfaces",
-            method="GET",
-            params={
-                "workspace_id": workspace_id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    typing.List[NetworkInterface],
-                    parse_obj_as(
-                        type_=typing.List[NetworkInterface],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def attach_cloud_vm_network(
-        self,
-        vm_id: str,
-        *,
-        workspace_id: str,
-        idempotency_key: str,
-        network_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[NetworkInterface]:
-        """
-        Attaches a network to a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        idempotency_key : str
-            Unique key used to safely retry write operations.
-
-        network_id : str
-            ID of the network to attach.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[NetworkInterface]
-            Network attached successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"compute/cloud-vms/{encode_path_param(vm_id)}/network-interfaces",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "network_id": network_id,
-            },
-            headers={
-                "content-type": "application/json",
-                "X-Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    NetworkInterface,
-                    parse_obj_as(
-                        type_=NetworkInterface,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def detach_cloud_vm_network(
-        self,
-        vm_id: str,
-        interface_id: str,
-        *,
-        workspace_id: str,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[DeleteResponse]:
-        """
-        Detaches a network interface from a cloud VM. Requires scope: vm.write.
-
-        Parameters
-        ----------
-        vm_id : str
-            Virtual machine ID.
-
-        interface_id : str
-            Network interface ID.
-
-        workspace_id : str
-            The workspace ID to scope this request to.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[DeleteResponse]
-            Network detached successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"compute/cloud-vms/{encode_path_param(vm_id)}/network-interfaces/{encode_path_param(interface_id)}",
-            method="DELETE",
-            params={
-                "workspace_id": workspace_id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    DeleteResponse,
-                    parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
