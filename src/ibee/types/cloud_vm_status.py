@@ -3,5 +3,24 @@
 import typing
 
 CloudVmStatus = typing.Union[
-    typing.Literal["creating", "running", "stopped", "rebooting", "deleting", "error"], typing.Any
+    typing.Literal[
+        "creating",
+        "pending",
+        "provisioning",
+        "configuring",
+        "running",
+        "starting",
+        "stopping",
+        "stopped",
+        "rebooting",
+        "resizing",
+        "attaching_volume",
+        "detaching_volume",
+        "resizing_plan",
+        "resizing_disk",
+        "deleting",
+        "deleted",
+        "error",
+    ],
+    typing.Any,
 ]

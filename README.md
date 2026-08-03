@@ -15,7 +15,17 @@ pip install ibee
 ```python
 from ibee import Ibee
 
-client = Ibee(token="ibee_live_xxxxxxxxxxxx")
+client = Ibee(token="YOUR_TOKEN")
+
+# Explicitly check billing before any billable create. Product services repeat
+# this check authoritatively when the resource is created.
+eligibility = client.billing.check_resource_eligibility(
+    workspace_id="907479",
+    sku_code="STANDARD-2-8-50",
+    estimated_cost_minor=12_500,
+)
+if not eligibility.allowed:
+    raise RuntimeError(f"Billing blocked the create: {eligibility.reason}")
 
 # List cloud VMs
 vms = client.cloud_vms.list_cloud_vms(workspace_id="907479")
@@ -132,7 +142,7 @@ import asyncio
 from ibee import AsyncIbee
 
 async def main():
-    client = AsyncIbee(token="ibee_live_xxxxxxxxxxxx")
+    client = AsyncIbee(token="YOUR_TOKEN")
     vms = await client.cloud_vms.list_cloud_vms(workspace_id="907479")
     print(vms)
 
@@ -145,7 +155,7 @@ Generate a platform API token from the IBEE portal under Settings > Platform API
 
 ## Documentation
 
-Full API reference: [https://docs.ibee.co.in/docs/api-reference](https://docs.ibee.co.in/docs/api-reference)
+Production API reference: [https://ibee.ai/docs/api-reference](https://ibee.ai/docs/api-reference)
 
 ## License
 
