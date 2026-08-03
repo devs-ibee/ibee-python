@@ -56,3 +56,37 @@ def test_object_storage_exposes_bucket_and_s3_credential_lifecycle() -> None:
         "bucket_scope": "specific",
         "allowed_buckets": ["assets"],
     }
+
+
+def test_create_bucket_uses_storage_region_without_compute_site_fields() -> None:
+    observed: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        observed.append(request)
+        return httpx.Response(201, json={"bucket_name": "assets"}, request=request)
+
+    client = Ibee(
+        token="test-token",
+        base_url="https://api.example.test/v1",
+        httpx_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    client.object_storage.create_bucket(
+        workspace_id="607005",
+        name="assets",
+        region="in-south-1",
+        is_public=False,
+        object_lock_enabled=True,
+        default_retention={"mode": "GOVERNANCE", "days": 30},
+        tags=["production"],
+    )
+
+    assert observed[0].url.path == "/v1/object-storage/buckets"
+    assert json.loads(observed[0].content) == {
+        "name": "assets",
+        "region": "in-south-1",
+        "is_public": False,
+        "object_lock_enabled": True,
+        "default_retention": {"mode": "GOVERNANCE", "days": 30},
+        "tags": ["production"],
+    }

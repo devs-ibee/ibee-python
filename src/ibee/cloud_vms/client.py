@@ -69,7 +69,7 @@ class CloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
+        site_id: typing.Optional[str] = OMIT,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
         template_id: str,
@@ -95,8 +95,8 @@ class CloudVmsClient:
         name : str
             Display name for the virtual machine.
 
-        site_id : str
-            Placement site ID returned by the compute catalog.
+        site_id : typing.Optional[str]
+            Optional placement site ID. Omit for automatic placement.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
@@ -565,7 +565,7 @@ class AsyncCloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
+        site_id: typing.Optional[str] = OMIT,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
         template_id: str,
@@ -591,8 +591,8 @@ class AsyncCloudVmsClient:
         name : str
             Display name for the virtual machine.
 
-        site_id : str
-            Placement site ID returned by the compute catalog.
+        site_id : typing.Optional[str]
+            Optional placement site ID. Omit for automatic placement.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).

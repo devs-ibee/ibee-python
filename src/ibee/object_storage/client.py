@@ -87,14 +87,11 @@ class ObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        site_id: str,
-        site_name: typing.Optional[str] = OMIT,
         region: typing.Optional[str] = OMIT,
-        plan: typing.Optional[str] = OMIT,
         is_public: typing.Optional[bool] = OMIT,
-        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        object_lock_enabled: typing.Optional[bool] = OMIT,
+        default_retention: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
@@ -108,23 +105,17 @@ class ObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        site_id : str
-            Site/datacenter ID for the bucket.
-
-        site_name : typing.Optional[str]
-
         region : typing.Optional[str]
-
-        plan : typing.Optional[str]
+            Optional storage region. Omit when the environment has one region.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
-        bucket_lock_enabled : typing.Optional[bool]
+        object_lock_enabled : typing.Optional[bool]
+
+        default_retention : typing.Optional[typing.Dict[str, typing.Any]]
 
         tags : typing.Optional[typing.Sequence[str]]
-
-        metadata : typing.Optional[typing.Dict[str, typing.Any]]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -144,21 +135,17 @@ class ObjectStorageClient:
         client.object_storage.create_bucket(
             workspace_id="workspace_id",
             name="production-assets",
-            site_id="68b99bd78a8eda32ff3f16ea",
             is_public=False,
         )
         """
         _response = self._raw_client.create_bucket(
             workspace_id=workspace_id,
             name=name,
-            site_id=site_id,
-            site_name=site_name,
             region=region,
-            plan=plan,
             is_public=is_public,
-            bucket_lock_enabled=bucket_lock_enabled,
+            object_lock_enabled=object_lock_enabled,
+            default_retention=default_retention,
             tags=tags,
-            metadata=metadata,
             request_options=request_options,
         )
         return _response.data
@@ -530,14 +517,11 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        site_id: str,
-        site_name: typing.Optional[str] = OMIT,
         region: typing.Optional[str] = OMIT,
-        plan: typing.Optional[str] = OMIT,
         is_public: typing.Optional[bool] = OMIT,
-        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        object_lock_enabled: typing.Optional[bool] = OMIT,
+        default_retention: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
@@ -551,23 +535,17 @@ class AsyncObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        site_id : str
-            Site/datacenter ID for the bucket.
-
-        site_name : typing.Optional[str]
-
         region : typing.Optional[str]
-
-        plan : typing.Optional[str]
+            Optional storage region. Omit when the environment has one region.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
-        bucket_lock_enabled : typing.Optional[bool]
+        object_lock_enabled : typing.Optional[bool]
+
+        default_retention : typing.Optional[typing.Dict[str, typing.Any]]
 
         tags : typing.Optional[typing.Sequence[str]]
-
-        metadata : typing.Optional[typing.Dict[str, typing.Any]]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -592,7 +570,6 @@ class AsyncObjectStorageClient:
             await client.object_storage.create_bucket(
                 workspace_id="workspace_id",
                 name="production-assets",
-                site_id="68b99bd78a8eda32ff3f16ea",
                 is_public=False,
             )
 
@@ -602,14 +579,11 @@ class AsyncObjectStorageClient:
         _response = await self._raw_client.create_bucket(
             workspace_id=workspace_id,
             name=name,
-            site_id=site_id,
-            site_name=site_name,
             region=region,
-            plan=plan,
             is_public=is_public,
-            bucket_lock_enabled=bucket_lock_enabled,
+            object_lock_enabled=object_lock_enabled,
+            default_retention=default_retention,
             tags=tags,
-            metadata=metadata,
             request_options=request_options,
         )
         return _response.data

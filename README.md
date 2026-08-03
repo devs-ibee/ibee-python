@@ -67,6 +67,12 @@ stores = client.secret_store.list_secret_stores(workspace_id="907479")
 
 # List object storage buckets
 buckets = client.object_storage.list_buckets(workspace_id="907479")
+bucket = client.object_storage.create_bucket(
+    workspace_id="907479",
+    name="production-assets",
+    # region is optional when the environment has one configured region
+    is_public=False,
+)
 credential = client.object_storage.create_s3credential(
     workspace_id="907479",
     name="application-key",
@@ -97,7 +103,8 @@ port-forwarding rules. `reserved_ips` includes attach, move, and detach;
 `firewalls` and `load_balancers` provide their complete public lifecycle.
 Synchronous and async clients expose matching methods.
 
-To create a VM from portal-style choices, pass the selected IDs:
+To create a VM with explicit placement, pass the selected IDs. Omit `site_id`
+to let IBEE select an available site automatically:
 
 ```python
 vm = client.cloud_vms.create_cloud_vm(

@@ -9,6 +9,43 @@ from ibee import Ibee
 from ibee.errors import ForbiddenError, NotFoundError
 
 
+def test_cloud_vm_create_omits_site_for_automatic_placement() -> None:
+    observed: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        observed.append(request)
+        return httpx.Response(
+            202,
+            json={
+                "operation_id": "op-1",
+                "vm_id": "vm-1",
+                "status": "accepted",
+                "submitted_at": "2026-08-04T10:00:00Z",
+            },
+            request=request,
+        )
+
+    client = Ibee(
+        token="test-token",
+        base_url="https://api.example.test/v1",
+        httpx_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    client.cloud_vms.create_cloud_vm(
+        workspace_id="workspace-1",
+        idempotency_key="automatic-placement",
+        name="web-automatic",
+        os_distro="ubuntu",
+        os_type="linux",
+        template_id="template-1",
+        cpu=2,
+        ram_mb=4096,
+        plan_id="plan-1",
+    )
+
+    assert "site_id" not in json.loads(observed[0].content)
+
+
 def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
     observed: list[httpx.Request] = []
 
