@@ -105,13 +105,13 @@ class RawCloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
         template_id: str,
         cpu: int,
         ram_mb: int,
         plan_id: str,
+        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -131,9 +131,6 @@ class RawCloudVmsClient:
         name : str
             Display name for the virtual machine.
 
-        site_id : str
-            Placement site ID returned by the compute catalog.
-
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
 
@@ -151,6 +148,9 @@ class RawCloudVmsClient:
 
         plan_id : str
             Billable compute plan ID returned by the compute catalog.
+
+        site_id : typing.Optional[str]
+            Optional placement constraint. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites`.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -1026,13 +1026,13 @@ class AsyncRawCloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
         template_id: str,
         cpu: int,
         ram_mb: int,
         plan_id: str,
+        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -1052,9 +1052,6 @@ class AsyncRawCloudVmsClient:
         name : str
             Display name for the virtual machine.
 
-        site_id : str
-            Placement site ID returned by the compute catalog.
-
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
 
@@ -1072,6 +1069,9 @@ class AsyncRawCloudVmsClient:
 
         plan_id : str
             Billable compute plan ID returned by the compute catalog.
+
+        site_id : typing.Optional[str]
+            Optional placement constraint. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites`.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.

@@ -6,6 +6,7 @@ from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.bucket import Bucket
 from ..types.bucket_list import BucketList
+from ..types.default_retention import DefaultRetention
 from ..types.delete_response import DeleteResponse
 from ..types.s3credential import S3Credential
 from ..types.s3credential_created import S3CredentialCreated
@@ -87,18 +88,15 @@ class ObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        site_id: str,
-        site_name: typing.Optional[str] = OMIT,
         region: typing.Optional[str] = OMIT,
-        plan: typing.Optional[str] = OMIT,
         is_public: typing.Optional[bool] = OMIT,
-        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        object_lock_enabled: typing.Optional[bool] = OMIT,
+        default_retention: typing.Optional[DefaultRetention] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Creates an object storage bucket. Requires scope: object-storage.write.
+        Creates an object storage bucket. Only `name` is required for the usual single-region setup; IBEE selects the configured storage region automatically. Send `region` only when you need an explicit placement. Placement metadata is managed internally. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -108,23 +106,19 @@ class ObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        site_id : str
-            Site/datacenter ID for the bucket.
-
-        site_name : typing.Optional[str]
-
         region : typing.Optional[str]
-
-        plan : typing.Optional[str]
+            Optional object storage region. Omit it when the environment has one configured region; IBEE selects that region automatically. If multiple regions become available, send one of the advertised region identifiers.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
-        bucket_lock_enabled : typing.Optional[bool]
+        object_lock_enabled : typing.Optional[bool]
+            Must be `true` when `default_retention` is provided.
+
+        default_retention : typing.Optional[DefaultRetention]
 
         tags : typing.Optional[typing.Sequence[str]]
-
-        metadata : typing.Optional[typing.Dict[str, typing.Any]]
+            Optional tags stored alongside bucket metadata.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -144,21 +138,17 @@ class ObjectStorageClient:
         client.object_storage.create_bucket(
             workspace_id="workspace_id",
             name="production-assets",
-            site_id="68b99bd78a8eda32ff3f16ea",
             is_public=False,
         )
         """
         _response = self._raw_client.create_bucket(
             workspace_id=workspace_id,
             name=name,
-            site_id=site_id,
-            site_name=site_name,
             region=region,
-            plan=plan,
             is_public=is_public,
-            bucket_lock_enabled=bucket_lock_enabled,
+            object_lock_enabled=object_lock_enabled,
+            default_retention=default_retention,
             tags=tags,
-            metadata=metadata,
             request_options=request_options,
         )
         return _response.data
@@ -530,18 +520,15 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        site_id: str,
-        site_name: typing.Optional[str] = OMIT,
         region: typing.Optional[str] = OMIT,
-        plan: typing.Optional[str] = OMIT,
         is_public: typing.Optional[bool] = OMIT,
-        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        object_lock_enabled: typing.Optional[bool] = OMIT,
+        default_retention: typing.Optional[DefaultRetention] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Creates an object storage bucket. Requires scope: object-storage.write.
+        Creates an object storage bucket. Only `name` is required for the usual single-region setup; IBEE selects the configured storage region automatically. Send `region` only when you need an explicit placement. Placement metadata is managed internally. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -551,23 +538,19 @@ class AsyncObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        site_id : str
-            Site/datacenter ID for the bucket.
-
-        site_name : typing.Optional[str]
-
         region : typing.Optional[str]
-
-        plan : typing.Optional[str]
+            Optional object storage region. Omit it when the environment has one configured region; IBEE selects that region automatically. If multiple regions become available, send one of the advertised region identifiers.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
-        bucket_lock_enabled : typing.Optional[bool]
+        object_lock_enabled : typing.Optional[bool]
+            Must be `true` when `default_retention` is provided.
+
+        default_retention : typing.Optional[DefaultRetention]
 
         tags : typing.Optional[typing.Sequence[str]]
-
-        metadata : typing.Optional[typing.Dict[str, typing.Any]]
+            Optional tags stored alongside bucket metadata.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -592,7 +575,6 @@ class AsyncObjectStorageClient:
             await client.object_storage.create_bucket(
                 workspace_id="workspace_id",
                 name="production-assets",
-                site_id="68b99bd78a8eda32ff3f16ea",
                 is_public=False,
             )
 
@@ -602,14 +584,11 @@ class AsyncObjectStorageClient:
         _response = await self._raw_client.create_bucket(
             workspace_id=workspace_id,
             name=name,
-            site_id=site_id,
-            site_name=site_name,
             region=region,
-            plan=plan,
             is_public=is_public,
-            bucket_lock_enabled=bucket_lock_enabled,
+            object_lock_enabled=object_lock_enabled,
+            default_retention=default_retention,
             tags=tags,
-            metadata=metadata,
             request_options=request_options,
         )
         return _response.data

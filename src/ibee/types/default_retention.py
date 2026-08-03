@@ -4,17 +4,17 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .default_retention_mode import DefaultRetentionMode
 
 
-class NetworkingSite(UniversalBaseModel):
-    site_id: str = pydantic.Field()
+class DefaultRetention(UniversalBaseModel):
     """
-    Canonical opaque site identifier accepted by VPC and Reserved IP creation. Copy it exactly; do not substitute a region or site name.
+    Optional default object retention. Supply exactly one of `days` or `years`, and set `object_lock_enabled` to `true`.
     """
 
-    site_name: str
-    available: bool
-    message: typing.Optional[str] = None
+    mode: DefaultRetentionMode
+    days: typing.Optional[int] = None
+    years: typing.Optional[int] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

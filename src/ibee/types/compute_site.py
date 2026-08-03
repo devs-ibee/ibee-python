@@ -6,15 +6,18 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class NetworkingSite(UniversalBaseModel):
+class ComputeSite(UniversalBaseModel):
     site_id: str = pydantic.Field()
     """
-    Canonical opaque site identifier accepted by VPC and Reserved IP creation. Copy it exactly; do not substitute a region or site name.
+    Canonical opaque placement ID accepted by VM creation. Copy it exactly; do not substitute `site_code`, `region_id`, or `name`.
     """
 
-    site_name: str
-    available: bool
-    message: typing.Optional[str] = None
+    site_code: typing.Optional[str] = None
+    name: str
+    location: typing.Optional[str] = None
+    region_id: typing.Optional[str] = None
+    country_id: typing.Optional[str] = None
+    timezone: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

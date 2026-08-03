@@ -4,17 +4,12 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .compute_site import ComputeSite
 
 
-class NetworkingSite(UniversalBaseModel):
-    site_id: str = pydantic.Field()
-    """
-    Canonical opaque site identifier accepted by VPC and Reserved IP creation. Copy it exactly; do not substitute a region or site name.
-    """
-
-    site_name: str
-    available: bool
-    message: typing.Optional[str] = None
+class ComputeSiteList(UniversalBaseModel):
+    sites: typing.List[ComputeSite]
+    count: int
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

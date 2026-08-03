@@ -35,7 +35,7 @@ class Ibee:
 
 
 
-        Defaults to IbeeEnvironment.DEFAULT
+        Defaults to IbeeEnvironment.PRODUCTION
 
 
 
@@ -77,7 +77,7 @@ class Ibee:
         self,
         *,
         base_url: typing.Optional[str] = None,
-        environment: IbeeEnvironment = IbeeEnvironment.DEFAULT,
+        environment: IbeeEnvironment = IbeeEnvironment.PRODUCTION,
         token: typing.Union[str, typing.Callable[[], str]],
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -107,11 +107,11 @@ class Ibee:
         )
         self._secret_store: typing.Optional[SecretStoreClient] = None
         self._object_storage: typing.Optional[ObjectStorageClient] = None
-        self._compute_catalog: typing.Optional[ComputeCatalogClient] = None
         self._vpcs: typing.Optional[VpcsClient] = None
         self._reserved_ips: typing.Optional[ReservedIpsClient] = None
         self._firewalls: typing.Optional[FirewallsClient] = None
         self._load_balancers: typing.Optional[LoadBalancersClient] = None
+        self._compute_catalog: typing.Optional[ComputeCatalogClient] = None
         self._cloud_vms: typing.Optional[CloudVmsClient] = None
         self._gpu_vms: typing.Optional[GpuVmsClient] = None
 
@@ -130,14 +130,6 @@ class Ibee:
 
             self._object_storage = ObjectStorageClient(client_wrapper=self._client_wrapper)
         return self._object_storage
-
-    @property
-    def compute_catalog(self):
-        if self._compute_catalog is None:
-            from .compute_catalog.client import ComputeCatalogClient  # noqa: E402
-
-            self._compute_catalog = ComputeCatalogClient(client_wrapper=self._client_wrapper)
-        return self._compute_catalog
 
     @property
     def vpcs(self):
@@ -170,6 +162,14 @@ class Ibee:
 
             self._load_balancers = LoadBalancersClient(client_wrapper=self._client_wrapper)
         return self._load_balancers
+
+    @property
+    def compute_catalog(self):
+        if self._compute_catalog is None:
+            from .compute_catalog.client import ComputeCatalogClient  # noqa: E402
+
+            self._compute_catalog = ComputeCatalogClient(client_wrapper=self._client_wrapper)
+        return self._compute_catalog
 
     @property
     def cloud_vms(self):
@@ -220,7 +220,7 @@ class AsyncIbee:
 
 
 
-        Defaults to IbeeEnvironment.DEFAULT
+        Defaults to IbeeEnvironment.PRODUCTION
 
 
 
@@ -265,7 +265,7 @@ class AsyncIbee:
         self,
         *,
         base_url: typing.Optional[str] = None,
-        environment: IbeeEnvironment = IbeeEnvironment.DEFAULT,
+        environment: IbeeEnvironment = IbeeEnvironment.PRODUCTION,
         token: typing.Union[str, typing.Callable[[], str]],
         headers: typing.Optional[typing.Dict[str, str]] = None,
         async_token: typing.Optional[typing.Callable[[], typing.Awaitable[str]]] = None,
@@ -295,11 +295,11 @@ class AsyncIbee:
         )
         self._secret_store: typing.Optional[AsyncSecretStoreClient] = None
         self._object_storage: typing.Optional[AsyncObjectStorageClient] = None
-        self._compute_catalog: typing.Optional[AsyncComputeCatalogClient] = None
         self._vpcs: typing.Optional[AsyncVpcsClient] = None
         self._reserved_ips: typing.Optional[AsyncReservedIpsClient] = None
         self._firewalls: typing.Optional[AsyncFirewallsClient] = None
         self._load_balancers: typing.Optional[AsyncLoadBalancersClient] = None
+        self._compute_catalog: typing.Optional[AsyncComputeCatalogClient] = None
         self._cloud_vms: typing.Optional[AsyncCloudVmsClient] = None
         self._gpu_vms: typing.Optional[AsyncGpuVmsClient] = None
 
@@ -318,14 +318,6 @@ class AsyncIbee:
 
             self._object_storage = AsyncObjectStorageClient(client_wrapper=self._client_wrapper)
         return self._object_storage
-
-    @property
-    def compute_catalog(self):
-        if self._compute_catalog is None:
-            from .compute_catalog.client import AsyncComputeCatalogClient  # noqa: E402
-
-            self._compute_catalog = AsyncComputeCatalogClient(client_wrapper=self._client_wrapper)
-        return self._compute_catalog
 
     @property
     def vpcs(self):
@@ -358,6 +350,14 @@ class AsyncIbee:
 
             self._load_balancers = AsyncLoadBalancersClient(client_wrapper=self._client_wrapper)
         return self._load_balancers
+
+    @property
+    def compute_catalog(self):
+        if self._compute_catalog is None:
+            from .compute_catalog.client import AsyncComputeCatalogClient  # noqa: E402
+
+            self._compute_catalog = AsyncComputeCatalogClient(client_wrapper=self._client_wrapper)
+        return self._compute_catalog
 
     @property
     def cloud_vms(self):

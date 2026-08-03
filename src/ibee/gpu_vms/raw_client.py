@@ -104,7 +104,6 @@ class RawGpuVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
         template_id: str,
@@ -113,6 +112,7 @@ class RawGpuVmsClient:
         gpu_count: int,
         gpu_model: str,
         plan_id: str,
+        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -131,9 +131,6 @@ class RawGpuVmsClient:
 
         name : str
             Display name for the virtual machine.
-
-        site_id : str
-            Placement site ID returned by the compute catalog.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
@@ -158,6 +155,9 @@ class RawGpuVmsClient:
 
         plan_id : str
             Billable GPU plan ID returned by the compute catalog.
+
+        site_id : typing.Optional[str]
+            Optional placement constraint. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites`.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -953,7 +953,6 @@ class AsyncRawGpuVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
         template_id: str,
@@ -962,6 +961,7 @@ class AsyncRawGpuVmsClient:
         gpu_count: int,
         gpu_model: str,
         plan_id: str,
+        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -980,9 +980,6 @@ class AsyncRawGpuVmsClient:
 
         name : str
             Display name for the virtual machine.
-
-        site_id : str
-            Placement site ID returned by the compute catalog.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
@@ -1007,6 +1004,9 @@ class AsyncRawGpuVmsClient:
 
         plan_id : str
             Billable GPU plan ID returned by the compute catalog.
+
+        site_id : typing.Optional[str]
+            Optional placement constraint. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites`.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.

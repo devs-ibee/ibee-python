@@ -69,13 +69,13 @@ class CloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
         template_id: str,
         cpu: int,
         ram_mb: int,
         plan_id: str,
+        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -95,9 +95,6 @@ class CloudVmsClient:
         name : str
             Display name for the virtual machine.
 
-        site_id : str
-            Placement site ID returned by the compute catalog.
-
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
 
@@ -115,6 +112,9 @@ class CloudVmsClient:
 
         plan_id : str
             Billable compute plan ID returned by the compute catalog.
+
+        site_id : typing.Optional[str]
+            Optional placement constraint. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites`.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -144,7 +144,6 @@ class CloudVmsClient:
             idempotency_key="X-Idempotency-Key",
             workspace_id="workspace_id",
             name="web-server-01",
-            site_id="site_id",
             os_distro="ubuntu",
             os_type="linux",
             template_id="tmpl_ubuntu_2204",
@@ -157,13 +156,13 @@ class CloudVmsClient:
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             name=name,
-            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
             template_id=template_id,
             cpu=cpu,
             ram_mb=ram_mb,
             plan_id=plan_id,
+            site_id=site_id,
             disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             tags=tags,
@@ -565,13 +564,13 @@ class AsyncCloudVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
         template_id: str,
         cpu: int,
         ram_mb: int,
         plan_id: str,
+        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -591,9 +590,6 @@ class AsyncCloudVmsClient:
         name : str
             Display name for the virtual machine.
 
-        site_id : str
-            Placement site ID returned by the compute catalog.
-
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
 
@@ -611,6 +607,9 @@ class AsyncCloudVmsClient:
 
         plan_id : str
             Billable compute plan ID returned by the compute catalog.
+
+        site_id : typing.Optional[str]
+            Optional placement constraint. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites`.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -645,7 +644,6 @@ class AsyncCloudVmsClient:
                 idempotency_key="X-Idempotency-Key",
                 workspace_id="workspace_id",
                 name="web-server-01",
-                site_id="site_id",
                 os_distro="ubuntu",
                 os_type="linux",
                 template_id="tmpl_ubuntu_2204",
@@ -661,13 +659,13 @@ class AsyncCloudVmsClient:
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             name=name,
-            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
             template_id=template_id,
             cpu=cpu,
             ram_mb=ram_mb,
             plan_id=plan_id,
+            site_id=site_id,
             disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             tags=tags,

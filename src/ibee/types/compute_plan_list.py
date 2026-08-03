@@ -4,17 +4,18 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .billing_interval import BillingInterval
+from .compute_plan import ComputePlan
+from .vm_type import VmType
 
 
-class NetworkingSite(UniversalBaseModel):
-    site_id: str = pydantic.Field()
-    """
-    Canonical opaque site identifier accepted by VPC and Reserved IP creation. Copy it exactly; do not substitute a region or site name.
-    """
-
-    site_name: str
-    available: bool
-    message: typing.Optional[str] = None
+class ComputePlanList(UniversalBaseModel):
+    plans: typing.List[ComputePlan]
+    count: int
+    vm_type: VmType
+    site_id: typing.Optional[str] = None
+    currency: str
+    billing_interval: BillingInterval
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

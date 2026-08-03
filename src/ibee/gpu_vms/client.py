@@ -68,7 +68,6 @@ class GpuVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
         template_id: str,
@@ -77,6 +76,7 @@ class GpuVmsClient:
         gpu_count: int,
         gpu_model: str,
         plan_id: str,
+        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -95,9 +95,6 @@ class GpuVmsClient:
 
         name : str
             Display name for the virtual machine.
-
-        site_id : str
-            Placement site ID returned by the compute catalog.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
@@ -122,6 +119,9 @@ class GpuVmsClient:
 
         plan_id : str
             Billable GPU plan ID returned by the compute catalog.
+
+        site_id : typing.Optional[str]
+            Optional placement constraint. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites`.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -151,7 +151,6 @@ class GpuVmsClient:
             idempotency_key="X-Idempotency-Key",
             workspace_id="workspace_id",
             name="ml-training-01",
-            site_id="site_id",
             os_distro="ubuntu",
             os_type="linux",
             template_id="tmpl_ubuntu_2204_cuda",
@@ -166,7 +165,6 @@ class GpuVmsClient:
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             name=name,
-            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
             template_id=template_id,
@@ -175,6 +173,7 @@ class GpuVmsClient:
             gpu_count=gpu_count,
             gpu_model=gpu_model,
             plan_id=plan_id,
+            site_id=site_id,
             disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             tags=tags,
@@ -537,7 +536,6 @@ class AsyncGpuVmsClient:
         workspace_id: str,
         idempotency_key: str,
         name: str,
-        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
         template_id: str,
@@ -546,6 +544,7 @@ class AsyncGpuVmsClient:
         gpu_count: int,
         gpu_model: str,
         plan_id: str,
+        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -564,9 +563,6 @@ class AsyncGpuVmsClient:
 
         name : str
             Display name for the virtual machine.
-
-        site_id : str
-            Placement site ID returned by the compute catalog.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
@@ -591,6 +587,9 @@ class AsyncGpuVmsClient:
 
         plan_id : str
             Billable GPU plan ID returned by the compute catalog.
+
+        site_id : typing.Optional[str]
+            Optional placement constraint. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites`.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -625,7 +624,6 @@ class AsyncGpuVmsClient:
                 idempotency_key="X-Idempotency-Key",
                 workspace_id="workspace_id",
                 name="ml-training-01",
-                site_id="site_id",
                 os_distro="ubuntu",
                 os_type="linux",
                 template_id="tmpl_ubuntu_2204_cuda",
@@ -643,7 +641,6 @@ class AsyncGpuVmsClient:
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             name=name,
-            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
             template_id=template_id,
@@ -652,6 +649,7 @@ class AsyncGpuVmsClient:
             gpu_count=gpu_count,
             gpu_model=gpu_model,
             plan_id=plan_id,
+            site_id=site_id,
             disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             tags=tags,

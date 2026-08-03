@@ -6,15 +6,16 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class NetworkingSite(UniversalBaseModel):
-    site_id: str = pydantic.Field()
+class UpdateVmRequest(UniversalBaseModel):
+    name: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Canonical opaque site identifier accepted by VPC and Reserved IP creation. Copy it exactly; do not substitute a region or site name.
+    New display name for the VM.
     """
 
-    site_name: str
-    available: bool
-    message: typing.Optional[str] = None
+    tags: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Updated tags. Replaces all existing tags.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

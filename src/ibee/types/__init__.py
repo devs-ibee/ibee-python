@@ -6,15 +6,27 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .attach_reserved_ip_request import AttachReservedIpRequest
+    from .billing_interval import BillingInterval
     from .bucket import Bucket
     from .bucket_list import BucketList
     from .bucket_stats import BucketStats
     from .bucket_summary import BucketSummary
     from .cloud_vm import CloudVm
     from .cloud_vm_status import CloudVmStatus
+    from .compute_image import ComputeImage
+    from .compute_image_list import ComputeImageList
+    from .compute_image_os_type import ComputeImageOsType
+    from .compute_plan import ComputePlan
+    from .compute_plan_list import ComputePlanList
+    from .compute_plan_pricing_status import ComputePlanPricingStatus
+    from .compute_site import ComputeSite
+    from .compute_site_list import ComputeSiteList
     from .create_firewall_rule_request import CreateFirewallRuleRequest
     from .create_nat_port_forwarding_rule_request import CreateNatPortForwardingRuleRequest
     from .create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
+    from .default_retention import DefaultRetention
+    from .default_retention_mode import DefaultRetentionMode
     from .delete_response import DeleteResponse
     from .error import Error
     from .error_detail import ErrorDetail
@@ -70,6 +82,7 @@ if typing.TYPE_CHECKING:
     from .vm_metrics import VmMetrics
     from .vm_metrics_monitoring_status import VmMetricsMonitoringStatus
     from .vm_metrics_vm_type import VmMetricsVmType
+    from .vm_type import VmType
     from .vpc import Vpc
     from .vpc_attached_node import VpcAttachedNode
     from .vpc_attached_node_connectivity import VpcAttachedNodeConnectivity
@@ -77,15 +90,27 @@ if typing.TYPE_CHECKING:
     from .vpc_detail import VpcDetail
     from .vpc_summary import VpcSummary
 _dynamic_imports: typing.Dict[str, str] = {
+    "AttachReservedIpRequest": ".attach_reserved_ip_request",
+    "BillingInterval": ".billing_interval",
     "Bucket": ".bucket",
     "BucketList": ".bucket_list",
     "BucketStats": ".bucket_stats",
     "BucketSummary": ".bucket_summary",
     "CloudVm": ".cloud_vm",
     "CloudVmStatus": ".cloud_vm_status",
+    "ComputeImage": ".compute_image",
+    "ComputeImageList": ".compute_image_list",
+    "ComputeImageOsType": ".compute_image_os_type",
+    "ComputePlan": ".compute_plan",
+    "ComputePlanList": ".compute_plan_list",
+    "ComputePlanPricingStatus": ".compute_plan_pricing_status",
+    "ComputeSite": ".compute_site",
+    "ComputeSiteList": ".compute_site_list",
     "CreateFirewallRuleRequest": ".create_firewall_rule_request",
     "CreateNatPortForwardingRuleRequest": ".create_nat_port_forwarding_rule_request",
     "CreateNatPortForwardingRuleRequestProtocol": ".create_nat_port_forwarding_rule_request_protocol",
+    "DefaultRetention": ".default_retention",
+    "DefaultRetentionMode": ".default_retention_mode",
     "DeleteResponse": ".delete_response",
     "Error": ".error",
     "ErrorDetail": ".error_detail",
@@ -141,6 +166,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "VmMetrics": ".vm_metrics",
     "VmMetricsMonitoringStatus": ".vm_metrics_monitoring_status",
     "VmMetricsVmType": ".vm_metrics_vm_type",
+    "VmType": ".vm_type",
     "Vpc": ".vpc",
     "VpcAttachedNode": ".vpc_attached_node",
     "VpcAttachedNodeConnectivity": ".vpc_attached_node_connectivity",
@@ -172,15 +198,27 @@ def __dir__():
 
 
 __all__ = [
+    "AttachReservedIpRequest",
+    "BillingInterval",
     "Bucket",
     "BucketList",
     "BucketStats",
     "BucketSummary",
     "CloudVm",
     "CloudVmStatus",
+    "ComputeImage",
+    "ComputeImageList",
+    "ComputeImageOsType",
+    "ComputePlan",
+    "ComputePlanList",
+    "ComputePlanPricingStatus",
+    "ComputeSite",
+    "ComputeSiteList",
     "CreateFirewallRuleRequest",
     "CreateNatPortForwardingRuleRequest",
     "CreateNatPortForwardingRuleRequestProtocol",
+    "DefaultRetention",
+    "DefaultRetentionMode",
     "DeleteResponse",
     "Error",
     "ErrorDetail",
@@ -236,6 +274,7 @@ __all__ = [
     "VmMetrics",
     "VmMetricsMonitoringStatus",
     "VmMetricsVmType",
+    "VmType",
     "Vpc",
     "VpcAttachedNode",
     "VpcAttachedNodeConnectivity",

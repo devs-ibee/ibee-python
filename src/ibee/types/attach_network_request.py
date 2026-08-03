@@ -6,15 +6,11 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class NetworkingSite(UniversalBaseModel):
-    site_id: str = pydantic.Field()
+class AttachNetworkRequest(UniversalBaseModel):
+    network_id: str = pydantic.Field()
     """
-    Canonical opaque site identifier accepted by VPC and Reserved IP creation. Copy it exactly; do not substitute a region or site name.
+    ID of the network to attach.
     """
-
-    site_name: str
-    available: bool
-    message: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
