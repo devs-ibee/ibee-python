@@ -10,16 +10,34 @@ from ..core.jsonable_encoder import encode_path_param
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
+from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
+from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.not_found_error import NotFoundError
 from ..errors.unauthorized_error import UnauthorizedError
+from ..types.batch_create_secret_item import BatchCreateSecretItem
+from ..types.batch_create_secrets_response import BatchCreateSecretsResponse
 from ..types.error import Error
 from ..types.secret import Secret
+from ..types.secret_identity import SecretIdentity
+from ..types.secret_identity_access import SecretIdentityAccess
+from ..types.secret_identity_action_status import SecretIdentityActionStatus
+from ..types.secret_identity_list import SecretIdentityList
+from ..types.secret_identity_scope import SecretIdentityScope
+from ..types.secret_identity_scope_list import SecretIdentityScopeList
+from ..types.secret_lifecycle_status import SecretLifecycleStatus
 from ..types.secret_list import SecretList
 from ..types.secret_store import SecretStore
 from ..types.secret_store_list import SecretStoreList
 from ..types.secret_value import SecretValue
+from ..types.secret_version import SecretVersion
+from ..types.secret_versions import SecretVersions
+from .types.create_secret_identity_request_auth_method import CreateSecretIdentityRequestAuthMethod
+from .types.create_secret_identity_request_token_policy_mode import CreateSecretIdentityRequestTokenPolicyMode
+from .types.create_secret_identity_scope_request_access_mode import CreateSecretIdentityScopeRequestAccessMode
+from .types.update_secret_identity_request_token_policy_mode import UpdateSecretIdentityRequestTokenPolicyMode
+from .types.update_secret_identity_scope_request_access_mode import UpdateSecretIdentityScopeRequestAccessMode
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -487,6 +505,170 @@ class RawSecretStoreClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    def unarchive_secret_store(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretStore]:
+        """
+        Reactivates an archived secret store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretStore]
+            Store reactivated successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/unarchive",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretStore,
+                    parse_obj_as(
+                        type_=SecretStore,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def permanently_delete_secret_store(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretLifecycleStatus]:
+        """
+        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretLifecycleStatus]
+            Store and its resources permanently deleted.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/permanent",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretLifecycleStatus,
+                    parse_obj_as(
+                        type_=SecretLifecycleStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
     def list_secrets(
         self,
         store_id: str,
@@ -644,6 +826,115 @@ class RawSecretStoreClient:
                     Secret,
                     parse_obj_as(
                         type_=Secret,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def batch_create_secrets(
+        self,
+        store_id: str,
+        *,
+        workspace_id: str,
+        secrets: typing.Sequence[BatchCreateSecretItem],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BatchCreateSecretsResponse]:
+        """
+        Creates up to 500 secrets without overwriting existing names. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        secrets : typing.Sequence[BatchCreateSecretItem]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BatchCreateSecretsResponse]
+            Batch processed; inspect each result for created, skipped, or failed status.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/secrets:batchIngest",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "secrets": convert_and_respect_annotation_metadata(
+                    object_=secrets, annotation=typing.Sequence[BatchCreateSecretItem], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BatchCreateSecretsResponse,
+                    parse_obj_as(
+                        type_=BatchCreateSecretsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1003,6 +1294,2010 @@ class RawSecretStoreClient:
                     SecretValue,
                     parse_obj_as(
                         type_=SecretValue,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def patch_secret_value(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        value: typing.Dict[str, typing.Any],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[SecretValue]:
+        """
+        Merges the supplied keys into the current value and creates a new version. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        value : typing.Dict[str, typing.Any]
+            Key-value pairs to merge into the current value. Creates a new version.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretValue]
+            Secret value patched successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/value",
+            method="PATCH",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "value": value,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretValue,
+                    parse_obj_as(
+                        type_=SecretValue,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def undelete_secret(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        versions: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[Secret]:
+        """
+        Restores specified soft-deleted versions and reactivates the secret. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        versions : typing.Sequence[int]
+            Secret versions to restore or irreversibly destroy.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[Secret]
+            Secret versions restored successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/undelete",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "versions": versions,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    Secret,
+                    parse_obj_as(
+                        type_=Secret,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def destroy_secret_versions(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        versions: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[SecretLifecycleStatus]:
+        """
+        Irreversibly destroys specified secret versions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        versions : typing.Sequence[int]
+            Secret versions to restore or irreversibly destroy.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretLifecycleStatus]
+            Secret versions permanently destroyed.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/destroy",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "versions": versions,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretLifecycleStatus,
+                    parse_obj_as(
+                        type_=SecretLifecycleStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def permanently_delete_secret(
+        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretLifecycleStatus]:
+        """
+        Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretLifecycleStatus]
+            Secret permanently deleted.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/permanent",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretLifecycleStatus,
+                    parse_obj_as(
+                        type_=SecretLifecycleStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def list_secret_versions(
+        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretVersions]:
+        """
+        Returns version metadata without secret values. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretVersions]
+            Secret version metadata returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/versions",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretVersions,
+                    parse_obj_as(
+                        type_=SecretVersions,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_secret_version(
+        self,
+        secret_id: str,
+        version: int,
+        *,
+        workspace_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[SecretVersion]:
+        """
+        Returns the value and metadata for one secret version. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        version : int
+            Positive secret version number.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretVersion]
+            Secret version returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/versions/{encode_path_param(version)}",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretVersion,
+                    parse_obj_as(
+                        type_=SecretVersion,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def rollback_secret(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        version: int,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[SecretValue]:
+        """
+        Copies a previous version into a new current version. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        version : int
+            Previous version to copy into a new current version.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretValue]
+            Previous value copied into a new current version.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/rollback",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "version": version,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretValue,
+                    parse_obj_as(
+                        type_=SecretValue,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def list_secret_identities(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentityList]:
+        """
+        Lists AppRole and Kubernetes identities bound to a store. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentityList]
+            Identities returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/identities",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityList,
+                    parse_obj_as(
+                        type_=SecretIdentityList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def create_secret_identity(
+        self,
+        store_id: str,
+        *,
+        workspace_id: str,
+        auth_method: CreateSecretIdentityRequestAuthMethod,
+        name: str,
+        token_policy_mode: typing.Optional[CreateSecretIdentityRequestTokenPolicyMode] = OMIT,
+        k8s_namespace: typing.Optional[str] = OMIT,
+        k8s_service_account: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[SecretIdentity]:
+        """
+        Creates an AppRole or Kubernetes identity with an initial scope for this store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        auth_method : CreateSecretIdentityRequestAuthMethod
+            Authentication method used by the application.
+
+        name : str
+
+        token_policy_mode : typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]
+
+        k8s_namespace : typing.Optional[str]
+            Required when auth_method is kubernetes.
+
+        k8s_service_account : typing.Optional[str]
+            Required when auth_method is kubernetes.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentity]
+            Identity created successfully. Fetch access details separately.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/identities",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "auth_method": auth_method,
+                "name": name,
+                "token_policy_mode": token_policy_mode,
+                "k8s_namespace": k8s_namespace,
+                "k8s_service_account": k8s_service_account,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentity]:
+        """
+        Gets one application identity without credentials. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentity]
+            Identity returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def delete_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentityActionStatus]:
+        """
+        Permanently removes the identity, its scopes, role, policy, and sessions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentityActionStatus]
+            Identity deleted successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityActionStatus,
+                    parse_obj_as(
+                        type_=SecretIdentityActionStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def update_secret_identity(
+        self,
+        identity_id: str,
+        *,
+        workspace_id: str,
+        token_policy_mode: typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[SecretIdentity]:
+        """
+        Updates the token policy mode. Identity names cannot be changed after creation. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        token_policy_mode : typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode]
+            Updating the mode also aligns every existing scope and revokes active sessions.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentity]
+            Identity updated successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}",
+            method="PATCH",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "token_policy_mode": token_policy_mode,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def disable_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentity]:
+        """
+        Disables an identity and revokes its active sessions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentity]
+            Identity disabled successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/disable",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def enable_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentity]:
+        """
+        Re-enables a disabled identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentity]
+            Identity enabled successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/enable",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_secret_identity_access(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentityAccess]:
+        """
+        Returns Kubernetes binding details or generates fresh AppRole credentials. Treat secret_id as sensitive. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentityAccess]
+            Access details returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/access",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityAccess,
+                    parse_obj_as(
+                        type_=SecretIdentityAccess,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def rotate_secret_identity_secret_id(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentityAccess]:
+        """
+        Generates fresh AppRole credentials. Available only for AppRole identities. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentityAccess]
+            Fresh AppRole access details returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/rotate-secret-id",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityAccess,
+                    parse_obj_as(
+                        type_=SecretIdentityAccess,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def revoke_secret_identity_sessions(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentityActionStatus]:
+        """
+        Revokes active sessions without deleting or disabling the identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentityActionStatus]
+            Identity sessions revoked successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/revoke",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityActionStatus,
+                    parse_obj_as(
+                        type_=SecretIdentityActionStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def list_secret_identity_scopes(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentityScopeList]:
+        """
+        Lists the stores and permissions available to an identity. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentityScopeList]
+            Scopes returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/scopes",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityScopeList,
+                    parse_obj_as(
+                        type_=SecretIdentityScopeList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def create_secret_identity_scope(
+        self,
+        identity_id: str,
+        *,
+        workspace_id: str,
+        store_id: str,
+        access_mode: typing.Optional[CreateSecretIdentityScopeRequestAccessMode] = OMIT,
+        allow_version_read: typing.Optional[bool] = OMIT,
+        allow_rollback: typing.Optional[bool] = OMIT,
+        allow_destroy: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[SecretIdentityScope]:
+        """
+        Grants an identity access to another store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        store_id : str
+
+        access_mode : typing.Optional[CreateSecretIdentityScopeRequestAccessMode]
+
+        allow_version_read : typing.Optional[bool]
+
+        allow_rollback : typing.Optional[bool]
+
+        allow_destroy : typing.Optional[bool]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentityScope]
+            Scope created successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/scopes",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "store_id": store_id,
+                "access_mode": access_mode,
+                "allow_version_read": allow_version_read,
+                "allow_rollback": allow_rollback,
+                "allow_destroy": allow_destroy,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityScope,
+                    parse_obj_as(
+                        type_=SecretIdentityScope,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def delete_secret_identity_scope(
+        self, scope_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[SecretIdentityActionStatus]:
+        """
+        Removes a store permission from an identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        scope_id : str
+            Secret Store identity scope ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentityActionStatus]
+            Scope deleted successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/scopes/{encode_path_param(scope_id)}",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityActionStatus,
+                    parse_obj_as(
+                        type_=SecretIdentityActionStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def update_secret_identity_scope(
+        self,
+        scope_id: str,
+        *,
+        workspace_id: str,
+        access_mode: typing.Optional[UpdateSecretIdentityScopeRequestAccessMode] = OMIT,
+        allow_version_read: typing.Optional[bool] = OMIT,
+        allow_rollback: typing.Optional[bool] = OMIT,
+        allow_destroy: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[SecretIdentityScope]:
+        """
+        Updates store access and version permissions for a scope. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        scope_id : str
+            Secret Store identity scope ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        access_mode : typing.Optional[UpdateSecretIdentityScopeRequestAccessMode]
+
+        allow_version_read : typing.Optional[bool]
+
+        allow_rollback : typing.Optional[bool]
+
+        allow_destroy : typing.Optional[bool]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SecretIdentityScope]
+            Scope updated successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"secret-store/scopes/{encode_path_param(scope_id)}",
+            method="PATCH",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "access_mode": access_mode,
+                "allow_version_read": allow_version_read,
+                "allow_rollback": allow_rollback,
+                "allow_destroy": allow_destroy,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityScope,
+                    parse_obj_as(
+                        type_=SecretIdentityScope,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1522,6 +3817,170 @@ class AsyncRawSecretStoreClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    async def unarchive_secret_store(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretStore]:
+        """
+        Reactivates an archived secret store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretStore]
+            Store reactivated successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/unarchive",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretStore,
+                    parse_obj_as(
+                        type_=SecretStore,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def permanently_delete_secret_store(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretLifecycleStatus]:
+        """
+        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretLifecycleStatus]
+            Store and its resources permanently deleted.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/permanent",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretLifecycleStatus,
+                    parse_obj_as(
+                        type_=SecretLifecycleStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
     async def list_secrets(
         self,
         store_id: str,
@@ -1679,6 +4138,115 @@ class AsyncRawSecretStoreClient:
                     Secret,
                     parse_obj_as(
                         type_=Secret,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def batch_create_secrets(
+        self,
+        store_id: str,
+        *,
+        workspace_id: str,
+        secrets: typing.Sequence[BatchCreateSecretItem],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BatchCreateSecretsResponse]:
+        """
+        Creates up to 500 secrets without overwriting existing names. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        secrets : typing.Sequence[BatchCreateSecretItem]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BatchCreateSecretsResponse]
+            Batch processed; inspect each result for created, skipped, or failed status.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/secrets:batchIngest",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "secrets": convert_and_respect_annotation_metadata(
+                    object_=secrets, annotation=typing.Sequence[BatchCreateSecretItem], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BatchCreateSecretsResponse,
+                    parse_obj_as(
+                        type_=BatchCreateSecretsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2038,6 +4606,2010 @@ class AsyncRawSecretStoreClient:
                     SecretValue,
                     parse_obj_as(
                         type_=SecretValue,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def patch_secret_value(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        value: typing.Dict[str, typing.Any],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[SecretValue]:
+        """
+        Merges the supplied keys into the current value and creates a new version. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        value : typing.Dict[str, typing.Any]
+            Key-value pairs to merge into the current value. Creates a new version.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretValue]
+            Secret value patched successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/value",
+            method="PATCH",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "value": value,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretValue,
+                    parse_obj_as(
+                        type_=SecretValue,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def undelete_secret(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        versions: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[Secret]:
+        """
+        Restores specified soft-deleted versions and reactivates the secret. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        versions : typing.Sequence[int]
+            Secret versions to restore or irreversibly destroy.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[Secret]
+            Secret versions restored successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/undelete",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "versions": versions,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    Secret,
+                    parse_obj_as(
+                        type_=Secret,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def destroy_secret_versions(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        versions: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[SecretLifecycleStatus]:
+        """
+        Irreversibly destroys specified secret versions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        versions : typing.Sequence[int]
+            Secret versions to restore or irreversibly destroy.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretLifecycleStatus]
+            Secret versions permanently destroyed.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/destroy",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "versions": versions,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretLifecycleStatus,
+                    parse_obj_as(
+                        type_=SecretLifecycleStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def permanently_delete_secret(
+        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretLifecycleStatus]:
+        """
+        Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretLifecycleStatus]
+            Secret permanently deleted.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/permanent",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretLifecycleStatus,
+                    parse_obj_as(
+                        type_=SecretLifecycleStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def list_secret_versions(
+        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretVersions]:
+        """
+        Returns version metadata without secret values. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretVersions]
+            Secret version metadata returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/versions",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretVersions,
+                    parse_obj_as(
+                        type_=SecretVersions,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_secret_version(
+        self,
+        secret_id: str,
+        version: int,
+        *,
+        workspace_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[SecretVersion]:
+        """
+        Returns the value and metadata for one secret version. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        version : int
+            Positive secret version number.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretVersion]
+            Secret version returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/versions/{encode_path_param(version)}",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretVersion,
+                    parse_obj_as(
+                        type_=SecretVersion,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def rollback_secret(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        version: int,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[SecretValue]:
+        """
+        Copies a previous version into a new current version. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        version : int
+            Previous version to copy into a new current version.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretValue]
+            Previous value copied into a new current version.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/secrets/{encode_path_param(secret_id)}/rollback",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "version": version,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretValue,
+                    parse_obj_as(
+                        type_=SecretValue,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def list_secret_identities(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentityList]:
+        """
+        Lists AppRole and Kubernetes identities bound to a store. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentityList]
+            Identities returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/identities",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityList,
+                    parse_obj_as(
+                        type_=SecretIdentityList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def create_secret_identity(
+        self,
+        store_id: str,
+        *,
+        workspace_id: str,
+        auth_method: CreateSecretIdentityRequestAuthMethod,
+        name: str,
+        token_policy_mode: typing.Optional[CreateSecretIdentityRequestTokenPolicyMode] = OMIT,
+        k8s_namespace: typing.Optional[str] = OMIT,
+        k8s_service_account: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[SecretIdentity]:
+        """
+        Creates an AppRole or Kubernetes identity with an initial scope for this store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        auth_method : CreateSecretIdentityRequestAuthMethod
+            Authentication method used by the application.
+
+        name : str
+
+        token_policy_mode : typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]
+
+        k8s_namespace : typing.Optional[str]
+            Required when auth_method is kubernetes.
+
+        k8s_service_account : typing.Optional[str]
+            Required when auth_method is kubernetes.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentity]
+            Identity created successfully. Fetch access details separately.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/stores/{encode_path_param(store_id)}/identities",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "auth_method": auth_method,
+                "name": name,
+                "token_policy_mode": token_policy_mode,
+                "k8s_namespace": k8s_namespace,
+                "k8s_service_account": k8s_service_account,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentity]:
+        """
+        Gets one application identity without credentials. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentity]
+            Identity returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def delete_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentityActionStatus]:
+        """
+        Permanently removes the identity, its scopes, role, policy, and sessions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentityActionStatus]
+            Identity deleted successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityActionStatus,
+                    parse_obj_as(
+                        type_=SecretIdentityActionStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def update_secret_identity(
+        self,
+        identity_id: str,
+        *,
+        workspace_id: str,
+        token_policy_mode: typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[SecretIdentity]:
+        """
+        Updates the token policy mode. Identity names cannot be changed after creation. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        token_policy_mode : typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode]
+            Updating the mode also aligns every existing scope and revokes active sessions.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentity]
+            Identity updated successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}",
+            method="PATCH",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "token_policy_mode": token_policy_mode,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def disable_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentity]:
+        """
+        Disables an identity and revokes its active sessions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentity]
+            Identity disabled successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/disable",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def enable_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentity]:
+        """
+        Re-enables a disabled identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentity]
+            Identity enabled successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/enable",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentity,
+                    parse_obj_as(
+                        type_=SecretIdentity,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_secret_identity_access(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentityAccess]:
+        """
+        Returns Kubernetes binding details or generates fresh AppRole credentials. Treat secret_id as sensitive. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentityAccess]
+            Access details returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/access",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityAccess,
+                    parse_obj_as(
+                        type_=SecretIdentityAccess,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def rotate_secret_identity_secret_id(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentityAccess]:
+        """
+        Generates fresh AppRole credentials. Available only for AppRole identities. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentityAccess]
+            Fresh AppRole access details returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/rotate-secret-id",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityAccess,
+                    parse_obj_as(
+                        type_=SecretIdentityAccess,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def revoke_secret_identity_sessions(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentityActionStatus]:
+        """
+        Revokes active sessions without deleting or disabling the identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentityActionStatus]
+            Identity sessions revoked successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/revoke",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityActionStatus,
+                    parse_obj_as(
+                        type_=SecretIdentityActionStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def list_secret_identity_scopes(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentityScopeList]:
+        """
+        Lists the stores and permissions available to an identity. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentityScopeList]
+            Scopes returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/scopes",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityScopeList,
+                    parse_obj_as(
+                        type_=SecretIdentityScopeList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def create_secret_identity_scope(
+        self,
+        identity_id: str,
+        *,
+        workspace_id: str,
+        store_id: str,
+        access_mode: typing.Optional[CreateSecretIdentityScopeRequestAccessMode] = OMIT,
+        allow_version_read: typing.Optional[bool] = OMIT,
+        allow_rollback: typing.Optional[bool] = OMIT,
+        allow_destroy: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[SecretIdentityScope]:
+        """
+        Grants an identity access to another store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        store_id : str
+
+        access_mode : typing.Optional[CreateSecretIdentityScopeRequestAccessMode]
+
+        allow_version_read : typing.Optional[bool]
+
+        allow_rollback : typing.Optional[bool]
+
+        allow_destroy : typing.Optional[bool]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentityScope]
+            Scope created successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/identities/{encode_path_param(identity_id)}/scopes",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "store_id": store_id,
+                "access_mode": access_mode,
+                "allow_version_read": allow_version_read,
+                "allow_rollback": allow_rollback,
+                "allow_destroy": allow_destroy,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityScope,
+                    parse_obj_as(
+                        type_=SecretIdentityScope,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def delete_secret_identity_scope(
+        self, scope_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[SecretIdentityActionStatus]:
+        """
+        Removes a store permission from an identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        scope_id : str
+            Secret Store identity scope ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentityActionStatus]
+            Scope deleted successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/scopes/{encode_path_param(scope_id)}",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityActionStatus,
+                    parse_obj_as(
+                        type_=SecretIdentityActionStatus,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def update_secret_identity_scope(
+        self,
+        scope_id: str,
+        *,
+        workspace_id: str,
+        access_mode: typing.Optional[UpdateSecretIdentityScopeRequestAccessMode] = OMIT,
+        allow_version_read: typing.Optional[bool] = OMIT,
+        allow_rollback: typing.Optional[bool] = OMIT,
+        allow_destroy: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[SecretIdentityScope]:
+        """
+        Updates store access and version permissions for a scope. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        scope_id : str
+            Secret Store identity scope ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        access_mode : typing.Optional[UpdateSecretIdentityScopeRequestAccessMode]
+
+        allow_version_read : typing.Optional[bool]
+
+        allow_rollback : typing.Optional[bool]
+
+        allow_destroy : typing.Optional[bool]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SecretIdentityScope]
+            Scope updated successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"secret-store/scopes/{encode_path_param(scope_id)}",
+            method="PATCH",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "access_mode": access_mode,
+                "allow_version_read": allow_version_read,
+                "allow_rollback": allow_rollback,
+                "allow_destroy": allow_destroy,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SecretIdentityScope,
+                    parse_obj_as(
+                        type_=SecretIdentityScope,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

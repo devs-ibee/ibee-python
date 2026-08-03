@@ -6,6 +6,10 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .batch_create_secret_item import BatchCreateSecretItem
+    from .batch_create_secret_result import BatchCreateSecretResult
+    from .batch_create_secret_result_status import BatchCreateSecretResultStatus
+    from .batch_create_secrets_response import BatchCreateSecretsResponse
     from .bucket import Bucket
     from .bucket_list import BucketList
     from .bucket_stats import BucketStats
@@ -60,12 +64,30 @@ if typing.TYPE_CHECKING:
     from .s3credential_revoked import S3CredentialRevoked
     from .s3credential_status import S3CredentialStatus
     from .secret import Secret
+    from .secret_identity import SecretIdentity
+    from .secret_identity_access import SecretIdentityAccess
+    from .secret_identity_access_auth_method import SecretIdentityAccessAuthMethod
+    from .secret_identity_action_status import SecretIdentityActionStatus
+    from .secret_identity_action_status_status import SecretIdentityActionStatusStatus
+    from .secret_identity_auth_method import SecretIdentityAuthMethod
+    from .secret_identity_list import SecretIdentityList
+    from .secret_identity_scope import SecretIdentityScope
+    from .secret_identity_scope_access_mode import SecretIdentityScopeAccessMode
+    from .secret_identity_scope_list import SecretIdentityScopeList
+    from .secret_identity_status import SecretIdentityStatus
+    from .secret_identity_token_policy_mode import SecretIdentityTokenPolicyMode
+    from .secret_lifecycle_status import SecretLifecycleStatus
+    from .secret_lifecycle_status_status import SecretLifecycleStatusStatus
     from .secret_list import SecretList
     from .secret_status import SecretStatus
     from .secret_store import SecretStore
     from .secret_store_list import SecretStoreList
     from .secret_store_status import SecretStoreStatus
     from .secret_value import SecretValue
+    from .secret_version import SecretVersion
+    from .secret_version_summary import SecretVersionSummary
+    from .secret_versions import SecretVersions
+    from .secret_versions_request import SecretVersionsRequest
     from .subnet import Subnet
     from .vm_metrics import VmMetrics
     from .vm_metrics_monitoring_status import VmMetricsMonitoringStatus
@@ -77,6 +99,10 @@ if typing.TYPE_CHECKING:
     from .vpc_detail import VpcDetail
     from .vpc_summary import VpcSummary
 _dynamic_imports: typing.Dict[str, str] = {
+    "BatchCreateSecretItem": ".batch_create_secret_item",
+    "BatchCreateSecretResult": ".batch_create_secret_result",
+    "BatchCreateSecretResultStatus": ".batch_create_secret_result_status",
+    "BatchCreateSecretsResponse": ".batch_create_secrets_response",
     "Bucket": ".bucket",
     "BucketList": ".bucket_list",
     "BucketStats": ".bucket_stats",
@@ -131,12 +157,30 @@ _dynamic_imports: typing.Dict[str, str] = {
     "S3CredentialRevoked": ".s3credential_revoked",
     "S3CredentialStatus": ".s3credential_status",
     "Secret": ".secret",
+    "SecretIdentity": ".secret_identity",
+    "SecretIdentityAccess": ".secret_identity_access",
+    "SecretIdentityAccessAuthMethod": ".secret_identity_access_auth_method",
+    "SecretIdentityActionStatus": ".secret_identity_action_status",
+    "SecretIdentityActionStatusStatus": ".secret_identity_action_status_status",
+    "SecretIdentityAuthMethod": ".secret_identity_auth_method",
+    "SecretIdentityList": ".secret_identity_list",
+    "SecretIdentityScope": ".secret_identity_scope",
+    "SecretIdentityScopeAccessMode": ".secret_identity_scope_access_mode",
+    "SecretIdentityScopeList": ".secret_identity_scope_list",
+    "SecretIdentityStatus": ".secret_identity_status",
+    "SecretIdentityTokenPolicyMode": ".secret_identity_token_policy_mode",
+    "SecretLifecycleStatus": ".secret_lifecycle_status",
+    "SecretLifecycleStatusStatus": ".secret_lifecycle_status_status",
     "SecretList": ".secret_list",
     "SecretStatus": ".secret_status",
     "SecretStore": ".secret_store",
     "SecretStoreList": ".secret_store_list",
     "SecretStoreStatus": ".secret_store_status",
     "SecretValue": ".secret_value",
+    "SecretVersion": ".secret_version",
+    "SecretVersionSummary": ".secret_version_summary",
+    "SecretVersions": ".secret_versions",
+    "SecretVersionsRequest": ".secret_versions_request",
     "Subnet": ".subnet",
     "VmMetrics": ".vm_metrics",
     "VmMetricsMonitoringStatus": ".vm_metrics_monitoring_status",
@@ -172,6 +216,10 @@ def __dir__():
 
 
 __all__ = [
+    "BatchCreateSecretItem",
+    "BatchCreateSecretResult",
+    "BatchCreateSecretResultStatus",
+    "BatchCreateSecretsResponse",
     "Bucket",
     "BucketList",
     "BucketStats",
@@ -226,12 +274,30 @@ __all__ = [
     "S3CredentialRevoked",
     "S3CredentialStatus",
     "Secret",
+    "SecretIdentity",
+    "SecretIdentityAccess",
+    "SecretIdentityAccessAuthMethod",
+    "SecretIdentityActionStatus",
+    "SecretIdentityActionStatusStatus",
+    "SecretIdentityAuthMethod",
+    "SecretIdentityList",
+    "SecretIdentityScope",
+    "SecretIdentityScopeAccessMode",
+    "SecretIdentityScopeList",
+    "SecretIdentityStatus",
+    "SecretIdentityTokenPolicyMode",
+    "SecretLifecycleStatus",
+    "SecretLifecycleStatusStatus",
     "SecretList",
     "SecretStatus",
     "SecretStore",
     "SecretStoreList",
     "SecretStoreStatus",
     "SecretValue",
+    "SecretVersion",
+    "SecretVersionSummary",
+    "SecretVersions",
+    "SecretVersionsRequest",
     "Subnet",
     "VmMetrics",
     "VmMetricsMonitoringStatus",

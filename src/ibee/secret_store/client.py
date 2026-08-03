@@ -4,12 +4,28 @@ import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
+from ..types.batch_create_secret_item import BatchCreateSecretItem
+from ..types.batch_create_secrets_response import BatchCreateSecretsResponse
 from ..types.secret import Secret
+from ..types.secret_identity import SecretIdentity
+from ..types.secret_identity_access import SecretIdentityAccess
+from ..types.secret_identity_action_status import SecretIdentityActionStatus
+from ..types.secret_identity_list import SecretIdentityList
+from ..types.secret_identity_scope import SecretIdentityScope
+from ..types.secret_identity_scope_list import SecretIdentityScopeList
+from ..types.secret_lifecycle_status import SecretLifecycleStatus
 from ..types.secret_list import SecretList
 from ..types.secret_store import SecretStore
 from ..types.secret_store_list import SecretStoreList
 from ..types.secret_value import SecretValue
+from ..types.secret_version import SecretVersion
+from ..types.secret_versions import SecretVersions
 from .raw_client import AsyncRawSecretStoreClient, RawSecretStoreClient
+from .types.create_secret_identity_request_auth_method import CreateSecretIdentityRequestAuthMethod
+from .types.create_secret_identity_request_token_policy_mode import CreateSecretIdentityRequestTokenPolicyMode
+from .types.create_secret_identity_scope_request_access_mode import CreateSecretIdentityScopeRequestAccessMode
+from .types.update_secret_identity_request_token_policy_mode import UpdateSecretIdentityRequestTokenPolicyMode
+from .types.update_secret_identity_scope_request_access_mode import UpdateSecretIdentityScopeRequestAccessMode
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -257,6 +273,84 @@ class SecretStoreClient:
         )
         return _response.data
 
+    def unarchive_secret_store(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretStore:
+        """
+        Reactivates an archived secret store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretStore
+            Store reactivated successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.unarchive_secret_store(
+            store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.unarchive_secret_store(
+            store_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def permanently_delete_secret_store(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretLifecycleStatus:
+        """
+        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretLifecycleStatus
+            Store and its resources permanently deleted.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.permanently_delete_secret_store(
+            store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.permanently_delete_secret_store(
+            store_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
     def list_secrets(
         self,
         store_id: str,
@@ -362,6 +456,58 @@ class SecretStoreClient:
         """
         _response = self._raw_client.create_secret(
             store_id, workspace_id=workspace_id, secret_name=secret_name, value=value, request_options=request_options
+        )
+        return _response.data
+
+    def batch_create_secrets(
+        self,
+        store_id: str,
+        *,
+        workspace_id: str,
+        secrets: typing.Sequence[BatchCreateSecretItem],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BatchCreateSecretsResponse:
+        """
+        Creates up to 500 secrets without overwriting existing names. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        secrets : typing.Sequence[BatchCreateSecretItem]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BatchCreateSecretsResponse
+            Batch processed; inspect each result for created, skipped, or failed status.
+
+        Examples
+        --------
+        from ibee import BatchCreateSecretItem, Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.batch_create_secrets(
+            store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+            workspace_id="workspace_id",
+            secrets=[
+                BatchCreateSecretItem(
+                    secret_name="secret_name",
+                    value={"key": "value"},
+                )
+            ],
+        )
+        """
+        _response = self._raw_client.batch_create_secrets(
+            store_id, workspace_id=workspace_id, secrets=secrets, request_options=request_options
         )
         return _response.data
 
@@ -530,6 +676,958 @@ class SecretStoreClient:
         """
         _response = self._raw_client.update_secret_value(
             secret_id, workspace_id=workspace_id, value=value, cas=cas, request_options=request_options
+        )
+        return _response.data
+
+    def patch_secret_value(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        value: typing.Dict[str, typing.Any],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretValue:
+        """
+        Merges the supplied keys into the current value and creates a new version. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        value : typing.Dict[str, typing.Any]
+            Key-value pairs to merge into the current value. Creates a new version.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretValue
+            Secret value patched successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.patch_secret_value(
+            secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+            workspace_id="workspace_id",
+            value={"key": "value"},
+        )
+        """
+        _response = self._raw_client.patch_secret_value(
+            secret_id, workspace_id=workspace_id, value=value, request_options=request_options
+        )
+        return _response.data
+
+    def undelete_secret(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        versions: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> Secret:
+        """
+        Restores specified soft-deleted versions and reactivates the secret. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        versions : typing.Sequence[int]
+            Secret versions to restore or irreversibly destroy.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        Secret
+            Secret versions restored successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.undelete_secret(
+            secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+            workspace_id="workspace_id",
+            versions=[1],
+        )
+        """
+        _response = self._raw_client.undelete_secret(
+            secret_id, workspace_id=workspace_id, versions=versions, request_options=request_options
+        )
+        return _response.data
+
+    def destroy_secret_versions(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        versions: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretLifecycleStatus:
+        """
+        Irreversibly destroys specified secret versions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        versions : typing.Sequence[int]
+            Secret versions to restore or irreversibly destroy.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretLifecycleStatus
+            Secret versions permanently destroyed.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.destroy_secret_versions(
+            secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+            workspace_id="workspace_id",
+            versions=[1],
+        )
+        """
+        _response = self._raw_client.destroy_secret_versions(
+            secret_id, workspace_id=workspace_id, versions=versions, request_options=request_options
+        )
+        return _response.data
+
+    def permanently_delete_secret(
+        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretLifecycleStatus:
+        """
+        Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretLifecycleStatus
+            Secret permanently deleted.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.permanently_delete_secret(
+            secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.permanently_delete_secret(
+            secret_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def list_secret_versions(
+        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretVersions:
+        """
+        Returns version metadata without secret values. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretVersions
+            Secret version metadata returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.list_secret_versions(
+            secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.list_secret_versions(
+            secret_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def get_secret_version(
+        self,
+        secret_id: str,
+        version: int,
+        *,
+        workspace_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretVersion:
+        """
+        Returns the value and metadata for one secret version. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        version : int
+            Positive secret version number.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretVersion
+            Secret version returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.get_secret_version(
+            secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+            version=1,
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.get_secret_version(
+            secret_id, version, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def rollback_secret(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        version: int,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretValue:
+        """
+        Copies a previous version into a new current version. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        version : int
+            Previous version to copy into a new current version.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretValue
+            Previous value copied into a new current version.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.rollback_secret(
+            secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+            workspace_id="workspace_id",
+            version=1,
+        )
+        """
+        _response = self._raw_client.rollback_secret(
+            secret_id, workspace_id=workspace_id, version=version, request_options=request_options
+        )
+        return _response.data
+
+    def list_secret_identities(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityList:
+        """
+        Lists AppRole and Kubernetes identities bound to a store. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityList
+            Identities returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.list_secret_identities(
+            store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.list_secret_identities(
+            store_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def create_secret_identity(
+        self,
+        store_id: str,
+        *,
+        workspace_id: str,
+        auth_method: CreateSecretIdentityRequestAuthMethod,
+        name: str,
+        token_policy_mode: typing.Optional[CreateSecretIdentityRequestTokenPolicyMode] = OMIT,
+        k8s_namespace: typing.Optional[str] = OMIT,
+        k8s_service_account: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretIdentity:
+        """
+        Creates an AppRole or Kubernetes identity with an initial scope for this store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        auth_method : CreateSecretIdentityRequestAuthMethod
+            Authentication method used by the application.
+
+        name : str
+
+        token_policy_mode : typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]
+
+        k8s_namespace : typing.Optional[str]
+            Required when auth_method is kubernetes.
+
+        k8s_service_account : typing.Optional[str]
+            Required when auth_method is kubernetes.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity created successfully. Fetch access details separately.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.create_secret_identity(
+            store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+            workspace_id="workspace_id",
+            auth_method="approle",
+            name="name",
+        )
+        """
+        _response = self._raw_client.create_secret_identity(
+            store_id,
+            workspace_id=workspace_id,
+            auth_method=auth_method,
+            name=name,
+            token_policy_mode=token_policy_mode,
+            k8s_namespace=k8s_namespace,
+            k8s_service_account=k8s_service_account,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def get_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentity:
+        """
+        Gets one application identity without credentials. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.get_secret_identity(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.get_secret_identity(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def delete_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityActionStatus:
+        """
+        Permanently removes the identity, its scopes, role, policy, and sessions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityActionStatus
+            Identity deleted successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.delete_secret_identity(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.delete_secret_identity(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def update_secret_identity(
+        self,
+        identity_id: str,
+        *,
+        workspace_id: str,
+        token_policy_mode: typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretIdentity:
+        """
+        Updates the token policy mode. Identity names cannot be changed after creation. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        token_policy_mode : typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode]
+            Updating the mode also aligns every existing scope and revokes active sessions.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity updated successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.update_secret_identity(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.update_secret_identity(
+            identity_id, workspace_id=workspace_id, token_policy_mode=token_policy_mode, request_options=request_options
+        )
+        return _response.data
+
+    def disable_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentity:
+        """
+        Disables an identity and revokes its active sessions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity disabled successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.disable_secret_identity(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.disable_secret_identity(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def enable_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentity:
+        """
+        Re-enables a disabled identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity enabled successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.enable_secret_identity(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.enable_secret_identity(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def get_secret_identity_access(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityAccess:
+        """
+        Returns Kubernetes binding details or generates fresh AppRole credentials. Treat secret_id as sensitive. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityAccess
+            Access details returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.get_secret_identity_access(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.get_secret_identity_access(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def rotate_secret_identity_secret_id(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityAccess:
+        """
+        Generates fresh AppRole credentials. Available only for AppRole identities. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityAccess
+            Fresh AppRole access details returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.rotate_secret_identity_secret_id(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.rotate_secret_identity_secret_id(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def revoke_secret_identity_sessions(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityActionStatus:
+        """
+        Revokes active sessions without deleting or disabling the identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityActionStatus
+            Identity sessions revoked successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.revoke_secret_identity_sessions(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.revoke_secret_identity_sessions(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def list_secret_identity_scopes(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityScopeList:
+        """
+        Lists the stores and permissions available to an identity. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityScopeList
+            Scopes returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.list_secret_identity_scopes(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.list_secret_identity_scopes(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def create_secret_identity_scope(
+        self,
+        identity_id: str,
+        *,
+        workspace_id: str,
+        store_id: str,
+        access_mode: typing.Optional[CreateSecretIdentityScopeRequestAccessMode] = OMIT,
+        allow_version_read: typing.Optional[bool] = OMIT,
+        allow_rollback: typing.Optional[bool] = OMIT,
+        allow_destroy: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretIdentityScope:
+        """
+        Grants an identity access to another store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        store_id : str
+
+        access_mode : typing.Optional[CreateSecretIdentityScopeRequestAccessMode]
+
+        allow_version_read : typing.Optional[bool]
+
+        allow_rollback : typing.Optional[bool]
+
+        allow_destroy : typing.Optional[bool]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityScope
+            Scope created successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.create_secret_identity_scope(
+            identity_id="identity_id",
+            workspace_id="workspace_id",
+            store_id="store_id",
+        )
+        """
+        _response = self._raw_client.create_secret_identity_scope(
+            identity_id,
+            workspace_id=workspace_id,
+            store_id=store_id,
+            access_mode=access_mode,
+            allow_version_read=allow_version_read,
+            allow_rollback=allow_rollback,
+            allow_destroy=allow_destroy,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def delete_secret_identity_scope(
+        self, scope_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityActionStatus:
+        """
+        Removes a store permission from an identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        scope_id : str
+            Secret Store identity scope ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityActionStatus
+            Scope deleted successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.delete_secret_identity_scope(
+            scope_id="scope_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.delete_secret_identity_scope(
+            scope_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def update_secret_identity_scope(
+        self,
+        scope_id: str,
+        *,
+        workspace_id: str,
+        access_mode: typing.Optional[UpdateSecretIdentityScopeRequestAccessMode] = OMIT,
+        allow_version_read: typing.Optional[bool] = OMIT,
+        allow_rollback: typing.Optional[bool] = OMIT,
+        allow_destroy: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretIdentityScope:
+        """
+        Updates store access and version permissions for a scope. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        scope_id : str
+            Secret Store identity scope ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        access_mode : typing.Optional[UpdateSecretIdentityScopeRequestAccessMode]
+
+        allow_version_read : typing.Optional[bool]
+
+        allow_rollback : typing.Optional[bool]
+
+        allow_destroy : typing.Optional[bool]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityScope
+            Scope updated successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.secret_store.update_secret_identity_scope(
+            scope_id="scope_id",
+            workspace_id="workspace_id",
+        )
+        """
+        _response = self._raw_client.update_secret_identity_scope(
+            scope_id,
+            workspace_id=workspace_id,
+            access_mode=access_mode,
+            allow_version_read=allow_version_read,
+            allow_rollback=allow_rollback,
+            allow_destroy=allow_destroy,
+            request_options=request_options,
         )
         return _response.data
 
@@ -816,6 +1914,100 @@ class AsyncSecretStoreClient:
         )
         return _response.data
 
+    async def unarchive_secret_store(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretStore:
+        """
+        Reactivates an archived secret store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretStore
+            Store reactivated successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.unarchive_secret_store(
+                store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.unarchive_secret_store(
+            store_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def permanently_delete_secret_store(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretLifecycleStatus:
+        """
+        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretLifecycleStatus
+            Store and its resources permanently deleted.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.permanently_delete_secret_store(
+                store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.permanently_delete_secret_store(
+            store_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
     async def list_secrets(
         self,
         store_id: str,
@@ -937,6 +2129,66 @@ class AsyncSecretStoreClient:
         """
         _response = await self._raw_client.create_secret(
             store_id, workspace_id=workspace_id, secret_name=secret_name, value=value, request_options=request_options
+        )
+        return _response.data
+
+    async def batch_create_secrets(
+        self,
+        store_id: str,
+        *,
+        workspace_id: str,
+        secrets: typing.Sequence[BatchCreateSecretItem],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BatchCreateSecretsResponse:
+        """
+        Creates up to 500 secrets without overwriting existing names. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        secrets : typing.Sequence[BatchCreateSecretItem]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BatchCreateSecretsResponse
+            Batch processed; inspect each result for created, skipped, or failed status.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee, BatchCreateSecretItem
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.batch_create_secrets(
+                store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+                workspace_id="workspace_id",
+                secrets=[
+                    BatchCreateSecretItem(
+                        secret_name="secret_name",
+                        value={"key": "value"},
+                    )
+                ],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.batch_create_secrets(
+            store_id, workspace_id=workspace_id, secrets=secrets, request_options=request_options
         )
         return _response.data
 
@@ -1139,5 +2391,1125 @@ class AsyncSecretStoreClient:
         """
         _response = await self._raw_client.update_secret_value(
             secret_id, workspace_id=workspace_id, value=value, cas=cas, request_options=request_options
+        )
+        return _response.data
+
+    async def patch_secret_value(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        value: typing.Dict[str, typing.Any],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretValue:
+        """
+        Merges the supplied keys into the current value and creates a new version. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        value : typing.Dict[str, typing.Any]
+            Key-value pairs to merge into the current value. Creates a new version.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretValue
+            Secret value patched successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.patch_secret_value(
+                secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+                workspace_id="workspace_id",
+                value={"key": "value"},
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.patch_secret_value(
+            secret_id, workspace_id=workspace_id, value=value, request_options=request_options
+        )
+        return _response.data
+
+    async def undelete_secret(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        versions: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> Secret:
+        """
+        Restores specified soft-deleted versions and reactivates the secret. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        versions : typing.Sequence[int]
+            Secret versions to restore or irreversibly destroy.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        Secret
+            Secret versions restored successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.undelete_secret(
+                secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+                workspace_id="workspace_id",
+                versions=[1],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.undelete_secret(
+            secret_id, workspace_id=workspace_id, versions=versions, request_options=request_options
+        )
+        return _response.data
+
+    async def destroy_secret_versions(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        versions: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretLifecycleStatus:
+        """
+        Irreversibly destroys specified secret versions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        versions : typing.Sequence[int]
+            Secret versions to restore or irreversibly destroy.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretLifecycleStatus
+            Secret versions permanently destroyed.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.destroy_secret_versions(
+                secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+                workspace_id="workspace_id",
+                versions=[1],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.destroy_secret_versions(
+            secret_id, workspace_id=workspace_id, versions=versions, request_options=request_options
+        )
+        return _response.data
+
+    async def permanently_delete_secret(
+        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretLifecycleStatus:
+        """
+        Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretLifecycleStatus
+            Secret permanently deleted.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.permanently_delete_secret(
+                secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.permanently_delete_secret(
+            secret_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def list_secret_versions(
+        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretVersions:
+        """
+        Returns version metadata without secret values. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretVersions
+            Secret version metadata returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.list_secret_versions(
+                secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.list_secret_versions(
+            secret_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def get_secret_version(
+        self,
+        secret_id: str,
+        version: int,
+        *,
+        workspace_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretVersion:
+        """
+        Returns the value and metadata for one secret version. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        version : int
+            Positive secret version number.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretVersion
+            Secret version returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.get_secret_version(
+                secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+                version=1,
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_secret_version(
+            secret_id, version, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def rollback_secret(
+        self,
+        secret_id: str,
+        *,
+        workspace_id: str,
+        version: int,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretValue:
+        """
+        Copies a previous version into a new current version. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        secret_id : str
+            Secret ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        version : int
+            Previous version to copy into a new current version.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretValue
+            Previous value copied into a new current version.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.rollback_secret(
+                secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+                workspace_id="workspace_id",
+                version=1,
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.rollback_secret(
+            secret_id, workspace_id=workspace_id, version=version, request_options=request_options
+        )
+        return _response.data
+
+    async def list_secret_identities(
+        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityList:
+        """
+        Lists AppRole and Kubernetes identities bound to a store. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityList
+            Identities returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.list_secret_identities(
+                store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.list_secret_identities(
+            store_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def create_secret_identity(
+        self,
+        store_id: str,
+        *,
+        workspace_id: str,
+        auth_method: CreateSecretIdentityRequestAuthMethod,
+        name: str,
+        token_policy_mode: typing.Optional[CreateSecretIdentityRequestTokenPolicyMode] = OMIT,
+        k8s_namespace: typing.Optional[str] = OMIT,
+        k8s_service_account: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretIdentity:
+        """
+        Creates an AppRole or Kubernetes identity with an initial scope for this store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        store_id : str
+            Secret store ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        auth_method : CreateSecretIdentityRequestAuthMethod
+            Authentication method used by the application.
+
+        name : str
+
+        token_policy_mode : typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]
+
+        k8s_namespace : typing.Optional[str]
+            Required when auth_method is kubernetes.
+
+        k8s_service_account : typing.Optional[str]
+            Required when auth_method is kubernetes.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity created successfully. Fetch access details separately.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.create_secret_identity(
+                store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+                workspace_id="workspace_id",
+                auth_method="approle",
+                name="name",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.create_secret_identity(
+            store_id,
+            workspace_id=workspace_id,
+            auth_method=auth_method,
+            name=name,
+            token_policy_mode=token_policy_mode,
+            k8s_namespace=k8s_namespace,
+            k8s_service_account=k8s_service_account,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def get_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentity:
+        """
+        Gets one application identity without credentials. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.get_secret_identity(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_secret_identity(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def delete_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityActionStatus:
+        """
+        Permanently removes the identity, its scopes, role, policy, and sessions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityActionStatus
+            Identity deleted successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.delete_secret_identity(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.delete_secret_identity(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def update_secret_identity(
+        self,
+        identity_id: str,
+        *,
+        workspace_id: str,
+        token_policy_mode: typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretIdentity:
+        """
+        Updates the token policy mode. Identity names cannot be changed after creation. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        token_policy_mode : typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode]
+            Updating the mode also aligns every existing scope and revokes active sessions.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity updated successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.update_secret_identity(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.update_secret_identity(
+            identity_id, workspace_id=workspace_id, token_policy_mode=token_policy_mode, request_options=request_options
+        )
+        return _response.data
+
+    async def disable_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentity:
+        """
+        Disables an identity and revokes its active sessions. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity disabled successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.disable_secret_identity(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.disable_secret_identity(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def enable_secret_identity(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentity:
+        """
+        Re-enables a disabled identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentity
+            Identity enabled successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.enable_secret_identity(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.enable_secret_identity(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def get_secret_identity_access(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityAccess:
+        """
+        Returns Kubernetes binding details or generates fresh AppRole credentials. Treat secret_id as sensitive. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityAccess
+            Access details returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.get_secret_identity_access(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_secret_identity_access(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def rotate_secret_identity_secret_id(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityAccess:
+        """
+        Generates fresh AppRole credentials. Available only for AppRole identities. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityAccess
+            Fresh AppRole access details returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.rotate_secret_identity_secret_id(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.rotate_secret_identity_secret_id(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def revoke_secret_identity_sessions(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityActionStatus:
+        """
+        Revokes active sessions without deleting or disabling the identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityActionStatus
+            Identity sessions revoked successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.revoke_secret_identity_sessions(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.revoke_secret_identity_sessions(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def list_secret_identity_scopes(
+        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityScopeList:
+        """
+        Lists the stores and permissions available to an identity. Requires scope: secret-store.read.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityScopeList
+            Scopes returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.list_secret_identity_scopes(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.list_secret_identity_scopes(
+            identity_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def create_secret_identity_scope(
+        self,
+        identity_id: str,
+        *,
+        workspace_id: str,
+        store_id: str,
+        access_mode: typing.Optional[CreateSecretIdentityScopeRequestAccessMode] = OMIT,
+        allow_version_read: typing.Optional[bool] = OMIT,
+        allow_rollback: typing.Optional[bool] = OMIT,
+        allow_destroy: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretIdentityScope:
+        """
+        Grants an identity access to another store. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        identity_id : str
+            Secret Store application identity ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        store_id : str
+
+        access_mode : typing.Optional[CreateSecretIdentityScopeRequestAccessMode]
+
+        allow_version_read : typing.Optional[bool]
+
+        allow_rollback : typing.Optional[bool]
+
+        allow_destroy : typing.Optional[bool]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityScope
+            Scope created successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.create_secret_identity_scope(
+                identity_id="identity_id",
+                workspace_id="workspace_id",
+                store_id="store_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.create_secret_identity_scope(
+            identity_id,
+            workspace_id=workspace_id,
+            store_id=store_id,
+            access_mode=access_mode,
+            allow_version_read=allow_version_read,
+            allow_rollback=allow_rollback,
+            allow_destroy=allow_destroy,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def delete_secret_identity_scope(
+        self, scope_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> SecretIdentityActionStatus:
+        """
+        Removes a store permission from an identity. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        scope_id : str
+            Secret Store identity scope ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityActionStatus
+            Scope deleted successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.delete_secret_identity_scope(
+                scope_id="scope_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.delete_secret_identity_scope(
+            scope_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def update_secret_identity_scope(
+        self,
+        scope_id: str,
+        *,
+        workspace_id: str,
+        access_mode: typing.Optional[UpdateSecretIdentityScopeRequestAccessMode] = OMIT,
+        allow_version_read: typing.Optional[bool] = OMIT,
+        allow_rollback: typing.Optional[bool] = OMIT,
+        allow_destroy: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SecretIdentityScope:
+        """
+        Updates store access and version permissions for a scope. Requires scope: secret-store.write.
+
+        Parameters
+        ----------
+        scope_id : str
+            Secret Store identity scope ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        access_mode : typing.Optional[UpdateSecretIdentityScopeRequestAccessMode]
+
+        allow_version_read : typing.Optional[bool]
+
+        allow_rollback : typing.Optional[bool]
+
+        allow_destroy : typing.Optional[bool]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SecretIdentityScope
+            Scope updated successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.secret_store.update_secret_identity_scope(
+                scope_id="scope_id",
+                workspace_id="workspace_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.update_secret_identity_scope(
+            scope_id,
+            workspace_id=workspace_id,
+            access_mode=access_mode,
+            allow_version_read=allow_version_read,
+            allow_rollback=allow_rollback,
+            allow_destroy=allow_destroy,
+            request_options=request_options,
         )
         return _response.data

@@ -2,4 +2,4 @@
 
 import typing
 
-SecretStoreStatus = typing.Union[typing.Literal["active", "archived"], typing.Any]
+SecretStoreStatus = typing.Union[typing.Literal["active", "archived", "deleting"], typing.Any]
