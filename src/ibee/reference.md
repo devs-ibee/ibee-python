@@ -5,6 +5,16 @@
 The following typed resources were added or expanded in SDK 0.3. Every method
 is also available from `AsyncIbee` with the same arguments.
 
+### Billing
+
+| Method | Return type |
+|---|---|
+| `client.billing.check_resource_eligibility(...)` | `BillingEligibility` |
+
+The billing eligibility operation requires `workspace_id` and accepts optional
+`sku_code` and `estimated_cost_minor` values. It returns a point-in-time
+decision only; it does not reserve funds or create the resource.
+
 ### Compute Catalog
 
 | Method | Return type |

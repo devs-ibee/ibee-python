@@ -78,6 +78,7 @@ if typing.TYPE_CHECKING:
         VpcDetail,
         VpcSummary,
     )
+    from .billing import BillingEligibility
     from .compute_catalog import (
         ComputeImage,
         ComputeImageList,
@@ -87,7 +88,18 @@ if typing.TYPE_CHECKING:
         ComputeSiteList,
     )
     from .errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError, UnauthorizedError
-    from . import cloud_vms, compute_catalog, firewalls, gpu_vms, load_balancers, object_storage, reserved_ips, secret_store, vpcs
+    from . import (
+        billing,
+        cloud_vms,
+        compute_catalog,
+        firewalls,
+        gpu_vms,
+        load_balancers,
+        object_storage,
+        reserved_ips,
+        secret_store,
+        vpcs,
+    )
     from ._default_clients import DefaultAioHttpClient, DefaultAsyncHttpxClient
     from .client import AsyncIbee, Ibee
     from .cloud_vms import CreateCloudVmRequestOsType
@@ -110,6 +122,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AsyncIbee": ".client",
     "AttachVpcNodeRequestConnectivity": ".vpcs",
     "BadRequestError": ".errors",
+    "BillingEligibility": ".billing",
     "Bucket": ".types",
     "BucketList": ".types",
     "BucketStats": ".types",
@@ -204,6 +217,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "VpcConnectivityType": ".types",
     "VpcDetail": ".types",
     "VpcSummary": ".types",
+    "billing": ".billing",
     "cloud_vms": ".cloud_vms",
     "compute_catalog": ".compute_catalog",
     "firewalls": ".firewalls",
@@ -241,6 +255,7 @@ __all__ = [
     "AsyncIbee",
     "AttachVpcNodeRequestConnectivity",
     "BadRequestError",
+    "BillingEligibility",
     "Bucket",
     "BucketList",
     "BucketStats",
@@ -335,6 +350,7 @@ __all__ = [
     "VpcConnectivityType",
     "VpcDetail",
     "VpcSummary",
+    "billing",
     "cloud_vms",
     "compute_catalog",
     "firewalls",

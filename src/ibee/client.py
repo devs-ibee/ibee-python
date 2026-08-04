@@ -10,6 +10,7 @@ from .core.logging import LogConfig, Logger
 from .environment import IbeeEnvironment
 
 if typing.TYPE_CHECKING:
+    from .billing.client import AsyncBillingClient, BillingClient
     from .cloud_vms.client import AsyncCloudVmsClient, CloudVmsClient
     from .compute_catalog.client import AsyncComputeCatalogClient, ComputeCatalogClient
     from .firewalls.client import AsyncFirewallsClient, FirewallsClient
@@ -106,6 +107,7 @@ class Ibee:
             logging=logging,
         )
         self._secret_store: typing.Optional[SecretStoreClient] = None
+        self._billing: typing.Optional[BillingClient] = None
         self._object_storage: typing.Optional[ObjectStorageClient] = None
         self._compute_catalog: typing.Optional[ComputeCatalogClient] = None
         self._vpcs: typing.Optional[VpcsClient] = None
@@ -114,6 +116,14 @@ class Ibee:
         self._load_balancers: typing.Optional[LoadBalancersClient] = None
         self._cloud_vms: typing.Optional[CloudVmsClient] = None
         self._gpu_vms: typing.Optional[GpuVmsClient] = None
+
+    @property
+    def billing(self):
+        if self._billing is None:
+            from .billing.client import BillingClient  # noqa: E402
+
+            self._billing = BillingClient(client_wrapper=self._client_wrapper)
+        return self._billing
 
     @property
     def secret_store(self):
@@ -294,6 +304,7 @@ class AsyncIbee:
             logging=logging,
         )
         self._secret_store: typing.Optional[AsyncSecretStoreClient] = None
+        self._billing: typing.Optional[AsyncBillingClient] = None
         self._object_storage: typing.Optional[AsyncObjectStorageClient] = None
         self._compute_catalog: typing.Optional[AsyncComputeCatalogClient] = None
         self._vpcs: typing.Optional[AsyncVpcsClient] = None
@@ -302,6 +313,14 @@ class AsyncIbee:
         self._load_balancers: typing.Optional[AsyncLoadBalancersClient] = None
         self._cloud_vms: typing.Optional[AsyncCloudVmsClient] = None
         self._gpu_vms: typing.Optional[AsyncGpuVmsClient] = None
+
+    @property
+    def billing(self):
+        if self._billing is None:
+            from .billing.client import AsyncBillingClient  # noqa: E402
+
+            self._billing = AsyncBillingClient(client_wrapper=self._client_wrapper)
+        return self._billing
 
     @property
     def secret_store(self):

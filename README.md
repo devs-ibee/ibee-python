@@ -17,6 +17,16 @@ from ibee import Ibee
 
 client = Ibee(token="ibee_live_xxxxxxxxxxxx")
 
+# Point-in-time billing preflight before a billable create. This does not
+# reserve funds or guarantee that the later product operation will succeed.
+eligibility = client.billing.check_resource_eligibility(
+    workspace_id="907479",
+    sku_code="STANDARD-2-8-50",
+    estimated_cost_minor=120000,
+)
+if not eligibility.allowed:
+    raise RuntimeError(f"Not eligible: {eligibility.reason}")
+
 # List cloud VMs
 vms = client.cloud_vms.list_cloud_vms(workspace_id="907479")
 
