@@ -9,11 +9,54 @@ from ibee import Ibee
 from ibee.errors import ForbiddenError, NotFoundError
 
 
+def _plan_list() -> dict[str, object]:
+    return {
+        "plans": [
+            {
+                "plan_id": "plan-1",
+                "vm_type": "cloud",
+                "name": "Standard",
+                "code": "STANDARD-2-8-50",
+                "cpu": 2,
+                "ram_mb": 4096,
+                "disk_gb": 50,
+                "gpu_count": 0,
+                "selectable": True,
+                "pricing_status": "priced",
+                "currency": "INR",
+                "billing_interval": "MONTHLY",
+                "monthly_price_minor": 12500,
+            }
+        ],
+        "count": 1,
+        "vm_type": "cloud",
+        "currency": "INR",
+        "billing_interval": "MONTHLY",
+    }
+
+
+def _billing_decision() -> dict[str, object]:
+    return {
+        "organization_id": "organization-1",
+        "allowed": True,
+        "reason": "eligible",
+        "billing_mode": "PREPAID",
+        "billing_state": "CURRENT",
+        "sku_code": "STANDARD-2-8-50",
+        "estimated_cost_minor": 12500,
+        "evaluated_at": "2026-08-04T10:00:00Z",
+    }
+
+
 def test_cloud_vm_create_omits_site_for_automatic_placement() -> None:
     observed: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         observed.append(request)
+        if request.url.path.endswith("/compute/plans"):
+            return httpx.Response(200, json=_plan_list(), request=request)
+        if request.url.path.endswith("/billing/resource-eligibility"):
+            return httpx.Response(200, json=_billing_decision(), request=request)
         return httpx.Response(
             202,
             json={
@@ -43,7 +86,8 @@ def test_cloud_vm_create_omits_site_for_automatic_placement() -> None:
         plan_id="plan-1",
     )
 
-    assert "site_id" not in json.loads(observed[0].content)
+    assert "site_id" not in json.loads(observed[2].content)
+    assert observed[2].headers["x-idempotency-key"] == "automatic-placement"
 
 
 def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
@@ -52,7 +96,11 @@ def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         observed.append(request)
         path = request.url.path
-        if request.method == "GET" and path.endswith("/cloud-vms"):
+        if path.endswith("/compute/plans"):
+            payload: object = _plan_list()
+        elif path.endswith("/billing/resource-eligibility"):
+            payload = _billing_decision()
+        elif request.method == "GET" and path.endswith("/cloud-vms"):
             payload: object = []
         elif request.method == "GET" and path.endswith("/metrics"):
             payload = {
@@ -120,6 +168,8 @@ def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
 
     assert [request.url.path for request in observed] == [
         "/v1/compute/cloud-vms",
+        "/v1/compute/plans",
+        "/v1/billing/resource-eligibility",
         "/v1/compute/cloud-vms",
         "/v1/compute/cloud-vms/vm-1",
         "/v1/compute/cloud-vms/vm-1/actions/start",
@@ -130,15 +180,15 @@ def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
         "/v1/compute/cloud-vms/vm-1",
     ]
     assert all(request.url.params["workspace_id"] == "workspace-1" for request in observed)
-    assert observed[1].headers["x-idempotency-key"] == "create-key"
-    assert observed[3].headers["x-idempotency-key"] == "start-key"
-    assert observed[4].headers["x-idempotency-key"] == "stop-key"
-    assert observed[5].headers["x-idempotency-key"] == "reboot-key"
-    assert observed[8].headers["x-idempotency-key"] == "delete-key"
-    create_body = json.loads(observed[1].content)
+    assert observed[3].headers["x-idempotency-key"] == "create-key"
+    assert observed[5].headers["x-idempotency-key"] == "start-key"
+    assert observed[6].headers["x-idempotency-key"] == "stop-key"
+    assert observed[7].headers["x-idempotency-key"] == "reboot-key"
+    assert observed[10].headers["x-idempotency-key"] == "delete-key"
+    create_body = json.loads(observed[3].content)
     assert create_body["site_id"] == "site-1"
     assert create_body["plan_id"] == "plan-1"
-    assert json.loads(observed[4].content) == {"force": True}
+    assert json.loads(observed[6].content) == {"force": True}
     assert operation.action == "create"
     assert operation.status == "succeeded"
 

@@ -87,7 +87,14 @@ if typing.TYPE_CHECKING:
         ComputeSite,
         ComputeSiteList,
     )
-    from .errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError, UnauthorizedError
+    from .errors import (
+        BadRequestError,
+        BillingEligibilityError,
+        ConflictError,
+        ForbiddenError,
+        NotFoundError,
+        UnauthorizedError,
+    )
     from . import billing, cloud_vms, compute_catalog, firewalls, gpu_vms, load_balancers, object_storage, reserved_ips, secret_store, vpcs
     from ._default_clients import DefaultAioHttpClient, DefaultAsyncHttpxClient
     from .client import AsyncIbee, Ibee
@@ -112,6 +119,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AttachVpcNodeRequestConnectivity": ".vpcs",
     "BadRequestError": ".errors",
     "BillingEligibility": ".billing",
+    "BillingEligibilityError": ".errors",
     "Bucket": ".types",
     "BucketList": ".types",
     "BucketStats": ".types",
@@ -245,6 +253,7 @@ __all__ = [
     "AttachVpcNodeRequestConnectivity",
     "BadRequestError",
     "BillingEligibility",
+    "BillingEligibilityError",
     "Bucket",
     "BucketList",
     "BucketStats",

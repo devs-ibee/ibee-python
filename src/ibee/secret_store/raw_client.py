@@ -3,6 +3,11 @@
 import typing
 from json.decoder import JSONDecodeError
 
+from ..billing.admission import (
+    SECRET_MANAGER_SKU_CODE,
+    enforce_billing_eligibility,
+    enforce_billing_eligibility_async,
+)
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
@@ -144,6 +149,12 @@ class RawSecretStoreClient:
         HttpResponse[SecretStore]
             Store created successfully.
         """
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=SECRET_MANAGER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             "secret-store/stores",
             method="POST",
@@ -622,6 +633,12 @@ class RawSecretStoreClient:
         HttpResponse[Secret]
             Secret created successfully.
         """
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=SECRET_MANAGER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             f"secret-store/stores/{encode_path_param(store_id)}/secrets",
             method="POST",
@@ -1179,6 +1196,12 @@ class AsyncRawSecretStoreClient:
         AsyncHttpResponse[SecretStore]
             Store created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=SECRET_MANAGER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             "secret-store/stores",
             method="POST",
@@ -1657,6 +1680,12 @@ class AsyncRawSecretStoreClient:
         AsyncHttpResponse[Secret]
             Secret created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=SECRET_MANAGER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             f"secret-store/stores/{encode_path_param(store_id)}/secrets",
             method="POST",

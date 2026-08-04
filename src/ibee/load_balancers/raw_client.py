@@ -3,6 +3,11 @@
 import typing
 from json.decoder import JSONDecodeError
 
+from ..billing.admission import (
+    LOAD_BALANCER_SKU_CODE,
+    enforce_billing_eligibility,
+    enforce_billing_eligibility_async,
+)
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
@@ -164,6 +169,12 @@ class RawLoadBalancersClient:
         HttpResponse[LoadBalancer]
             L4 load balancer created successfully.
         """
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=LOAD_BALANCER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             "networking/load-balancers/l4",
             method="POST",
@@ -293,6 +304,12 @@ class RawLoadBalancersClient:
         HttpResponse[LoadBalancer]
             L7 load balancer created successfully.
         """
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=LOAD_BALANCER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             "networking/load-balancers/l7",
             method="POST",
@@ -1032,6 +1049,12 @@ class AsyncRawLoadBalancersClient:
         AsyncHttpResponse[LoadBalancer]
             L4 load balancer created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=LOAD_BALANCER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             "networking/load-balancers/l4",
             method="POST",
@@ -1161,6 +1184,12 @@ class AsyncRawLoadBalancersClient:
         AsyncHttpResponse[LoadBalancer]
             L7 load balancer created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=LOAD_BALANCER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             "networking/load-balancers/l7",
             method="POST",

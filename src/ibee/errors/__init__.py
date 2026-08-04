@@ -7,12 +7,14 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .bad_request_error import BadRequestError
+    from .billing_eligibility_error import BillingEligibilityError
     from .conflict_error import ConflictError
     from .forbidden_error import ForbiddenError
     from .not_found_error import NotFoundError
     from .unauthorized_error import UnauthorizedError
 _dynamic_imports: typing.Dict[str, str] = {
     "BadRequestError": ".bad_request_error",
+    "BillingEligibilityError": ".billing_eligibility_error",
     "ConflictError": ".conflict_error",
     "ForbiddenError": ".forbidden_error",
     "NotFoundError": ".not_found_error",
@@ -41,4 +43,11 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["BadRequestError", "ConflictError", "ForbiddenError", "NotFoundError", "UnauthorizedError"]
+__all__ = [
+    "BadRequestError",
+    "BillingEligibilityError",
+    "ConflictError",
+    "ForbiddenError",
+    "NotFoundError",
+    "UnauthorizedError",
+]

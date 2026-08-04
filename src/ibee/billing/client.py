@@ -27,8 +27,9 @@ class BillingClient:
         """
         Check whether billing permits a prospective resource create.
 
-        This is an explicit, read-only preflight. Create methods do not invoke it
-        automatically, and product services remain authoritative at create time.
+        This is an optional, explicit read-only preflight. Billable SDK create
+        methods also invoke it automatically, and product services remain
+        authoritative at create time.
         """
         return self._raw_client.check_resource_eligibility(
             workspace_id=workspace_id,
@@ -57,8 +58,9 @@ class AsyncBillingClient:
         """
         Check whether billing permits a prospective resource create.
 
-        This is an explicit, read-only preflight. Create methods do not invoke it
-        automatically, and product services remain authoritative at create time.
+        This is an optional, explicit read-only preflight. Billable SDK create
+        methods also invoke it automatically, and product services remain
+        authoritative at create time.
         """
         response = await self._raw_client.check_resource_eligibility(
             workspace_id=workspace_id,

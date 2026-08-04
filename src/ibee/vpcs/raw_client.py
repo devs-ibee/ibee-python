@@ -3,6 +3,10 @@
 import typing
 from json.decoder import JSONDecodeError
 
+from ..billing.admission import (
+    enforce_billing_eligibility,
+    enforce_billing_eligibility_async,
+)
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
@@ -1482,6 +1486,15 @@ class RawVpcsClient:
         HttpResponse[NatGateway]
             NAT gateway created successfully.
         """
+        # NAT gateways do not yet have a catalog SKU. The server still returns
+        # its authoritative workspace billing-state decision and the SDK fails
+        # closed if that decision cannot be obtained.
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=None,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways",
             method="POST",
@@ -3578,6 +3591,12 @@ class AsyncRawVpcsClient:
         AsyncHttpResponse[NatGateway]
             NAT gateway created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=None,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways",
             method="POST",

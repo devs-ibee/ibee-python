@@ -17,15 +17,10 @@ from ibee import Ibee
 
 client = Ibee(token="YOUR_TOKEN")
 
-# Explicitly check billing before any billable create. Product services repeat
-# this check authoritatively when the resource is created.
-eligibility = client.billing.check_resource_eligibility(
-    workspace_id="907479",
-    sku_code="STANDARD-2-8-50",
-    estimated_cost_minor=12_500,
-)
-if not eligibility.allowed:
-    raise RuntimeError(f"Billing blocked the create: {eligibility.reason}")
+# Billable create methods automatically fail closed unless billing returns an
+# affirmative decision. Product services repeat the check authoritatively
+# immediately before provisioning. You can still call
+# client.billing.check_resource_eligibility(...) for an earlier UI preflight.
 
 # List cloud VMs
 vms = client.cloud_vms.list_cloud_vms(workspace_id="907479")
@@ -131,7 +126,9 @@ when `plan_id` is provided.
 
 ## Environments
 
-The client defaults to the production API (`https://api.ibee.ai/v1`). To use the development environment:
+The client defaults to the production API (`https://api.ibee.ai/v1`).
+`IbeeEnvironment.PRODUCTION` is an explicit alias for that default. Use
+`IbeeEnvironment.DEVELOPMENT` for the development API (`https://api.ibee.co.in/v1`):
 
 ```python
 from ibee import Ibee
@@ -139,6 +136,13 @@ from ibee.environment import IbeeEnvironment
 
 client = Ibee(token="IBEE_DEV_TOKEN", environment=IbeeEnvironment.DEVELOPMENT)
 ```
+
+All ten billable creates perform automatic preflight: secret stores, secrets,
+buckets, S3 credentials, NAT gateways, Reserved IPs, L4 and L7 load balancers,
+Cloud VMs, and GPU VMs. Compute creates resolve the selected `plan_id` through
+the compute catalog and submit its confirmed SKU and price. NAT gateways and
+Reserved IPs currently use the platform's workspace billing-state decision
+because those resources do not yet have dedicated catalog SKUs.
 
 Requires Python 3.10+.
 
