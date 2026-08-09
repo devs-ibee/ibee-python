@@ -7,7 +7,11 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .create_cloud_vm_request_os_type import CreateCloudVmRequestOsType
-_dynamic_imports: typing.Dict[str, str] = {"CreateCloudVmRequestOsType": ".create_cloud_vm_request_os_type"}
+    from .get_cloud_vm_metrics_timeseries_request_range import GetCloudVmMetricsTimeseriesRequestRange
+_dynamic_imports: typing.Dict[str, str] = {
+    "CreateCloudVmRequestOsType": ".create_cloud_vm_request_os_type",
+    "GetCloudVmMetricsTimeseriesRequestRange": ".get_cloud_vm_metrics_timeseries_request_range",
+}
 
 
 def __getattr__(attr_name: str) -> typing.Any:
@@ -31,4 +35,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["CreateCloudVmRequestOsType"]
+__all__ = ["CreateCloudVmRequestOsType", "GetCloudVmMetricsTimeseriesRequestRange"]

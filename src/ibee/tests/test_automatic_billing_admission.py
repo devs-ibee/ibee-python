@@ -89,7 +89,11 @@ def _invoke_sync(client: Ibee, name: OperationName) -> object:
             "store-1", workspace_id=WORKSPACE_ID, secret_name="database-url", value={"url": "secret"}
         )
     if name == "bucket":
-        return client.object_storage.create_bucket(workspace_id=WORKSPACE_ID, name="assets")
+        return client.object_storage.create_bucket(
+            workspace_id=WORKSPACE_ID,
+            name="assets",
+            region="in-south-1",
+        )
     if name == "s3-credential":
         return client.object_storage.create_s3credential(workspace_id=WORKSPACE_ID, name="application")
     if name == "nat-gateway":
@@ -147,7 +151,11 @@ async def _invoke_async(client: AsyncIbee, name: OperationName) -> object:
             "store-1", workspace_id=WORKSPACE_ID, secret_name="database-url", value={"url": "secret"}
         )
     if name == "bucket":
-        return await client.object_storage.create_bucket(workspace_id=WORKSPACE_ID, name="assets")
+        return await client.object_storage.create_bucket(
+            workspace_id=WORKSPACE_ID,
+            name="assets",
+            region="in-south-1",
+        )
     if name == "s3-credential":
         return await client.object_storage.create_s3credential(workspace_id=WORKSPACE_ID, name="application")
     if name == "nat-gateway":
@@ -291,7 +299,11 @@ def test_allowed_but_unconfirmed_billing_decision_fails_closed(decision: dict[st
     )
 
     with pytest.raises(BillingEligibilityError) as exc_info:
-        client.object_storage.create_bucket(workspace_id=WORKSPACE_ID, name="assets")
+        client.object_storage.create_bucket(
+            workspace_id=WORKSPACE_ID,
+            name="assets",
+            region="in-south-1",
+        )
 
     assert exc_info.value.status_code == 503
     assert len(observed) == 1
@@ -311,7 +323,11 @@ def test_unavailable_billing_preflight_fails_closed_before_resource_post() -> No
     )
 
     with pytest.raises(ApiError):
-        client.object_storage.create_bucket(workspace_id=WORKSPACE_ID, name="assets")
+        client.object_storage.create_bucket(
+            workspace_id=WORKSPACE_ID,
+            name="assets",
+            region="in-south-1",
+        )
     assert len(observed) == 1
     assert observed[0].url.path.endswith("/billing/resource-eligibility")
 

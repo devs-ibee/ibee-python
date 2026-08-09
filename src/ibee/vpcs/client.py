@@ -40,7 +40,7 @@ class VpcsClient:
         self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> typing.List[NetworkingSite]:
         """
-        Lists sites and whether VPC networking is currently available. Requires scope: network.read.
+        Lists the site IDs accepted by VPC and Reserved IP creation. Use only entries where `available` is `true`. Requires scope: network.read.
 
         Parameters
         ----------
@@ -85,7 +85,7 @@ class VpcsClient:
             The workspace ID to scope this request to.
 
         site_id : typing.Optional[str]
-            Return only VPCs in this site.
+            Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -138,6 +138,7 @@ class VpcsClient:
         name : str
 
         site_id : str
+            Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
 
         description : typing.Optional[str]
 
@@ -174,7 +175,7 @@ class VpcsClient:
         client.vpcs.create_vpc(
             workspace_id="workspace_id",
             name="name",
-            site_id="site_id",
+            site_id="68b99bd78a8eda32ff3f16ea",
         )
         """
         _response = self._raw_client.create_vpc(
@@ -1106,7 +1107,7 @@ class AsyncVpcsClient:
         self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> typing.List[NetworkingSite]:
         """
-        Lists sites and whether VPC networking is currently available. Requires scope: network.read.
+        Lists the site IDs accepted by VPC and Reserved IP creation. Use only entries where `available` is `true`. Requires scope: network.read.
 
         Parameters
         ----------
@@ -1161,7 +1162,7 @@ class AsyncVpcsClient:
             The workspace ID to scope this request to.
 
         site_id : typing.Optional[str]
-            Return only VPCs in this site.
+            Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1222,6 +1223,7 @@ class AsyncVpcsClient:
         name : str
 
         site_id : str
+            Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
 
         description : typing.Optional[str]
 
@@ -1263,7 +1265,7 @@ class AsyncVpcsClient:
             await client.vpcs.create_vpc(
                 workspace_id="workspace_id",
                 name="name",
-                site_id="site_id",
+                site_id="68b99bd78a8eda32ff3f16ea",
             )
 
 

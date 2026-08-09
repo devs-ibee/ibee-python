@@ -6,18 +6,24 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .bad_gateway_error import BadGatewayError
     from .bad_request_error import BadRequestError
     from .billing_eligibility_error import BillingEligibilityError
     from .conflict_error import ConflictError
     from .forbidden_error import ForbiddenError
     from .not_found_error import NotFoundError
+    from .payment_required_error import PaymentRequiredError
+    from .service_unavailable_error import ServiceUnavailableError
     from .unauthorized_error import UnauthorizedError
 _dynamic_imports: typing.Dict[str, str] = {
+    "BadGatewayError": ".bad_gateway_error",
     "BadRequestError": ".bad_request_error",
     "BillingEligibilityError": ".billing_eligibility_error",
     "ConflictError": ".conflict_error",
     "ForbiddenError": ".forbidden_error",
     "NotFoundError": ".not_found_error",
+    "PaymentRequiredError": ".payment_required_error",
+    "ServiceUnavailableError": ".service_unavailable_error",
     "UnauthorizedError": ".unauthorized_error",
 }
 
@@ -44,10 +50,13 @@ def __dir__():
 
 
 __all__ = [
+    "BadGatewayError",
     "BadRequestError",
     "BillingEligibilityError",
     "ConflictError",
     "ForbiddenError",
     "NotFoundError",
+    "PaymentRequiredError",
+    "ServiceUnavailableError",
     "UnauthorizedError",
 ]

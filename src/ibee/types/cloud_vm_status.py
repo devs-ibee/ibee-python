@@ -4,8 +4,8 @@ import typing
 
 CloudVmStatus = typing.Union[
     typing.Literal[
-        "creating",
         "pending",
+        "creating",
         "provisioning",
         "configuring",
         "running",

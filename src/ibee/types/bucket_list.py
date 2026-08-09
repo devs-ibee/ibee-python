@@ -4,11 +4,11 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .bucket_summary import BucketSummary
+from .bucket import Bucket
 
 
 class BucketList(UniversalBaseModel):
-    buckets: typing.Optional[typing.List[BucketSummary]] = None
+    buckets: typing.Optional[typing.List[Bucket]] = None
     is_truncated: typing.Optional[bool] = None
     next_continuation_token: typing.Optional[str] = None
 

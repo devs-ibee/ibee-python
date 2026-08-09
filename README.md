@@ -124,6 +124,77 @@ template or image. `ssh_key_ids` are the SSH keys to inject at first boot.
 In the current SDK, `cpu` and `ram_mb` are still required fallback fields even
 when `plan_id` is provided.
 
+## Complete VM lifecycle
+
+Cloud and GPU VM clients expose matching power, access, resize, volume,
+monitoring, snapshot, and backup operations. Mutating operations that accept an
+idempotency key can be retried safely with the same key:
+
+```python
+# Power and access
+operation = client.cloud_vms.stop_cloud_vm(
+    "vm_123",
+    workspace_id="907479",
+    idempotency_key="stop-vm-123-01",
+)
+client.cloud_vms.update_cloud_vm_access(
+    "vm_123",
+    workspace_id="907479",
+    idempotency_key="rotate-access-vm-123-01",
+    ssh_key_ids=["ssh_key_456"],
+    ssh_key_mode="add",
+)
+
+# Precheck and apply a resize
+decision = client.cloud_vms.precheck_cloud_vm_resize(
+    "vm_123", workspace_id="907479", cpu=4, ram_mb=8192
+)
+operation = client.cloud_vms.resize_cloud_vm(
+    "vm_123",
+    workspace_id="907479",
+    idempotency_key="resize-vm-123-01",
+    cpu=4,
+    ram_mb=8192,
+)
+
+# Volumes, events, and time-series metrics
+client.cloud_vms.attach_cloud_vm_volume(
+    "vm_123",
+    workspace_id="907479",
+    idempotency_key="attach-volume-789-01",
+    volume_id="volume_789",
+)
+events = client.cloud_vms.list_cloud_vm_events("vm_123", workspace_id="907479")
+metrics = client.cloud_vms.get_cloud_vm_metrics_timeseries(
+    "vm_123", workspace_id="907479", range="24h"
+)
+
+# Snapshots and backups
+snapshot = client.cloud_vms.create_cloud_vm_snapshot(
+    "vm_123", workspace_id="907479", name="before-upgrade", mode="root_only"
+)
+policy = client.cloud_vms.enable_cloud_vm_backups(
+    "vm_123", workspace_id="907479", retention_days=14
+)
+backup = client.cloud_vms.create_cloud_vm_backup_run(
+    "vm_123", workspace_id="907479", reason="before-upgrade"
+)
+
+# Short-lived graphical console session. Treat connect_url as a secret: do not
+# log or persist it, and close the session when finished.
+session = client.vm_console.create_vm_console_session(
+    workspace_id="907479", vm_id="vm_123", vm_type="cloud"
+)
+client.vm_console.close_vm_console_session(
+    session.session_id, workspace_id="907479", reason="finished"
+)
+```
+
+Use the corresponding `gpu_vms` methods for GPU instances. Snapshot and backup
+item/status methods use family-specific public routes, so cloud and GPU recovery
+records cannot be mixed accidentally. The async client provides the same method
+names and arguments.
+
 ## Environments
 
 The client defaults to the production API (`https://api.ibee.ai/v1`).

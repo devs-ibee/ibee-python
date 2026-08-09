@@ -6,6 +6,7 @@ from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.bucket import Bucket
 from ..types.bucket_list import BucketList
+from ..types.default_retention import DefaultRetention
 from ..types.delete_response import DeleteResponse
 from ..types.s3credential import S3Credential
 from ..types.s3credential_created import S3CredentialCreated
@@ -87,15 +88,15 @@ class ObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        region: typing.Optional[str] = OMIT,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
         object_lock_enabled: typing.Optional[bool] = OMIT,
-        default_retention: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
+        default_retention: typing.Optional[DefaultRetention] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Creates an object storage bucket. Requires scope: object-storage.write.
+        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -105,17 +106,19 @@ class ObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        region : typing.Optional[str]
-            Optional storage region. Omit when the environment has one region.
+        region : str
+            Required Object Storage region identifier. This must match a region configured for the target environment; it is not a compute `site_id` or display name.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
         object_lock_enabled : typing.Optional[bool]
+            Must be `true` when `default_retention` is provided.
 
-        default_retention : typing.Optional[typing.Dict[str, typing.Any]]
+        default_retention : typing.Optional[DefaultRetention]
 
         tags : typing.Optional[typing.Sequence[str]]
+            Optional tags stored alongside bucket metadata.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -135,6 +138,7 @@ class ObjectStorageClient:
         client.object_storage.create_bucket(
             workspace_id="workspace_id",
             name="production-assets",
+            region="in-south-2",
             is_public=False,
         )
         """
@@ -517,15 +521,15 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        region: typing.Optional[str] = OMIT,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
         object_lock_enabled: typing.Optional[bool] = OMIT,
-        default_retention: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
+        default_retention: typing.Optional[DefaultRetention] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Creates an object storage bucket. Requires scope: object-storage.write.
+        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -535,17 +539,19 @@ class AsyncObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        region : typing.Optional[str]
-            Optional storage region. Omit when the environment has one region.
+        region : str
+            Required Object Storage region identifier. This must match a region configured for the target environment; it is not a compute `site_id` or display name.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
         object_lock_enabled : typing.Optional[bool]
+            Must be `true` when `default_retention` is provided.
 
-        default_retention : typing.Optional[typing.Dict[str, typing.Any]]
+        default_retention : typing.Optional[DefaultRetention]
 
         tags : typing.Optional[typing.Sequence[str]]
+            Optional tags stored alongside bucket metadata.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -570,6 +576,7 @@ class AsyncObjectStorageClient:
             await client.object_storage.create_bucket(
                 workspace_id="workspace_id",
                 name="production-assets",
+                region="in-south-2",
                 is_public=False,
             )
 

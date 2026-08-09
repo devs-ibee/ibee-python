@@ -10,15 +10,15 @@ from .operation_status_status import OperationStatusStatus
 
 
 class OperationStatus(UniversalBaseModel):
-    operation_id: typing.Optional[str] = None
-    vm_id: typing.Optional[str] = None
-    action: typing.Optional[OperationStatusAction] = None
-    status: typing.Optional[OperationStatusStatus] = None
+    operation_id: str
+    vm_id: str
+    action: OperationStatusAction
+    status: OperationStatusStatus
     current_step: typing.Optional[str] = None
     error_code: typing.Optional[str] = None
     error_message: typing.Optional[str] = None
-    submitted_at: typing.Optional[dt.datetime] = None
-    updated_at: typing.Optional[dt.datetime] = None
+    submitted_at: dt.datetime
+    updated_at: dt.datetime
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

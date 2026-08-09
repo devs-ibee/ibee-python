@@ -4,8 +4,8 @@ import typing
 
 GpuVmStatus = typing.Union[
     typing.Literal[
-        "creating",
         "pending",
+        "creating",
         "provisioning",
         "configuring",
         "running",

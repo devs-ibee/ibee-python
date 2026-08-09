@@ -15,12 +15,15 @@ from ..core.jsonable_encoder import encode_path_param
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
+from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.not_found_error import NotFoundError
+from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.bucket import Bucket
 from ..types.bucket_list import BucketList
+from ..types.default_retention import DefaultRetention
 from ..types.delete_response import DeleteResponse
 from ..types.error import Error
 from ..types.s3credential import S3Credential
@@ -124,15 +127,15 @@ class RawObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        region: typing.Optional[str] = OMIT,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
         object_lock_enabled: typing.Optional[bool] = OMIT,
-        default_retention: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
+        default_retention: typing.Optional[DefaultRetention] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Bucket]:
         """
-        Creates an object storage bucket. Requires scope: object-storage.write.
+        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -142,17 +145,19 @@ class RawObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        region : typing.Optional[str]
-            Optional storage region. Omit when the environment has one region.
+        region : str
+            Required Object Storage region identifier. This must match a region configured for the target environment; it is not a compute `site_id` or display name.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
         object_lock_enabled : typing.Optional[bool]
+            Must be `true` when `default_retention` is provided.
 
-        default_retention : typing.Optional[typing.Dict[str, typing.Any]]
+        default_retention : typing.Optional[DefaultRetention]
 
         tags : typing.Optional[typing.Sequence[str]]
+            Optional tags stored alongside bucket metadata.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -179,7 +184,9 @@ class RawObjectStorageClient:
                 "region": region,
                 "is_public": is_public,
                 "object_lock_enabled": object_lock_enabled,
-                "default_retention": default_retention,
+                "default_retention": convert_and_respect_annotation_metadata(
+                    object_=default_retention, annotation=DefaultRetention, direction="write"
+                ),
                 "tags": tags,
             },
             headers={
@@ -211,6 +218,17 @@ class RawObjectStorageClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -669,6 +687,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 403:
                 raise ForbiddenError(
                     headers=dict(_response.headers),
@@ -944,15 +973,15 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        region: typing.Optional[str] = OMIT,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
         object_lock_enabled: typing.Optional[bool] = OMIT,
-        default_retention: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
+        default_retention: typing.Optional[DefaultRetention] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Bucket]:
         """
-        Creates an object storage bucket. Requires scope: object-storage.write.
+        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -962,17 +991,19 @@ class AsyncRawObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        region : typing.Optional[str]
-            Optional storage region. Omit when the environment has one region.
+        region : str
+            Required Object Storage region identifier. This must match a region configured for the target environment; it is not a compute `site_id` or display name.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
         object_lock_enabled : typing.Optional[bool]
+            Must be `true` when `default_retention` is provided.
 
-        default_retention : typing.Optional[typing.Dict[str, typing.Any]]
+        default_retention : typing.Optional[DefaultRetention]
 
         tags : typing.Optional[typing.Sequence[str]]
+            Optional tags stored alongside bucket metadata.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -999,7 +1030,9 @@ class AsyncRawObjectStorageClient:
                 "region": region,
                 "is_public": is_public,
                 "object_lock_enabled": object_lock_enabled,
-                "default_retention": default_retention,
+                "default_retention": convert_and_respect_annotation_metadata(
+                    object_=default_retention, annotation=DefaultRetention, direction="write"
+                ),
                 "tags": tags,
             },
             headers={
@@ -1031,6 +1064,17 @@ class AsyncRawObjectStorageClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1480,6 +1524,17 @@ class AsyncRawObjectStorageClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

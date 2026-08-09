@@ -79,7 +79,15 @@ def test_create_bucket_uses_storage_region_without_compute_site_fields() -> None
         observed.append(request)
         if request.url.path.endswith("/billing/resource-eligibility"):
             return httpx.Response(200, json=_billing_decision(), request=request)
-        return httpx.Response(201, json={"bucket_name": "assets"}, request=request)
+        return httpx.Response(
+            201,
+            json={
+                "name": "assets",
+                "is_public": False,
+                "bucket_lock_enabled": True,
+            },
+            request=request,
+        )
 
     client = Ibee(
         token="test-token",

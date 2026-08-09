@@ -5,23 +5,65 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .bucket_stats import BucketStats
 
 
 class Bucket(UniversalBaseModel):
-    bucket_name: typing.Optional[str] = None
-    minio_id: typing.Optional[str] = None
-    public: typing.Optional[bool] = None
-    region: typing.Optional[str] = None
-    plan: typing.Optional[str] = None
-    status: typing.Optional[str] = None
-    site_id: typing.Optional[str] = None
-    site: typing.Optional[str] = None
-    tags: typing.Optional[typing.List[str]] = None
-    metadata: typing.Optional[typing.Dict[str, typing.Any]] = None
-    stats: typing.Optional[BucketStats] = None
+    """
+    An object storage bucket. Read and list responses carry the usage counters `object_count` and `total_size`; the create response omits them because usage is only measured once the bucket exists.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Unique bucket name within the workspace.
+    """
+
+    is_public: bool = pydantic.Field()
+    """
+    Whether the bucket allows unauthenticated read access.
+    """
+
+    region: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Object storage region the bucket lives in.
+    """
+
+    plan: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Storage plan billed for the bucket.
+    """
+
+    status: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Current bucket status.
+    """
+
+    site_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Identifier of the site holding the bucket. Placement is managed internally.
+    """
+
+    site_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Human-readable name of the site holding the bucket.
+    """
+
+    bucket_lock_enabled: bool = pydantic.Field()
+    """
+    Whether object lock is enabled on the bucket.
+    """
+
+    object_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of objects stored in the bucket. Returned by the read and list endpoints only.
+    """
+
+    total_size: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Total size in bytes of the objects stored in the bucket. Returned by the read and list endpoints only.
+    """
+
     created_at: typing.Optional[dt.datetime] = None
-    last_modified: typing.Optional[dt.datetime] = None
+    updated_at: typing.Optional[dt.datetime] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
