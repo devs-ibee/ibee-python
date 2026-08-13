@@ -4,10 +4,6 @@ import datetime as dt
 import typing
 from json.decoder import JSONDecodeError
 
-from ..billing.admission import (
-    enforce_compute_plan_eligibility,
-    enforce_compute_plan_eligibility_async,
-)
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
@@ -203,14 +199,6 @@ class RawGpuVmsClient:
         HttpResponse[OperationAccepted]
             VM creation accepted.
         """
-        enforce_compute_plan_eligibility(
-            self._client_wrapper,
-            workspace_id=workspace_id,
-            vm_type="gpu",
-            plan_id=plan_id,
-            site_id=None if site_id is OMIT else typing.cast(typing.Optional[str], site_id),
-            request_options=request_options,
-        )
         _response = self._client_wrapper.httpx_client.request(
             "compute/gpu-vms",
             method="POST",
@@ -4299,14 +4287,6 @@ class AsyncRawGpuVmsClient:
         AsyncHttpResponse[OperationAccepted]
             VM creation accepted.
         """
-        await enforce_compute_plan_eligibility_async(
-            self._client_wrapper,
-            workspace_id=workspace_id,
-            vm_type="gpu",
-            plan_id=plan_id,
-            site_id=None if site_id is OMIT else typing.cast(typing.Optional[str], site_id),
-            request_options=request_options,
-        )
         _response = await self._client_wrapper.httpx_client.request(
             "compute/gpu-vms",
             method="POST",

@@ -10,6 +10,8 @@ from .core.logging import LogConfig, Logger
 from .environment import IbeeEnvironment
 
 if typing.TYPE_CHECKING:
+    from .block_storage.client import AsyncBlockStorageClient, BlockStorageClient
+    from .cdn.client import AsyncCdnClient, CdnClient
     from .billing.client import AsyncBillingClient, BillingClient
     from .cloud_vms.client import AsyncCloudVmsClient, CloudVmsClient
     from .compute_catalog.client import AsyncComputeCatalogClient, ComputeCatalogClient
@@ -118,6 +120,8 @@ class Ibee:
         self._gpu_vms: typing.Optional[GpuVmsClient] = None
         self._vm_console: typing.Optional[VmConsoleClient] = None
         self._billing: typing.Optional[BillingClient] = None
+        self._block_storage: typing.Optional[BlockStorageClient] = None
+        self._cdn: typing.Optional[CdnClient] = None
 
     @property
     def secret_store(self):
@@ -206,6 +210,22 @@ class Ibee:
 
             self._billing = BillingClient(client_wrapper=self._client_wrapper)
         return self._billing
+
+    @property
+    def block_storage(self):
+        if self._block_storage is None:
+            from .block_storage.client import BlockStorageClient  # noqa: E402
+
+            self._block_storage = BlockStorageClient(client_wrapper=self._client_wrapper)
+        return self._block_storage
+
+    @property
+    def cdn(self):
+        if self._cdn is None:
+            from .cdn.client import CdnClient  # noqa: E402
+
+            self._cdn = CdnClient(client_wrapper=self._client_wrapper)
+        return self._cdn
 
 
 def _make_default_async_client(
@@ -324,6 +344,8 @@ class AsyncIbee:
         self._gpu_vms: typing.Optional[AsyncGpuVmsClient] = None
         self._vm_console: typing.Optional[AsyncVmConsoleClient] = None
         self._billing: typing.Optional[AsyncBillingClient] = None
+        self._block_storage: typing.Optional[AsyncBlockStorageClient] = None
+        self._cdn: typing.Optional[AsyncCdnClient] = None
 
     @property
     def secret_store(self):
@@ -412,6 +434,22 @@ class AsyncIbee:
 
             self._billing = AsyncBillingClient(client_wrapper=self._client_wrapper)
         return self._billing
+
+    @property
+    def block_storage(self):
+        if self._block_storage is None:
+            from .block_storage.client import AsyncBlockStorageClient  # noqa: E402
+
+            self._block_storage = AsyncBlockStorageClient(client_wrapper=self._client_wrapper)
+        return self._block_storage
+
+    @property
+    def cdn(self):
+        if self._cdn is None:
+            from .cdn.client import AsyncCdnClient  # noqa: E402
+
+            self._cdn = AsyncCdnClient(client_wrapper=self._client_wrapper)
+        return self._cdn
 
 
 def _get_base_url(*, base_url: typing.Optional[str] = None, environment: IbeeEnvironment) -> str:

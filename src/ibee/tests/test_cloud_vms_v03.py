@@ -86,8 +86,9 @@ def test_cloud_vm_create_omits_site_for_automatic_placement() -> None:
         plan_id="plan-1",
     )
 
-    assert "site_id" not in json.loads(observed[2].content)
-    assert observed[2].headers["x-idempotency-key"] == "automatic-placement"
+    assert len(observed) == 1
+    assert "site_id" not in json.loads(observed[0].content)
+    assert observed[0].headers["x-idempotency-key"] == "automatic-placement"
 
 
 def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
@@ -168,8 +169,6 @@ def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
 
     assert [request.url.path for request in observed] == [
         "/v1/compute/cloud-vms",
-        "/v1/compute/plans",
-        "/v1/billing/resource-eligibility",
         "/v1/compute/cloud-vms",
         "/v1/compute/cloud-vms/vm-1",
         "/v1/compute/cloud-vms/vm-1/actions/start",
@@ -180,15 +179,15 @@ def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
         "/v1/compute/cloud-vms/vm-1",
     ]
     assert all(request.url.params["workspace_id"] == "710995" for request in observed)
-    assert observed[3].headers["x-idempotency-key"] == "create-key"
-    assert observed[5].headers["x-idempotency-key"] == "start-key"
-    assert observed[6].headers["x-idempotency-key"] == "stop-key"
-    assert observed[7].headers["x-idempotency-key"] == "reboot-key"
-    assert observed[10].headers["x-idempotency-key"] == "delete-key"
-    create_body = json.loads(observed[3].content)
+    assert observed[1].headers["x-idempotency-key"] == "create-key"
+    assert observed[3].headers["x-idempotency-key"] == "start-key"
+    assert observed[4].headers["x-idempotency-key"] == "stop-key"
+    assert observed[5].headers["x-idempotency-key"] == "reboot-key"
+    assert observed[8].headers["x-idempotency-key"] == "delete-key"
+    create_body = json.loads(observed[1].content)
     assert create_body["site_id"] == "site-1"
     assert create_body["plan_id"] == "plan-1"
-    assert json.loads(observed[6].content) == {"force": True}
+    assert json.loads(observed[4].content) == {"force": True}
     assert operation.action == "create"
     assert operation.status == "succeeded"
 

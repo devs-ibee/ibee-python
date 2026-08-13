@@ -1,8 +1,8 @@
 # IBEE Solutions Python SDK
 
 Official Python SDK for the IBEE Solutions API. Manage cloud VMs, GPU VMs,
-VPC networking, Reserved IPs, firewalls, load balancers, object storage, and
-secrets programmatically.
+VPC networking, Reserved IPs, firewalls, load balancers, object storage,
+Block Storage, CDN, and secrets programmatically.
 
 ## Installation
 
@@ -17,10 +17,9 @@ from ibee import Ibee
 
 client = Ibee(token="YOUR_TOKEN")
 
-# Billable create methods automatically fail closed unless billing returns an
-# affirmative decision. Product services repeat the check authoritatively
-# immediately before provisioning. You can still call
-# client.billing.check_resource_eligibility(...) for an earlier UI preflight.
+# Product create methods send one request. The public API edge checks billing
+# authoritatively before routing billable creates. Applications can optionally
+# call client.billing.check_resource_eligibility(...) for a UI preview.
 
 # List cloud VMs
 vms = client.cloud_vms.list_cloud_vms(workspace_id="907479")
@@ -65,7 +64,7 @@ buckets = client.object_storage.list_buckets(workspace_id="907479")
 bucket = client.object_storage.create_bucket(
     workspace_id="907479",
     name="production-assets",
-    # region is optional when the environment has one configured region
+    region="in-south-1",
     is_public=False,
 )
 credential = client.object_storage.create_s3credential(
@@ -244,12 +243,16 @@ from ibee.environment import IbeeEnvironment
 client = Ibee(token="IBEE_DEV_TOKEN", environment=IbeeEnvironment.DEVELOPMENT)
 ```
 
-All ten billable creates perform automatic preflight: secret stores, secrets,
-buckets, S3 credentials, NAT gateways, Reserved IPs, L4 and L7 load balancers,
-Cloud VMs, and GPU VMs. Compute creates resolve the selected `plan_id` through
-the compute catalog and submit its confirmed SKU and price. NAT gateways and
-Reserved IPs currently use the platform's workspace billing-state decision
-because those resources do not yet have dedicated catalog SKUs.
+Billable creates are admitted at the public API edge before the request reaches
+the existing product service. This applies equally to raw REST, the Python and
+TypeScript SDKs, and the CLI, so create helpers do not perform duplicate billing
+or catalog calls. The explicit eligibility method remains available as an
+optional, point-in-time preview and does not reserve funds.
+
+Block Storage is exposed at `client.block_storage` with list, create, get,
+delete, operations, attach, detach, and resize methods. CDN is exposed at
+`client.cdn` with distribution, static-website, custom-domain, URL-generation,
+verification, and cache-purge methods.
 
 Requires Python 3.10+.
 

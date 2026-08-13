@@ -3,11 +3,6 @@
 import typing
 from json.decoder import JSONDecodeError
 
-from ..billing.admission import (
-    OBJECT_STORAGE_SKU_CODE,
-    enforce_billing_eligibility,
-    enforce_billing_eligibility_async,
-)
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
@@ -167,12 +162,6 @@ class RawObjectStorageClient:
         HttpResponse[Bucket]
             Bucket created successfully.
         """
-        enforce_billing_eligibility(
-            self._client_wrapper,
-            workspace_id=workspace_id,
-            sku_code=OBJECT_STORAGE_SKU_CODE,
-            request_options=request_options,
-        )
         _response = self._client_wrapper.httpx_client.request(
             "object-storage/buckets",
             method="POST",
@@ -631,12 +620,6 @@ class RawObjectStorageClient:
         HttpResponse[S3CredentialCreated]
             Credential created successfully.
         """
-        enforce_billing_eligibility(
-            self._client_wrapper,
-            workspace_id=workspace_id,
-            sku_code=OBJECT_STORAGE_SKU_CODE,
-            request_options=request_options,
-        )
         _response = self._client_wrapper.httpx_client.request(
             "object-storage/credentials",
             method="POST",
@@ -1013,12 +996,6 @@ class AsyncRawObjectStorageClient:
         AsyncHttpResponse[Bucket]
             Bucket created successfully.
         """
-        await enforce_billing_eligibility_async(
-            self._client_wrapper,
-            workspace_id=workspace_id,
-            sku_code=OBJECT_STORAGE_SKU_CODE,
-            request_options=request_options,
-        )
         _response = await self._client_wrapper.httpx_client.request(
             "object-storage/buckets",
             method="POST",
@@ -1477,12 +1454,6 @@ class AsyncRawObjectStorageClient:
         AsyncHttpResponse[S3CredentialCreated]
             Credential created successfully.
         """
-        await enforce_billing_eligibility_async(
-            self._client_wrapper,
-            workspace_id=workspace_id,
-            sku_code=OBJECT_STORAGE_SKU_CODE,
-            request_options=request_options,
-        )
         _response = await self._client_wrapper.httpx_client.request(
             "object-storage/credentials",
             method="POST",

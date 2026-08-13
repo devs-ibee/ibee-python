@@ -3,10 +3,6 @@
 import typing
 from json.decoder import JSONDecodeError
 
-from ..billing.admission import (
-    enforce_billing_eligibility,
-    enforce_billing_eligibility_async,
-)
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
@@ -137,14 +133,6 @@ class RawReservedIpsClient:
         HttpResponse[ReservedIp]
             Public IP reserved successfully.
         """
-        # Reserved IPs do not yet have a catalog SKU. Require the platform's
-        # authoritative workspace billing-state decision before reserving one.
-        enforce_billing_eligibility(
-            self._client_wrapper,
-            workspace_id=workspace_id,
-            sku_code=None,
-            request_options=request_options,
-        )
         _response = self._client_wrapper.httpx_client.request(
             "networking/reserved-ips",
             method="POST",
@@ -947,12 +935,6 @@ class AsyncRawReservedIpsClient:
         AsyncHttpResponse[ReservedIp]
             Public IP reserved successfully.
         """
-        await enforce_billing_eligibility_async(
-            self._client_wrapper,
-            workspace_id=workspace_id,
-            sku_code=None,
-            request_options=request_options,
-        )
         _response = await self._client_wrapper.httpx_client.request(
             "networking/reserved-ips",
             method="POST",

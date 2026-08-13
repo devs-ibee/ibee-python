@@ -64,8 +64,9 @@ def test_object_storage_exposes_bucket_and_s3_credential_lifecycle() -> None:
     )
 
     assert result.secret_access_key == "returned-once"
-    assert observed[1].url.path == "/v1/object-storage/credentials"
-    assert json.loads(observed[1].content) == {
+    assert len(observed) == 1
+    assert observed[0].url.path == "/v1/object-storage/credentials"
+    assert json.loads(observed[0].content) == {
         "name": "ci",
         "bucket_scope": "specific",
         "allowed_buckets": ["assets"],
@@ -105,8 +106,9 @@ def test_create_bucket_uses_storage_region_without_compute_site_fields() -> None
         tags=["production"],
     )
 
-    assert observed[1].url.path == "/v1/object-storage/buckets"
-    assert json.loads(observed[1].content) == {
+    assert len(observed) == 1
+    assert observed[0].url.path == "/v1/object-storage/buckets"
+    assert json.loads(observed[0].content) == {
         "name": "assets",
         "region": "in-south-1",
         "is_public": False,
