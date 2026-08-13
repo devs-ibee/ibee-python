@@ -124,6 +124,42 @@ template or image. `ssh_key_ids` are the SSH keys to inject at first boot.
 In the current SDK, `cpu` and `ram_mb` are still required fallback fields even
 when `plan_id` is provided.
 
+## Secret Store lifecycle
+
+The synchronous and asynchronous Secret Store clients expose the complete store,
+secret-version, application-identity, and identity-scope lifecycle. Every call
+is scoped with `workspace_id`; value and identity-access responses can contain
+sensitive credentials and should never be logged.
+
+```python
+store = client.secret_store.create_secret_store(
+    workspace_id="710995", name="payments"
+)
+secret = client.secret_store.create_secret(
+    store.id,
+    workspace_id="710995",
+    secret_name="database",
+    value={"username": "payments", "password": "replace-me"},
+)
+client.secret_store.patch_secret_value(
+    secret.id,
+    workspace_id="710995",
+    value={"username": "payments-v2"},
+)
+versions = client.secret_store.list_secret_versions(
+    secret.id, workspace_id="710995"
+)
+client.secret_store.rollback_secret(
+    secret.id, workspace_id="710995", version=1
+)
+```
+
+Stores support archive, unarchive, and explicit permanent deletion. Secrets
+support batch creation, soft deletion, undelete, version destruction, rollback,
+and permanent deletion. Workload identities support AppRole or Kubernetes
+authentication, credential rotation, session revocation, and per-store scopes.
+Permanent-delete and version-destroy operations are irreversible.
+
 ## Complete VM lifecycle
 
 Cloud and GPU VM clients expose matching power, access, resize, volume,

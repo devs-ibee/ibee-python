@@ -150,6 +150,29 @@ if typing.TYPE_CHECKING:
     from .vpc_connectivity_type import VpcConnectivityType
     from .vpc_detail import VpcDetail
     from .vpc_summary import VpcSummary
+
+    from .batch_create_secret_item import BatchCreateSecretItem
+    from .batch_create_secret_result import BatchCreateSecretResult
+    from .batch_create_secret_result_status import BatchCreateSecretResultStatus
+    from .batch_create_secrets_response import BatchCreateSecretsResponse
+    from .secret_identity import SecretIdentity
+    from .secret_identity_access import SecretIdentityAccess
+    from .secret_identity_access_auth_method import SecretIdentityAccessAuthMethod
+    from .secret_identity_action_status import SecretIdentityActionStatus
+    from .secret_identity_action_status_status import SecretIdentityActionStatusStatus
+    from .secret_identity_auth_method import SecretIdentityAuthMethod
+    from .secret_identity_list import SecretIdentityList
+    from .secret_identity_scope import SecretIdentityScope
+    from .secret_identity_scope_access_mode import SecretIdentityScopeAccessMode
+    from .secret_identity_scope_list import SecretIdentityScopeList
+    from .secret_identity_status import SecretIdentityStatus
+    from .secret_identity_token_policy_mode import SecretIdentityTokenPolicyMode
+    from .secret_lifecycle_status import SecretLifecycleStatus
+    from .secret_lifecycle_status_status import SecretLifecycleStatusStatus
+    from .secret_version import SecretVersion
+    from .secret_version_summary import SecretVersionSummary
+    from .secret_versions import SecretVersions
+    from .secret_versions_request import SecretVersionsRequest
 _dynamic_imports: typing.Dict[str, str] = {
     "AttachReservedIpRequest": ".attach_reserved_ip_request",
     "BackupFrequency": ".backup_frequency",
@@ -296,6 +319,33 @@ _dynamic_imports: typing.Dict[str, str] = {
     "VpcDetail": ".vpc_detail",
     "VpcSummary": ".vpc_summary",
 }
+
+_dynamic_imports.update(
+    {
+        "BatchCreateSecretItem": ".batch_create_secret_item",
+        "BatchCreateSecretResult": ".batch_create_secret_result",
+        "BatchCreateSecretResultStatus": ".batch_create_secret_result_status",
+        "BatchCreateSecretsResponse": ".batch_create_secrets_response",
+        "SecretIdentity": ".secret_identity",
+        "SecretIdentityAccess": ".secret_identity_access",
+        "SecretIdentityAccessAuthMethod": ".secret_identity_access_auth_method",
+        "SecretIdentityActionStatus": ".secret_identity_action_status",
+        "SecretIdentityActionStatusStatus": ".secret_identity_action_status_status",
+        "SecretIdentityAuthMethod": ".secret_identity_auth_method",
+        "SecretIdentityList": ".secret_identity_list",
+        "SecretIdentityScope": ".secret_identity_scope",
+        "SecretIdentityScopeAccessMode": ".secret_identity_scope_access_mode",
+        "SecretIdentityScopeList": ".secret_identity_scope_list",
+        "SecretIdentityStatus": ".secret_identity_status",
+        "SecretIdentityTokenPolicyMode": ".secret_identity_token_policy_mode",
+        "SecretLifecycleStatus": ".secret_lifecycle_status",
+        "SecretLifecycleStatusStatus": ".secret_lifecycle_status_status",
+        "SecretVersion": ".secret_version",
+        "SecretVersionSummary": ".secret_version_summary",
+        "SecretVersions": ".secret_versions",
+        "SecretVersionsRequest": ".secret_versions_request",
+    }
+)
 
 
 def __getattr__(attr_name: str) -> typing.Any:
@@ -465,3 +515,30 @@ __all__ = [
     "VpcDetail",
     "VpcSummary",
 ]
+
+__all__.extend(
+    [
+        "BatchCreateSecretItem",
+        "BatchCreateSecretResult",
+        "BatchCreateSecretResultStatus",
+        "BatchCreateSecretsResponse",
+        "SecretIdentity",
+        "SecretIdentityAccess",
+        "SecretIdentityAccessAuthMethod",
+        "SecretIdentityActionStatus",
+        "SecretIdentityActionStatusStatus",
+        "SecretIdentityAuthMethod",
+        "SecretIdentityList",
+        "SecretIdentityScope",
+        "SecretIdentityScopeAccessMode",
+        "SecretIdentityScopeList",
+        "SecretIdentityStatus",
+        "SecretIdentityTokenPolicyMode",
+        "SecretLifecycleStatus",
+        "SecretLifecycleStatusStatus",
+        "SecretVersion",
+        "SecretVersionSummary",
+        "SecretVersions",
+        "SecretVersionsRequest",
+    ]
+)

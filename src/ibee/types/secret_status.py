@@ -2,4 +2,4 @@
 
 import typing
 
-SecretStatus = typing.Union[typing.Literal["active", "deleted"], typing.Any]
+SecretStatus = typing.Union[typing.Literal["active", "soft_deleted"], typing.Any]

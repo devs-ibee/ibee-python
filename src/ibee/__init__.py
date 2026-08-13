@@ -195,6 +195,38 @@ if typing.TYPE_CHECKING:
         CreateVpcRequestConnectivityType,
         UpdateNatPortForwardingRuleRequestProtocol,
     )
+
+    from .types import (
+        BatchCreateSecretItem,
+        BatchCreateSecretResult,
+        BatchCreateSecretResultStatus,
+        BatchCreateSecretsResponse,
+        SecretIdentity,
+        SecretIdentityAccess,
+        SecretIdentityAccessAuthMethod,
+        SecretIdentityActionStatus,
+        SecretIdentityActionStatusStatus,
+        SecretIdentityAuthMethod,
+        SecretIdentityList,
+        SecretIdentityScope,
+        SecretIdentityScopeAccessMode,
+        SecretIdentityScopeList,
+        SecretIdentityStatus,
+        SecretIdentityTokenPolicyMode,
+        SecretLifecycleStatus,
+        SecretLifecycleStatusStatus,
+        SecretVersion,
+        SecretVersionSummary,
+        SecretVersions,
+        SecretVersionsRequest,
+    )
+    from .secret_store import (
+        CreateSecretIdentityRequestAuthMethod,
+        CreateSecretIdentityRequestTokenPolicyMode,
+        CreateSecretIdentityScopeRequestAccessMode,
+        UpdateSecretIdentityRequestTokenPolicyMode,
+        UpdateSecretIdentityScopeRequestAccessMode,
+    )
 _dynamic_imports: typing.Dict[str, str] = {
     "AsyncIbee": ".client",
     "AttachReservedIpRequest": ".types",
@@ -380,6 +412,38 @@ _dynamic_imports: typing.Dict[str, str] = {
     "vm_console": ".vm_console",
     "vpcs": ".vpcs",
 }
+
+_dynamic_imports.update(
+    {
+        "BatchCreateSecretItem": ".types",
+        "BatchCreateSecretResult": ".types",
+        "BatchCreateSecretResultStatus": ".types",
+        "BatchCreateSecretsResponse": ".types",
+        "CreateSecretIdentityRequestAuthMethod": ".secret_store",
+        "CreateSecretIdentityRequestTokenPolicyMode": ".secret_store",
+        "CreateSecretIdentityScopeRequestAccessMode": ".secret_store",
+        "SecretIdentity": ".types",
+        "SecretIdentityAccess": ".types",
+        "SecretIdentityAccessAuthMethod": ".types",
+        "SecretIdentityActionStatus": ".types",
+        "SecretIdentityActionStatusStatus": ".types",
+        "SecretIdentityAuthMethod": ".types",
+        "SecretIdentityList": ".types",
+        "SecretIdentityScope": ".types",
+        "SecretIdentityScopeAccessMode": ".types",
+        "SecretIdentityScopeList": ".types",
+        "SecretIdentityStatus": ".types",
+        "SecretIdentityTokenPolicyMode": ".types",
+        "SecretLifecycleStatus": ".types",
+        "SecretLifecycleStatusStatus": ".types",
+        "SecretVersion": ".types",
+        "SecretVersionSummary": ".types",
+        "SecretVersions": ".types",
+        "SecretVersionsRequest": ".types",
+        "UpdateSecretIdentityRequestTokenPolicyMode": ".secret_store",
+        "UpdateSecretIdentityScopeRequestAccessMode": ".secret_store",
+    }
+)
 
 
 def __getattr__(attr_name: str) -> typing.Any:
@@ -588,3 +652,35 @@ __all__ = [
     "vm_console",
     "vpcs",
 ]
+
+__all__.extend(
+    [
+        "BatchCreateSecretItem",
+        "BatchCreateSecretResult",
+        "BatchCreateSecretResultStatus",
+        "BatchCreateSecretsResponse",
+        "CreateSecretIdentityRequestAuthMethod",
+        "CreateSecretIdentityRequestTokenPolicyMode",
+        "CreateSecretIdentityScopeRequestAccessMode",
+        "SecretIdentity",
+        "SecretIdentityAccess",
+        "SecretIdentityAccessAuthMethod",
+        "SecretIdentityActionStatus",
+        "SecretIdentityActionStatusStatus",
+        "SecretIdentityAuthMethod",
+        "SecretIdentityList",
+        "SecretIdentityScope",
+        "SecretIdentityScopeAccessMode",
+        "SecretIdentityScopeList",
+        "SecretIdentityStatus",
+        "SecretIdentityTokenPolicyMode",
+        "SecretLifecycleStatus",
+        "SecretLifecycleStatusStatus",
+        "SecretVersion",
+        "SecretVersionSummary",
+        "SecretVersions",
+        "SecretVersionsRequest",
+        "UpdateSecretIdentityRequestTokenPolicyMode",
+        "UpdateSecretIdentityScopeRequestAccessMode",
+    ]
+)
