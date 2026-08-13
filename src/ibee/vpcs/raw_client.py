@@ -3,6 +3,10 @@
 import typing
 from json.decoder import JSONDecodeError
 
+from ..billing.admission import (
+    enforce_billing_eligibility,
+    enforce_billing_eligibility_async,
+)
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
@@ -14,6 +18,7 @@ from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.not_found_error import NotFoundError
+from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
 from ..types.error import Error
@@ -41,7 +46,7 @@ class RawVpcsClient:
         self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[typing.List[NetworkingSite]]:
         """
-        Lists sites and whether VPC networking is currently available. Requires scope: network.read.
+        Lists the site IDs accepted by VPC and Reserved IP creation. Use only entries where `available` is `true`. Requires scope: network.read.
 
         Parameters
         ----------
@@ -121,7 +126,7 @@ class RawVpcsClient:
             The workspace ID to scope this request to.
 
         site_id : typing.Optional[str]
-            Return only VPCs in this site.
+            Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -208,6 +213,7 @@ class RawVpcsClient:
         name : str
 
         site_id : str
+            Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
 
         description : typing.Optional[str]
 
@@ -1482,6 +1488,15 @@ class RawVpcsClient:
         HttpResponse[NatGateway]
             NAT gateway created successfully.
         """
+        # NAT gateways do not yet have a catalog SKU. The server still returns
+        # its authoritative workspace billing-state decision and the SDK fails
+        # closed if that decision cannot be obtained.
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=None,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways",
             method="POST",
@@ -1522,6 +1537,17 @@ class RawVpcsClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2137,7 +2163,7 @@ class AsyncRawVpcsClient:
         self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[typing.List[NetworkingSite]]:
         """
-        Lists sites and whether VPC networking is currently available. Requires scope: network.read.
+        Lists the site IDs accepted by VPC and Reserved IP creation. Use only entries where `available` is `true`. Requires scope: network.read.
 
         Parameters
         ----------
@@ -2217,7 +2243,7 @@ class AsyncRawVpcsClient:
             The workspace ID to scope this request to.
 
         site_id : typing.Optional[str]
-            Return only VPCs in this site.
+            Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2304,6 +2330,7 @@ class AsyncRawVpcsClient:
         name : str
 
         site_id : str
+            Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
 
         description : typing.Optional[str]
 
@@ -3578,6 +3605,12 @@ class AsyncRawVpcsClient:
         AsyncHttpResponse[NatGateway]
             NAT gateway created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=None,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways",
             method="POST",
@@ -3618,6 +3651,17 @@ class AsyncRawVpcsClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

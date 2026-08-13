@@ -7,7 +7,11 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .create_gpu_vm_request_os_type import CreateGpuVmRequestOsType
-_dynamic_imports: typing.Dict[str, str] = {"CreateGpuVmRequestOsType": ".create_gpu_vm_request_os_type"}
+    from .get_gpu_vm_metrics_timeseries_request_range import GetGpuVmMetricsTimeseriesRequestRange
+_dynamic_imports: typing.Dict[str, str] = {
+    "CreateGpuVmRequestOsType": ".create_gpu_vm_request_os_type",
+    "GetGpuVmMetricsTimeseriesRequestRange": ".get_gpu_vm_metrics_timeseries_request_range",
+}
 
 
 def __getattr__(attr_name: str) -> typing.Any:
@@ -31,4 +35,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["CreateGpuVmRequestOsType"]
+__all__ = ["CreateGpuVmRequestOsType", "GetGpuVmMetricsTimeseriesRequestRange"]

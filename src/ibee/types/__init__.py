@@ -6,15 +6,43 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .attach_reserved_ip_request import AttachReservedIpRequest
+    from .backup_frequency import BackupFrequency
+    from .backup_policy import BackupPolicy
+    from .backup_policy_disable_request import BackupPolicyDisableRequest
+    from .backup_policy_enable_request import BackupPolicyEnableRequest
+    from .backup_policy_next_run_request import BackupPolicyNextRunRequest
+    from .backup_policy_schedule import BackupPolicySchedule
+    from .backup_policy_update_request import BackupPolicyUpdateRequest
+    from .backup_restore_request import BackupRestoreRequest
+    from .backup_run import BackupRun
+    from .backup_run_backup_type import BackupRunBackupType
+    from .backup_run_capture_scope import BackupRunCaptureScope
+    from .backup_run_list import BackupRunList
+    from .backup_run_recovery_point_type import BackupRunRecoveryPointType
+    from .backup_run_trigger import BackupRunTrigger
+    from .backup_status import BackupStatus
+    from .billing_eligibility import BillingEligibility
+    from .billing_eligibility_billing_mode import BillingEligibilityBillingMode
+    from .billing_eligibility_billing_state import BillingEligibilityBillingState
+    from .billing_interval import BillingInterval
     from .bucket import Bucket
     from .bucket_list import BucketList
-    from .bucket_stats import BucketStats
-    from .bucket_summary import BucketSummary
     from .cloud_vm import CloudVm
     from .cloud_vm_status import CloudVmStatus
+    from .compute_image import ComputeImage
+    from .compute_image_list import ComputeImageList
+    from .compute_image_os_type import ComputeImageOsType
+    from .compute_plan import ComputePlan
+    from .compute_plan_list import ComputePlanList
+    from .compute_plan_pricing_status import ComputePlanPricingStatus
+    from .compute_site import ComputeSite
+    from .compute_site_list import ComputeSiteList
     from .create_firewall_rule_request import CreateFirewallRuleRequest
     from .create_nat_port_forwarding_rule_request import CreateNatPortForwardingRuleRequest
     from .create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
+    from .default_retention import DefaultRetention
+    from .default_retention_mode import DefaultRetentionMode
     from .delete_response import DeleteResponse
     from .error import Error
     from .error_detail import ErrorDetail
@@ -27,6 +55,7 @@ if typing.TYPE_CHECKING:
     from .firewall_rule_fields_protocol import FirewallRuleFieldsProtocol
     from .gpu_vm import GpuVm
     from .gpu_vm_status import GpuVmStatus
+    from .live_drift_summary import LiveDriftSummary
     from .load_balancer import LoadBalancer
     from .load_balancer_backend import LoadBalancerBackend
     from .load_balancer_backend_type import LoadBalancerBackendType
@@ -40,6 +69,9 @@ if typing.TYPE_CHECKING:
     from .load_balancer_status_response import LoadBalancerStatusResponse
     from .load_balancer_tls import LoadBalancerTls
     from .load_balancer_tls_mode import LoadBalancerTlsMode
+    from .manual_backup_run_request import ManualBackupRunRequest
+    from .mount_guidance_acknowledge import MountGuidanceAcknowledge
+    from .mount_guidance_acknowledge_request import MountGuidanceAcknowledgeRequest
     from .nat_gateway import NatGateway
     from .nat_port_forwarding_rule import NatPortForwardingRule
     from .nat_pricing import NatPricing
@@ -52,6 +84,15 @@ if typing.TYPE_CHECKING:
     from .operation_status_action import OperationStatusAction
     from .operation_status_status import OperationStatusStatus
     from .power_action_request import PowerActionRequest
+    from .recovery_point_summary import RecoveryPointSummary
+    from .recovery_restore import RecoveryRestore
+    from .recovery_restore_recovery_point_type import RecoveryRestoreRecoveryPointType
+    from .recovery_restore_request import RecoveryRestoreRequest
+    from .recovery_restore_request_target_bandwidth_tb import RecoveryRestoreRequestTargetBandwidthTb
+    from .recovery_restore_request_target_mode import RecoveryRestoreRequestTargetMode
+    from .recovery_restore_target_mode import RecoveryRestoreTargetMode
+    from .recovery_volume_manifest_item import RecoveryVolumeManifestItem
+    from .recovery_volume_manifest_item_role import RecoveryVolumeManifestItemRole
     from .reserved_ip import ReservedIp
     from .reserved_ip_reservation_type import ReservedIpReservationType
     from .s3credential import S3Credential
@@ -66,10 +107,43 @@ if typing.TYPE_CHECKING:
     from .secret_store_list import SecretStoreList
     from .secret_store_status import SecretStoreStatus
     from .secret_value import SecretValue
+    from .snapshot_create_request import SnapshotCreateRequest
+    from .snapshot_create_request_mode import SnapshotCreateRequestMode
+    from .snapshot_delete_result import SnapshotDeleteResult
+    from .snapshot_delete_result_status import SnapshotDeleteResultStatus
+    from .snapshot_set import SnapshotSet
+    from .snapshot_set_capture_scope import SnapshotSetCaptureScope
+    from .snapshot_set_list import SnapshotSetList
+    from .snapshot_set_recovery_point_type import SnapshotSetRecoveryPointType
+    from .ssh_key_secret_ref import SshKeySecretRef
     from .subnet import Subnet
+    from .vm_access_update_request import VmAccessUpdateRequest
+    from .vm_access_update_request_ssh_key_mode import VmAccessUpdateRequestSshKeyMode
+    from .vm_attach_volume_request import VmAttachVolumeRequest
+    from .vm_attach_volume_request_mode import VmAttachVolumeRequestMode
+    from .vm_bandwidth_summary import VmBandwidthSummary
+    from .vm_console_close import VmConsoleClose
+    from .vm_console_session import VmConsoleSession
+    from .vm_console_session_console_type import VmConsoleSessionConsoleType
+    from .vm_console_session_status import VmConsoleSessionStatus
+    from .vm_console_session_status_console_type import VmConsoleSessionStatusConsoleType
+    from .vm_console_state import VmConsoleState
+    from .vm_detach_volume_request import VmDetachVolumeRequest
+    from .vm_event import VmEvent
     from .vm_metrics import VmMetrics
     from .vm_metrics_monitoring_status import VmMetricsMonitoringStatus
+    from .vm_metrics_timeseries import VmMetricsTimeseries
+    from .vm_metrics_timeseries_range import VmMetricsTimeseriesRange
+    from .vm_metrics_timeseries_resolution import VmMetricsTimeseriesResolution
     from .vm_metrics_vm_type import VmMetricsVmType
+    from .vm_resize_plan_request import VmResizePlanRequest
+    from .vm_resize_precheck import VmResizePrecheck
+    from .vm_resize_precheck_decision import VmResizePrecheckDecision
+    from .vm_resize_precheck_mode import VmResizePrecheckMode
+    from .vm_resize_request import VmResizeRequest
+    from .vm_resize_root_disk_request import VmResizeRootDiskRequest
+    from .vm_resize_shape import VmResizeShape
+    from .vm_type import VmType
     from .vpc import Vpc
     from .vpc_attached_node import VpcAttachedNode
     from .vpc_attached_node_connectivity import VpcAttachedNodeConnectivity
@@ -77,15 +151,43 @@ if typing.TYPE_CHECKING:
     from .vpc_detail import VpcDetail
     from .vpc_summary import VpcSummary
 _dynamic_imports: typing.Dict[str, str] = {
+    "AttachReservedIpRequest": ".attach_reserved_ip_request",
+    "BackupFrequency": ".backup_frequency",
+    "BackupPolicy": ".backup_policy",
+    "BackupPolicyDisableRequest": ".backup_policy_disable_request",
+    "BackupPolicyEnableRequest": ".backup_policy_enable_request",
+    "BackupPolicyNextRunRequest": ".backup_policy_next_run_request",
+    "BackupPolicySchedule": ".backup_policy_schedule",
+    "BackupPolicyUpdateRequest": ".backup_policy_update_request",
+    "BackupRestoreRequest": ".backup_restore_request",
+    "BackupRun": ".backup_run",
+    "BackupRunBackupType": ".backup_run_backup_type",
+    "BackupRunCaptureScope": ".backup_run_capture_scope",
+    "BackupRunList": ".backup_run_list",
+    "BackupRunRecoveryPointType": ".backup_run_recovery_point_type",
+    "BackupRunTrigger": ".backup_run_trigger",
+    "BackupStatus": ".backup_status",
+    "BillingEligibility": ".billing_eligibility",
+    "BillingEligibilityBillingMode": ".billing_eligibility_billing_mode",
+    "BillingEligibilityBillingState": ".billing_eligibility_billing_state",
+    "BillingInterval": ".billing_interval",
     "Bucket": ".bucket",
     "BucketList": ".bucket_list",
-    "BucketStats": ".bucket_stats",
-    "BucketSummary": ".bucket_summary",
     "CloudVm": ".cloud_vm",
     "CloudVmStatus": ".cloud_vm_status",
+    "ComputeImage": ".compute_image",
+    "ComputeImageList": ".compute_image_list",
+    "ComputeImageOsType": ".compute_image_os_type",
+    "ComputePlan": ".compute_plan",
+    "ComputePlanList": ".compute_plan_list",
+    "ComputePlanPricingStatus": ".compute_plan_pricing_status",
+    "ComputeSite": ".compute_site",
+    "ComputeSiteList": ".compute_site_list",
     "CreateFirewallRuleRequest": ".create_firewall_rule_request",
     "CreateNatPortForwardingRuleRequest": ".create_nat_port_forwarding_rule_request",
     "CreateNatPortForwardingRuleRequestProtocol": ".create_nat_port_forwarding_rule_request_protocol",
+    "DefaultRetention": ".default_retention",
+    "DefaultRetentionMode": ".default_retention_mode",
     "DeleteResponse": ".delete_response",
     "Error": ".error",
     "ErrorDetail": ".error_detail",
@@ -98,6 +200,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "FirewallRuleFieldsProtocol": ".firewall_rule_fields_protocol",
     "GpuVm": ".gpu_vm",
     "GpuVmStatus": ".gpu_vm_status",
+    "LiveDriftSummary": ".live_drift_summary",
     "LoadBalancer": ".load_balancer",
     "LoadBalancerBackend": ".load_balancer_backend",
     "LoadBalancerBackendType": ".load_balancer_backend_type",
@@ -111,6 +214,9 @@ _dynamic_imports: typing.Dict[str, str] = {
     "LoadBalancerStatusResponse": ".load_balancer_status_response",
     "LoadBalancerTls": ".load_balancer_tls",
     "LoadBalancerTlsMode": ".load_balancer_tls_mode",
+    "ManualBackupRunRequest": ".manual_backup_run_request",
+    "MountGuidanceAcknowledge": ".mount_guidance_acknowledge",
+    "MountGuidanceAcknowledgeRequest": ".mount_guidance_acknowledge_request",
     "NatGateway": ".nat_gateway",
     "NatPortForwardingRule": ".nat_port_forwarding_rule",
     "NatPricing": ".nat_pricing",
@@ -123,6 +229,15 @@ _dynamic_imports: typing.Dict[str, str] = {
     "OperationStatusAction": ".operation_status_action",
     "OperationStatusStatus": ".operation_status_status",
     "PowerActionRequest": ".power_action_request",
+    "RecoveryPointSummary": ".recovery_point_summary",
+    "RecoveryRestore": ".recovery_restore",
+    "RecoveryRestoreRecoveryPointType": ".recovery_restore_recovery_point_type",
+    "RecoveryRestoreRequest": ".recovery_restore_request",
+    "RecoveryRestoreRequestTargetBandwidthTb": ".recovery_restore_request_target_bandwidth_tb",
+    "RecoveryRestoreRequestTargetMode": ".recovery_restore_request_target_mode",
+    "RecoveryRestoreTargetMode": ".recovery_restore_target_mode",
+    "RecoveryVolumeManifestItem": ".recovery_volume_manifest_item",
+    "RecoveryVolumeManifestItemRole": ".recovery_volume_manifest_item_role",
     "ReservedIp": ".reserved_ip",
     "ReservedIpReservationType": ".reserved_ip_reservation_type",
     "S3Credential": ".s3credential",
@@ -137,10 +252,43 @@ _dynamic_imports: typing.Dict[str, str] = {
     "SecretStoreList": ".secret_store_list",
     "SecretStoreStatus": ".secret_store_status",
     "SecretValue": ".secret_value",
+    "SnapshotCreateRequest": ".snapshot_create_request",
+    "SnapshotCreateRequestMode": ".snapshot_create_request_mode",
+    "SnapshotDeleteResult": ".snapshot_delete_result",
+    "SnapshotDeleteResultStatus": ".snapshot_delete_result_status",
+    "SnapshotSet": ".snapshot_set",
+    "SnapshotSetCaptureScope": ".snapshot_set_capture_scope",
+    "SnapshotSetList": ".snapshot_set_list",
+    "SnapshotSetRecoveryPointType": ".snapshot_set_recovery_point_type",
+    "SshKeySecretRef": ".ssh_key_secret_ref",
     "Subnet": ".subnet",
+    "VmAccessUpdateRequest": ".vm_access_update_request",
+    "VmAccessUpdateRequestSshKeyMode": ".vm_access_update_request_ssh_key_mode",
+    "VmAttachVolumeRequest": ".vm_attach_volume_request",
+    "VmAttachVolumeRequestMode": ".vm_attach_volume_request_mode",
+    "VmBandwidthSummary": ".vm_bandwidth_summary",
+    "VmConsoleClose": ".vm_console_close",
+    "VmConsoleSession": ".vm_console_session",
+    "VmConsoleSessionConsoleType": ".vm_console_session_console_type",
+    "VmConsoleSessionStatus": ".vm_console_session_status",
+    "VmConsoleSessionStatusConsoleType": ".vm_console_session_status_console_type",
+    "VmConsoleState": ".vm_console_state",
+    "VmDetachVolumeRequest": ".vm_detach_volume_request",
+    "VmEvent": ".vm_event",
     "VmMetrics": ".vm_metrics",
     "VmMetricsMonitoringStatus": ".vm_metrics_monitoring_status",
+    "VmMetricsTimeseries": ".vm_metrics_timeseries",
+    "VmMetricsTimeseriesRange": ".vm_metrics_timeseries_range",
+    "VmMetricsTimeseriesResolution": ".vm_metrics_timeseries_resolution",
     "VmMetricsVmType": ".vm_metrics_vm_type",
+    "VmResizePlanRequest": ".vm_resize_plan_request",
+    "VmResizePrecheck": ".vm_resize_precheck",
+    "VmResizePrecheckDecision": ".vm_resize_precheck_decision",
+    "VmResizePrecheckMode": ".vm_resize_precheck_mode",
+    "VmResizeRequest": ".vm_resize_request",
+    "VmResizeRootDiskRequest": ".vm_resize_root_disk_request",
+    "VmResizeShape": ".vm_resize_shape",
+    "VmType": ".vm_type",
     "Vpc": ".vpc",
     "VpcAttachedNode": ".vpc_attached_node",
     "VpcAttachedNodeConnectivity": ".vpc_attached_node_connectivity",
@@ -172,15 +320,43 @@ def __dir__():
 
 
 __all__ = [
+    "AttachReservedIpRequest",
+    "BackupFrequency",
+    "BackupPolicy",
+    "BackupPolicyDisableRequest",
+    "BackupPolicyEnableRequest",
+    "BackupPolicyNextRunRequest",
+    "BackupPolicySchedule",
+    "BackupPolicyUpdateRequest",
+    "BackupRestoreRequest",
+    "BackupRun",
+    "BackupRunBackupType",
+    "BackupRunCaptureScope",
+    "BackupRunList",
+    "BackupRunRecoveryPointType",
+    "BackupRunTrigger",
+    "BackupStatus",
+    "BillingEligibility",
+    "BillingEligibilityBillingMode",
+    "BillingEligibilityBillingState",
+    "BillingInterval",
     "Bucket",
     "BucketList",
-    "BucketStats",
-    "BucketSummary",
     "CloudVm",
     "CloudVmStatus",
+    "ComputeImage",
+    "ComputeImageList",
+    "ComputeImageOsType",
+    "ComputePlan",
+    "ComputePlanList",
+    "ComputePlanPricingStatus",
+    "ComputeSite",
+    "ComputeSiteList",
     "CreateFirewallRuleRequest",
     "CreateNatPortForwardingRuleRequest",
     "CreateNatPortForwardingRuleRequestProtocol",
+    "DefaultRetention",
+    "DefaultRetentionMode",
     "DeleteResponse",
     "Error",
     "ErrorDetail",
@@ -193,6 +369,7 @@ __all__ = [
     "FirewallRuleFieldsProtocol",
     "GpuVm",
     "GpuVmStatus",
+    "LiveDriftSummary",
     "LoadBalancer",
     "LoadBalancerBackend",
     "LoadBalancerBackendType",
@@ -206,6 +383,9 @@ __all__ = [
     "LoadBalancerStatusResponse",
     "LoadBalancerTls",
     "LoadBalancerTlsMode",
+    "ManualBackupRunRequest",
+    "MountGuidanceAcknowledge",
+    "MountGuidanceAcknowledgeRequest",
     "NatGateway",
     "NatPortForwardingRule",
     "NatPricing",
@@ -218,6 +398,15 @@ __all__ = [
     "OperationStatusAction",
     "OperationStatusStatus",
     "PowerActionRequest",
+    "RecoveryPointSummary",
+    "RecoveryRestore",
+    "RecoveryRestoreRecoveryPointType",
+    "RecoveryRestoreRequest",
+    "RecoveryRestoreRequestTargetBandwidthTb",
+    "RecoveryRestoreRequestTargetMode",
+    "RecoveryRestoreTargetMode",
+    "RecoveryVolumeManifestItem",
+    "RecoveryVolumeManifestItemRole",
     "ReservedIp",
     "ReservedIpReservationType",
     "S3Credential",
@@ -232,10 +421,43 @@ __all__ = [
     "SecretStoreList",
     "SecretStoreStatus",
     "SecretValue",
+    "SnapshotCreateRequest",
+    "SnapshotCreateRequestMode",
+    "SnapshotDeleteResult",
+    "SnapshotDeleteResultStatus",
+    "SnapshotSet",
+    "SnapshotSetCaptureScope",
+    "SnapshotSetList",
+    "SnapshotSetRecoveryPointType",
+    "SshKeySecretRef",
     "Subnet",
+    "VmAccessUpdateRequest",
+    "VmAccessUpdateRequestSshKeyMode",
+    "VmAttachVolumeRequest",
+    "VmAttachVolumeRequestMode",
+    "VmBandwidthSummary",
+    "VmConsoleClose",
+    "VmConsoleSession",
+    "VmConsoleSessionConsoleType",
+    "VmConsoleSessionStatus",
+    "VmConsoleSessionStatusConsoleType",
+    "VmConsoleState",
+    "VmDetachVolumeRequest",
+    "VmEvent",
     "VmMetrics",
     "VmMetricsMonitoringStatus",
+    "VmMetricsTimeseries",
+    "VmMetricsTimeseriesRange",
+    "VmMetricsTimeseriesResolution",
     "VmMetricsVmType",
+    "VmResizePlanRequest",
+    "VmResizePrecheck",
+    "VmResizePrecheckDecision",
+    "VmResizePrecheckMode",
+    "VmResizeRequest",
+    "VmResizeRootDiskRequest",
+    "VmResizeShape",
+    "VmType",
     "Vpc",
     "VpcAttachedNode",
     "VpcAttachedNodeConnectivity",

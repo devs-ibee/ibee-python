@@ -3,6 +3,11 @@
 import typing
 from json.decoder import JSONDecodeError
 
+from ..billing.admission import (
+    OBJECT_STORAGE_SKU_CODE,
+    enforce_billing_eligibility,
+    enforce_billing_eligibility_async,
+)
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
@@ -10,12 +15,15 @@ from ..core.jsonable_encoder import encode_path_param
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
+from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.not_found_error import NotFoundError
+from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.bucket import Bucket
 from ..types.bucket_list import BucketList
+from ..types.default_retention import DefaultRetention
 from ..types.delete_response import DeleteResponse
 from ..types.error import Error
 from ..types.s3credential import S3Credential
@@ -119,18 +127,15 @@ class RawObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        site_id: str,
-        site_name: typing.Optional[str] = OMIT,
-        region: typing.Optional[str] = OMIT,
-        plan: typing.Optional[str] = OMIT,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
-        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        object_lock_enabled: typing.Optional[bool] = OMIT,
+        default_retention: typing.Optional[DefaultRetention] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Bucket]:
         """
-        Creates an object storage bucket. Requires scope: object-storage.write.
+        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -140,23 +145,19 @@ class RawObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        site_id : str
-            Site/datacenter ID for the bucket.
-
-        site_name : typing.Optional[str]
-
-        region : typing.Optional[str]
-
-        plan : typing.Optional[str]
+        region : str
+            Required Object Storage region identifier. This must match a region configured for the target environment; it is not a compute `site_id` or display name.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
-        bucket_lock_enabled : typing.Optional[bool]
+        object_lock_enabled : typing.Optional[bool]
+            Must be `true` when `default_retention` is provided.
+
+        default_retention : typing.Optional[DefaultRetention]
 
         tags : typing.Optional[typing.Sequence[str]]
-
-        metadata : typing.Optional[typing.Dict[str, typing.Any]]
+            Optional tags stored alongside bucket metadata.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -166,6 +167,12 @@ class RawObjectStorageClient:
         HttpResponse[Bucket]
             Bucket created successfully.
         """
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=OBJECT_STORAGE_SKU_CODE,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             "object-storage/buckets",
             method="POST",
@@ -174,14 +181,13 @@ class RawObjectStorageClient:
             },
             json={
                 "name": name,
-                "site_id": site_id,
-                "site_name": site_name,
                 "region": region,
-                "plan": plan,
                 "is_public": is_public,
-                "bucket_lock_enabled": bucket_lock_enabled,
+                "object_lock_enabled": object_lock_enabled,
+                "default_retention": convert_and_respect_annotation_metadata(
+                    object_=default_retention, annotation=DefaultRetention, direction="write"
+                ),
                 "tags": tags,
-                "metadata": metadata,
             },
             headers={
                 "content-type": "application/json",
@@ -212,6 +218,17 @@ class RawObjectStorageClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -614,6 +631,12 @@ class RawObjectStorageClient:
         HttpResponse[S3CredentialCreated]
             Credential created successfully.
         """
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=OBJECT_STORAGE_SKU_CODE,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             "object-storage/credentials",
             method="POST",
@@ -655,6 +678,17 @@ class RawObjectStorageClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -939,18 +973,15 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: str,
         name: str,
-        site_id: str,
-        site_name: typing.Optional[str] = OMIT,
-        region: typing.Optional[str] = OMIT,
-        plan: typing.Optional[str] = OMIT,
+        region: str,
         is_public: typing.Optional[bool] = OMIT,
-        bucket_lock_enabled: typing.Optional[bool] = OMIT,
+        object_lock_enabled: typing.Optional[bool] = OMIT,
+        default_retention: typing.Optional[DefaultRetention] = OMIT,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
-        metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Bucket]:
         """
-        Creates an object storage bucket. Requires scope: object-storage.write.
+        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -960,23 +991,19 @@ class AsyncRawObjectStorageClient:
         name : str
             Unique bucket name within the workspace.
 
-        site_id : str
-            Site/datacenter ID for the bucket.
-
-        site_name : typing.Optional[str]
-
-        region : typing.Optional[str]
-
-        plan : typing.Optional[str]
+        region : str
+            Required Object Storage region identifier. This must match a region configured for the target environment; it is not a compute `site_id` or display name.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
 
-        bucket_lock_enabled : typing.Optional[bool]
+        object_lock_enabled : typing.Optional[bool]
+            Must be `true` when `default_retention` is provided.
+
+        default_retention : typing.Optional[DefaultRetention]
 
         tags : typing.Optional[typing.Sequence[str]]
-
-        metadata : typing.Optional[typing.Dict[str, typing.Any]]
+            Optional tags stored alongside bucket metadata.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -986,6 +1013,12 @@ class AsyncRawObjectStorageClient:
         AsyncHttpResponse[Bucket]
             Bucket created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=OBJECT_STORAGE_SKU_CODE,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             "object-storage/buckets",
             method="POST",
@@ -994,14 +1027,13 @@ class AsyncRawObjectStorageClient:
             },
             json={
                 "name": name,
-                "site_id": site_id,
-                "site_name": site_name,
                 "region": region,
-                "plan": plan,
                 "is_public": is_public,
-                "bucket_lock_enabled": bucket_lock_enabled,
+                "object_lock_enabled": object_lock_enabled,
+                "default_retention": convert_and_respect_annotation_metadata(
+                    object_=default_retention, annotation=DefaultRetention, direction="write"
+                ),
                 "tags": tags,
-                "metadata": metadata,
             },
             headers={
                 "content-type": "application/json",
@@ -1032,6 +1064,17 @@ class AsyncRawObjectStorageClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1434,6 +1477,12 @@ class AsyncRawObjectStorageClient:
         AsyncHttpResponse[S3CredentialCreated]
             Credential created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=OBJECT_STORAGE_SKU_CODE,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             "object-storage/credentials",
             method="POST",
@@ -1475,6 +1524,17 @@ class AsyncRawObjectStorageClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

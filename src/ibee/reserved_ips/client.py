@@ -42,6 +42,7 @@ class ReservedIpsClient:
             The workspace ID to scope this request to.
 
         site_id : typing.Optional[str]
+            Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -76,12 +77,15 @@ class ReservedIpsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ReservedIp:
         """
+        Reserves an address from a site's public IP pool. Discover an available site with `GET /networking/sites`. Requires scope: network.write.
+
         Parameters
         ----------
         workspace_id : str
             The workspace ID to scope this request to.
 
         site_id : str
+            Site whose public IP pool allocates the address. Copy an available `site_id` from `GET /networking/sites`; use the target VM or VPC's site when the address will be attached.
 
         label : typing.Optional[str]
 
@@ -102,7 +106,7 @@ class ReservedIpsClient:
         )
         client.reserved_ips.reserve_ip(
             workspace_id="workspace_id",
-            site_id="site_id",
+            site_id="68b99bd78a8eda32ff3f16ea",
         )
         """
         _response = self._raw_client.reserve_ip(
@@ -290,27 +294,6 @@ class ReservedIpsClient:
         )
         return _response.data
 
-    def move_reserved_ip(
-        self,
-        reserved_ip_id: str,
-        *,
-        workspace_id: str,
-        vm_id: str,
-        vpc_id: typing.Optional[str] = OMIT,
-        subnet_id: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ReservedIp:
-        """Move a Reserved IP to another VM attachment."""
-        _response = self._raw_client.move_reserved_ip(
-            reserved_ip_id,
-            workspace_id=workspace_id,
-            vm_id=vm_id,
-            vpc_id=vpc_id,
-            subnet_id=subnet_id,
-            request_options=request_options,
-        )
-        return _response.data
-
     def detach_reserved_ip(
         self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> ReservedIp:
@@ -348,6 +331,64 @@ class ReservedIpsClient:
         )
         return _response.data
 
+    def move_reserved_ip(
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: str,
+        vm_id: str,
+        vpc_id: typing.Optional[str] = OMIT,
+        subnet_id: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ReservedIp:
+        """
+        Atomically moves a Reserved IP to another VM attachment.
+
+        Parameters
+        ----------
+        reserved_ip_id : str
+            Reserved IP ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        vm_id : str
+
+        vpc_id : typing.Optional[str]
+
+        subnet_id : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ReservedIp
+            Reserved IP moved successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.reserved_ips.move_reserved_ip(
+            reserved_ip_id="reserved_ip_id",
+            workspace_id="workspace_id",
+            vm_id="vm_id",
+        )
+        """
+        _response = self._raw_client.move_reserved_ip(
+            reserved_ip_id,
+            workspace_id=workspace_id,
+            vm_id=vm_id,
+            vpc_id=vpc_id,
+            subnet_id=subnet_id,
+            request_options=request_options,
+        )
+        return _response.data
+
 
 class AsyncReservedIpsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -380,6 +421,7 @@ class AsyncReservedIpsClient:
             The workspace ID to scope this request to.
 
         site_id : typing.Optional[str]
+            Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -422,12 +464,15 @@ class AsyncReservedIpsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ReservedIp:
         """
+        Reserves an address from a site's public IP pool. Discover an available site with `GET /networking/sites`. Requires scope: network.write.
+
         Parameters
         ----------
         workspace_id : str
             The workspace ID to scope this request to.
 
         site_id : str
+            Site whose public IP pool allocates the address. Copy an available `site_id` from `GET /networking/sites`; use the target VM or VPC's site when the address will be attached.
 
         label : typing.Optional[str]
 
@@ -453,7 +498,7 @@ class AsyncReservedIpsClient:
         async def main() -> None:
             await client.reserved_ips.reserve_ip(
                 workspace_id="workspace_id",
-                site_id="site_id",
+                site_id="68b99bd78a8eda32ff3f16ea",
             )
 
 
@@ -676,27 +721,6 @@ class AsyncReservedIpsClient:
         )
         return _response.data
 
-    async def move_reserved_ip(
-        self,
-        reserved_ip_id: str,
-        *,
-        workspace_id: str,
-        vm_id: str,
-        vpc_id: typing.Optional[str] = OMIT,
-        subnet_id: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ReservedIp:
-        """Move a Reserved IP to another VM attachment."""
-        _response = await self._raw_client.move_reserved_ip(
-            reserved_ip_id,
-            workspace_id=workspace_id,
-            vm_id=vm_id,
-            vpc_id=vpc_id,
-            subnet_id=subnet_id,
-            request_options=request_options,
-        )
-        return _response.data
-
     async def detach_reserved_ip(
         self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> ReservedIp:
@@ -739,5 +763,71 @@ class AsyncReservedIpsClient:
         """
         _response = await self._raw_client.detach_reserved_ip(
             reserved_ip_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def move_reserved_ip(
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: str,
+        vm_id: str,
+        vpc_id: typing.Optional[str] = OMIT,
+        subnet_id: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ReservedIp:
+        """
+        Atomically moves a Reserved IP to another VM attachment.
+
+        Parameters
+        ----------
+        reserved_ip_id : str
+            Reserved IP ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        vm_id : str
+
+        vpc_id : typing.Optional[str]
+
+        subnet_id : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ReservedIp
+            Reserved IP moved successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.reserved_ips.move_reserved_ip(
+                reserved_ip_id="reserved_ip_id",
+                workspace_id="workspace_id",
+                vm_id="vm_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.move_reserved_ip(
+            reserved_ip_id,
+            workspace_id=workspace_id,
+            vm_id=vm_id,
+            vpc_id=vpc_id,
+            subnet_id=subnet_id,
+            request_options=request_options,
         )
         return _response.data

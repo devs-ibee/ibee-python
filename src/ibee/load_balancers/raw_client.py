@@ -3,6 +3,11 @@
 import typing
 from json.decoder import JSONDecodeError
 
+from ..billing.admission import (
+    LOAD_BALANCER_SKU_CODE,
+    enforce_billing_eligibility,
+    enforce_billing_eligibility_async,
+)
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
@@ -15,6 +20,7 @@ from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.not_found_error import NotFoundError
+from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.error import Error
 from ..types.load_balancer import LoadBalancer
@@ -164,6 +170,12 @@ class RawLoadBalancersClient:
         HttpResponse[LoadBalancer]
             L4 load balancer created successfully.
         """
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=LOAD_BALANCER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             "networking/load-balancers/l4",
             method="POST",
@@ -212,6 +224,17 @@ class RawLoadBalancersClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -293,6 +316,12 @@ class RawLoadBalancersClient:
         HttpResponse[LoadBalancer]
             L7 load balancer created successfully.
         """
+        enforce_billing_eligibility(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=LOAD_BALANCER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = self._client_wrapper.httpx_client.request(
             "networking/load-balancers/l7",
             method="POST",
@@ -349,6 +378,17 @@ class RawLoadBalancersClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1032,6 +1072,12 @@ class AsyncRawLoadBalancersClient:
         AsyncHttpResponse[LoadBalancer]
             L4 load balancer created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=LOAD_BALANCER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             "networking/load-balancers/l4",
             method="POST",
@@ -1080,6 +1126,17 @@ class AsyncRawLoadBalancersClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1161,6 +1218,12 @@ class AsyncRawLoadBalancersClient:
         AsyncHttpResponse[LoadBalancer]
             L7 load balancer created successfully.
         """
+        await enforce_billing_eligibility_async(
+            self._client_wrapper,
+            workspace_id=workspace_id,
+            sku_code=LOAD_BALANCER_SKU_CODE,
+            request_options=request_options,
+        )
         _response = await self._client_wrapper.httpx_client.request(
             "networking/load-balancers/l7",
             method="POST",
@@ -1217,6 +1280,17 @@ class AsyncRawLoadBalancersClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

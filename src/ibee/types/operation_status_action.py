@@ -3,5 +3,22 @@
 import typing
 
 OperationStatusAction = typing.Union[
-    typing.Literal["CREATE", "DELETE", "START", "STOP", "REBOOT", "RESIZE"], typing.Any
+    typing.Literal[
+        "create",
+        "start",
+        "stop",
+        "reboot",
+        "delete",
+        "resize",
+        "attach_volume",
+        "detach_volume",
+        "resize_plan",
+        "resize_root_disk",
+        "update_access",
+        "snapshot",
+        "restore",
+        "rebuild",
+        "rescue",
+    ],
+    typing.Any,
 ]
