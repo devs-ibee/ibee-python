@@ -28,6 +28,20 @@ class SecretStoreLifecycleTest(unittest.TestCase):
             self.requests.append((request.method, request.url.path))
             self.assertEqual(request.url.params.get("workspace_id"), WORKSPACE_ID)
 
+            if request.url.path == "/v1/billing/resource-eligibility":
+                return httpx.Response(
+                    200,
+                    json={
+                        "organization_id": "org-1",
+                        "allowed": True,
+                        "reason": "eligible",
+                        "billing_mode": "PREPAID",
+                        "billing_state": "CURRENT",
+                        "sku_code": "SECRETMA-STD",
+                        "evaluated_at": "2026-08-13T00:00:00Z",
+                    },
+                )
+
             identity = {
                 "id": IDENTITY_ID,
                 "organization_id": "org-1",
@@ -186,7 +200,11 @@ class SecretStoreLifecycleTest(unittest.TestCase):
         secret_store.delete_secret_identity(IDENTITY_ID, workspace_id=WORKSPACE_ID)
 
         self.assertEqual(
-            self.requests,
+            [
+                request
+                for request in self.requests
+                if request[1] != "/v1/billing/resource-eligibility"
+            ],
             [
                 ("GET", "/v1/secret-store/stores"),
                 ("POST", "/v1/secret-store/stores"),

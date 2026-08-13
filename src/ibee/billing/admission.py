@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import typing
 
-from ..compute_catalog.models import ComputePlan
 from ..compute_catalog.raw_client import AsyncRawComputeCatalogClient, RawComputeCatalogClient
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..errors.billing_eligibility_error import BillingEligibilityError
+from ..types.compute_plan import ComputePlan
 from .models import BillingEligibility
 from .raw_client import AsyncRawBillingClient, RawBillingClient
 
