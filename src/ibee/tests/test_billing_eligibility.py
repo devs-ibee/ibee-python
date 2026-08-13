@@ -40,7 +40,7 @@ def test_billing_eligibility_is_explicit_typed_preflight() -> None:
     )
 
     result = client.billing.check_resource_eligibility(
-        workspace_id="workspaces-710995",
+        workspace_id="710995",
         sku_code="vm.standard-2x4",
         estimated_cost_minor=12_500,
     )
@@ -52,7 +52,7 @@ def test_billing_eligibility_is_explicit_typed_preflight() -> None:
     request = observed[0]
     assert request.method == "POST"
     assert request.url.path == "/v1/billing/resource-eligibility"
-    assert dict(request.url.params) == {"workspace_id": "workspaces-710995"}
+    assert dict(request.url.params) == {"workspace_id": "710995"}
     assert json.loads(request.content) == {
         "sku_code": "vm.standard-2x4",
         "estimated_cost_minor": 12_500,
@@ -73,7 +73,7 @@ def test_billing_eligibility_omits_unspecified_optional_inputs() -> None:
         httpx_client=httpx.Client(transport=httpx.MockTransport(handler)),
     )
 
-    result = client.billing.check_resource_eligibility(workspace_id="workspace-1")
+    result = client.billing.check_resource_eligibility(workspace_id="710995")
 
     assert result.allowed is False
     assert result.reason == "insufficient_balance"
@@ -91,7 +91,7 @@ def test_billing_eligibility_preserves_typed_forbidden_error() -> None:
     )
 
     with pytest.raises(ForbiddenError):
-        client.billing.check_resource_eligibility(workspace_id="another-workspace")
+        client.billing.check_resource_eligibility(workspace_id="710995")
 
 
 def test_async_billing_eligibility_uses_same_contract() -> None:
@@ -109,7 +109,7 @@ def test_async_billing_eligibility_uses_same_contract() -> None:
                 httpx_client=http_client,
             )
             return await client.billing.check_resource_eligibility(
-                workspace_id="workspace-1",
+                workspace_id="710995",
                 sku_code="vm.standard-2x4",
             )
 

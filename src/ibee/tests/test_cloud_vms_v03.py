@@ -75,7 +75,7 @@ def test_cloud_vm_create_omits_site_for_automatic_placement() -> None:
     )
 
     client.cloud_vms.create_cloud_vm(
-        workspace_id="workspace-1",
+        workspace_id="710995",
         idempotency_key="automatic-placement",
         name="web-automatic",
         os_distro="ubuntu",
@@ -137,9 +137,9 @@ def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
         httpx_client=httpx.Client(transport=httpx.MockTransport(handler)),
     )
 
-    client.cloud_vms.list_cloud_vms(workspace_id="workspace-1")
+    client.cloud_vms.list_cloud_vms(workspace_id="710995")
     client.cloud_vms.create_cloud_vm(
-        workspace_id="workspace-1",
+        workspace_id="710995",
         idempotency_key="create-key",
         name="web-1",
         site_id="site-1",
@@ -150,20 +150,20 @@ def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
         ram_mb=4096,
         plan_id="plan-1",
     )
-    client.cloud_vms.get_cloud_vm("vm-1", workspace_id="workspace-1")
+    client.cloud_vms.get_cloud_vm("vm-1", workspace_id="710995")
     client.cloud_vms.start_cloud_vm(
-        "vm-1", workspace_id="workspace-1", idempotency_key="start-key"
+        "vm-1", workspace_id="710995", idempotency_key="start-key"
     )
     client.cloud_vms.stop_cloud_vm(
-        "vm-1", workspace_id="workspace-1", idempotency_key="stop-key", force=True
+        "vm-1", workspace_id="710995", idempotency_key="stop-key", force=True
     )
     client.cloud_vms.reboot_cloud_vm(
-        "vm-1", workspace_id="workspace-1", idempotency_key="reboot-key"
+        "vm-1", workspace_id="710995", idempotency_key="reboot-key"
     )
-    client.cloud_vms.get_cloud_vm_metrics("vm-1", workspace_id="workspace-1")
-    operation = client.cloud_vms.get_compute_operation("op-1", workspace_id="workspace-1")
+    client.cloud_vms.get_cloud_vm_metrics("vm-1", workspace_id="710995")
+    operation = client.cloud_vms.get_compute_operation("op-1", workspace_id="710995")
     client.cloud_vms.delete_cloud_vm(
-        "vm-1", workspace_id="workspace-1", idempotency_key="delete-key"
+        "vm-1", workspace_id="710995", idempotency_key="delete-key"
     )
 
     assert [request.url.path for request in observed] == [
@@ -179,7 +179,7 @@ def test_cloud_vm_lifecycle_paths_tenant_scope_and_idempotency() -> None:
         "/v1/compute/operations/op-1",
         "/v1/compute/cloud-vms/vm-1",
     ]
-    assert all(request.url.params["workspace_id"] == "workspace-1" for request in observed)
+    assert all(request.url.params["workspace_id"] == "710995" for request in observed)
     assert observed[3].headers["x-idempotency-key"] == "create-key"
     assert observed[5].headers["x-idempotency-key"] == "start-key"
     assert observed[6].headers["x-idempotency-key"] == "stop-key"
@@ -216,6 +216,6 @@ def test_cloud_vm_common_api_errors_are_typed(
 
     with pytest.raises(expected_error):
         if method == "list":
-            client.cloud_vms.list_cloud_vms(workspace_id="workspace-1")
+            client.cloud_vms.list_cloud_vms(workspace_id="710995")
         else:
-            client.cloud_vms.get_cloud_vm("vm-1", workspace_id="workspace-1")
+            client.cloud_vms.get_cloud_vm("vm-1", workspace_id="710995")

@@ -10,7 +10,7 @@ import pytest
 from ibee import AsyncIbee, BillingEligibilityError, Ibee, IbeeEnvironment, LoadBalancerBackend
 from ibee.core.api_error import ApiError
 
-WORKSPACE_ID = "workspace-1"
+WORKSPACE_ID = "710995"
 
 OperationName = typing.Literal[
     "secret-store",

@@ -13,7 +13,7 @@ from ibee import AsyncIbee, Ibee
 from ibee.errors import UnauthorizedError
 
 
-WORKSPACE_ID = "workspace-1"
+WORKSPACE_ID = "710995"
 
 
 @dataclass(frozen=True)

@@ -21,6 +21,14 @@ from httpx._types import RequestFiles
 INITIAL_RETRY_DELAY_SECONDS = 1.0
 MAX_RETRY_DELAY_SECONDS = 60.0
 JITTER_FACTOR = 0.2  # 20% random jitter
+WORKSPACE_ID_PATTERN = re.compile(r"^[1-9][0-9]*$")
+WORKSPACE_ID_ERROR = "workspace_id must be a positive numeric string (for example, '710995')."
+
+
+def _validate_workspace_id(params: typing.Mapping[str, typing.Any]) -> None:
+    workspace_id = params.get("workspace_id")
+    if not isinstance(workspace_id, str) or WORKSPACE_ID_PATTERN.fullmatch(workspace_id) is None:
+        raise ValueError(WORKSPACE_ID_ERROR)
 
 
 def _parse_retry_after(response_headers: httpx.Headers) -> typing.Optional[float]:
@@ -334,23 +342,17 @@ class HttpClient:
 
         # Compute encoded params separately to avoid passing empty list to httpx
         # (httpx strips existing query params from URL when params=[] is passed)
-        _encoded_params = encode_query(
-            jsonable_encoder(
-                remove_none_from_dict(
-                    remove_omit_from_dict(
-                        {
-                            **(params if params is not None else {}),
-                            **(
-                                request_options.get("additional_query_parameters", {}) or {}
-                                if request_options is not None
-                                else {}
-                            ),
-                        },
-                        omit,
-                    )
-                )
-            )
-        )
+        _query_params = {
+            **(params if params is not None else {}),
+            **(
+                request_options.get("additional_query_parameters", {}) or {}
+                if request_options is not None
+                else {}
+            ),
+        }
+        _validate_workspace_id(_query_params)
+        _query_params = remove_none_from_dict(remove_omit_from_dict(_query_params, omit))
+        _encoded_params = encode_query(jsonable_encoder(_query_params))
 
         _request_url = _build_url(base_url, path)
         _request_headers = jsonable_encoder(
@@ -628,23 +630,17 @@ class AsyncHttpClient:
 
         # Compute encoded params separately to avoid passing empty list to httpx
         # (httpx strips existing query params from URL when params=[] is passed)
-        _encoded_params = encode_query(
-            jsonable_encoder(
-                remove_none_from_dict(
-                    remove_omit_from_dict(
-                        {
-                            **(params if params is not None else {}),
-                            **(
-                                request_options.get("additional_query_parameters", {}) or {}
-                                if request_options is not None
-                                else {}
-                            ),
-                        },
-                        omit,
-                    )
-                )
-            )
-        )
+        _query_params = {
+            **(params if params is not None else {}),
+            **(
+                request_options.get("additional_query_parameters", {}) or {}
+                if request_options is not None
+                else {}
+            ),
+        }
+        _validate_workspace_id(_query_params)
+        _query_params = remove_none_from_dict(remove_omit_from_dict(_query_params, omit))
+        _encoded_params = encode_query(jsonable_encoder(_query_params))
 
         _request_url = _build_url(base_url, path)
         _request_headers = jsonable_encoder(
