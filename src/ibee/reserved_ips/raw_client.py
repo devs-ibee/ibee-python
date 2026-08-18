@@ -14,6 +14,7 @@ from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.not_found_error import NotFoundError
+from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.error import Error
 from ..types.reserved_ip import ReservedIp
@@ -43,6 +44,7 @@ class RawReservedIpsClient:
             The workspace ID to scope this request to.
 
         site_id : typing.Optional[str]
+            Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -111,12 +113,15 @@ class RawReservedIpsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ReservedIp]:
         """
+        Reserves an address from a site's public IP pool. Discover an available site with `GET /networking/sites`. Requires scope: network.write.
+
         Parameters
         ----------
         workspace_id : str
             The workspace ID to scope this request to.
 
         site_id : str
+            Site whose public IP pool allocates the address. Copy an available `site_id` from `GET /networking/sites`; use the target VM or VPC's site when the address will be attached.
 
         label : typing.Optional[str]
 
@@ -167,6 +172,17 @@ class RawReservedIpsClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -603,57 +619,6 @@ class RawReservedIpsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def move_reserved_ip(
-        self,
-        reserved_ip_id: str,
-        *,
-        workspace_id: str,
-        vm_id: str,
-        vpc_id: typing.Optional[str] = OMIT,
-        subnet_id: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[ReservedIp]:
-        """Move a Reserved IP to another VM attachment."""
-        _response = self._client_wrapper.httpx_client.request(
-            f"networking/reserved-ips/{encode_path_param(reserved_ip_id)}/move",
-            method="POST",
-            params={"workspace_id": workspace_id},
-            json={
-                "vm_id": vm_id,
-                "vpc_id": vpc_id,
-                "subnet_id": subnet_id,
-            },
-            headers={"content-type": "application/json"},
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    ReservedIp,
-                    parse_obj_as(type_=ReservedIp, object_=_response.json()),  # type: ignore
-                )
-                return HttpResponse(response=_response, data=_data)
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(
-                status_code=_response.status_code,
-                headers=dict(_response.headers),
-                body=_response.text,
-            )
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code,
-                headers=dict(_response.headers),
-                body=_response.json(),
-                cause=e,
-            )
-        raise ApiError(
-            status_code=_response.status_code,
-            headers=dict(_response.headers),
-            body=_response_json,
-        )
-
     def detach_reserved_ip(
         self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[ReservedIp]:
@@ -734,6 +699,132 @@ class RawReservedIpsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    def move_reserved_ip(
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: str,
+        vm_id: str,
+        vpc_id: typing.Optional[str] = OMIT,
+        subnet_id: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[ReservedIp]:
+        """
+        Atomically moves a Reserved IP to another VM attachment.
+
+        Parameters
+        ----------
+        reserved_ip_id : str
+            Reserved IP ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        vm_id : str
+
+        vpc_id : typing.Optional[str]
+
+        subnet_id : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[ReservedIp]
+            Reserved IP moved successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"networking/reserved-ips/{encode_path_param(reserved_ip_id)}/move",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "vm_id": vm_id,
+                "vpc_id": vpc_id,
+                "subnet_id": subnet_id,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ReservedIp,
+                    parse_obj_as(
+                        type_=ReservedIp,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
 
 class AsyncRawReservedIpsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -755,6 +846,7 @@ class AsyncRawReservedIpsClient:
             The workspace ID to scope this request to.
 
         site_id : typing.Optional[str]
+            Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -823,12 +915,15 @@ class AsyncRawReservedIpsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ReservedIp]:
         """
+        Reserves an address from a site's public IP pool. Discover an available site with `GET /networking/sites`. Requires scope: network.write.
+
         Parameters
         ----------
         workspace_id : str
             The workspace ID to scope this request to.
 
         site_id : str
+            Site whose public IP pool allocates the address. Copy an available `site_id` from `GET /networking/sites`; use the target VM or VPC's site when the address will be attached.
 
         label : typing.Optional[str]
 
@@ -879,6 +974,17 @@ class AsyncRawReservedIpsClient:
                 )
             if _response.status_code == 401:
                 raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1315,57 +1421,6 @@ class AsyncRawReservedIpsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def move_reserved_ip(
-        self,
-        reserved_ip_id: str,
-        *,
-        workspace_id: str,
-        vm_id: str,
-        vpc_id: typing.Optional[str] = OMIT,
-        subnet_id: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[ReservedIp]:
-        """Move a Reserved IP to another VM attachment."""
-        _response = await self._client_wrapper.httpx_client.request(
-            f"networking/reserved-ips/{encode_path_param(reserved_ip_id)}/move",
-            method="POST",
-            params={"workspace_id": workspace_id},
-            json={
-                "vm_id": vm_id,
-                "vpc_id": vpc_id,
-                "subnet_id": subnet_id,
-            },
-            headers={"content-type": "application/json"},
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    ReservedIp,
-                    parse_obj_as(type_=ReservedIp, object_=_response.json()),  # type: ignore
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(
-                status_code=_response.status_code,
-                headers=dict(_response.headers),
-                body=_response.text,
-            )
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code,
-                headers=dict(_response.headers),
-                body=_response.json(),
-                cause=e,
-            )
-        raise ApiError(
-            status_code=_response.status_code,
-            headers=dict(_response.headers),
-            body=_response_json,
-        )
-
     async def detach_reserved_ip(
         self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[ReservedIp]:
@@ -1428,6 +1483,132 @@ class AsyncRawReservedIpsClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def move_reserved_ip(
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: str,
+        vm_id: str,
+        vpc_id: typing.Optional[str] = OMIT,
+        subnet_id: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[ReservedIp]:
+        """
+        Atomically moves a Reserved IP to another VM attachment.
+
+        Parameters
+        ----------
+        reserved_ip_id : str
+            Reserved IP ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        vm_id : str
+
+        vpc_id : typing.Optional[str]
+
+        subnet_id : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[ReservedIp]
+            Reserved IP moved successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"networking/reserved-ips/{encode_path_param(reserved_ip_id)}/move",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "vm_id": vm_id,
+                "vpc_id": vpc_id,
+                "subnet_id": subnet_id,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ReservedIp,
+                    parse_obj_as(
+                        type_=ReservedIp,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

@@ -10,6 +10,9 @@ from .core.logging import LogConfig, Logger
 from .environment import IbeeEnvironment
 
 if typing.TYPE_CHECKING:
+    from .block_storage.client import AsyncBlockStorageClient, BlockStorageClient
+    from .cdn.client import AsyncCdnClient, CdnClient
+    from .billing.client import AsyncBillingClient, BillingClient
     from .cloud_vms.client import AsyncCloudVmsClient, CloudVmsClient
     from .compute_catalog.client import AsyncComputeCatalogClient, ComputeCatalogClient
     from .firewalls.client import AsyncFirewallsClient, FirewallsClient
@@ -18,6 +21,7 @@ if typing.TYPE_CHECKING:
     from .object_storage.client import AsyncObjectStorageClient, ObjectStorageClient
     from .reserved_ips.client import AsyncReservedIpsClient, ReservedIpsClient
     from .secret_store.client import AsyncSecretStoreClient, SecretStoreClient
+    from .vm_console.client import AsyncVmConsoleClient, VmConsoleClient
     from .vpcs.client import AsyncVpcsClient, VpcsClient
 
 
@@ -35,7 +39,7 @@ class Ibee:
 
 
 
-        Defaults to IbeeEnvironment.DEFAULT
+        Defaults to IbeeEnvironment.PRODUCTION
 
 
 
@@ -77,7 +81,7 @@ class Ibee:
         self,
         *,
         base_url: typing.Optional[str] = None,
-        environment: IbeeEnvironment = IbeeEnvironment.DEFAULT,
+        environment: IbeeEnvironment = IbeeEnvironment.PRODUCTION,
         token: typing.Union[str, typing.Callable[[], str]],
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -107,13 +111,17 @@ class Ibee:
         )
         self._secret_store: typing.Optional[SecretStoreClient] = None
         self._object_storage: typing.Optional[ObjectStorageClient] = None
-        self._compute_catalog: typing.Optional[ComputeCatalogClient] = None
         self._vpcs: typing.Optional[VpcsClient] = None
         self._reserved_ips: typing.Optional[ReservedIpsClient] = None
         self._firewalls: typing.Optional[FirewallsClient] = None
         self._load_balancers: typing.Optional[LoadBalancersClient] = None
+        self._compute_catalog: typing.Optional[ComputeCatalogClient] = None
         self._cloud_vms: typing.Optional[CloudVmsClient] = None
         self._gpu_vms: typing.Optional[GpuVmsClient] = None
+        self._vm_console: typing.Optional[VmConsoleClient] = None
+        self._billing: typing.Optional[BillingClient] = None
+        self._block_storage: typing.Optional[BlockStorageClient] = None
+        self._cdn: typing.Optional[CdnClient] = None
 
     @property
     def secret_store(self):
@@ -130,14 +138,6 @@ class Ibee:
 
             self._object_storage = ObjectStorageClient(client_wrapper=self._client_wrapper)
         return self._object_storage
-
-    @property
-    def compute_catalog(self):
-        if self._compute_catalog is None:
-            from .compute_catalog.client import ComputeCatalogClient  # noqa: E402
-
-            self._compute_catalog = ComputeCatalogClient(client_wrapper=self._client_wrapper)
-        return self._compute_catalog
 
     @property
     def vpcs(self):
@@ -172,6 +172,14 @@ class Ibee:
         return self._load_balancers
 
     @property
+    def compute_catalog(self):
+        if self._compute_catalog is None:
+            from .compute_catalog.client import ComputeCatalogClient  # noqa: E402
+
+            self._compute_catalog = ComputeCatalogClient(client_wrapper=self._client_wrapper)
+        return self._compute_catalog
+
+    @property
     def cloud_vms(self):
         if self._cloud_vms is None:
             from .cloud_vms.client import CloudVmsClient  # noqa: E402
@@ -186,6 +194,38 @@ class Ibee:
 
             self._gpu_vms = GpuVmsClient(client_wrapper=self._client_wrapper)
         return self._gpu_vms
+
+    @property
+    def vm_console(self):
+        if self._vm_console is None:
+            from .vm_console.client import VmConsoleClient  # noqa: E402
+
+            self._vm_console = VmConsoleClient(client_wrapper=self._client_wrapper)
+        return self._vm_console
+
+    @property
+    def billing(self):
+        if self._billing is None:
+            from .billing.client import BillingClient  # noqa: E402
+
+            self._billing = BillingClient(client_wrapper=self._client_wrapper)
+        return self._billing
+
+    @property
+    def block_storage(self):
+        if self._block_storage is None:
+            from .block_storage.client import BlockStorageClient  # noqa: E402
+
+            self._block_storage = BlockStorageClient(client_wrapper=self._client_wrapper)
+        return self._block_storage
+
+    @property
+    def cdn(self):
+        if self._cdn is None:
+            from .cdn.client import CdnClient  # noqa: E402
+
+            self._cdn = CdnClient(client_wrapper=self._client_wrapper)
+        return self._cdn
 
 
 def _make_default_async_client(
@@ -220,7 +260,7 @@ class AsyncIbee:
 
 
 
-        Defaults to IbeeEnvironment.DEFAULT
+        Defaults to IbeeEnvironment.PRODUCTION
 
 
 
@@ -265,7 +305,7 @@ class AsyncIbee:
         self,
         *,
         base_url: typing.Optional[str] = None,
-        environment: IbeeEnvironment = IbeeEnvironment.DEFAULT,
+        environment: IbeeEnvironment = IbeeEnvironment.PRODUCTION,
         token: typing.Union[str, typing.Callable[[], str]],
         headers: typing.Optional[typing.Dict[str, str]] = None,
         async_token: typing.Optional[typing.Callable[[], typing.Awaitable[str]]] = None,
@@ -295,13 +335,17 @@ class AsyncIbee:
         )
         self._secret_store: typing.Optional[AsyncSecretStoreClient] = None
         self._object_storage: typing.Optional[AsyncObjectStorageClient] = None
-        self._compute_catalog: typing.Optional[AsyncComputeCatalogClient] = None
         self._vpcs: typing.Optional[AsyncVpcsClient] = None
         self._reserved_ips: typing.Optional[AsyncReservedIpsClient] = None
         self._firewalls: typing.Optional[AsyncFirewallsClient] = None
         self._load_balancers: typing.Optional[AsyncLoadBalancersClient] = None
+        self._compute_catalog: typing.Optional[AsyncComputeCatalogClient] = None
         self._cloud_vms: typing.Optional[AsyncCloudVmsClient] = None
         self._gpu_vms: typing.Optional[AsyncGpuVmsClient] = None
+        self._vm_console: typing.Optional[AsyncVmConsoleClient] = None
+        self._billing: typing.Optional[AsyncBillingClient] = None
+        self._block_storage: typing.Optional[AsyncBlockStorageClient] = None
+        self._cdn: typing.Optional[AsyncCdnClient] = None
 
     @property
     def secret_store(self):
@@ -318,14 +362,6 @@ class AsyncIbee:
 
             self._object_storage = AsyncObjectStorageClient(client_wrapper=self._client_wrapper)
         return self._object_storage
-
-    @property
-    def compute_catalog(self):
-        if self._compute_catalog is None:
-            from .compute_catalog.client import AsyncComputeCatalogClient  # noqa: E402
-
-            self._compute_catalog = AsyncComputeCatalogClient(client_wrapper=self._client_wrapper)
-        return self._compute_catalog
 
     @property
     def vpcs(self):
@@ -360,6 +396,14 @@ class AsyncIbee:
         return self._load_balancers
 
     @property
+    def compute_catalog(self):
+        if self._compute_catalog is None:
+            from .compute_catalog.client import AsyncComputeCatalogClient  # noqa: E402
+
+            self._compute_catalog = AsyncComputeCatalogClient(client_wrapper=self._client_wrapper)
+        return self._compute_catalog
+
+    @property
     def cloud_vms(self):
         if self._cloud_vms is None:
             from .cloud_vms.client import AsyncCloudVmsClient  # noqa: E402
@@ -374,6 +418,38 @@ class AsyncIbee:
 
             self._gpu_vms = AsyncGpuVmsClient(client_wrapper=self._client_wrapper)
         return self._gpu_vms
+
+    @property
+    def vm_console(self):
+        if self._vm_console is None:
+            from .vm_console.client import AsyncVmConsoleClient  # noqa: E402
+
+            self._vm_console = AsyncVmConsoleClient(client_wrapper=self._client_wrapper)
+        return self._vm_console
+
+    @property
+    def billing(self):
+        if self._billing is None:
+            from .billing.client import AsyncBillingClient  # noqa: E402
+
+            self._billing = AsyncBillingClient(client_wrapper=self._client_wrapper)
+        return self._billing
+
+    @property
+    def block_storage(self):
+        if self._block_storage is None:
+            from .block_storage.client import AsyncBlockStorageClient  # noqa: E402
+
+            self._block_storage = AsyncBlockStorageClient(client_wrapper=self._client_wrapper)
+        return self._block_storage
+
+    @property
+    def cdn(self):
+        if self._cdn is None:
+            from .cdn.client import AsyncCdnClient  # noqa: E402
+
+            self._cdn = AsyncCdnClient(client_wrapper=self._client_wrapper)
+        return self._cdn
 
 
 def _get_base_url(*, base_url: typing.Optional[str] = None, environment: IbeeEnvironment) -> str:

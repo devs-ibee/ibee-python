@@ -1,8 +1,8 @@
 # IBEE Solutions Python SDK
 
 Official Python SDK for the IBEE Solutions API. Manage cloud VMs, GPU VMs,
-VPC networking, Reserved IPs, firewalls, load balancers, object storage, and
-secrets programmatically.
+VPC networking, Reserved IPs, firewalls, load balancers, object storage,
+Block Storage, CDN, and secrets programmatically.
 
 ## Installation
 
@@ -15,7 +15,11 @@ pip install ibee
 ```python
 from ibee import Ibee
 
-client = Ibee(token="ibee_live_xxxxxxxxxxxx")
+client = Ibee(token="YOUR_TOKEN")
+
+# Product create methods send one request. The public API edge checks billing
+# authoritatively before routing billable creates. Applications can optionally
+# call client.billing.check_resource_eligibility(...) for a UI preview.
 
 # List cloud VMs
 vms = client.cloud_vms.list_cloud_vms(workspace_id="907479")
@@ -57,6 +61,12 @@ stores = client.secret_store.list_secret_stores(workspace_id="907479")
 
 # List object storage buckets
 buckets = client.object_storage.list_buckets(workspace_id="907479")
+bucket = client.object_storage.create_bucket(
+    workspace_id="907479",
+    name="production-assets",
+    region="in-south-1",
+    is_public=False,
+)
 credential = client.object_storage.create_s3credential(
     workspace_id="907479",
     name="application-key",
@@ -87,7 +97,8 @@ port-forwarding rules. `reserved_ips` includes attach, move, and detach;
 `firewalls` and `load_balancers` provide their complete public lifecycle.
 Synchronous and async clients expose matching methods.
 
-To create a VM from portal-style choices, pass the selected IDs:
+To create a VM with explicit placement, pass the selected IDs. Omit `site_id`
+to let IBEE select an available site automatically:
 
 ```python
 vm = client.cloud_vms.create_cloud_vm(
@@ -112,9 +123,118 @@ template or image. `ssh_key_ids` are the SSH keys to inject at first boot.
 In the current SDK, `cpu` and `ram_mb` are still required fallback fields even
 when `plan_id` is provided.
 
+## Secret Store lifecycle
+
+The synchronous and asynchronous Secret Store clients expose the complete store,
+secret-version, application-identity, and identity-scope lifecycle. Every call
+is scoped with `workspace_id`; value and identity-access responses can contain
+sensitive credentials and should never be logged.
+
+```python
+store = client.secret_store.create_secret_store(
+    workspace_id="710995", name="payments"
+)
+secret = client.secret_store.create_secret(
+    store.id,
+    workspace_id="710995",
+    secret_name="database",
+    value={"username": "payments", "password": "replace-me"},
+)
+client.secret_store.patch_secret_value(
+    secret.id,
+    workspace_id="710995",
+    value={"username": "payments-v2"},
+)
+versions = client.secret_store.list_secret_versions(
+    secret.id, workspace_id="710995"
+)
+client.secret_store.rollback_secret(
+    secret.id, workspace_id="710995", version=1
+)
+```
+
+Stores support archive, unarchive, and explicit permanent deletion. Secrets
+support batch creation, soft deletion, undelete, version destruction, rollback,
+and permanent deletion. Workload identities support AppRole or Kubernetes
+authentication, credential rotation, session revocation, and per-store scopes.
+Permanent-delete and version-destroy operations are irreversible.
+
+## Complete VM lifecycle
+
+Cloud and GPU VM clients expose matching power, access, resize, volume,
+monitoring, snapshot, and backup operations. Mutating operations that accept an
+idempotency key can be retried safely with the same key:
+
+```python
+# Power and access
+operation = client.cloud_vms.stop_cloud_vm(
+    "vm_123",
+    workspace_id="907479",
+    idempotency_key="stop-vm-123-01",
+)
+client.cloud_vms.update_cloud_vm_access(
+    "vm_123",
+    workspace_id="907479",
+    idempotency_key="rotate-access-vm-123-01",
+    ssh_key_ids=["ssh_key_456"],
+    ssh_key_mode="add",
+)
+
+# Precheck and apply a resize
+decision = client.cloud_vms.precheck_cloud_vm_resize(
+    "vm_123", workspace_id="907479", cpu=4, ram_mb=8192
+)
+operation = client.cloud_vms.resize_cloud_vm(
+    "vm_123",
+    workspace_id="907479",
+    idempotency_key="resize-vm-123-01",
+    cpu=4,
+    ram_mb=8192,
+)
+
+# Volumes, events, and time-series metrics
+client.cloud_vms.attach_cloud_vm_volume(
+    "vm_123",
+    workspace_id="907479",
+    idempotency_key="attach-volume-789-01",
+    volume_id="volume_789",
+)
+events = client.cloud_vms.list_cloud_vm_events("vm_123", workspace_id="907479")
+metrics = client.cloud_vms.get_cloud_vm_metrics_timeseries(
+    "vm_123", workspace_id="907479", range="24h"
+)
+
+# Snapshots and backups
+snapshot = client.cloud_vms.create_cloud_vm_snapshot(
+    "vm_123", workspace_id="907479", name="before-upgrade", mode="root_only"
+)
+policy = client.cloud_vms.enable_cloud_vm_backups(
+    "vm_123", workspace_id="907479", retention_days=14
+)
+backup = client.cloud_vms.create_cloud_vm_backup_run(
+    "vm_123", workspace_id="907479", reason="before-upgrade"
+)
+
+# Short-lived graphical console session. Treat connect_url as a secret: do not
+# log or persist it, and close the session when finished.
+session = client.vm_console.create_vm_console_session(
+    workspace_id="907479", vm_id="vm_123", vm_type="cloud"
+)
+client.vm_console.close_vm_console_session(
+    session.session_id, workspace_id="907479", reason="finished"
+)
+```
+
+Use the corresponding `gpu_vms` methods for GPU instances. Snapshot and backup
+item/status methods use family-specific public routes, so cloud and GPU recovery
+records cannot be mixed accidentally. The async client provides the same method
+names and arguments.
+
 ## Environments
 
-The client defaults to the production API (`https://api.ibee.ai/v1`). To use the development environment:
+The client defaults to the production API (`https://api.ibee.ai/v1`).
+`IbeeEnvironment.PRODUCTION` is an explicit alias for that default. Use
+`IbeeEnvironment.DEVELOPMENT` for the development API (`https://api.ibee.co.in/v1`):
 
 ```python
 from ibee import Ibee
@@ -122,6 +242,17 @@ from ibee.environment import IbeeEnvironment
 
 client = Ibee(token="IBEE_DEV_TOKEN", environment=IbeeEnvironment.DEVELOPMENT)
 ```
+
+Billable creates are admitted at the public API edge before the request reaches
+the existing product service. This applies equally to raw REST, the Python and
+TypeScript SDKs, and the CLI, so create helpers do not perform duplicate billing
+or catalog calls. The explicit eligibility method remains available as an
+optional, point-in-time preview and does not reserve funds.
+
+Block Storage is exposed at `client.block_storage` with list, create, get,
+delete, operations, attach, detach, and resize methods. CDN is exposed at
+`client.cdn` with distribution, static-website, custom-domain, URL-generation,
+verification, and cache-purge methods.
 
 Requires Python 3.10+.
 
@@ -132,7 +263,7 @@ import asyncio
 from ibee import AsyncIbee
 
 async def main():
-    client = AsyncIbee(token="ibee_live_xxxxxxxxxxxx")
+    client = AsyncIbee(token="YOUR_TOKEN")
     vms = await client.cloud_vms.list_cloud_vms(workspace_id="907479")
     print(vms)
 
@@ -145,7 +276,7 @@ Generate a platform API token from the IBEE portal under Settings > Platform API
 
 ## Documentation
 
-Full API reference: [https://docs.ibee.co.in/docs/api-reference](https://docs.ibee.co.in/docs/api-reference)
+Production API reference: [https://ibee.ai/docs/api-reference](https://ibee.ai/docs/api-reference)
 
 ## License
 

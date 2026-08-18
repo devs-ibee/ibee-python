@@ -2,4 +2,7 @@
 
 import typing
 
-OperationStatusStatus = typing.Union[typing.Literal["accepted", "running", "completed", "failed"], typing.Any]
+OperationStatusStatus = typing.Union[
+    typing.Literal["accepted", "running", "waiting", "compensating", "succeeded", "failed", "cancelled", "timed_out"],
+    typing.Any,
+]

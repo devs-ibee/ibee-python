@@ -8,10 +8,10 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class OperationAccepted(UniversalBaseModel):
-    operation_id: typing.Optional[str] = None
-    vm_id: typing.Optional[str] = None
-    status: typing.Optional[str] = None
-    submitted_at: typing.Optional[dt.datetime] = None
+    operation_id: str
+    vm_id: str
+    status: str
+    submitted_at: dt.datetime
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
