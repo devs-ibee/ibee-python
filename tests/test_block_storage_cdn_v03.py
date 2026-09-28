@@ -55,7 +55,10 @@ def test_block_storage_and_cdn_expose_all_23_new_operations() -> None:
 
     block_create = observed[1]
     assert block_create.method == "POST"
-    assert json.loads(block_create.content) == {
+    create_body = json.loads(block_create.content)
+    # 0.4.0: the SDK fills a portal-style idempotency key so retries are safe.
+    assert create_body.pop("idempotency_key").startswith("block-volume-create-data-")
+    assert create_body == {
         "name": "data",
         "size_gb": 100,
         "site_id": "site-1",

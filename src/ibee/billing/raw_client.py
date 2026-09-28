@@ -1,3 +1,4 @@
+# Hand-written (listed in .fernignore).
 from __future__ import annotations
 
 import typing
@@ -11,11 +12,30 @@ from ..core.http_response import AsyncHttpResponse, HttpResponse
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
-from ..errors.bad_request_error import BadRequestError
-from ..errors.forbidden_error import ForbiddenError
-from ..errors.unauthorized_error import UnauthorizedError
-from ..types.error import Error
+from ..validation import (
+    normalize_eligibility_operation,
+    normalize_estimated_cost_minor,
+    normalize_sku_code,
+    validate_workspace_id,
+)
 from .models import BillingEligibility
+
+ELIGIBILITY_PATH = "billing/resource-eligibility"
+
+
+def eligibility_request_body(
+    *,
+    sku_code: typing.Optional[str] = None,
+    estimated_cost_minor: typing.Any = None,
+    operation: typing.Optional[str] = None,
+) -> typing.Dict[str, typing.Any]:
+    """Validate and normalise eligibility inputs; blank or ``None`` values are omitted."""
+    body = {
+        "sku_code": normalize_sku_code(sku_code),
+        "estimated_cost_minor": normalize_estimated_cost_minor(estimated_cost_minor),
+        "operation": normalize_eligibility_operation(operation),
+    }
+    return {key: value for key, value in body.items() if value is not None}
 
 
 def _handle_response(response: typing.Any) -> HttpResponse[BillingEligibility]:
@@ -27,16 +47,6 @@ def _handle_response(response: typing.Any) -> HttpResponse[BillingEligibility]:
                     BillingEligibility,
                     parse_obj_as(type_=BillingEligibility, object_=response.json()),  # type: ignore
                 ),
-            )
-        error_type = {
-            400: BadRequestError,
-            401: UnauthorizedError,
-            403: ForbiddenError,
-        }.get(response.status_code)
-        if error_type is not None:
-            raise error_type(
-                headers=dict(response.headers),
-                body=typing.cast(Error, parse_obj_as(type_=Error, object_=response.json())),  # type: ignore
             )
         response_json = response.json()
     except JSONDecodeError:
@@ -55,36 +65,59 @@ class RawBillingClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
+    def _post_eligibility(
+        self,
+        *,
+        workspace_id: str,
+        body: typing.Dict[str, typing.Any],
+        request_options: typing.Optional[RequestOptions],
+    ) -> typing.Any:
+        return self._client_wrapper.httpx_client.request(
+            ELIGIBILITY_PATH,
+            method="POST",
+            params={"workspace_id": validate_workspace_id(workspace_id)},
+            json=body,
+            headers={"content-type": "application/json"},
+            request_options=request_options,
+        )
+
     def check_resource_eligibility(
         self,
         *,
         workspace_id: str,
         sku_code: typing.Optional[str] = None,
         estimated_cost_minor: typing.Optional[int] = None,
+        operation: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BillingEligibility]:
         """Check billing eligibility without creating or modifying a resource."""
-        response = self._client_wrapper.httpx_client.request(
-            "billing/resource-eligibility",
-            method="POST",
-            params={"workspace_id": workspace_id},
-            json={
-                key: value
-                for key, value in {
-                    "sku_code": sku_code,
-                    "estimated_cost_minor": estimated_cost_minor,
-                }.items()
-                if value is not None
-            },
-            headers={"content-type": "application/json"},
-            request_options=request_options,
+        body = eligibility_request_body(
+            sku_code=sku_code, estimated_cost_minor=estimated_cost_minor, operation=operation
         )
-        return _handle_response(response)
+        return _handle_response(
+            self._post_eligibility(workspace_id=workspace_id, body=body, request_options=request_options)
+        )
 
 
 class AsyncRawBillingClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
+
+    async def _post_eligibility(
+        self,
+        *,
+        workspace_id: str,
+        body: typing.Dict[str, typing.Any],
+        request_options: typing.Optional[RequestOptions],
+    ) -> typing.Any:
+        return await self._client_wrapper.httpx_client.request(
+            ELIGIBILITY_PATH,
+            method="POST",
+            params={"workspace_id": validate_workspace_id(workspace_id)},
+            json=body,
+            headers={"content-type": "application/json"},
+            request_options=request_options,
+        )
 
     async def check_resource_eligibility(
         self,
@@ -92,23 +125,13 @@ class AsyncRawBillingClient:
         workspace_id: str,
         sku_code: typing.Optional[str] = None,
         estimated_cost_minor: typing.Optional[int] = None,
+        operation: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BillingEligibility]:
         """Check billing eligibility without creating or modifying a resource."""
-        response = await self._client_wrapper.httpx_client.request(
-            "billing/resource-eligibility",
-            method="POST",
-            params={"workspace_id": workspace_id},
-            json={
-                key: value
-                for key, value in {
-                    "sku_code": sku_code,
-                    "estimated_cost_minor": estimated_cost_minor,
-                }.items()
-                if value is not None
-            },
-            headers={"content-type": "application/json"},
-            request_options=request_options,
+        body = eligibility_request_body(
+            sku_code=sku_code, estimated_cost_minor=estimated_cost_minor, operation=operation
         )
+        response = await self._post_eligibility(workspace_id=workspace_id, body=body, request_options=request_options)
         parsed = _handle_response(response)
         return AsyncHttpResponse(response=response, data=parsed.data)
