@@ -6,7 +6,7 @@
 #   on 429/502/503/504; the same key and body are resent on every attempt;
 # * automatic X-Idempotency-Key on the cloud/GPU VM write routes;
 # * client-side validation before sending (workspace_id, idempotency keys,
-#   64 KiB billable-create bodies);
+#   64 KiB billable-create bodies; Secret Store workspace ids and 64 KiB bodies);
 # * every error response is raised as a typed ApiError subclass built by
 #   ibee.errors.error_from_response.
 
@@ -22,6 +22,7 @@ from ..validation import (
     WORKSPACE_ID_ERROR,
     WORKSPACE_ID_PATTERN,
     check_billable_body_size,
+    check_secret_store_request,
     is_billable_create,
     validate_idempotency_key,
     validate_workspace_id,
@@ -182,6 +183,7 @@ def _prepare_request(
     ):
         json_body = {}
     check_billable_body_size(method, path, json_body)
+    check_secret_store_request(method, path, _query_params, json_body)
 
     # Cloud/GPU VM writes: validate a caller key, or generate one once per logical call.
     ve_scope = ve_auto_key_scope(method, path, json_body)

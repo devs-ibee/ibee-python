@@ -8,7 +8,9 @@ A request is retried only when repeating it cannot create or change anything twi
 
 Such requests are retried on HTTP 429, 502, 503 and 504 only. VM creates are never
 retried, even with a key: a replayed create is answered "VM with this name already
-exists" instead of returning the first result. HTTP 408, 409, 500
+exists" instead of returning the first result. The Secret Store identity access read
+(``GET /secret-store/identities/{id}/access``) is never retried either: every call
+mints a new AppRole secret ID. No other Secret Store write carries a key, so none is retried. HTTP 408, 409, 500
 and every other 4xx are never retried. Connection failures where the request was
 never sent (``httpx.ConnectError``/``httpx.ConnectTimeout``) are retried for any
 method; failures after the request may have been sent are retried only for
@@ -31,6 +33,8 @@ from .validation import normalize_api_path
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 #: Keyed routes that are still never retried automatically.
 NEVER_RETRIED_WRITES = re.compile(r"^/compute/(cloud-vms|gpu-vms)/?$")
+#: Reads that create something on every call (a fresh AppRole secret ID) and are never retried.
+NEVER_RETRIED_READS = re.compile(r"^/secret-store/identities/[^/]+/access/?$")
 RETRYABLE_STATUS_CODES = frozenset({429, 502, 503, 504})
 INITIAL_RETRY_DELAY_SECONDS = 1.0
 MAX_RETRY_DELAY_SECONDS = 30.0
@@ -57,7 +61,7 @@ def is_retry_safe(
 ) -> bool:
     """Whether repeating this request is safe (read-only, or keyed on a route that deduplicates)."""
     if method.upper() in SAFE_METHODS:
-        return True
+        return NEVER_RETRIED_READS.fullmatch(normalize_api_path(path)) is None
     if method.upper() == "POST" and NEVER_RETRIED_WRITES.fullmatch(normalize_api_path(path)):
         return False
     return find_idempotency_key(method, path, headers, json_body, params) is not None
@@ -125,6 +129,7 @@ def retry_delay(attempt: int, headers: typing.Any = None) -> float:
 
 __all__ = [
     "MAX_RETRY_DELAY_SECONDS",
+    "NEVER_RETRIED_READS",
     "RETRYABLE_STATUS_CODES",
     "SAFE_METHODS",
     "is_retry_safe",

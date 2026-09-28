@@ -35,6 +35,20 @@ if typing.TYPE_CHECKING:
     from .not_found_error import NotFoundError
     from .operation_errors import OperationFailedError, OperationTimeoutError
     from .payment_required_error import PaymentRequiredError
+    from .secret_store_errors import (
+        AuthMethodMismatchError,
+        CasConflictError,
+        DeletionIncompleteError,
+        IdentityDisabledError,
+        OrganizationLifecycleError,
+        ResourceNotFoundError,
+        ScopePermissionError,
+        ScopeValidationError,
+        SecretValueNotFoundError,
+        StoreArchivedError,
+        StoreDeletingError,
+        StoreNotActiveError,
+    )
     from .service_unavailable_error import ServiceUnavailableError
     from .storage_errors import CdnPurgeFailedError
     from .unauthorized_error import UnauthorizedError
@@ -73,6 +87,18 @@ _dynamic_imports: typing.Dict[str, str] = {
     "UnauthorizedError": ".unauthorized_error",
     "UnprocessableEntityError": ".api_errors",
     "WorkspaceNotAllowedError": ".api_errors",
+    "AuthMethodMismatchError": ".secret_store_errors",
+    "CasConflictError": ".secret_store_errors",
+    "DeletionIncompleteError": ".secret_store_errors",
+    "IdentityDisabledError": ".secret_store_errors",
+    "OrganizationLifecycleError": ".secret_store_errors",
+    "ResourceNotFoundError": ".secret_store_errors",
+    "ScopePermissionError": ".secret_store_errors",
+    "ScopeValidationError": ".secret_store_errors",
+    "SecretValueNotFoundError": ".secret_store_errors",
+    "StoreArchivedError": ".secret_store_errors",
+    "StoreDeletingError": ".secret_store_errors",
+    "StoreNotActiveError": ".secret_store_errors",
     "error_from_response": ".factory",
     "is_payment_block_error": ".factory",
 }

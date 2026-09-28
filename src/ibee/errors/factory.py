@@ -181,11 +181,21 @@ def error_from_response(
     """Build the most specific ``ApiError`` subclass for an error response.
 
     ``body`` is the parsed JSON body (or the response text). ``path`` (relative to
-    the API root) is only used to word billing denials for the resource being created.
+    the API root) is used to word billing denials for the resource being created and
+    to pick the Secret Store error classes (see :mod:`ibee.errors.secret_store_errors`).
     """
     header_dict = dict(headers) if headers is not None else None
     info = parse_error_payload(status_code, body, header_dict)
-    cls = _select_class(status_code, info, body)
+    cls: typing.Optional[typing.Type[ApiError]] = None
+    if path is not None:
+        from ..validation import normalize_api_path
+        from .secret_store_errors import select_secret_store_error_class
+
+        normalized = normalize_api_path(path)
+        if normalized.startswith("/secret-store/"):
+            cls = select_secret_store_error_class(status_code, info, normalized)
+    if cls is None:
+        cls = _select_class(status_code, info, body)
     typed_body = _typed_body(status_code, body)
     error: ApiError
     if cls is ApiError:
