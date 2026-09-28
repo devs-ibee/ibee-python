@@ -1,3 +1,4 @@
+# Hand-written (listed in .fernignore).
 from __future__ import annotations
 
 import typing
@@ -6,6 +7,17 @@ from urllib.parse import quote
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
+from ..idempotency import build_idempotency_key
+from ..validation import validate_idempotency_key
+
+_UNCONTRACTED = "Not yet part of the published API contract; behaviour may change."
+
+
+def _key(idempotency_key: typing.Optional[str], action: str, identity: typing.Any) -> str:
+    """Validate a caller key, or build one (``block-volume-<action>-<identity>-...``)."""
+    if idempotency_key is None:
+        return build_idempotency_key(f"block-volume-{action}", identity)
+    return validate_idempotency_key(idempotency_key)
 
 
 def _data(response: typing.Any) -> typing.Any:
@@ -52,16 +64,21 @@ class BlockStorageClient:
             "name": name, "size_gb": size_gb, "site_id": site_id, "site_name": site_name,
             "sku_code": sku_code,
             "volume_class": volume_class, "replica_count": replica_count,
-            "backup_enabled": backup_enabled, "idempotency_key": idempotency_key,
+            "backup_enabled": backup_enabled, "idempotency_key": _key(idempotency_key, "create", name),
         }, request_options=request_options)
 
     def get_block_volume(self, volume_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None):
         return self._request("GET", f"block-storage/volumes/{quote(volume_id, safe='')}", workspace_id=workspace_id, request_options=request_options)
 
     def delete_block_volume(self, volume_id: str, *, workspace_id: str, force: bool = False,
+                            idempotency_key: typing.Optional[str] = None,
                             request_options: typing.Optional[RequestOptions] = None):
+        """Delete a volume. ``idempotency_key`` is sent as a query parameter and generated when
+        omitted, which makes retries safe. The query key is not yet part of the published API
+        contract; behaviour may change."""
         return self._request("DELETE", f"block-storage/volumes/{quote(volume_id, safe='')}", workspace_id=workspace_id,
-                             params={"force": force}, request_options=request_options)
+                             params={"force": force, "idempotency_key": _key(idempotency_key, "delete", volume_id)},
+                             request_options=request_options)
 
     def list_block_volume_operations(self, volume_id: str, *, workspace_id: str,
                                      request_options: typing.Optional[RequestOptions] = None):
@@ -78,7 +95,8 @@ class BlockStorageClient:
                              workspace_id=workspace_id, json={"node_name": node_name, "mode": mode,
                              "vm_id": vm_id, "vm_name": vm_name, "vm_state": vm_state,
                              "vm_site_id": vm_site_id, "vm_type": vm_type,
-                             "idempotency_key": idempotency_key}, request_options=request_options)
+                             "idempotency_key": _key(idempotency_key, "attach", volume_id)},
+                             request_options=request_options)
 
     def detach_block_volume(self, volume_id: str, *, workspace_id: str, node_name: str,
                             force: bool = False, confirm_unmounted: bool = False,
@@ -88,7 +106,8 @@ class BlockStorageClient:
         return self._request("POST", f"block-storage/volumes/{quote(volume_id, safe='')}/detach",
                              workspace_id=workspace_id, json={"node_name": node_name, "force": force,
                              "confirm_unmounted": confirm_unmounted, "vm_state": vm_state,
-                             "vm_type": vm_type, "reason": reason, "idempotency_key": idempotency_key},
+                             "vm_type": vm_type, "reason": reason,
+                             "idempotency_key": _key(idempotency_key, "detach", volume_id)},
                              request_options=request_options)
 
     def resize_block_volume(self, volume_id: str, *, workspace_id: str, new_size_gb: int,
@@ -98,7 +117,8 @@ class BlockStorageClient:
         return self._request("POST", f"block-storage/volumes/{quote(volume_id, safe='')}/resize",
                              workspace_id=workspace_id, json={"new_size_gb": new_size_gb,
                              "vm_state": vm_state, "allow_online": allow_online,
-                             "idempotency_key": idempotency_key}, request_options=request_options)
+                             "idempotency_key": _key(idempotency_key, "resize", volume_id)},
+                             request_options=request_options)
 
 
 class AsyncBlockStorageClient:
@@ -118,15 +138,23 @@ class AsyncBlockStorageClient:
     async def create_block_volume(self, *, workspace_id: str, name: str, size_gb: int, site_id: str,
                                   **kwargs):
         request_options = kwargs.pop("request_options", None)
+        kwargs["idempotency_key"] = _key(kwargs.get("idempotency_key"), "create", name)
         return await self._request("POST", "block-storage/volumes", workspace_id=workspace_id,
                                    json={"name": name, "size_gb": size_gb, "site_id": site_id,
                                          **kwargs}, request_options=request_options)
     async def get_block_volume(self, volume_id: str, **kwargs): return await self._request("GET", f"block-storage/volumes/{quote(volume_id, safe='')}", **kwargs)
-    async def delete_block_volume(self, volume_id: str, *, workspace_id: str, force: bool = False, request_options=None): return await self._request("DELETE", f"block-storage/volumes/{quote(volume_id, safe='')}", workspace_id=workspace_id, params={"force": force}, request_options=request_options)
+    async def delete_block_volume(self, volume_id: str, *, workspace_id: str, force: bool = False,
+                                  idempotency_key: typing.Optional[str] = None, request_options=None):
+        """Async variant of ``BlockStorageClient.delete_block_volume`` (query ``idempotency_key``,
+        generated when omitted; not yet part of the published API contract; behaviour may change)."""
+        return await self._request("DELETE", f"block-storage/volumes/{quote(volume_id, safe='')}",
+                                   workspace_id=workspace_id,
+                                   params={"force": force, "idempotency_key": _key(idempotency_key, "delete", volume_id)},
+                                   request_options=request_options)
     async def list_block_volume_operations(self, volume_id: str, **kwargs): return await self._request("GET", f"block-storage/volumes/{quote(volume_id, safe='')}/operations", **kwargs)
     async def attach_block_volume(self, volume_id: str, *, workspace_id: str, node_name: str, **kwargs):
-        request_options = kwargs.pop("request_options", None); return await self._request("POST", f"block-storage/volumes/{quote(volume_id, safe='')}/attachments", workspace_id=workspace_id, json={"node_name": node_name, **kwargs}, request_options=request_options)
+        request_options = kwargs.pop("request_options", None); kwargs["idempotency_key"] = _key(kwargs.get("idempotency_key"), "attach", volume_id); return await self._request("POST", f"block-storage/volumes/{quote(volume_id, safe='')}/attachments", workspace_id=workspace_id, json={"node_name": node_name, **kwargs}, request_options=request_options)
     async def detach_block_volume(self, volume_id: str, *, workspace_id: str, node_name: str, **kwargs):
-        request_options = kwargs.pop("request_options", None); return await self._request("POST", f"block-storage/volumes/{quote(volume_id, safe='')}/detach", workspace_id=workspace_id, json={"node_name": node_name, **kwargs}, request_options=request_options)
+        request_options = kwargs.pop("request_options", None); kwargs["idempotency_key"] = _key(kwargs.get("idempotency_key"), "detach", volume_id); return await self._request("POST", f"block-storage/volumes/{quote(volume_id, safe='')}/detach", workspace_id=workspace_id, json={"node_name": node_name, **kwargs}, request_options=request_options)
     async def resize_block_volume(self, volume_id: str, *, workspace_id: str, new_size_gb: int, **kwargs):
-        request_options = kwargs.pop("request_options", None); return await self._request("POST", f"block-storage/volumes/{quote(volume_id, safe='')}/resize", workspace_id=workspace_id, json={"new_size_gb": new_size_gb, **kwargs}, request_options=request_options)
+        request_options = kwargs.pop("request_options", None); kwargs["idempotency_key"] = _key(kwargs.get("idempotency_key"), "resize", volume_id); return await self._request("POST", f"block-storage/volumes/{quote(volume_id, safe='')}/resize", workspace_id=workspace_id, json={"new_size_gb": new_size_gb, **kwargs}, request_options=request_options)

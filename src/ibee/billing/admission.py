@@ -1,3 +1,10 @@
+"""Deprecated billing admission helpers (not used by any SDK method).
+
+.. deprecated:: 0.4.0
+   Use ``client.billing.require_resource_eligibility`` and the helpers in
+   ``ibee.billing`` instead. This module will be removed in 0.5.0.
+"""
+
 from __future__ import annotations
 
 import typing
