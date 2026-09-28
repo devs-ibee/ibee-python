@@ -17,26 +17,27 @@ from ibee import Ibee
 
 client = Ibee(token="YOUR_TOKEN")
 
-# Product create methods send one request. The public API edge checks billing
+# Product create methods send one write request. VM creates first read the plan
+# and image (see "Complete VM lifecycle"). The public API edge checks billing
 # authoritatively before routing billable creates. Applications can optionally
 # call client.billing.require_resource_eligibility(...) first (see "Billing preflight").
 
 # List cloud VMs (every page)
 vms = client.cloud_vms.list_cloud_vms(workspace_id="907479")
 
-# Create a cloud VM
+# Create a cloud VM like the portal: the SDK looks up the plan and image for the
+# site, takes cpu/RAM/disk from the plan and builds the plan's billing_catalog
+# for the chosen term (HOURLY by default). site_id is required.
 vm = client.cloud_vms.create_cloud_vm(
     workspace_id="907479",
-    idempotency_key="create-web-server-01",
     name="web-server",
     site_id="site_blr_01",
     plan_id="plan_standard_2c_4g",
     template_id="tmpl_ubuntu_2204",
-    os_distro="ubuntu",
-    os_type="linux",
-    cpu=2,
-    ram_mb=4096,
+    billing_term="MONTHLY",
+    ssh_keys=["ssh-ed25519 AAAAC3Nza... me@laptop"],
 )
+client.cloud_vms.wait_for_compute_operation(vm.operation_id, workspace_id="907479")
 
 # List GPU VMs
 gpu_vms = client.gpu_vms.list_gpu_vms(workspace_id="907479")
@@ -162,74 +163,116 @@ Permanent-delete and version-destroy operations are irreversible.
 ## Complete VM lifecycle
 
 Cloud and GPU VM clients expose matching power, access, resize, volume,
-monitoring, snapshot, and backup operations. VM writes take an optional
-`idempotency_key`; the SDK generates one when you omit it (see
-"Retries & idempotency"):
+monitoring, snapshot, and backup operations, and apply the same rules the IBEE
+portal applies before sending anything. A rule that fails raises
+`IbeeValidationError` (a `ValueError`) with a stable `code` and `field`, before
+any request. VM writes take an optional `idempotency_key`; the SDK generates one
+when you omit it (see "Retries & idempotency"). VM ids are 24 hexadecimal
+characters; list and get results expose them as `id`.
 
 ```python
-# Power and access
-operation = client.cloud_vms.stop_cloud_vm(
-    "vm_123",
-    workspace_id="907479",
-    idempotency_key="stop-vm-123-01",
+WS = "907479"
+VM = "66f0c2a1b4d3e5f601234567"
+
+# Create: plan/image lookups, plan shape, billing SKU for the term, VPC placement.
+op = client.cloud_vms.create_cloud_vm(
+    workspace_id=WS,
+    name="app-1",                   # letters, digits and hyphens
+    site_id="site_blr_01",          # required
+    plan_id="plan_standard_2c_4g",  # must be selectable and priced
+    template_id="tmpl_ubuntu_2204",
+    billing_term="HOURLY",          # HOURLY (default) | MONTHLY | YEARLY
+    ssh_keys=["ssh-ed25519 AAAAC3Nza... me@laptop"],  # preferred over ssh_key_ids for API tokens
+    firewall_group_ids=["fw_123"],  # at most one
+    vpc_id="vpc_1", subnet_id="subnet_1", network_connectivity="private",  # private | nat | public_ip
+    preflight_billing=True,         # optional billing eligibility check (needs billing.read)
 )
-client.cloud_vms.update_cloud_vm_access(
-    "vm_123",
-    workspace_id="907479",
-    idempotency_key="rotate-access-vm-123-01",
-    ssh_key_ids=["ssh_key_456"],
+# Windows images need the Windows licence SKU (not listed by the public API yet):
+#   windows_license={"sku_id": ..., "sku_code": ..., "billing_options": [...]}
+# GPU VMs take gpu_count/gpu_model from the plan and must use Linux images.
+
+# Delete: an auto-assigned public IP is released by default, or kept as a Reserved IP.
+client.cloud_vms.delete_cloud_vm(VM, workspace_id=WS)  # public_ip_action="release"
+client.cloud_vms.delete_cloud_vm(
+    VM,
+    workspace_id=WS,
+    public_ip_action="reserve",
+    reserved_ip_billing_catalog=existing_reserved_ip.billing_catalog,  # Reserved IP SKU, same site
+)
+
+# Power and access. check_state=True applies the portal state rule first
+# (start only when stopped, stop/reboot only when running).
+client.cloud_vms.stop_cloud_vm(VM, workspace_id=WS, check_state=True)
+client.cloud_vms.update_cloud_vm_access(  # running Linux VMs only
+    VM,
+    workspace_id=WS,
     ssh_key_mode="add",
+    ssh_keys=["ssh-ed25519 AAAAC3Nza... me@laptop"],
 )
 
-# Precheck and apply a resize
-decision = client.cloud_vms.precheck_cloud_vm_resize(
-    "vm_123", workspace_id="907479", cpu=4, ram_mb=8192
-)
-operation = client.cloud_vms.resize_cloud_vm(
-    "vm_123",
-    workspace_id="907479",
-    idempotency_key="resize-vm-123-01",
-    cpu=4,
-    ram_mb=8192,
-)
+# Resize to a plan: the precheck must say in_place, and billing moves to the new SKU.
+decision = client.cloud_vms.precheck_cloud_vm_resize(VM, workspace_id=WS, plan_id="plan_4c_8g")
+client.cloud_vms.resize_cloud_vm(VM, workspace_id=WS, plan_id="plan_4c_8g", billing_term="MONTHLY")
+client.cloud_vms.resize_cloud_vm_plan(VM, workspace_id=WS, cpu=2, ram_mb=4096, confirm_downgrade=True)
+client.cloud_vms.resize_cloud_vm_root_disk(VM, workspace_id=WS, new_size_gb=100)  # grow only
 
-# Volumes, events, and time-series metrics
-client.cloud_vms.attach_cloud_vm_volume(
-    "vm_123",
-    workspace_id="907479",
-    idempotency_key="attach-volume-789-01",
-    volume_id="volume_789",
-)
-events = client.cloud_vms.list_cloud_vm_events("vm_123", workspace_id="907479")
-metrics = client.cloud_vms.get_cloud_vm_metrics_timeseries(
-    "vm_123", workspace_id="907479", range="24h"
-)
+# Volumes: attach reads the volume's Block Storage SKU and checks state and site.
+op = client.cloud_vms.attach_cloud_vm_volume(VM, workspace_id=WS, volume_id="vol_789")
+client.cloud_vms.wait_for_compute_operation(op.operation_id, workspace_id=WS, poll_interval=2, timeout=120)
+client.cloud_vms.detach_cloud_vm_volume(VM, workspace_id=WS, volume_id="vol_789", confirm_unmounted=True)
 
-# Snapshots and backups
+# Monitoring
+events = client.cloud_vms.list_cloud_vm_events(VM, workspace_id=WS, limit=100)      # 1-500
+series = client.cloud_vms.get_cloud_vm_metrics_timeseries(VM, workspace_id=WS, range="24h")
+usage = client.cloud_vms.get_cloud_vm_bandwidth(VM, workspace_id=WS)  # current UTC month
+
+# Snapshots. billing_catalog is the snapshot_storage SKU (SNAPSHOT-STD); the public
+# API cannot list it yet, so copy it from an existing snapshot set.
 snapshot = client.cloud_vms.create_cloud_vm_snapshot(
-    "vm_123", workspace_id="907479", name="before-upgrade", mode="root_only"
+    VM, workspace_id=WS, name="before-upgrade", mode="root_only", billing_catalog=snapshot_sku
 )
-policy = client.cloud_vms.enable_cloud_vm_backups(
-    "vm_123", workspace_id="907479", retention_days=14
+client.cloud_vms.wait_for_cloud_vm_snapshot(snapshot.snapshot_set_id, workspace_id=WS, vm_id=VM)
+restore = client.cloud_vms.restore_cloud_vm_snapshot(
+    snapshot.snapshot_set_id, workspace_id=WS, vm_id=VM, target_mode="new_vm"  # plan, names, SKU resolved
 )
-backup = client.cloud_vms.create_cloud_vm_backup_run(
-    "vm_123", workspace_id="907479", reason="before-upgrade"
-)
+client.cloud_vms.wait_for_cloud_vm_snapshot_restore(restore.restore_id, workspace_id=WS)
 
-# Short-lived graphical console session. Treat connect_url as a secret: do not
-# log or persist it, and close the session when finished.
-session = client.vm_console.create_vm_console_session(
-    workspace_id="907479", vm_id="vm_123", vm_type="cloud"
+# Backups. billing_catalog is the backup_storage SKU (BACKUP-STD).
+client.cloud_vms.enable_cloud_vm_backups(
+    VM,
+    workspace_id=WS,
+    schedule={"frequency": "weekly", "day_of_week": 6, "hour": 2, "timezone": "Asia/Kolkata"},
+    billing_catalog=backup_sku,
 )
-client.vm_console.close_vm_console_session(
-    session.session_id, workspace_id="907479", reason="finished"
-)
+run = client.cloud_vms.create_cloud_vm_backup_run(VM, workspace_id=WS, reason="pre-upgrade", billing_catalog=backup_sku)
+client.cloud_vms.wait_for_cloud_vm_backup_run(run.run_id, workspace_id=WS)
+points = client.cloud_vms.list_cloud_vm_backup_runs(VM, workspace_id=WS, restorable_only=True)
+workspace_backups = client.cloud_vms.list_all_cloud_vm_backup_runs(workspace_id=WS, status=["succeeded"])
+client.cloud_vms.restore_cloud_vm_backup(VM, workspace_id=WS, recovery_point_id=run.recovery_point_id)
+client.cloud_vms.delete_cloud_vm_backup_run(run.run_id, workspace_id=WS)
+
+# Short-lived graphical console session (cloud VMs only). Treat connect_url as a
+# secret: do not log or persist it, and close the session when finished.
+session = client.vm_console.create_vm_console_session(workspace_id=WS, vm_id=VM, vm_type="cloud")
+client.vm_console.close_vm_console_session(session.session_id, workspace_id=WS, reason="finished")
 ```
 
-Use the corresponding `gpu_vms` methods for GPU instances. Snapshot and backup
-item/status methods use family-specific public routes, so cloud and GPU recovery
-records cannot be mixed accidentally. The async client provides the same method
-names and arguments.
+Use the corresponding `gpu_vms` methods for GPU instances. The async client
+provides the same method names and arguments.
+
+Pre-steps are read-only requests (`vm.read`, and `block_storage.read` for attach).
+Methods that read the VM for a state check take `check_state`: pass `False` to
+skip the read. `resize_*`, `update_*_access` and restores check state by default;
+start/stop/reboot, snapshot create and detach only when you pass `check_state=True`.
+The rules live in `ibee.validation` (for example `validate_vm_id`,
+`resolve_delete_public_ip_action`, `build_vm_billing_catalog`,
+`validate_backup_schedule`) and can be used directly.
+
+Not available through the public API yet (so not in the SDK): listing the Windows
+licence, snapshot, backup and Reserved IP SKUs; plan capacity checks; VM-side
+public-network and VPC-attachment actions; GPU monitoring; password reveal; SSH
+key management; ISO installs; workspace-wide snapshot lists; converting backups
+to snapshots.
 
 ## Environments & tokens
 

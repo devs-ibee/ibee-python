@@ -53,6 +53,50 @@ auto-paging.
   not yet part of the published API contract).
 - `__version__` is exported from `ibee`.
 
+- **Portal-parity VMs** (cloud and GPU, sync and async). `create_*_vm` resolves
+  the plan (must be selectable and priced) and image for `site_id`, takes
+  cpu/ram_mb/disk_gb (and GPU fields) from the plan and os fields from the image,
+  and builds `billing_catalog` for `billing_term` (`HOURLY`/`MONTHLY`/`YEARLY`;
+  cloud defaults to `HOURLY`, GPU sends the plan SKU as the portal does). New
+  create parameters: `billing_term`, `billing_catalog`, `windows_license`,
+  `ssh_keys`, `firewall_group_ids`, `vpc_id`, `subnet_id`,
+  `network_connectivity`, `reserved_public_ip_id`, `requested_by`,
+  `preflight_billing`. Passing `billing_catalog` with the full shape skips the
+  lookups (one request).
+- `delete_*_vm(public_ip_action=..., reserved_ip_label=..., reserved_ip_billing_catalog=...)`:
+  the VM is read and an auto-assigned public IP is released by default, or kept
+  as a Reserved IP (portal delete dialog).
+- `resize_*_vm(plan_id=..., billing_term=..., billing_catalog=..., windows_license=...)`
+  runs the precheck and only resizes when it is `in_place`; the new plan SKU is
+  sent so billing follows the resize (Windows VMs keep their licence).
+  `precheck_*_vm_resize(plan_id=...)`, `resize_*_vm_plan(plan_id=..., billing_catalog=...)`,
+  `resize_*_vm_root_disk(billing_catalog=...)`.
+- `check_state` on power, access, resize, delete, attach/detach, snapshot and
+  restore methods (portal state matrix).
+- `list_all_cloud_vms` / `list_all_gpu_vms`; VM records expose the API's `_id` as `id`.
+- Recovery: `billing_catalog` on `create_*_vm_snapshot`, `enable_*_vm_backups`,
+  `update_*_vm_backup_policy` and `create_*_vm_backup_run` (the API requires it;
+  it cannot be listed publicly yet); `target_billing_catalog`,
+  `target_volume_names` on restores and `vpc_id`/`subnet_id`/
+  `network_connectivity`/`ssh_key_ids` on snapshot restores, with the new-VM
+  plan, names and SKU resolved like the portal; `restorable_only` on
+  `list_*_vm_backup_runs`; `preflight_billing` on snapshot create.
+- New: `delete_cloud_vm_backup_run` / `delete_gpu_vm_backup_run` and
+  `list_all_cloud_vm_backup_runs` / `list_all_gpu_vm_backup_runs` (not yet part
+  of the published API contract); waiters `wait_for_*_vm_snapshot`,
+  `wait_for_*_vm_snapshot_restore`, `wait_for_*_vm_backup_restore`,
+  `wait_for_*_vm_backup_run`; `wait_for_operation` alias.
+- `attach_*_vm_volume` reads the volume and sends its Block Storage SKU as
+  `billing_catalog`; `vm_console.create_vm_console_session(check_state=...)`.
+- Errors: `ResizeBlockedError` (409 with a precheck decision),
+  `RecoveryFailedError`, `RecoveryRestoreFailedError`.
+- Rules in `ibee.validation` (now a package; imports unchanged): VM ids, names and
+  batches, SSH public keys, billing SKUs and terms (`build_vm_billing_catalog`,
+  `billing_catalog_for_term`, `with_attached_billing_skus`), VPC placement, state
+  matrix, public-IP choice on delete, access updates, resize ranges, metrics,
+  snapshot/backup schedules, restore modes and naming. `IbeeValidationError` has
+  `details`.
+
 ### Changed
 
 - **Retries.** Only `GET`/`HEAD`/`OPTIONS` requests, and writes carrying an
@@ -87,10 +131,35 @@ auto-paging.
 - Billable create bodies over 64 KiB raise `IbeeValidationError(code="request_body_too_large")`
   before sending (the API would answer 413).
 
+- **VM rules are checked before sending.** VM ids must be 24 hexadecimal
+  characters and operation ids `op_` + 24 hex characters (blocks operator-only
+  paths such as `gpu-vms/all`); `site_id` is required on VM create (the API
+  answers 422 without it); `cpu`, `ram_mb`, `os_type`, `os_distro`, `gpu_count`
+  and `gpu_model` are now optional on create (taken from the plan/image) but must
+  match them when given; `disk_gb` is always sent (0.3.0 left it to a 50/140 GB
+  server default).
+- VM access updates, `resize_*`, `resize_*_vm_plan` and `resize_*_vm_root_disk`
+  read the VM first by default (`check_state=False` skips it); resize also runs
+  the precheck. Backup enable/update read the saved policy.
+- Snapshot create, backup enable and manual backup run raise
+  `IbeeValidationError` without `billing_catalog` (0.3.0 always got 422).
+  Backup schedules are `daily` or `weekly` only (weekly needs `day_of_week`),
+  with a valid IANA time zone; `next_run_at` must be timezone-aware.
+- `detach_*_vm_volume` needs `confirm_unmounted=True` or `force=True`.
+- Snapshot restores send `auto_start=True` by default; backup restores no longer
+  send `auto_start` (the API ignores it).
+- Console sessions are cloud-only (`vm_type="gpu"` is rejected locally).
+- `get_*_vm_bandwidth` defaults `month` to the current UTC month.
+- VM creates are never retried automatically, even with an idempotency key.
+
 ### Fixed
 
 - Creates replayed after a committed first attempt no longer retry into a 409.
 - VM and firewall-group lists no longer cap at 10 items.
+- VM creates now send `billing_catalog` (0.3.0 creates always failed with 422).
+- Deleting a VM with an auto-assigned public IP no longer fails with 400.
+- Resizes now move billing to the target plan's SKU.
+- VM `id` is no longer `None` for records the API returns with `_id`.
 
 ### Deprecated
 

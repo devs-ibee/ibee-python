@@ -26,6 +26,7 @@ if typing.TYPE_CHECKING:
     from .bad_request_error import BadRequestError
     from .billing_eligibility_error import BillingEligibilityError
     from .billing_errors import BillingAdmissionError, BillingDeniedError, BillingForbiddenError
+    from .compute_errors import RecoveryFailedError, RecoveryRestoreFailedError, ResizeBlockedError
     from .conflict_error import ConflictError
     from .factory import error_from_response, is_payment_block_error
     from .forbidden_error import ForbiddenError
@@ -45,6 +46,9 @@ _dynamic_imports: typing.Dict[str, str] = {
     "BillingEligibilityError": ".billing_eligibility_error",
     "BillingForbiddenError": ".billing_errors",
     "ConflictError": ".conflict_error",
+    "RecoveryFailedError": ".compute_errors",
+    "RecoveryRestoreFailedError": ".compute_errors",
+    "ResizeBlockedError": ".compute_errors",
     "ForbiddenError": ".forbidden_error",
     "GatewayTimeoutError": ".api_errors",
     "IbeeError": ".ibee_error",

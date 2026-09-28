@@ -36,6 +36,23 @@ from .raw_client import AsyncRawGpuVmsClient, RawGpuVmsClient
 from .types.create_gpu_vm_request_os_type import CreateGpuVmRequestOsType
 from .types.get_gpu_vm_metrics_timeseries_request_range import GetGpuVmMetricsTimeseriesRequestRange
 
+from ..compute_workflows import clean_kwargs, run_async, run_sync
+from .. import compute_workflows as workflows
+from ..errors.compute_errors import RecoveryFailedError, RecoveryRestoreFailedError
+from ..errors.not_found_error import NotFoundError
+from ..operations import apoll_until, poll_until
+from ..validation import (
+    current_bandwidth_month,
+    validate_bandwidth_month,
+    validate_compute_operation_id,
+    validate_events_limit,
+    validate_metrics_range,
+    validate_poll_interval,
+    validate_required_text,
+    validate_vm_id,
+    validate_wait_timeout,
+)
+
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
 
@@ -160,22 +177,44 @@ class GpuVmsClient:
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
         name: str,
-        os_distro: str,
-        os_type: CreateGpuVmRequestOsType,
-        template_id: str,
-        cpu: int,
-        ram_mb: int,
-        gpu_count: int,
-        gpu_model: str,
         plan_id: str,
+        template_id: str,
         site_id: typing.Optional[str] = OMIT,
+        os_distro: typing.Optional[str] = None,
+        os_type: typing.Optional[str] = None,
+        cpu: typing.Optional[int] = None,
+        ram_mb: typing.Optional[int] = None,
         disk_gb: typing.Optional[int] = OMIT,
+        gpu_count: typing.Optional[int] = None,
+        gpu_model: typing.Optional[str] = None,
+        billing_term: typing.Optional[str] = None,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        windows_license: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        ssh_keys: typing.Optional[typing.Sequence[str]] = None,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
+        firewall_group_ids: typing.Optional[typing.Sequence[str]] = None,
+        vpc_id: typing.Optional[str] = None,
+        subnet_id: typing.Optional[str] = None,
+        network_connectivity: typing.Optional[str] = None,
+        reserved_public_ip_id: typing.Optional[str] = None,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
+        requested_by: typing.Optional[str] = None,
+        preflight_billing: bool = False,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Creates a GPU VM. Returns an operation you can poll for status. Requires scope: vm.write.
+        Creates a GPU VM the way the portal does. Requires scope: vm.write (and billing.read with
+        ``preflight_billing``).
+
+        Pre-steps: the plan is looked up in ``GET /compute/plans?vm_type=gpu&site_id=...`` (it must be selectable
+        and priced) and the image in ``GET /compute/images``; cpu, ram_mb, disk_gb, gpu_count and gpu_model come
+        from the plan and os_type/os_distro from the image (values you pass must match). ``billing_catalog`` is
+        built from the plan's SKU for ``billing_term`` (when given; by default the plan SKU is sent unchanged and
+        billed hourly, as in the portal), with a Windows licence and a Reserved IP attached when used. VPC placement
+        is checked against the VPC, subnet and Reserved IP. Everything is validated before the create request;
+        failures raise ``IbeeValidationError``. VM creates are never retried automatically.
+
+        Returns the accepted operation; wait for it with ``wait_for_compute_operation``.
 
         Parameters
         ----------
@@ -183,48 +222,90 @@ class GpuVmsClient:
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         name : str
-            Display name for the virtual machine.
-
-        os_distro : str
-            Operating system distribution (e.g. ubuntu, centos, debian, rocky).
-
-        os_type : CreateGpuVmRequestOsType
-            Operating system family.
-
-        template_id : str
-            GPU-compatible template ID returned by the compute catalog.
-
-        cpu : int
-            Number of vCPUs.
-
-        ram_mb : int
-            RAM in megabytes.
-
-        gpu_count : int
-            Number of GPUs to attach.
-
-        gpu_model : str
-            GPU model (e.g. A100, H100, L40S, RTX4090).
+            Hostname: letters, digits and hyphens (trimmed).
 
         plan_id : str
-            Billable GPU plan ID returned by the compute catalog.
+            Plan ID from ``compute_catalog.list_compute_plans(vm_type='gpu', site_id=...)``.
+
+        template_id : str
+            Image ID from ``compute_catalog.list_compute_images(vm_type='gpu', site_id=...)``.
 
         site_id : typing.Optional[str]
-            Optional placement site ID. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites` and use the same value when filtering plans and images.
+            Site ID from ``compute_catalog.list_compute_sites``. Required: the API rejects creates without it.
+
+        os_distro : typing.Optional[str]
+            Defaults to the image's os_distro.
+
+        os_type : typing.Optional[str]
+            Defaults to the image's os_type (must match it); GPU VMs must use Linux images.
+
+        cpu : typing.Optional[int]
+            Defaults to the plan's vCPUs (must match it).
+
+        ram_mb : typing.Optional[int]
+            Defaults to the plan's RAM (must match it).
 
         disk_gb : typing.Optional[int]
-            Root disk size in gigabytes.
+            Defaults to the plan's root disk (must match it); always sent.
+
+        gpu_count : typing.Optional[int]
+            Defaults to the plan's GPU count (must match it).
+
+        gpu_model : typing.Optional[str]
+            Defaults to the plan's GPU model (must match it, case-insensitive).
+
+        billing_term : typing.Optional[str]
+            ``HOURLY``, ``MONTHLY`` or ``YEARLY`` (default: the plan SKU unchanged, billed hourly). The plan must
+            offer the term.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Advanced: send this SKU object instead of the one built from the plan (checked: sku_id, sku_code, no
+            root-disk SKUs). When it is given together with cpu, ram_mb, disk_gb, os_type and os_distro (and
+            gpu_count), the plan and image lookups are skipped and the create is a single request.
+
+        windows_license : typing.Optional[typing.Dict[str, typing.Any]]
+            Windows images only (required for them): the Windows licence billing SKU (sku_id, sku_code, optional
+            billing_options). It is priced per vCPU for the same billing term. The public API does not list licence
+            add-ons yet.
+
+        ssh_keys : typing.Optional[typing.Sequence[str]]
+            Inline OpenSSH public keys (single line; ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256/384/521, sk-ssh-
+            ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com). Recommended for API tokens.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
-            SSH key IDs to inject into the VM.
+            Saved SSH key IDs. They are resolved for the user who created the VM, so they do not work for VMs
+            created with an API token; prefer ``ssh_keys``.
+
+        firewall_group_ids : typing.Optional[typing.Sequence[str]]
+            At most one firewall group ID.
+
+        vpc_id : typing.Optional[str]
+            Place the VM in this VPC (needs ``subnet_id``; same site).
+
+        subnet_id : typing.Optional[str]
+            Subnet of ``vpc_id``.
+
+        network_connectivity : typing.Optional[str]
+            With a VPC: ``private`` (default), ``nat`` (NAT Gateway VPCs only) or ``public_ip`` (public or private
+            VPCs; a private VPC needs ``reserved_public_ip_id``).
+
+        reserved_public_ip_id : typing.Optional[str]
+            Reserved IP for ``public_ip`` connectivity (same site, not attached). Its SKU is attached to the bill.
 
         tags : typing.Optional[typing.Sequence[str]]
-            Arbitrary tags for filtering and organization.
+            Arbitrary tags.
+
+        requested_by : typing.Optional[str]
+            Optional audit label (1-128 characters).
+
+        preflight_billing : bool
+            Check billing eligibility for the plan SKU first (needs billing.read) and raise ``BillingDeniedError``
+            when it is not allowed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -232,59 +313,23 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM creation accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.create_gpu_vm(
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-            name="ml-training-01",
-            os_distro="ubuntu",
-            os_type="linux",
-            template_id="tmpl_ubuntu_2204_cuda",
-            cpu=8,
-            ram_mb=32768,
-            gpu_count=1,
-            gpu_model="A100",
-            plan_id="plan_id",
-        )
         """
-        _response = self._raw_client.create_gpu_vm(
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            name=name,
-            os_distro=os_distro,
-            os_type=os_type,
-            template_id=template_id,
-            cpu=cpu,
-            ram_mb=ram_mb,
-            gpu_count=gpu_count,
-            gpu_model=gpu_model,
-            plan_id=plan_id,
-            site_id=site_id,
-            disk_gb=disk_gb,
-            ssh_key_ids=ssh_key_ids,
-            tags=tags,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.create_vm("gpu", **clean_kwargs(locals())), request_options)
 
     def get_gpu_vm(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vm_id: str,
+        *,
+        workspace_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> GpuVm:
         """
-        Returns a single GPU VM. Requires scope: vm.read.
+        Returns a single GPU VM (``id`` is filled from the API's ``_id``). Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
@@ -295,21 +340,8 @@ class GpuVmsClient:
         Returns
         -------
         GpuVm
-            GPU VM returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.get_gpu_vm(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.get_gpu_vm(vm_id, workspace_id=workspace_id, request_options=request_options)
+        _response = self._raw_client.get_gpu_vm(validate_vm_id(vm_id), workspace_id=workspace_id, request_options=request_options)
         return _response.data
 
     def delete_gpu_vm(
@@ -318,23 +350,53 @@ class GpuVmsClient:
         *,
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
+        public_ip_action: typing.Optional[str] = None,
+        reserved_ip_label: typing.Optional[str] = None,
+        reserved_ip_billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        requested_by: typing.Optional[str] = None,
+        preflight_billing: bool = False,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Deletes a GPU VM. Returns an operation you can poll for status. Requires scope: vm.write.
+        Deletes a GPU VM, choosing what happens to its public IP like the portal's delete dialog. Requires scope:
+        vm.write.
+
+        The VM is read first. When it has an auto-assigned public IP the API needs a choice: ``release`` (default)
+        or ``reserve`` (keep the address as a billed Reserved IP; needs ``reserved_ip_billing_catalog``). Deleting
+        is refused while the VM is already deleting or resizing. Data volumes are detached, not deleted.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
+
+        public_ip_action : typing.Optional[str]
+            ``release`` (default when the VM has an auto-assigned public IP) or ``reserve``.
+
+        reserved_ip_label : typing.Optional[str]
+            Label for the kept Reserved IP (at most 120 characters; default: the VM name). Only with ``reserve``.
+
+        reserved_ip_billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Reserved IP SKU (sku_id, sku_code), required with ``reserve``. The public API cannot list it yet: copy
+            ``billing_catalog`` from an existing Reserved IP in the same site.
+
+        requested_by : typing.Optional[str]
+            Optional audit label (1-128 characters).
+
+        preflight_billing : bool
+            With ``reserve``: check billing eligibility for the Reserved IP SKU first (needs billing.read).
+
+        check_state : typing.Optional[bool]
+            ``False`` skips reading the VM when ``public_ip_action='release'`` is given (no state check).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -342,25 +404,8 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM deletion accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.delete_gpu_vm(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.delete_gpu_vm(
-            vm_id, workspace_id=workspace_id, idempotency_key=idempotency_key, request_options=request_options
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.delete_vm("gpu", **clean_kwargs(locals())), request_options)
 
     def start_gpu_vm(
         self,
@@ -369,26 +414,30 @@ class GpuVmsClient:
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
         force: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Starts a stopped GPU VM. Requires scope: vm.write.
+        Starts a GPU VM. Returns an operation you can poll. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         force : typing.Optional[bool]
-            Force the action even if the VM is in a transitional state.
+            Force the action.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the VM first and applies the portal rule (only when ``stopped``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -396,29 +445,8 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM start accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.start_gpu_vm(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.start_gpu_vm(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            force=force,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.power_action("gpu", "start", **clean_kwargs(locals())), request_options)
 
     def stop_gpu_vm(
         self,
@@ -427,26 +455,30 @@ class GpuVmsClient:
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
         force: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Stops a running GPU VM. Requires scope: vm.write.
+        Stops a GPU VM. Returns an operation you can poll. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         force : typing.Optional[bool]
-            Force the action even if the VM is in a transitional state.
+            Force the action.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the VM first and applies the portal rule (only when ``running``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -454,29 +486,8 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM stop accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.stop_gpu_vm(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.stop_gpu_vm(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            force=force,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.power_action("gpu", "stop", **clean_kwargs(locals())), request_options)
 
     def reboot_gpu_vm(
         self,
@@ -485,26 +496,30 @@ class GpuVmsClient:
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
         force: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Reboots a GPU VM. Requires scope: vm.write.
+        Reboots a GPU VM. Returns an operation you can poll. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         force : typing.Optional[bool]
-            Force the action even if the VM is in a transitional state.
+            Force the action.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the VM first and applies the portal rule (only when ``running``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -512,40 +527,23 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM reboot accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.reboot_gpu_vm(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.reboot_gpu_vm(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            force=force,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.power_action("gpu", "reboot", **clean_kwargs(locals())), request_options)
 
     def get_gpu_vm_metrics(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vm_id: str,
+        *,
+        workspace_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> VmMetrics:
         """
-        Returns current resource-usage metrics for a GPU VM. Requires scope: vm.read.
+        Returns the current metrics overview of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
@@ -556,23 +554,8 @@ class GpuVmsClient:
         Returns
         -------
         VmMetrics
-            VM metrics returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.get_gpu_vm_metrics(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.get_gpu_vm_metrics(
-            vm_id, workspace_id=workspace_id, request_options=request_options
-        )
+        _response = self._raw_client.get_gpu_vm_metrics(validate_vm_id(vm_id), workspace_id=workspace_id, request_options=request_options)
         return _response.data
 
     def update_gpu_vm_access(
@@ -590,44 +573,60 @@ class GpuVmsClient:
         new_password: typing.Optional[str] = OMIT,
         password_auth_enabled: typing.Optional[bool] = OMIT,
         confirm_remove_last_ssh_key: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication without rebooting the VM. Requires scope: vm.write.
+        Adds or removes SSH keys, resets the Linux password, or turns SSH password login on/off (Linux VMs only).
+        Requires scope: vm.write.
+
+        Checked first: ``ssh_key_mode`` is given exactly when keys are; at least one change; a new password has at
+        least 8 characters and no line breaks; keys are single-line OpenSSH public keys. By default the VM is read
+        too: it must be a running Linux VM, password login can only be turned off while an SSH key remains, and
+        removing the last key while password login is off needs ``confirm_remove_last_ssh_key=True``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         admin_username : typing.Optional[str]
             Linux account to update. Defaults to the VM admin user.
 
         ssh_key_mode : typing.Optional[VmAccessUpdateRequestSshKeyMode]
+            ``add`` or ``remove`` (required with keys).
 
         ssh_keys : typing.Optional[typing.Sequence[str]]
             Inline public SSH keys to add or remove.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
-            Secret Store SSH key IDs to add or remove.
+            Saved SSH key IDs to add or remove.
 
         ssh_key_secret_refs : typing.Optional[typing.Sequence[SshKeySecretRef]]
+            Secret Store SSH key references.
 
         new_password : typing.Optional[str]
+            New password for the Linux user (at least 8 characters, no line breaks).
 
         password_auth_enabled : typing.Optional[bool]
+            Turn SSH password login on or off.
 
         confirm_remove_last_ssh_key : typing.Optional[bool]
+            Confirm removing the last tracked SSH key while password login is off.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the VM and apply the Linux/running/last-key rules. ``False`` skips that read.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -635,37 +634,8 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Access update accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.update_gpu_vm_access(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.update_gpu_vm_access(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            requested_by=requested_by,
-            admin_username=admin_username,
-            ssh_key_mode=ssh_key_mode,
-            ssh_keys=ssh_keys,
-            ssh_key_ids=ssh_key_ids,
-            ssh_key_secret_refs=ssh_key_secret_refs,
-            new_password=new_password,
-            password_auth_enabled=password_auth_enabled,
-            confirm_remove_last_ssh_key=confirm_remove_last_ssh_key,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.update_access("gpu", **clean_kwargs(locals())), request_options)
 
     def precheck_gpu_vm_resize(
         self,
@@ -676,26 +646,35 @@ class GpuVmsClient:
         ram_mb: typing.Optional[int] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        plan_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> VmResizePrecheck:
         """
-        Evaluates a requested CPU, memory, or root-disk change before starting it. Requires scope: vm.write.
+        Checks whether a resize can run in place (``decision``: ``in_place``, ``migration_required`` or
+        ``blocked``). Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         cpu : typing.Optional[int]
+            Target vCPUs (1-256).
 
         ram_mb : typing.Optional[int]
+            Target RAM in MB (257-2097152).
 
         disk_gb : typing.Optional[int]
+            Target root disk in GB (1-10000).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        plan_id : typing.Optional[str]
+            Resize to this plan's shape instead of explicit values (looked up for the VM's site).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -703,30 +682,8 @@ class GpuVmsClient:
         Returns
         -------
         VmResizePrecheck
-            Resize decision returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.precheck_gpu_vm_resize(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.precheck_gpu_vm_resize(
-            vm_id,
-            workspace_id=workspace_id,
-            cpu=cpu,
-            ram_mb=ram_mb,
-            disk_gb=disk_gb,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.precheck_resize("gpu", **clean_kwargs(locals())), request_options)
 
     def resize_gpu_vm(
         self,
@@ -738,31 +695,60 @@ class GpuVmsClient:
         ram_mb: typing.Optional[int] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        plan_id: typing.Optional[str] = None,
+        billing_term: typing.Optional[str] = None,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        windows_license: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Changes CPU, memory, and optionally increases the root disk after the same precheck used by the portal. Requires scope: vm.write.
+        Resizes a GPU VM the way the portal does. Requires scope: vm.write.
+
+        With ``plan_id`` the target cpu/RAM/disk and the new ``billing_catalog`` (for ``billing_term``, default
+        ``HOURLY``; a Windows VM keeps its licence) come from the plan, so billing moves to the new SKU. The resize
+        precheck runs first and the resize is only sent when its decision is ``in_place``; otherwise
+        ``IbeeValidationError`` (code ``resize_not_in_place``, ``details`` = the precheck) is raised.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         cpu : typing.Optional[int]
+            Target vCPUs (1-256), when not using ``plan_id``.
 
         ram_mb : typing.Optional[int]
+            Target RAM in MB (257-2097152), when not using ``plan_id``.
 
         disk_gb : typing.Optional[int]
+            Target root disk in GB (1-10000), when not using ``plan_id``.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        plan_id : typing.Optional[str]
+            Target plan (recommended; the portal only resizes to plans).
+
+        billing_term : typing.Optional[str]
+            With ``plan_id``: ``HOURLY`` (default), ``MONTHLY`` or ``YEARLY``.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Advanced: explicit target SKU object.
+
+        windows_license : typing.Optional[typing.Dict[str, typing.Any]]
+            Windows VMs: licence SKU (default: the one on the VM's current billing catalog).
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the VM and require ``running``, ``stopped`` or ``error``.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -770,32 +756,8 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM resize accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.resize_gpu_vm(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.resize_gpu_vm(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            cpu=cpu,
-            ram_mb=ram_mb,
-            disk_gb=disk_gb,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.resize("gpu", **clean_kwargs(locals())), request_options)
 
     def resize_gpu_vm_plan(
         self,
@@ -803,38 +765,66 @@ class GpuVmsClient:
         *,
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
-        cpu: int,
-        ram_mb: int,
+        cpu: typing.Optional[int] = None,
+        ram_mb: typing.Optional[int] = None,
         allow_online: typing.Optional[bool] = OMIT,
         confirm_downgrade: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        plan_id: typing.Optional[str] = None,
+        billing_term: typing.Optional[str] = None,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        windows_license: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Changes the VM CPU and memory shape. Downgrades require explicit confirmation. Requires scope: vm.write.
+        Changes the CPU/RAM shape of a GPU VM. Requires scope: vm.write.
+
+        By default the VM is read first: the shape must change, a smaller CPU or RAM needs
+        ``confirm_downgrade=True``, and the VM must be ``running``, ``stopped`` or ``error``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
-        cpu : int
+        cpu : typing.Optional[int]
+            Target vCPUs (1-256); from the plan with ``plan_id``.
 
-        ram_mb : int
+        ram_mb : typing.Optional[int]
+            Target RAM in MB (257-2097152); from the plan with ``plan_id``.
 
         allow_online : typing.Optional[bool]
+            Allow resizing without stopping the VM.
 
         confirm_downgrade : typing.Optional[bool]
+            Required (``True``) when reducing CPU or RAM.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        plan_id : typing.Optional[str]
+            Take cpu/RAM and the new billing SKU from this plan.
+
+        billing_term : typing.Optional[str]
+            With ``plan_id``: ``HOURLY`` (default), ``MONTHLY`` or ``YEARLY``.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Advanced: explicit target SKU object.
+
+        windows_license : typing.Optional[typing.Dict[str, typing.Any]]
+            Windows VMs with ``plan_id``: licence SKU (default: the VM's current one).
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the VM for the state, no-change and downgrade rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -842,35 +832,8 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Plan resize accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.resize_gpu_vm_plan(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-            cpu=1,
-            ram_mb=1,
-        )
         """
-        _response = self._raw_client.resize_gpu_vm_plan(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            cpu=cpu,
-            ram_mb=ram_mb,
-            allow_online=allow_online,
-            confirm_downgrade=confirm_downgrade,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.resize_plan("gpu", **clean_kwargs(locals())), request_options)
 
     def resize_gpu_vm_root_disk(
         self,
@@ -881,29 +844,43 @@ class GpuVmsClient:
         new_size_gb: int,
         allow_online: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Increases the root disk size; shrinking is not supported. Requires scope: vm.write.
+        Grows the root disk of a GPU VM (shrinking is not supported). Requires scope: vm.write.
+
+        By default the VM is read first: ``new_size_gb`` must be larger than the current disk and the VM
+        ``running``, ``stopped`` or ``error``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         new_size_gb : int
+            New root disk size in GB (1-10000, larger than the current size).
 
         allow_online : typing.Optional[bool]
+            Allow resizing without stopping the VM.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Advanced: target SKU object.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the VM for the grow-only and state rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -911,32 +888,8 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Root-disk resize accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.resize_gpu_vm_root_disk(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-            new_size_gb=1,
-        )
         """
-        _response = self._raw_client.resize_gpu_vm_root_disk(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            new_size_gb=new_size_gb,
-            allow_online=allow_online,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.resize_root_disk("gpu", **clean_kwargs(locals())), request_options)
 
     def attach_gpu_vm_volume(
         self,
@@ -947,29 +900,45 @@ class GpuVmsClient:
         volume_id: str,
         mode: typing.Optional[VmAttachVolumeRequestMode] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Attaches a persistent block volume to the VM. Requires scope: vm.write.
+        Attaches a block volume to a GPU VM like the portal. Requires scope: vm.write and block_storage.read.
+
+        The volume is read first: it must not be attached or busy, it must be in the VM's site, and its Block
+        Storage SKU is sent as ``billing_catalog`` (required by the API). Wait for the returned operation with
+        ``wait_for_compute_operation``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         volume_id : str
+            Block volume ID.
 
         mode : typing.Optional[VmAttachVolumeRequestMode]
+            ``single-writer`` (default) or ``multi-writer``.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            The volume's Block Storage SKU. Read from the volume when omitted.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: also read the VM (state and site). ``False`` with ``billing_catalog`` skips both
+            reads.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -977,32 +946,8 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Volume attachment accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.attach_gpu_vm_volume(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-            volume_id="volume_id",
-        )
         """
-        _response = self._raw_client.attach_gpu_vm_volume(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            volume_id=volume_id,
-            mode=mode,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.attach_volume("gpu", **clean_kwargs(locals())), request_options)
 
     def detach_gpu_vm_volume(
         self,
@@ -1014,31 +959,42 @@ class GpuVmsClient:
         force: typing.Optional[bool] = OMIT,
         confirm_unmounted: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Detaches a persistent block volume. Confirm the guest filesystem is unmounted unless force is used. Requires scope: vm.write.
+        Detaches a block volume from a GPU VM. Requires scope: vm.write.
+
+        Like the portal, confirm the volume is unmounted in the guest (``confirm_unmounted=True``) or pass
+        ``force=True``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         volume_id : str
+            Block volume ID.
 
         force : typing.Optional[bool]
+            Detach even if the guest still uses the volume (risk of data loss).
 
         confirm_unmounted : typing.Optional[bool]
+            Confirm the volume is unmounted in the guest (required unless ``force``).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the volume first and requires it to be attached to this VM.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1046,49 +1002,30 @@ class GpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Volume detachment accepted.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.detach_gpu_vm_volume(
-            vm_id="vm_id",
-            idempotency_key="X-Idempotency-Key",
-            workspace_id="workspace_id",
-            volume_id="volume_id",
-        )
         """
-        _response = self._raw_client.detach_gpu_vm_volume(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            volume_id=volume_id,
-            force=force,
-            confirm_unmounted=confirm_unmounted,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.detach_volume("gpu", **clean_kwargs(locals())), request_options)
 
     def acknowledge_gpu_vm_mount_guidance(
-        self, vm_id: str, *, workspace_id: str, volume_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vm_id: str,
+        *,
+        workspace_id: str,
+        volume_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> MountGuidanceAcknowledge:
         """
-        Records that the client has reviewed the guest mount instructions for an attached data volume. Requires scope: vm.write.
+        Marks the guest mount guidance of an attached data volume as read. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         volume_id : str
+            Attached block volume ID.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1096,25 +1033,8 @@ class GpuVmsClient:
         Returns
         -------
         MountGuidanceAcknowledge
-            Mount guidance acknowledged successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.acknowledge_gpu_vm_mount_guidance(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-            volume_id="volume_id",
-        )
         """
-        _response = self._raw_client.acknowledge_gpu_vm_mount_guidance(
-            vm_id, workspace_id=workspace_id, volume_id=volume_id, request_options=request_options
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.acknowledge_mount_guidance("gpu", **clean_kwargs(locals())), request_options)
 
     def list_gpu_vm_events(
         self,
@@ -1125,17 +1045,18 @@ class GpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[VmEvent]:
         """
-        Returns the VM lifecycle and operation event timeline. Requires scope: vm.read.
+        Lists the event timeline of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         limit : typing.Optional[int]
+            Maximum events (1-500, server default 100).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1143,23 +1064,8 @@ class GpuVmsClient:
         Returns
         -------
         typing.List[VmEvent]
-            VM events returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.list_gpu_vm_events(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.list_gpu_vm_events(
-            vm_id, workspace_id=workspace_id, limit=limit, request_options=request_options
-        )
+        _response = self._raw_client.list_gpu_vm_events(validate_vm_id(vm_id), workspace_id=workspace_id, limit=validate_events_limit(limit), request_options=request_options)
         return _response.data
 
     def get_gpu_vm_metrics_timeseries(
@@ -1171,17 +1077,18 @@ class GpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> VmMetricsTimeseries:
         """
-        Returns rolled-up VM metric series for a supported time range. Requires scope: vm.read.
+        Returns metric time series for a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         range : typing.Optional[GetGpuVmMetricsTimeseriesRequestRange]
+            ``30m``, ``1h`` (default), ``6h``, ``24h`` or ``7d``.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1189,40 +1096,31 @@ class GpuVmsClient:
         Returns
         -------
         VmMetricsTimeseries
-            VM metric timeseries returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.get_gpu_vm_metrics_timeseries(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.get_gpu_vm_metrics_timeseries(
-            vm_id, workspace_id=workspace_id, range=range, request_options=request_options
-        )
+        _response = self._raw_client.get_gpu_vm_metrics_timeseries(validate_vm_id(vm_id), workspace_id=workspace_id, range=validate_metrics_range(range), request_options=request_options)
         return _response.data
 
     def get_gpu_vm_bandwidth(
-        self, vm_id: str, *, workspace_id: str, month: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vm_id: str,
+        *,
+        workspace_id: str,
+        month: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> VmBandwidthSummary:
         """
-        Returns received and transmitted byte totals for a calendar month. Requires scope: vm.read.
+        Returns the monthly bandwidth summary of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
-        month : str
+        month : typing.Optional[str]
+            Month as ``YYYY-MM``. Default: the current UTC month (as in the portal).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1230,24 +1128,9 @@ class GpuVmsClient:
         Returns
         -------
         VmBandwidthSummary
-            VM bandwidth summary returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.get_gpu_vm_bandwidth(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-            month="2026-08",
-        )
         """
-        _response = self._raw_client.get_gpu_vm_bandwidth(
-            vm_id, workspace_id=workspace_id, month=month, request_options=request_options
-        )
+        _month = validate_bandwidth_month(month) if month is not None else current_bandwidth_month()
+        _response = self._raw_client.get_gpu_vm_bandwidth(validate_vm_id(vm_id), workspace_id=workspace_id, month=_month, request_options=request_options)
         return _response.data
 
     def list_gpu_vm_snapshots(
@@ -1261,22 +1144,24 @@ class GpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SnapshotSetList:
         """
-        Lists recovery snapshots for one GPU VM. Requires scope: vm.read.
+        Lists snapshot sets of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         limit : typing.Optional[int]
-            Maximum number of records to return.
+            Page size (1-200, server default 50).
 
         offset : typing.Optional[int]
+            Items to skip (>= 0).
 
         search : typing.Optional[str]
+            Filter text (trimmed; blank is ignored).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1284,24 +1169,8 @@ class GpuVmsClient:
         Returns
         -------
         SnapshotSetList
-            Snapshots returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.list_gpu_vm_snapshots(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.list_gpu_vm_snapshots(
-            vm_id, workspace_id=workspace_id, limit=limit, offset=offset, search=search, request_options=request_options
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.list_snapshots("gpu", **clean_kwargs(locals())), request_options)
 
     def create_gpu_vm_snapshot(
         self,
@@ -1313,28 +1182,49 @@ class GpuVmsClient:
         mode: typing.Optional[SnapshotCreateRequestMode] = OMIT,
         selected_data_volume_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        preflight_billing: bool = False,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SnapshotSet:
         """
-        Creates a recovery snapshot of the root disk, all attached disks, or selected data disks. Requires scope: vm.write.
+        Creates a snapshot set of a GPU VM. Requires scope: vm.write.
+
+        ``billing_catalog`` is required by the API: the ``snapshot_storage`` SKU (code ``SNAPSHOT-STD``) with
+        ``sku_id`` and ``sku_code``. The public API cannot list it yet; copy ``billing_catalog`` from an existing
+        snapshot set. Snapshot creates are never retried automatically.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         name : str
+            Snapshot name (1-255 characters, trimmed).
 
         description : typing.Optional[str]
+            Description (at most 1024 characters; blank is omitted).
 
         mode : typing.Optional[SnapshotCreateRequestMode]
+            ``all_attached`` (default), ``root_only`` or ``selective``.
 
         selected_data_volume_ids : typing.Optional[typing.Sequence[str]]
+            Data volumes for ``selective`` (at least one); not allowed with the other modes.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Snapshot storage SKU (required).
+
+        preflight_billing : bool
+            Check billing eligibility for the SKU first (needs billing.read).
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the VM first: refused while it changes state; selective volumes must be attached.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1342,32 +1232,8 @@ class GpuVmsClient:
         Returns
         -------
         SnapshotSet
-            Snapshot created or queued successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.create_gpu_vm_snapshot(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-            name="name",
-        )
         """
-        _response = self._raw_client.create_gpu_vm_snapshot(
-            vm_id,
-            workspace_id=workspace_id,
-            name=name,
-            description=description,
-            mode=mode,
-            selected_data_volume_ids=selected_data_volume_ids,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.create_snapshot("gpu", **clean_kwargs(locals())), request_options)
 
     def restore_gpu_vm_snapshot(
         self,
@@ -1377,10 +1243,10 @@ class GpuVmsClient:
         vm_id: str,
         target_mode: typing.Optional[RecoveryRestoreRequestTargetMode] = OMIT,
         target_vm_name: typing.Optional[str] = OMIT,
+        target_plan_id: typing.Optional[str] = OMIT,
         target_cpu: typing.Optional[int] = OMIT,
         target_ram_mb: typing.Optional[int] = OMIT,
         target_disk_gb: typing.Optional[int] = OMIT,
-        target_plan_id: typing.Optional[str] = OMIT,
         target_plan_name: typing.Optional[str] = OMIT,
         target_plan_code: typing.Optional[str] = OMIT,
         target_plan_type: typing.Optional[str] = OMIT,
@@ -1401,10 +1267,24 @@ class GpuVmsClient:
         selected_volume_id: typing.Optional[str] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         auto_start: typing.Optional[bool] = OMIT,
+        target_billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        target_volume_names: typing.Optional[typing.Dict[str, str]] = None,
+        vpc_id: typing.Optional[str] = None,
+        subnet_id: typing.Optional[str] = None,
+        network_connectivity: typing.Optional[str] = None,
+        ssh_key_ids: typing.Optional[typing.Sequence[str]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RecoveryRestore:
         """
-        Restores a snapshot by replacing a VM, creating a new VM, or restoring one volume. Requires scope: vm.write.
+        Restores a snapshot set like the portal: replace the VM, create a new VM, or restore one volume. Requires
+        scope: vm.write.
+
+        The snapshot must be ready (and, by default, the VM ``running`` or ``stopped``). For ``new_vm`` the target
+        plan (default: the source VM's plan) is looked up in ``GET /compute/plans`` and fills cpu/RAM/disk/GPU
+        fields and ``target_billing_catalog``; the VM and volume names default to ``...-snapshot-restored-
+        YYYYMMDD``. ``auto_start`` defaults to ``True`` (portal behaviour). Wait with
+        ``wait_for_gpu_vm_snapshot_restore``.
 
         Parameters
         ----------
@@ -1415,59 +1295,109 @@ class GpuVmsClient:
             The workspace ID to scope this request to.
 
         vm_id : str
-            Source GPU VM ID for the snapshot.
+            Source VM of the snapshot.
 
         target_mode : typing.Optional[RecoveryRestoreRequestTargetMode]
+            ``replace`` (default), ``new_vm`` or ``volume_only``.
 
         target_vm_name : typing.Optional[str]
-
-        target_cpu : typing.Optional[int]
-
-        target_ram_mb : typing.Optional[int]
-
-        target_disk_gb : typing.Optional[int]
+            new_vm: name of the restored VM (1-255 characters). Default: ``<vm name>-snapshot-restored-YYYYMMDD``.
 
         target_plan_id : typing.Optional[str]
+            new_vm: compute plan for the restored VM. Default: the source VM's plan. The plan is looked up in ``GET
+            /compute/plans`` and fills cpu, RAM, disk, GPU fields, rates and ``target_billing_catalog``; it must be
+            selectable and at least as large as the captured root disk.
+
+        target_cpu : typing.Optional[int]
+            new_vm: vCPUs (1-256). Normally taken from the plan.
+
+        target_ram_mb : typing.Optional[int]
+            new_vm: RAM in MB (512-2097152). Normally taken from the plan.
+
+        target_disk_gb : typing.Optional[int]
+            new_vm: root disk in GB (10-10000, at least the captured root disk). Normally taken from the plan.
 
         target_plan_name : typing.Optional[str]
+            new_vm: plan display name (taken from the plan).
 
         target_plan_code : typing.Optional[str]
+            new_vm: plan code (taken from the plan).
 
         target_plan_type : typing.Optional[str]
+            new_vm: plan type.
 
         target_performance_category : typing.Optional[str]
+            new_vm: plan performance category.
 
         target_plan_monthly_rate : typing.Optional[float]
+            new_vm: monthly rate (taken from the plan).
 
         target_plan_hourly_rate : typing.Optional[float]
+            new_vm: hourly rate (taken from the plan).
 
         target_bandwidth_tb : typing.Optional[RecoveryRestoreRequestTargetBandwidthTb]
+            new_vm: included bandwidth.
 
         target_bandwidth_display : typing.Optional[str]
+            new_vm: bandwidth label.
 
         target_network_bandwidth : typing.Optional[str]
+            new_vm: network bandwidth label.
 
         target_compute_node_id : typing.Optional[str]
+            new_vm: leave unset; the platform places the VM.
 
         target_gpu_type : typing.Optional[str]
+            new_vm: GPU type.
 
         target_gpu_model : typing.Optional[str]
+            new_vm: GPU model (taken from the plan).
 
         target_gpu_count : typing.Optional[int]
+            new_vm: GPU count 0-16 (taken from the plan).
 
         target_gpu_memory_gb : typing.Optional[float]
+            new_vm: GPU memory (taken from the plan).
 
         target_gpu_memory_display : typing.Optional[str]
+            new_vm: GPU memory label.
 
         target_site_id : typing.Optional[str]
+            new_vm: site for the restored VM. Default: the plan's or source VM's site.
 
         target_site_name : typing.Optional[str]
+            new_vm: site label.
 
         selected_volume_id : typing.Optional[str]
+            volume_only: the captured volume to restore (must still be attached).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         auto_start : typing.Optional[bool]
+            Start the VM after the restore (default ``True``).
+
+        target_billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            new_vm: plan SKU (taken from the plan).
+
+        target_volume_names : typing.Optional[typing.Dict[str, str]]
+            new_vm: names for restored data volumes, keyed by captured source volume ID.
+
+        vpc_id : typing.Optional[str]
+            new_vm: place the restored VM in this VPC (needs ``subnet_id``).
+
+        subnet_id : typing.Optional[str]
+            new_vm: subnet of ``vpc_id``.
+
+        network_connectivity : typing.Optional[str]
+            new_vm with a VPC: ``private`` (default), ``nat`` or ``public_ip``.
+
+        ssh_key_ids : typing.Optional[typing.Sequence[str]]
+            new_vm: saved SSH key IDs.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the snapshot and VM for the ready/state rules (always read for ``new_vm`` and
+            ``volume_only``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1475,54 +1405,8 @@ class GpuVmsClient:
         Returns
         -------
         RecoveryRestore
-            Snapshot restore started successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.restore_gpu_vm_snapshot(
-            snapshot_set_id="snapshot_set_id",
-            workspace_id="workspace_id",
-            vm_id="vm_id",
-        )
         """
-        _response = self._raw_client.restore_gpu_vm_snapshot(
-            snapshot_set_id,
-            workspace_id=workspace_id,
-            vm_id=vm_id,
-            target_mode=target_mode,
-            target_vm_name=target_vm_name,
-            target_cpu=target_cpu,
-            target_ram_mb=target_ram_mb,
-            target_disk_gb=target_disk_gb,
-            target_plan_id=target_plan_id,
-            target_plan_name=target_plan_name,
-            target_plan_code=target_plan_code,
-            target_plan_type=target_plan_type,
-            target_performance_category=target_performance_category,
-            target_plan_monthly_rate=target_plan_monthly_rate,
-            target_plan_hourly_rate=target_plan_hourly_rate,
-            target_bandwidth_tb=target_bandwidth_tb,
-            target_bandwidth_display=target_bandwidth_display,
-            target_network_bandwidth=target_network_bandwidth,
-            target_compute_node_id=target_compute_node_id,
-            target_gpu_type=target_gpu_type,
-            target_gpu_model=target_gpu_model,
-            target_gpu_count=target_gpu_count,
-            target_gpu_memory_gb=target_gpu_memory_gb,
-            target_gpu_memory_display=target_gpu_memory_display,
-            target_site_id=target_site_id,
-            target_site_name=target_site_name,
-            selected_volume_id=selected_volume_id,
-            requested_by=requested_by,
-            auto_start=auto_start,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.restore_snapshot("gpu", **clean_kwargs(locals())), request_options)
 
     def get_gpu_vm_snapshot(
         self, snapshot_set_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
@@ -1564,10 +1448,15 @@ class GpuVmsClient:
         return _response.data
 
     def delete_gpu_vm_snapshot(
-        self, snapshot_set_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        snapshot_set_id: str,
+        *,
+        workspace_id: str,
+        check_state: typing.Optional[bool] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> SnapshotDeleteResult:
         """
-        Deletes a GPU VM snapshot set when no restore is running. Requires scope: vm.write.
+        Deletes a snapshot set. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -1577,30 +1466,17 @@ class GpuVmsClient:
         workspace_id : str
             The workspace ID to scope this request to.
 
+        check_state : typing.Optional[bool]
+            ``True`` reads the snapshot first and refuses while a restore of it is running.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
         SnapshotDeleteResult
-            Snapshot deleted successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.delete_gpu_vm_snapshot(
-            snapshot_set_id="snapshot_set_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.delete_gpu_vm_snapshot(
-            snapshot_set_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.delete_snapshot("gpu", **clean_kwargs(locals())), request_options)
 
     def get_gpu_vm_snapshot_restore(
         self, restore_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
@@ -1685,33 +1561,50 @@ class GpuVmsClient:
         vm_id: str,
         *,
         workspace_id: str,
-        schedule: typing.Optional[BackupPolicySchedule] = OMIT,
+        schedule: typing.Optional[typing.Union[BackupPolicySchedule, typing.Dict[str, typing.Any]]] = OMIT,
         retention_days: typing.Optional[int] = OMIT,
         full_backup_interval_days: typing.Optional[int] = OMIT,
         incremental_enabled: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
-        Updates the automated backup schedule and retention settings. Requires scope: vm.write.
+        Updates the backup schedule or retention of a GPU VM. Requires scope: vm.write.
+
+        By default the saved policy is read first: backups must be enabled, and a partial ``schedule`` is merged
+        with the saved one (the API replaces the whole schedule). Schedules are daily or weekly (weekly needs
+        ``day_of_week`` 0=Monday..6=Sunday), hour 0-23, minute 0-59, a valid IANA time zone, window 5-180 minutes.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
-        schedule : typing.Optional[BackupPolicySchedule]
+        schedule : typing.Optional[typing.Union[BackupPolicySchedule, typing.Dict[str, typing.Any]]]
+            New schedule (merged with the saved one).
 
         retention_days : typing.Optional[int]
+            Days to keep backups (1-365).
 
         full_backup_interval_days : typing.Optional[int]
+            Days between full backups (1-30).
 
         incremental_enabled : typing.Optional[bool]
+            Use incremental backups.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Replacement backup_storage SKU (optional).
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the saved policy (must be enabled). ``False`` sends the values as given.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1719,64 +1612,55 @@ class GpuVmsClient:
         Returns
         -------
         BackupPolicy
-            Backup policy updated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.update_gpu_vm_backup_policy(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.update_gpu_vm_backup_policy(
-            vm_id,
-            workspace_id=workspace_id,
-            schedule=schedule,
-            retention_days=retention_days,
-            full_backup_interval_days=full_backup_interval_days,
-            incremental_enabled=incremental_enabled,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.update_backup_policy("gpu", **clean_kwargs(locals())), request_options)
 
     def enable_gpu_vm_backups(
         self,
         vm_id: str,
         *,
         workspace_id: str,
-        schedule: typing.Optional[BackupPolicySchedule] = OMIT,
+        schedule: typing.Optional[typing.Union[BackupPolicySchedule, typing.Dict[str, typing.Any]]] = OMIT,
         retention_days: typing.Optional[int] = OMIT,
         full_backup_interval_days: typing.Optional[int] = OMIT,
         incremental_enabled: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
-        Enables automated backups and creates the VM backup policy. Requires scope: vm.write.
+        Enables automatic backups for a GPU VM like the portal. Requires scope: vm.write.
+
+        ``billing_catalog`` is required by the API: the ``backup_storage`` SKU (code ``BACKUP-STD``); the public API
+        cannot list it yet, so copy it from an existing backup run. Values you omit come from the saved policy, or
+        the portal defaults (daily at 12:00 UTC, 30-minute window, 7-day retention, full backup every 7 days,
+        incremental on).
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
-        schedule : typing.Optional[BackupPolicySchedule]
+        schedule : typing.Optional[typing.Union[BackupPolicySchedule, typing.Dict[str, typing.Any]]]
+            Schedule: daily or weekly (weekly needs ``day_of_week``).
 
         retention_days : typing.Optional[int]
+            Days to keep backups (1-365, default 7).
 
         full_backup_interval_days : typing.Optional[int]
+            Days between full backups (1-30, default 7).
 
         incremental_enabled : typing.Optional[bool]
+            Use incremental backups (default ``True``).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Backup storage SKU (required).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1784,31 +1668,8 @@ class GpuVmsClient:
         Returns
         -------
         BackupPolicy
-            Backups enabled successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.enable_gpu_vm_backups(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.enable_gpu_vm_backups(
-            vm_id,
-            workspace_id=workspace_id,
-            schedule=schedule,
-            retention_days=retention_days,
-            full_backup_interval_days=full_backup_interval_days,
-            incremental_enabled=incremental_enabled,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.enable_backups("gpu", **clean_kwargs(locals())), request_options)
 
     def disable_gpu_vm_backups(
         self,
@@ -1866,19 +1727,21 @@ class GpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
-        Sets the next automated backup execution time. Requires scope: vm.write.
+        Sets the time of the next automatic backup. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         next_run_at : dt.datetime
+            Timezone-aware time of the next backup (naive values are rejected).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1886,33 +1749,8 @@ class GpuVmsClient:
         Returns
         -------
         BackupPolicy
-            Next backup execution rescheduled successfully.
-
-        Examples
-        --------
-        import datetime
-
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.reschedule_gpu_vm_backup(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-            next_run_at=datetime.datetime.fromisoformat(
-                "2024-01-15 09:30:00+00:00",
-            ),
-        )
         """
-        _response = self._raw_client.reschedule_gpu_vm_backup(
-            vm_id,
-            workspace_id=workspace_id,
-            next_run_at=next_run_at,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.reschedule_backup("gpu", **clean_kwargs(locals())), request_options)
 
     def list_gpu_vm_backup_runs(
         self,
@@ -1922,25 +1760,31 @@ class GpuVmsClient:
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         search: typing.Optional[str] = None,
+        restorable_only: bool = False,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRunList:
         """
-        Lists backup runs and usable recovery points for one GPU VM. Requires scope: vm.read.
+        Lists backup runs (recovery points) of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         limit : typing.Optional[int]
-            Maximum number of records to return.
+            Page size (1-200, server default 50).
 
         offset : typing.Optional[int]
+            Items to skip (>= 0).
 
         search : typing.Optional[str]
+            Filter text (trimmed; blank is ignored).
+
+        restorable_only : bool
+            Keep only ``succeeded`` runs (the ones the portal offers for restore).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1948,24 +1792,8 @@ class GpuVmsClient:
         Returns
         -------
         BackupRunList
-            Backup runs returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.list_gpu_vm_backup_runs(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.list_gpu_vm_backup_runs(
-            vm_id, workspace_id=workspace_id, limit=limit, offset=offset, search=search, request_options=request_options
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.list_backup_runs("gpu", **clean_kwargs(locals())), request_options)
 
     def create_gpu_vm_backup_run(
         self,
@@ -1974,22 +1802,35 @@ class GpuVmsClient:
         workspace_id: str,
         requested_by: typing.Optional[str] = OMIT,
         reason: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRun:
         """
-        Queues a manual backup using the VM's backup configuration. Requires scope: vm.write.
+        Starts a manual backup of a GPU VM. Requires scope: vm.write.
+
+        ``billing_catalog`` is required by the API: the ``backup_storage`` SKU (code ``BACKUP-STD``); copy it from
+        an existing backup run. Manual backups are never retried automatically.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         reason : typing.Optional[str]
+            Reason (at most 512 characters; blank is omitted).
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Backup storage SKU (required).
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the backup policy first and requires backups to be enabled.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1997,24 +1838,8 @@ class GpuVmsClient:
         Returns
         -------
         BackupRun
-            Backup run queued successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.create_gpu_vm_backup_run(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.create_gpu_vm_backup_run(
-            vm_id, workspace_id=workspace_id, requested_by=requested_by, reason=reason, request_options=request_options
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.create_backup_run("gpu", **clean_kwargs(locals())), request_options)
 
     def restore_gpu_vm_backup(
         self,
@@ -2024,10 +1849,10 @@ class GpuVmsClient:
         recovery_point_id: str,
         target_mode: typing.Optional[RecoveryRestoreRequestTargetMode] = OMIT,
         target_vm_name: typing.Optional[str] = OMIT,
+        target_plan_id: typing.Optional[str] = OMIT,
         target_cpu: typing.Optional[int] = OMIT,
         target_ram_mb: typing.Optional[int] = OMIT,
         target_disk_gb: typing.Optional[int] = OMIT,
-        target_plan_id: typing.Optional[str] = OMIT,
         target_plan_name: typing.Optional[str] = OMIT,
         target_plan_code: typing.Optional[str] = OMIT,
         target_plan_type: typing.Optional[str] = OMIT,
@@ -2048,72 +1873,119 @@ class GpuVmsClient:
         selected_volume_id: typing.Optional[str] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         auto_start: typing.Optional[bool] = OMIT,
+        target_billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        target_volume_names: typing.Optional[typing.Dict[str, str]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RecoveryRestore:
         """
-        Restores a backup recovery point by replacing a VM, creating a new VM, or restoring one volume. Requires scope: vm.write.
+        Restores a backup recovery point like the portal: replace the VM, create a new VM, or restore one volume.
+        Requires scope: vm.write.
+
+        The backup must have ``succeeded``. For ``new_vm`` the target plan (default: the source VM's plan) fills
+        cpu/RAM/disk/GPU fields and ``target_billing_catalog``; names default to ``...-backup-restored-YYYYMMDD``.
+        ``auto_start`` is not sent (backup restores ignore it). Wait with ``wait_for_gpu_vm_backup_restore``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         recovery_point_id : str
+            Recovery point (or run) ID of a succeeded backup.
 
         target_mode : typing.Optional[RecoveryRestoreRequestTargetMode]
+            ``replace`` (default), ``new_vm`` or ``volume_only``.
 
         target_vm_name : typing.Optional[str]
-
-        target_cpu : typing.Optional[int]
-
-        target_ram_mb : typing.Optional[int]
-
-        target_disk_gb : typing.Optional[int]
+            new_vm: name of the restored VM (1-255 characters). Default: ``<vm name>-backup-restored-YYYYMMDD``.
 
         target_plan_id : typing.Optional[str]
+            new_vm: compute plan for the restored VM. Default: the source VM's plan. The plan is looked up in ``GET
+            /compute/plans`` and fills cpu, RAM, disk, GPU fields, rates and ``target_billing_catalog``; it must be
+            selectable and at least as large as the captured root disk.
+
+        target_cpu : typing.Optional[int]
+            new_vm: vCPUs (1-256). Normally taken from the plan.
+
+        target_ram_mb : typing.Optional[int]
+            new_vm: RAM in MB (512-2097152). Normally taken from the plan.
+
+        target_disk_gb : typing.Optional[int]
+            new_vm: root disk in GB (10-10000, at least the captured root disk). Normally taken from the plan.
 
         target_plan_name : typing.Optional[str]
+            new_vm: plan display name (taken from the plan).
 
         target_plan_code : typing.Optional[str]
+            new_vm: plan code (taken from the plan).
 
         target_plan_type : typing.Optional[str]
+            new_vm: plan type.
 
         target_performance_category : typing.Optional[str]
+            new_vm: plan performance category.
 
         target_plan_monthly_rate : typing.Optional[float]
+            new_vm: monthly rate (taken from the plan).
 
         target_plan_hourly_rate : typing.Optional[float]
+            new_vm: hourly rate (taken from the plan).
 
         target_bandwidth_tb : typing.Optional[RecoveryRestoreRequestTargetBandwidthTb]
+            new_vm: included bandwidth.
 
         target_bandwidth_display : typing.Optional[str]
+            new_vm: bandwidth label.
 
         target_network_bandwidth : typing.Optional[str]
+            new_vm: network bandwidth label.
 
         target_compute_node_id : typing.Optional[str]
+            new_vm: leave unset; the platform places the VM.
 
         target_gpu_type : typing.Optional[str]
+            new_vm: GPU type.
 
         target_gpu_model : typing.Optional[str]
+            new_vm: GPU model (taken from the plan).
 
         target_gpu_count : typing.Optional[int]
+            new_vm: GPU count 0-16 (taken from the plan).
 
         target_gpu_memory_gb : typing.Optional[float]
+            new_vm: GPU memory (taken from the plan).
 
         target_gpu_memory_display : typing.Optional[str]
+            new_vm: GPU memory label.
 
         target_site_id : typing.Optional[str]
+            new_vm: site for the restored VM. Default: the plan's or source VM's site.
 
         target_site_name : typing.Optional[str]
+            new_vm: site label.
 
         selected_volume_id : typing.Optional[str]
+            volume_only: the captured volume to restore.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         auto_start : typing.Optional[bool]
+            Ignored for backup restores (kept for compatibility).
+
+        target_billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            new_vm: plan SKU (taken from the plan).
+
+        target_volume_names : typing.Optional[typing.Dict[str, str]]
+            new_vm: names for restored data volumes, keyed by captured source volume ID.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the backup run for the ready rule (always read for ``new_vm`` and
+            ``volume_only``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2121,54 +1993,8 @@ class GpuVmsClient:
         Returns
         -------
         RecoveryRestore
-            Backup restore started successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.gpu_vms.restore_gpu_vm_backup(
-            vm_id="vm_id",
-            workspace_id="workspace_id",
-            recovery_point_id="recovery_point_id",
-        )
         """
-        _response = self._raw_client.restore_gpu_vm_backup(
-            vm_id,
-            workspace_id=workspace_id,
-            recovery_point_id=recovery_point_id,
-            target_mode=target_mode,
-            target_vm_name=target_vm_name,
-            target_cpu=target_cpu,
-            target_ram_mb=target_ram_mb,
-            target_disk_gb=target_disk_gb,
-            target_plan_id=target_plan_id,
-            target_plan_name=target_plan_name,
-            target_plan_code=target_plan_code,
-            target_plan_type=target_plan_type,
-            target_performance_category=target_performance_category,
-            target_plan_monthly_rate=target_plan_monthly_rate,
-            target_plan_hourly_rate=target_plan_hourly_rate,
-            target_bandwidth_tb=target_bandwidth_tb,
-            target_bandwidth_display=target_bandwidth_display,
-            target_network_bandwidth=target_network_bandwidth,
-            target_compute_node_id=target_compute_node_id,
-            target_gpu_type=target_gpu_type,
-            target_gpu_model=target_gpu_model,
-            target_gpu_count=target_gpu_count,
-            target_gpu_memory_gb=target_gpu_memory_gb,
-            target_gpu_memory_display=target_gpu_memory_display,
-            target_site_id=target_site_id,
-            target_site_name=target_site_name,
-            selected_volume_id=selected_volume_id,
-            requested_by=requested_by,
-            auto_start=auto_start,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, workflows.restore_backup("gpu", **clean_kwargs(locals())), request_options)
 
     def get_gpu_vm_backup_run(
         self, run_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
@@ -2256,7 +2082,7 @@ class GpuVmsClient:
         ``cloud_vms.get_compute_operation`` (it serves cloud and GPU VM operations). Requires scope: vm.read.
         """
         _response = RawCloudVmsClient(client_wrapper=self._raw_client._client_wrapper).get_compute_operation(
-            validate_operation_id(operation_id), workspace_id=workspace_id, request_options=request_options
+            validate_compute_operation_id(operation_id), workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -2298,6 +2124,372 @@ class GpuVmsClient:
             raise_on_failure=raise_on_failure,
             on_update=on_update,
             request_options=request_options,
+        )
+
+    def list_all_gpu_vms(
+        self,
+        *,
+        workspace_id: str,
+        search: typing.Optional[str] = None,
+        sort_by: typing.Optional[str] = None,
+        sort_direction: typing.Optional[str] = None,
+        page_size: int = 100,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.List[GpuVm]:
+        """
+        Lists every GPU VM in the workspace, fetching ``page_size`` (1-100) per request. Requires scope: vm.read.
+
+        The paging, search and sort parameters are not yet part of the published API contract; behaviour may change.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        search : typing.Optional[str]
+            Filter text (at most 120 characters).
+
+        sort_by : typing.Optional[str]
+            ``created_at`` (default), ``name``, ``status`` or ``os_type``.
+
+        sort_direction : typing.Optional[str]
+            ``asc`` or ``desc`` (default).
+
+        page_size : int
+            Items per request (1-100).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.List[GpuVm]
+        """
+        return list(self.iter_gpu_vms(workspace_id=workspace_id, search=search, sort_by=sort_by, sort_direction=sort_direction, page_size=page_size, request_options=request_options))
+
+    def wait_for_gpu_vm_snapshot_restore(
+        self,
+        restore_id: str,
+        *,
+        workspace_id: str,
+        timeout: float = 1800.0,
+        poll_interval: float = 5.0,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryRestore:
+        """
+        Polls a snapshot restore until it succeeds (returned) or fails/is cancelled
+        (``RecoveryRestoreFailedError``).
+
+        ``OperationTimeoutError`` is raised when ``timeout`` seconds pass first.
+
+        Parameters
+        ----------
+        restore_id : str
+            Restore ID returned by ``restore_gpu_vm_snapshot``.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60; the portal polls every 5 s).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryRestore
+        """
+        return self._wait_restore(self.get_gpu_vm_snapshot_restore, restore_id, workspace_id, timeout, poll_interval, request_options)
+
+    def wait_for_gpu_vm_snapshot(
+        self,
+        snapshot_set_id: str,
+        *,
+        workspace_id: str,
+        vm_id: str,
+        timeout: float = 1800.0,
+        poll_interval: float = 5.0,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SnapshotSet:
+        """
+        Polls a new snapshot set until it succeeds (returned) or fails (``RecoveryFailedError``).
+
+        While a snapshot is being taken it is looked up in the VM's snapshot list.
+
+        Parameters
+        ----------
+        snapshot_set_id : str
+            Snapshot set ID returned by ``create_gpu_vm_snapshot``.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        vm_id : str
+            The snapshotted VM.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SnapshotSet
+        """
+        return self._wait_snapshot(snapshot_set_id, vm_id, workspace_id, timeout, poll_interval, request_options)
+
+    def list_all_gpu_vm_backup_runs(
+        self,
+        *,
+        workspace_id: str,
+        vm_id: typing.Optional[str] = None,
+        status: typing.Optional[typing.Sequence[str]] = None,
+        limit: typing.Optional[int] = None,
+        offset: typing.Optional[int] = None,
+        search: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BackupRunList:
+        """
+        Lists backup runs across the workspace (the portal Backups page). Requires scope: vm.read.
+
+        Not yet part of the published API contract; behaviour may change.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        vm_id : typing.Optional[str]
+            Only this VM's backups.
+
+        status : typing.Optional[typing.Sequence[str]]
+            Statuses to include (queued, running, succeeded, failed, cancelled); the portal shows ``['succeeded']``.
+
+        limit : typing.Optional[int]
+            Page size (1-200, server default 50).
+
+        offset : typing.Optional[int]
+            Items to skip (>= 0).
+
+        search : typing.Optional[str]
+            Filter text (trimmed; blank is ignored).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BackupRunList
+        """
+        return run_sync(self._raw_client._client_wrapper, workflows.list_all_backup_runs("gpu", **clean_kwargs(locals())), request_options)
+
+    def delete_gpu_vm_backup_run(
+        self,
+        run_id: str,
+        *,
+        workspace_id: str,
+        check_state: typing.Optional[bool] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.Dict[str, typing.Any]:
+        """
+        Deletes a completed backup (recovery point). Requires scope: vm.write.
+
+        Not yet part of the published API contract; behaviour may change. The API refuses backups that a newer
+        incremental depends on, or that are being restored.
+
+        Parameters
+        ----------
+        run_id : str
+            Backup run ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the run first and requires ``succeeded``.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, typing.Any]
+        """
+        return run_sync(self._raw_client._client_wrapper, workflows.delete_backup_run("gpu", **clean_kwargs(locals())), request_options)
+
+    def wait_for_gpu_vm_backup_restore(
+        self,
+        restore_id: str,
+        *,
+        workspace_id: str,
+        timeout: float = 1800.0,
+        poll_interval: float = 5.0,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryRestore:
+        """
+        Polls a backup restore until it succeeds (returned) or fails/is cancelled (``RecoveryRestoreFailedError``).
+
+        Parameters
+        ----------
+        restore_id : str
+            Restore ID returned by ``restore_gpu_vm_backup``.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryRestore
+        """
+        return self._wait_restore(self.get_gpu_vm_backup_restore, restore_id, workspace_id, timeout, poll_interval, request_options)
+
+    def wait_for_gpu_vm_backup_run(
+        self,
+        run_id: str,
+        *,
+        workspace_id: str,
+        timeout: float = 1800.0,
+        poll_interval: float = 5.0,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BackupRun:
+        """
+        Polls a backup run until it succeeds (returned) or fails/is cancelled (``RecoveryFailedError``).
+
+        Parameters
+        ----------
+        run_id : str
+            Backup run ID returned by ``create_gpu_vm_backup_run``.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BackupRun
+        """
+        return self._wait_run(run_id, workspace_id, timeout, poll_interval, request_options)
+
+    def wait_for_operation(
+        self,
+        operation_id: str,
+        *,
+        workspace_id: str,
+        timeout: float = 1200.0,
+        poll_interval: float = 5.0,
+        raise_on_failure: bool = True,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> OperationStatus:
+        """
+        Alias of ``wait_for_compute_operation`` (works for cloud and GPU VM operations).
+
+        Parameters
+        ----------
+        operation_id : str
+            Operation ID (``op_`` + 24 hexadecimal characters).
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60).
+
+        raise_on_failure : bool
+            Raise ``OperationFailedError`` on failed/cancelled/timed_out.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OperationStatus
+        """
+        return self.wait_for_compute_operation(operation_id, workspace_id=workspace_id, timeout=timeout, poll_interval=poll_interval, raise_on_failure=raise_on_failure, request_options=request_options)
+
+    def _wait_restore(self, getter, restore_id, workspace_id, timeout, poll_interval, request_options):  # type: ignore[no-untyped-def]
+        restore_id = validate_required_text(restore_id, field="restore_id")
+        timeout = validate_wait_timeout(timeout)
+        poll_interval = validate_poll_interval(poll_interval, timeout)
+        return poll_until(
+            lambda: getter(restore_id, workspace_id=workspace_id, request_options=request_options),
+            lambda restore: restore.status,
+            success=frozenset({"succeeded"}),
+            failure=frozenset({"failed", "cancelled"}),
+            timeout=timeout,
+            poll_interval=poll_interval,
+            operation_id=restore_id,
+            error_factory=RecoveryRestoreFailedError,
+        )
+
+    def _wait_run(self, run_id, workspace_id, timeout, poll_interval, request_options):  # type: ignore[no-untyped-def]
+        run_id = validate_required_text(run_id, field="run_id")
+        timeout = validate_wait_timeout(timeout)
+        poll_interval = validate_poll_interval(poll_interval, timeout)
+        return poll_until(
+            lambda: self.get_gpu_vm_backup_run(run_id, workspace_id=workspace_id, request_options=request_options),
+            lambda run: run.status,
+            success=frozenset({"succeeded"}),
+            failure=frozenset({"failed", "cancelled"}),
+            timeout=timeout,
+            poll_interval=poll_interval,
+            operation_id=run_id,
+            error_factory=lambda run: RecoveryFailedError(run, kind="backup run", id_field="run_id"),
+        )
+
+    def _wait_snapshot(self, snapshot_set_id, vm_id, workspace_id, timeout, poll_interval, request_options):  # type: ignore[no-untyped-def]
+        snapshot_set_id = validate_required_text(snapshot_set_id, field="snapshot_set_id")
+        vm_id = validate_vm_id(vm_id)
+        timeout = validate_wait_timeout(timeout)
+        poll_interval = validate_poll_interval(poll_interval, timeout)
+
+        def _fetch() -> SnapshotSet:
+            try:
+                return self.get_gpu_vm_snapshot(snapshot_set_id, workspace_id=workspace_id, request_options=request_options)
+            except NotFoundError:
+                # A snapshot that is still being taken is only visible in the VM's list.
+                listing = self.list_gpu_vm_snapshots(vm_id, workspace_id=workspace_id, limit=200, request_options=request_options)
+                for item in listing.snapshots:
+                    if item.snapshot_set_id == snapshot_set_id:
+                        return item
+                raise
+
+        return poll_until(
+            _fetch,
+            lambda snapshot: snapshot.status,
+            success=frozenset({"succeeded", "available"}),
+            failure=frozenset({"failed", "cancelled"}),
+            timeout=timeout,
+            poll_interval=poll_interval,
+            operation_id=snapshot_set_id,
+            error_factory=lambda snapshot: RecoveryFailedError(snapshot, kind="snapshot", id_field="snapshot_set_id"),
         )
 
 
@@ -2387,22 +2579,44 @@ class AsyncGpuVmsClient:
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
         name: str,
-        os_distro: str,
-        os_type: CreateGpuVmRequestOsType,
-        template_id: str,
-        cpu: int,
-        ram_mb: int,
-        gpu_count: int,
-        gpu_model: str,
         plan_id: str,
+        template_id: str,
         site_id: typing.Optional[str] = OMIT,
+        os_distro: typing.Optional[str] = None,
+        os_type: typing.Optional[str] = None,
+        cpu: typing.Optional[int] = None,
+        ram_mb: typing.Optional[int] = None,
         disk_gb: typing.Optional[int] = OMIT,
+        gpu_count: typing.Optional[int] = None,
+        gpu_model: typing.Optional[str] = None,
+        billing_term: typing.Optional[str] = None,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        windows_license: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        ssh_keys: typing.Optional[typing.Sequence[str]] = None,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
+        firewall_group_ids: typing.Optional[typing.Sequence[str]] = None,
+        vpc_id: typing.Optional[str] = None,
+        subnet_id: typing.Optional[str] = None,
+        network_connectivity: typing.Optional[str] = None,
+        reserved_public_ip_id: typing.Optional[str] = None,
         tags: typing.Optional[typing.Sequence[str]] = OMIT,
+        requested_by: typing.Optional[str] = None,
+        preflight_billing: bool = False,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Creates a GPU VM. Returns an operation you can poll for status. Requires scope: vm.write.
+        Creates a GPU VM the way the portal does. Requires scope: vm.write (and billing.read with
+        ``preflight_billing``).
+
+        Pre-steps: the plan is looked up in ``GET /compute/plans?vm_type=gpu&site_id=...`` (it must be selectable
+        and priced) and the image in ``GET /compute/images``; cpu, ram_mb, disk_gb, gpu_count and gpu_model come
+        from the plan and os_type/os_distro from the image (values you pass must match). ``billing_catalog`` is
+        built from the plan's SKU for ``billing_term`` (when given; by default the plan SKU is sent unchanged and
+        billed hourly, as in the portal), with a Windows licence and a Reserved IP attached when used. VPC placement
+        is checked against the VPC, subnet and Reserved IP. Everything is validated before the create request;
+        failures raise ``IbeeValidationError``. VM creates are never retried automatically.
+
+        Returns the accepted operation; wait for it with ``wait_for_compute_operation``.
 
         Parameters
         ----------
@@ -2410,48 +2624,90 @@ class AsyncGpuVmsClient:
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         name : str
-            Display name for the virtual machine.
-
-        os_distro : str
-            Operating system distribution (e.g. ubuntu, centos, debian, rocky).
-
-        os_type : CreateGpuVmRequestOsType
-            Operating system family.
-
-        template_id : str
-            GPU-compatible template ID returned by the compute catalog.
-
-        cpu : int
-            Number of vCPUs.
-
-        ram_mb : int
-            RAM in megabytes.
-
-        gpu_count : int
-            Number of GPUs to attach.
-
-        gpu_model : str
-            GPU model (e.g. A100, H100, L40S, RTX4090).
+            Hostname: letters, digits and hyphens (trimmed).
 
         plan_id : str
-            Billable GPU plan ID returned by the compute catalog.
+            Plan ID from ``compute_catalog.list_compute_plans(vm_type='gpu', site_id=...)``.
+
+        template_id : str
+            Image ID from ``compute_catalog.list_compute_images(vm_type='gpu', site_id=...)``.
 
         site_id : typing.Optional[str]
-            Optional placement site ID. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites` and use the same value when filtering plans and images.
+            Site ID from ``compute_catalog.list_compute_sites``. Required: the API rejects creates without it.
+
+        os_distro : typing.Optional[str]
+            Defaults to the image's os_distro.
+
+        os_type : typing.Optional[str]
+            Defaults to the image's os_type (must match it); GPU VMs must use Linux images.
+
+        cpu : typing.Optional[int]
+            Defaults to the plan's vCPUs (must match it).
+
+        ram_mb : typing.Optional[int]
+            Defaults to the plan's RAM (must match it).
 
         disk_gb : typing.Optional[int]
-            Root disk size in gigabytes.
+            Defaults to the plan's root disk (must match it); always sent.
+
+        gpu_count : typing.Optional[int]
+            Defaults to the plan's GPU count (must match it).
+
+        gpu_model : typing.Optional[str]
+            Defaults to the plan's GPU model (must match it, case-insensitive).
+
+        billing_term : typing.Optional[str]
+            ``HOURLY``, ``MONTHLY`` or ``YEARLY`` (default: the plan SKU unchanged, billed hourly). The plan must
+            offer the term.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Advanced: send this SKU object instead of the one built from the plan (checked: sku_id, sku_code, no
+            root-disk SKUs). When it is given together with cpu, ram_mb, disk_gb, os_type and os_distro (and
+            gpu_count), the plan and image lookups are skipped and the create is a single request.
+
+        windows_license : typing.Optional[typing.Dict[str, typing.Any]]
+            Windows images only (required for them): the Windows licence billing SKU (sku_id, sku_code, optional
+            billing_options). It is priced per vCPU for the same billing term. The public API does not list licence
+            add-ons yet.
+
+        ssh_keys : typing.Optional[typing.Sequence[str]]
+            Inline OpenSSH public keys (single line; ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256/384/521, sk-ssh-
+            ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com). Recommended for API tokens.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
-            SSH key IDs to inject into the VM.
+            Saved SSH key IDs. They are resolved for the user who created the VM, so they do not work for VMs
+            created with an API token; prefer ``ssh_keys``.
+
+        firewall_group_ids : typing.Optional[typing.Sequence[str]]
+            At most one firewall group ID.
+
+        vpc_id : typing.Optional[str]
+            Place the VM in this VPC (needs ``subnet_id``; same site).
+
+        subnet_id : typing.Optional[str]
+            Subnet of ``vpc_id``.
+
+        network_connectivity : typing.Optional[str]
+            With a VPC: ``private`` (default), ``nat`` (NAT Gateway VPCs only) or ``public_ip`` (public or private
+            VPCs; a private VPC needs ``reserved_public_ip_id``).
+
+        reserved_public_ip_id : typing.Optional[str]
+            Reserved IP for ``public_ip`` connectivity (same site, not attached). Its SKU is attached to the bill.
 
         tags : typing.Optional[typing.Sequence[str]]
-            Arbitrary tags for filtering and organization.
+            Arbitrary tags.
+
+        requested_by : typing.Optional[str]
+            Optional audit label (1-128 characters).
+
+        preflight_billing : bool
+            Check billing eligibility for the plan SKU first (needs billing.read) and raise ``BillingDeniedError``
+            when it is not allowed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2459,67 +2715,23 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM creation accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.create_gpu_vm(
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-                name="ml-training-01",
-                os_distro="ubuntu",
-                os_type="linux",
-                template_id="tmpl_ubuntu_2204_cuda",
-                cpu=8,
-                ram_mb=32768,
-                gpu_count=1,
-                gpu_model="A100",
-                plan_id="plan_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.create_gpu_vm(
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            name=name,
-            os_distro=os_distro,
-            os_type=os_type,
-            template_id=template_id,
-            cpu=cpu,
-            ram_mb=ram_mb,
-            gpu_count=gpu_count,
-            gpu_model=gpu_model,
-            plan_id=plan_id,
-            site_id=site_id,
-            disk_gb=disk_gb,
-            ssh_key_ids=ssh_key_ids,
-            tags=tags,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.create_vm("gpu", **clean_kwargs(locals())), request_options)
 
     async def get_gpu_vm(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vm_id: str,
+        *,
+        workspace_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> GpuVm:
         """
-        Returns a single GPU VM. Requires scope: vm.read.
+        Returns a single GPU VM (``id`` is filled from the API's ``_id``). Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
@@ -2530,29 +2742,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         GpuVm
-            GPU VM returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.get_gpu_vm(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.get_gpu_vm(vm_id, workspace_id=workspace_id, request_options=request_options)
+        _response = await self._raw_client.get_gpu_vm(validate_vm_id(vm_id), workspace_id=workspace_id, request_options=request_options)
         return _response.data
 
     async def delete_gpu_vm(
@@ -2561,23 +2752,53 @@ class AsyncGpuVmsClient:
         *,
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
+        public_ip_action: typing.Optional[str] = None,
+        reserved_ip_label: typing.Optional[str] = None,
+        reserved_ip_billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        requested_by: typing.Optional[str] = None,
+        preflight_billing: bool = False,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Deletes a GPU VM. Returns an operation you can poll for status. Requires scope: vm.write.
+        Deletes a GPU VM, choosing what happens to its public IP like the portal's delete dialog. Requires scope:
+        vm.write.
+
+        The VM is read first. When it has an auto-assigned public IP the API needs a choice: ``release`` (default)
+        or ``reserve`` (keep the address as a billed Reserved IP; needs ``reserved_ip_billing_catalog``). Deleting
+        is refused while the VM is already deleting or resizing. Data volumes are detached, not deleted.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
+
+        public_ip_action : typing.Optional[str]
+            ``release`` (default when the VM has an auto-assigned public IP) or ``reserve``.
+
+        reserved_ip_label : typing.Optional[str]
+            Label for the kept Reserved IP (at most 120 characters; default: the VM name). Only with ``reserve``.
+
+        reserved_ip_billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Reserved IP SKU (sku_id, sku_code), required with ``reserve``. The public API cannot list it yet: copy
+            ``billing_catalog`` from an existing Reserved IP in the same site.
+
+        requested_by : typing.Optional[str]
+            Optional audit label (1-128 characters).
+
+        preflight_billing : bool
+            With ``reserve``: check billing eligibility for the Reserved IP SKU first (needs billing.read).
+
+        check_state : typing.Optional[bool]
+            ``False`` skips reading the VM when ``public_ip_action='release'`` is given (no state check).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2585,33 +2806,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM deletion accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.delete_gpu_vm(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.delete_gpu_vm(
-            vm_id, workspace_id=workspace_id, idempotency_key=idempotency_key, request_options=request_options
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.delete_vm("gpu", **clean_kwargs(locals())), request_options)
 
     async def start_gpu_vm(
         self,
@@ -2620,26 +2816,30 @@ class AsyncGpuVmsClient:
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
         force: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Starts a stopped GPU VM. Requires scope: vm.write.
+        Starts a GPU VM. Returns an operation you can poll. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         force : typing.Optional[bool]
-            Force the action even if the VM is in a transitional state.
+            Force the action.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the VM first and applies the portal rule (only when ``stopped``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2647,37 +2847,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM start accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.start_gpu_vm(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.start_gpu_vm(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            force=force,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.power_action("gpu", "start", **clean_kwargs(locals())), request_options)
 
     async def stop_gpu_vm(
         self,
@@ -2686,26 +2857,30 @@ class AsyncGpuVmsClient:
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
         force: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Stops a running GPU VM. Requires scope: vm.write.
+        Stops a GPU VM. Returns an operation you can poll. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         force : typing.Optional[bool]
-            Force the action even if the VM is in a transitional state.
+            Force the action.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the VM first and applies the portal rule (only when ``running``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2713,37 +2888,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM stop accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.stop_gpu_vm(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.stop_gpu_vm(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            force=force,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.power_action("gpu", "stop", **clean_kwargs(locals())), request_options)
 
     async def reboot_gpu_vm(
         self,
@@ -2752,26 +2898,30 @@ class AsyncGpuVmsClient:
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
         force: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Reboots a GPU VM. Requires scope: vm.write.
+        Reboots a GPU VM. Returns an operation you can poll. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         force : typing.Optional[bool]
-            Force the action even if the VM is in a transitional state.
+            Force the action.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the VM first and applies the portal rule (only when ``running``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2779,48 +2929,23 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM reboot accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.reboot_gpu_vm(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.reboot_gpu_vm(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            force=force,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.power_action("gpu", "reboot", **clean_kwargs(locals())), request_options)
 
     async def get_gpu_vm_metrics(
-        self, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vm_id: str,
+        *,
+        workspace_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> VmMetrics:
         """
-        Returns current resource-usage metrics for a GPU VM. Requires scope: vm.read.
+        Returns the current metrics overview of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
@@ -2831,31 +2956,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         VmMetrics
-            VM metrics returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.get_gpu_vm_metrics(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.get_gpu_vm_metrics(
-            vm_id, workspace_id=workspace_id, request_options=request_options
-        )
+        _response = await self._raw_client.get_gpu_vm_metrics(validate_vm_id(vm_id), workspace_id=workspace_id, request_options=request_options)
         return _response.data
 
     async def update_gpu_vm_access(
@@ -2873,44 +2975,60 @@ class AsyncGpuVmsClient:
         new_password: typing.Optional[str] = OMIT,
         password_auth_enabled: typing.Optional[bool] = OMIT,
         confirm_remove_last_ssh_key: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication without rebooting the VM. Requires scope: vm.write.
+        Adds or removes SSH keys, resets the Linux password, or turns SSH password login on/off (Linux VMs only).
+        Requires scope: vm.write.
+
+        Checked first: ``ssh_key_mode`` is given exactly when keys are; at least one change; a new password has at
+        least 8 characters and no line breaks; keys are single-line OpenSSH public keys. By default the VM is read
+        too: it must be a running Linux VM, password login can only be turned off while an SSH key remains, and
+        removing the last key while password login is off needs ``confirm_remove_last_ssh_key=True``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         admin_username : typing.Optional[str]
             Linux account to update. Defaults to the VM admin user.
 
         ssh_key_mode : typing.Optional[VmAccessUpdateRequestSshKeyMode]
+            ``add`` or ``remove`` (required with keys).
 
         ssh_keys : typing.Optional[typing.Sequence[str]]
             Inline public SSH keys to add or remove.
 
         ssh_key_ids : typing.Optional[typing.Sequence[str]]
-            Secret Store SSH key IDs to add or remove.
+            Saved SSH key IDs to add or remove.
 
         ssh_key_secret_refs : typing.Optional[typing.Sequence[SshKeySecretRef]]
+            Secret Store SSH key references.
 
         new_password : typing.Optional[str]
+            New password for the Linux user (at least 8 characters, no line breaks).
 
         password_auth_enabled : typing.Optional[bool]
+            Turn SSH password login on or off.
 
         confirm_remove_last_ssh_key : typing.Optional[bool]
+            Confirm removing the last tracked SSH key while password login is off.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the VM and apply the Linux/running/last-key rules. ``False`` skips that read.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2918,45 +3036,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Access update accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.update_gpu_vm_access(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.update_gpu_vm_access(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            requested_by=requested_by,
-            admin_username=admin_username,
-            ssh_key_mode=ssh_key_mode,
-            ssh_keys=ssh_keys,
-            ssh_key_ids=ssh_key_ids,
-            ssh_key_secret_refs=ssh_key_secret_refs,
-            new_password=new_password,
-            password_auth_enabled=password_auth_enabled,
-            confirm_remove_last_ssh_key=confirm_remove_last_ssh_key,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.update_access("gpu", **clean_kwargs(locals())), request_options)
 
     async def precheck_gpu_vm_resize(
         self,
@@ -2967,26 +3048,35 @@ class AsyncGpuVmsClient:
         ram_mb: typing.Optional[int] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        plan_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> VmResizePrecheck:
         """
-        Evaluates a requested CPU, memory, or root-disk change before starting it. Requires scope: vm.write.
+        Checks whether a resize can run in place (``decision``: ``in_place``, ``migration_required`` or
+        ``blocked``). Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         cpu : typing.Optional[int]
+            Target vCPUs (1-256).
 
         ram_mb : typing.Optional[int]
+            Target RAM in MB (257-2097152).
 
         disk_gb : typing.Optional[int]
+            Target root disk in GB (1-10000).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        plan_id : typing.Optional[str]
+            Resize to this plan's shape instead of explicit values (looked up for the VM's site).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2994,38 +3084,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         VmResizePrecheck
-            Resize decision returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.precheck_gpu_vm_resize(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.precheck_gpu_vm_resize(
-            vm_id,
-            workspace_id=workspace_id,
-            cpu=cpu,
-            ram_mb=ram_mb,
-            disk_gb=disk_gb,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.precheck_resize("gpu", **clean_kwargs(locals())), request_options)
 
     async def resize_gpu_vm(
         self,
@@ -3037,31 +3097,60 @@ class AsyncGpuVmsClient:
         ram_mb: typing.Optional[int] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        plan_id: typing.Optional[str] = None,
+        billing_term: typing.Optional[str] = None,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        windows_license: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Changes CPU, memory, and optionally increases the root disk after the same precheck used by the portal. Requires scope: vm.write.
+        Resizes a GPU VM the way the portal does. Requires scope: vm.write.
+
+        With ``plan_id`` the target cpu/RAM/disk and the new ``billing_catalog`` (for ``billing_term``, default
+        ``HOURLY``; a Windows VM keeps its licence) come from the plan, so billing moves to the new SKU. The resize
+        precheck runs first and the resize is only sent when its decision is ``in_place``; otherwise
+        ``IbeeValidationError`` (code ``resize_not_in_place``, ``details`` = the precheck) is raised.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         cpu : typing.Optional[int]
+            Target vCPUs (1-256), when not using ``plan_id``.
 
         ram_mb : typing.Optional[int]
+            Target RAM in MB (257-2097152), when not using ``plan_id``.
 
         disk_gb : typing.Optional[int]
+            Target root disk in GB (1-10000), when not using ``plan_id``.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        plan_id : typing.Optional[str]
+            Target plan (recommended; the portal only resizes to plans).
+
+        billing_term : typing.Optional[str]
+            With ``plan_id``: ``HOURLY`` (default), ``MONTHLY`` or ``YEARLY``.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Advanced: explicit target SKU object.
+
+        windows_license : typing.Optional[typing.Dict[str, typing.Any]]
+            Windows VMs: licence SKU (default: the one on the VM's current billing catalog).
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the VM and require ``running``, ``stopped`` or ``error``.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3069,40 +3158,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            VM resize accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.resize_gpu_vm(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.resize_gpu_vm(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            cpu=cpu,
-            ram_mb=ram_mb,
-            disk_gb=disk_gb,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.resize("gpu", **clean_kwargs(locals())), request_options)
 
     async def resize_gpu_vm_plan(
         self,
@@ -3110,38 +3167,66 @@ class AsyncGpuVmsClient:
         *,
         workspace_id: str,
         idempotency_key: typing.Optional[str] = None,
-        cpu: int,
-        ram_mb: int,
+        cpu: typing.Optional[int] = None,
+        ram_mb: typing.Optional[int] = None,
         allow_online: typing.Optional[bool] = OMIT,
         confirm_downgrade: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        plan_id: typing.Optional[str] = None,
+        billing_term: typing.Optional[str] = None,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        windows_license: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Changes the VM CPU and memory shape. Downgrades require explicit confirmation. Requires scope: vm.write.
+        Changes the CPU/RAM shape of a GPU VM. Requires scope: vm.write.
+
+        By default the VM is read first: the shape must change, a smaller CPU or RAM needs
+        ``confirm_downgrade=True``, and the VM must be ``running``, ``stopped`` or ``error``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
-        cpu : int
+        cpu : typing.Optional[int]
+            Target vCPUs (1-256); from the plan with ``plan_id``.
 
-        ram_mb : int
+        ram_mb : typing.Optional[int]
+            Target RAM in MB (257-2097152); from the plan with ``plan_id``.
 
         allow_online : typing.Optional[bool]
+            Allow resizing without stopping the VM.
 
         confirm_downgrade : typing.Optional[bool]
+            Required (``True``) when reducing CPU or RAM.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        plan_id : typing.Optional[str]
+            Take cpu/RAM and the new billing SKU from this plan.
+
+        billing_term : typing.Optional[str]
+            With ``plan_id``: ``HOURLY`` (default), ``MONTHLY`` or ``YEARLY``.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Advanced: explicit target SKU object.
+
+        windows_license : typing.Optional[typing.Dict[str, typing.Any]]
+            Windows VMs with ``plan_id``: licence SKU (default: the VM's current one).
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the VM for the state, no-change and downgrade rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3149,43 +3234,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Plan resize accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.resize_gpu_vm_plan(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-                cpu=1,
-                ram_mb=1,
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.resize_gpu_vm_plan(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            cpu=cpu,
-            ram_mb=ram_mb,
-            allow_online=allow_online,
-            confirm_downgrade=confirm_downgrade,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.resize_plan("gpu", **clean_kwargs(locals())), request_options)
 
     async def resize_gpu_vm_root_disk(
         self,
@@ -3196,29 +3246,43 @@ class AsyncGpuVmsClient:
         new_size_gb: int,
         allow_online: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Increases the root disk size; shrinking is not supported. Requires scope: vm.write.
+        Grows the root disk of a GPU VM (shrinking is not supported). Requires scope: vm.write.
+
+        By default the VM is read first: ``new_size_gb`` must be larger than the current disk and the VM
+        ``running``, ``stopped`` or ``error``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         new_size_gb : int
+            New root disk size in GB (1-10000, larger than the current size).
 
         allow_online : typing.Optional[bool]
+            Allow resizing without stopping the VM.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Advanced: target SKU object.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the VM for the grow-only and state rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3226,40 +3290,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Root-disk resize accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.resize_gpu_vm_root_disk(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-                new_size_gb=1,
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.resize_gpu_vm_root_disk(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            new_size_gb=new_size_gb,
-            allow_online=allow_online,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.resize_root_disk("gpu", **clean_kwargs(locals())), request_options)
 
     async def attach_gpu_vm_volume(
         self,
@@ -3270,29 +3302,45 @@ class AsyncGpuVmsClient:
         volume_id: str,
         mode: typing.Optional[VmAttachVolumeRequestMode] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Attaches a persistent block volume to the VM. Requires scope: vm.write.
+        Attaches a block volume to a GPU VM like the portal. Requires scope: vm.write and block_storage.read.
+
+        The volume is read first: it must not be attached or busy, it must be in the VM's site, and its Block
+        Storage SKU is sent as ``billing_catalog`` (required by the API). Wait for the returned operation with
+        ``wait_for_compute_operation``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         volume_id : str
+            Block volume ID.
 
         mode : typing.Optional[VmAttachVolumeRequestMode]
+            ``single-writer`` (default) or ``multi-writer``.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            The volume's Block Storage SKU. Read from the volume when omitted.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: also read the VM (state and site). ``False`` with ``billing_catalog`` skips both
+            reads.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3300,40 +3348,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Volume attachment accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.attach_gpu_vm_volume(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-                volume_id="volume_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.attach_gpu_vm_volume(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            volume_id=volume_id,
-            mode=mode,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.attach_volume("gpu", **clean_kwargs(locals())), request_options)
 
     async def detach_gpu_vm_volume(
         self,
@@ -3345,31 +3361,42 @@ class AsyncGpuVmsClient:
         force: typing.Optional[bool] = OMIT,
         confirm_unmounted: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Detaches a persistent block volume. Confirm the guest filesystem is unmounted unless force is used. Requires scope: vm.write.
+        Detaches a block volume from a GPU VM. Requires scope: vm.write.
+
+        Like the portal, confirm the volume is unmounted in the guest (``confirm_unmounted=True``) or pass
+        ``force=True``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         idempotency_key : typing.Optional[str]
-            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces).
-            Generated automatically when omitted. The same key is reused on every automatic retry
-            and is available as ``error.idempotency_key`` if the call fails.
+            Key that makes retries of this write safe (1-128 printable ASCII characters, no spaces). Generated
+            automatically when omitted; the same key is reused on every automatic retry and is available as
+            ``error.idempotency_key`` if the call fails.
 
         volume_id : str
+            Block volume ID.
 
         force : typing.Optional[bool]
+            Detach even if the guest still uses the volume (risk of data loss).
 
         confirm_unmounted : typing.Optional[bool]
+            Confirm the volume is unmounted in the guest (required unless ``force``).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the volume first and requires it to be attached to this VM.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3377,57 +3404,30 @@ class AsyncGpuVmsClient:
         Returns
         -------
         OperationAccepted
-            Volume detachment accepted.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.detach_gpu_vm_volume(
-                vm_id="vm_id",
-                idempotency_key="X-Idempotency-Key",
-                workspace_id="workspace_id",
-                volume_id="volume_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.detach_gpu_vm_volume(
-            vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
-            volume_id=volume_id,
-            force=force,
-            confirm_unmounted=confirm_unmounted,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.detach_volume("gpu", **clean_kwargs(locals())), request_options)
 
     async def acknowledge_gpu_vm_mount_guidance(
-        self, vm_id: str, *, workspace_id: str, volume_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vm_id: str,
+        *,
+        workspace_id: str,
+        volume_id: str,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> MountGuidanceAcknowledge:
         """
-        Records that the client has reviewed the guest mount instructions for an attached data volume. Requires scope: vm.write.
+        Marks the guest mount guidance of an attached data volume as read. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         volume_id : str
+            Attached block volume ID.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3435,33 +3435,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         MountGuidanceAcknowledge
-            Mount guidance acknowledged successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.acknowledge_gpu_vm_mount_guidance(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-                volume_id="volume_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.acknowledge_gpu_vm_mount_guidance(
-            vm_id, workspace_id=workspace_id, volume_id=volume_id, request_options=request_options
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.acknowledge_mount_guidance("gpu", **clean_kwargs(locals())), request_options)
 
     async def list_gpu_vm_events(
         self,
@@ -3472,17 +3447,18 @@ class AsyncGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[VmEvent]:
         """
-        Returns the VM lifecycle and operation event timeline. Requires scope: vm.read.
+        Lists the event timeline of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         limit : typing.Optional[int]
+            Maximum events (1-500, server default 100).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3490,31 +3466,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         typing.List[VmEvent]
-            VM events returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.list_gpu_vm_events(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.list_gpu_vm_events(
-            vm_id, workspace_id=workspace_id, limit=limit, request_options=request_options
-        )
+        _response = await self._raw_client.list_gpu_vm_events(validate_vm_id(vm_id), workspace_id=workspace_id, limit=validate_events_limit(limit), request_options=request_options)
         return _response.data
 
     async def get_gpu_vm_metrics_timeseries(
@@ -3526,17 +3479,18 @@ class AsyncGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> VmMetricsTimeseries:
         """
-        Returns rolled-up VM metric series for a supported time range. Requires scope: vm.read.
+        Returns metric time series for a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         range : typing.Optional[GetGpuVmMetricsTimeseriesRequestRange]
+            ``30m``, ``1h`` (default), ``6h``, ``24h`` or ``7d``.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3544,48 +3498,31 @@ class AsyncGpuVmsClient:
         Returns
         -------
         VmMetricsTimeseries
-            VM metric timeseries returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.get_gpu_vm_metrics_timeseries(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.get_gpu_vm_metrics_timeseries(
-            vm_id, workspace_id=workspace_id, range=range, request_options=request_options
-        )
+        _response = await self._raw_client.get_gpu_vm_metrics_timeseries(validate_vm_id(vm_id), workspace_id=workspace_id, range=validate_metrics_range(range), request_options=request_options)
         return _response.data
 
     async def get_gpu_vm_bandwidth(
-        self, vm_id: str, *, workspace_id: str, month: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vm_id: str,
+        *,
+        workspace_id: str,
+        month: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> VmBandwidthSummary:
         """
-        Returns received and transmitted byte totals for a calendar month. Requires scope: vm.read.
+        Returns the monthly bandwidth summary of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
-        month : str
+        month : typing.Optional[str]
+            Month as ``YYYY-MM``. Default: the current UTC month (as in the portal).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3593,32 +3530,9 @@ class AsyncGpuVmsClient:
         Returns
         -------
         VmBandwidthSummary
-            VM bandwidth summary returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.get_gpu_vm_bandwidth(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-                month="2026-08",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.get_gpu_vm_bandwidth(
-            vm_id, workspace_id=workspace_id, month=month, request_options=request_options
-        )
+        _month = validate_bandwidth_month(month) if month is not None else current_bandwidth_month()
+        _response = await self._raw_client.get_gpu_vm_bandwidth(validate_vm_id(vm_id), workspace_id=workspace_id, month=_month, request_options=request_options)
         return _response.data
 
     async def list_gpu_vm_snapshots(
@@ -3632,22 +3546,24 @@ class AsyncGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SnapshotSetList:
         """
-        Lists recovery snapshots for one GPU VM. Requires scope: vm.read.
+        Lists snapshot sets of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         limit : typing.Optional[int]
-            Maximum number of records to return.
+            Page size (1-200, server default 50).
 
         offset : typing.Optional[int]
+            Items to skip (>= 0).
 
         search : typing.Optional[str]
+            Filter text (trimmed; blank is ignored).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3655,32 +3571,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         SnapshotSetList
-            Snapshots returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.list_gpu_vm_snapshots(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.list_gpu_vm_snapshots(
-            vm_id, workspace_id=workspace_id, limit=limit, offset=offset, search=search, request_options=request_options
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.list_snapshots("gpu", **clean_kwargs(locals())), request_options)
 
     async def create_gpu_vm_snapshot(
         self,
@@ -3692,28 +3584,49 @@ class AsyncGpuVmsClient:
         mode: typing.Optional[SnapshotCreateRequestMode] = OMIT,
         selected_data_volume_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        preflight_billing: bool = False,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SnapshotSet:
         """
-        Creates a recovery snapshot of the root disk, all attached disks, or selected data disks. Requires scope: vm.write.
+        Creates a snapshot set of a GPU VM. Requires scope: vm.write.
+
+        ``billing_catalog`` is required by the API: the ``snapshot_storage`` SKU (code ``SNAPSHOT-STD``) with
+        ``sku_id`` and ``sku_code``. The public API cannot list it yet; copy ``billing_catalog`` from an existing
+        snapshot set. Snapshot creates are never retried automatically.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         name : str
+            Snapshot name (1-255 characters, trimmed).
 
         description : typing.Optional[str]
+            Description (at most 1024 characters; blank is omitted).
 
         mode : typing.Optional[SnapshotCreateRequestMode]
+            ``all_attached`` (default), ``root_only`` or ``selective``.
 
         selected_data_volume_ids : typing.Optional[typing.Sequence[str]]
+            Data volumes for ``selective`` (at least one); not allowed with the other modes.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Snapshot storage SKU (required).
+
+        preflight_billing : bool
+            Check billing eligibility for the SKU first (needs billing.read).
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the VM first: refused while it changes state; selective volumes must be attached.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3721,40 +3634,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         SnapshotSet
-            Snapshot created or queued successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.create_gpu_vm_snapshot(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-                name="name",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.create_gpu_vm_snapshot(
-            vm_id,
-            workspace_id=workspace_id,
-            name=name,
-            description=description,
-            mode=mode,
-            selected_data_volume_ids=selected_data_volume_ids,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.create_snapshot("gpu", **clean_kwargs(locals())), request_options)
 
     async def restore_gpu_vm_snapshot(
         self,
@@ -3764,10 +3645,10 @@ class AsyncGpuVmsClient:
         vm_id: str,
         target_mode: typing.Optional[RecoveryRestoreRequestTargetMode] = OMIT,
         target_vm_name: typing.Optional[str] = OMIT,
+        target_plan_id: typing.Optional[str] = OMIT,
         target_cpu: typing.Optional[int] = OMIT,
         target_ram_mb: typing.Optional[int] = OMIT,
         target_disk_gb: typing.Optional[int] = OMIT,
-        target_plan_id: typing.Optional[str] = OMIT,
         target_plan_name: typing.Optional[str] = OMIT,
         target_plan_code: typing.Optional[str] = OMIT,
         target_plan_type: typing.Optional[str] = OMIT,
@@ -3788,10 +3669,24 @@ class AsyncGpuVmsClient:
         selected_volume_id: typing.Optional[str] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         auto_start: typing.Optional[bool] = OMIT,
+        target_billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        target_volume_names: typing.Optional[typing.Dict[str, str]] = None,
+        vpc_id: typing.Optional[str] = None,
+        subnet_id: typing.Optional[str] = None,
+        network_connectivity: typing.Optional[str] = None,
+        ssh_key_ids: typing.Optional[typing.Sequence[str]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RecoveryRestore:
         """
-        Restores a snapshot by replacing a VM, creating a new VM, or restoring one volume. Requires scope: vm.write.
+        Restores a snapshot set like the portal: replace the VM, create a new VM, or restore one volume. Requires
+        scope: vm.write.
+
+        The snapshot must be ready (and, by default, the VM ``running`` or ``stopped``). For ``new_vm`` the target
+        plan (default: the source VM's plan) is looked up in ``GET /compute/plans`` and fills cpu/RAM/disk/GPU
+        fields and ``target_billing_catalog``; the VM and volume names default to ``...-snapshot-restored-
+        YYYYMMDD``. ``auto_start`` defaults to ``True`` (portal behaviour). Wait with
+        ``wait_for_gpu_vm_snapshot_restore``.
 
         Parameters
         ----------
@@ -3802,59 +3697,109 @@ class AsyncGpuVmsClient:
             The workspace ID to scope this request to.
 
         vm_id : str
-            Source GPU VM ID for the snapshot.
+            Source VM of the snapshot.
 
         target_mode : typing.Optional[RecoveryRestoreRequestTargetMode]
+            ``replace`` (default), ``new_vm`` or ``volume_only``.
 
         target_vm_name : typing.Optional[str]
-
-        target_cpu : typing.Optional[int]
-
-        target_ram_mb : typing.Optional[int]
-
-        target_disk_gb : typing.Optional[int]
+            new_vm: name of the restored VM (1-255 characters). Default: ``<vm name>-snapshot-restored-YYYYMMDD``.
 
         target_plan_id : typing.Optional[str]
+            new_vm: compute plan for the restored VM. Default: the source VM's plan. The plan is looked up in ``GET
+            /compute/plans`` and fills cpu, RAM, disk, GPU fields, rates and ``target_billing_catalog``; it must be
+            selectable and at least as large as the captured root disk.
+
+        target_cpu : typing.Optional[int]
+            new_vm: vCPUs (1-256). Normally taken from the plan.
+
+        target_ram_mb : typing.Optional[int]
+            new_vm: RAM in MB (512-2097152). Normally taken from the plan.
+
+        target_disk_gb : typing.Optional[int]
+            new_vm: root disk in GB (10-10000, at least the captured root disk). Normally taken from the plan.
 
         target_plan_name : typing.Optional[str]
+            new_vm: plan display name (taken from the plan).
 
         target_plan_code : typing.Optional[str]
+            new_vm: plan code (taken from the plan).
 
         target_plan_type : typing.Optional[str]
+            new_vm: plan type.
 
         target_performance_category : typing.Optional[str]
+            new_vm: plan performance category.
 
         target_plan_monthly_rate : typing.Optional[float]
+            new_vm: monthly rate (taken from the plan).
 
         target_plan_hourly_rate : typing.Optional[float]
+            new_vm: hourly rate (taken from the plan).
 
         target_bandwidth_tb : typing.Optional[RecoveryRestoreRequestTargetBandwidthTb]
+            new_vm: included bandwidth.
 
         target_bandwidth_display : typing.Optional[str]
+            new_vm: bandwidth label.
 
         target_network_bandwidth : typing.Optional[str]
+            new_vm: network bandwidth label.
 
         target_compute_node_id : typing.Optional[str]
+            new_vm: leave unset; the platform places the VM.
 
         target_gpu_type : typing.Optional[str]
+            new_vm: GPU type.
 
         target_gpu_model : typing.Optional[str]
+            new_vm: GPU model (taken from the plan).
 
         target_gpu_count : typing.Optional[int]
+            new_vm: GPU count 0-16 (taken from the plan).
 
         target_gpu_memory_gb : typing.Optional[float]
+            new_vm: GPU memory (taken from the plan).
 
         target_gpu_memory_display : typing.Optional[str]
+            new_vm: GPU memory label.
 
         target_site_id : typing.Optional[str]
+            new_vm: site for the restored VM. Default: the plan's or source VM's site.
 
         target_site_name : typing.Optional[str]
+            new_vm: site label.
 
         selected_volume_id : typing.Optional[str]
+            volume_only: the captured volume to restore (must still be attached).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         auto_start : typing.Optional[bool]
+            Start the VM after the restore (default ``True``).
+
+        target_billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            new_vm: plan SKU (taken from the plan).
+
+        target_volume_names : typing.Optional[typing.Dict[str, str]]
+            new_vm: names for restored data volumes, keyed by captured source volume ID.
+
+        vpc_id : typing.Optional[str]
+            new_vm: place the restored VM in this VPC (needs ``subnet_id``).
+
+        subnet_id : typing.Optional[str]
+            new_vm: subnet of ``vpc_id``.
+
+        network_connectivity : typing.Optional[str]
+            new_vm with a VPC: ``private`` (default), ``nat`` or ``public_ip``.
+
+        ssh_key_ids : typing.Optional[typing.Sequence[str]]
+            new_vm: saved SSH key IDs.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the snapshot and VM for the ready/state rules (always read for ``new_vm`` and
+            ``volume_only``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3862,62 +3807,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         RecoveryRestore
-            Snapshot restore started successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.restore_gpu_vm_snapshot(
-                snapshot_set_id="snapshot_set_id",
-                workspace_id="workspace_id",
-                vm_id="vm_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.restore_gpu_vm_snapshot(
-            snapshot_set_id,
-            workspace_id=workspace_id,
-            vm_id=vm_id,
-            target_mode=target_mode,
-            target_vm_name=target_vm_name,
-            target_cpu=target_cpu,
-            target_ram_mb=target_ram_mb,
-            target_disk_gb=target_disk_gb,
-            target_plan_id=target_plan_id,
-            target_plan_name=target_plan_name,
-            target_plan_code=target_plan_code,
-            target_plan_type=target_plan_type,
-            target_performance_category=target_performance_category,
-            target_plan_monthly_rate=target_plan_monthly_rate,
-            target_plan_hourly_rate=target_plan_hourly_rate,
-            target_bandwidth_tb=target_bandwidth_tb,
-            target_bandwidth_display=target_bandwidth_display,
-            target_network_bandwidth=target_network_bandwidth,
-            target_compute_node_id=target_compute_node_id,
-            target_gpu_type=target_gpu_type,
-            target_gpu_model=target_gpu_model,
-            target_gpu_count=target_gpu_count,
-            target_gpu_memory_gb=target_gpu_memory_gb,
-            target_gpu_memory_display=target_gpu_memory_display,
-            target_site_id=target_site_id,
-            target_site_name=target_site_name,
-            selected_volume_id=selected_volume_id,
-            requested_by=requested_by,
-            auto_start=auto_start,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.restore_snapshot("gpu", **clean_kwargs(locals())), request_options)
 
     async def get_gpu_vm_snapshot(
         self, snapshot_set_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
@@ -3967,10 +3858,15 @@ class AsyncGpuVmsClient:
         return _response.data
 
     async def delete_gpu_vm_snapshot(
-        self, snapshot_set_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        snapshot_set_id: str,
+        *,
+        workspace_id: str,
+        check_state: typing.Optional[bool] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> SnapshotDeleteResult:
         """
-        Deletes a GPU VM snapshot set when no restore is running. Requires scope: vm.write.
+        Deletes a snapshot set. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -3980,38 +3876,17 @@ class AsyncGpuVmsClient:
         workspace_id : str
             The workspace ID to scope this request to.
 
+        check_state : typing.Optional[bool]
+            ``True`` reads the snapshot first and refuses while a restore of it is running.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
         SnapshotDeleteResult
-            Snapshot deleted successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.delete_gpu_vm_snapshot(
-                snapshot_set_id="snapshot_set_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.delete_gpu_vm_snapshot(
-            snapshot_set_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.delete_snapshot("gpu", **clean_kwargs(locals())), request_options)
 
     async def get_gpu_vm_snapshot_restore(
         self, restore_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
@@ -4112,33 +3987,50 @@ class AsyncGpuVmsClient:
         vm_id: str,
         *,
         workspace_id: str,
-        schedule: typing.Optional[BackupPolicySchedule] = OMIT,
+        schedule: typing.Optional[typing.Union[BackupPolicySchedule, typing.Dict[str, typing.Any]]] = OMIT,
         retention_days: typing.Optional[int] = OMIT,
         full_backup_interval_days: typing.Optional[int] = OMIT,
         incremental_enabled: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
-        Updates the automated backup schedule and retention settings. Requires scope: vm.write.
+        Updates the backup schedule or retention of a GPU VM. Requires scope: vm.write.
+
+        By default the saved policy is read first: backups must be enabled, and a partial ``schedule`` is merged
+        with the saved one (the API replaces the whole schedule). Schedules are daily or weekly (weekly needs
+        ``day_of_week`` 0=Monday..6=Sunday), hour 0-23, minute 0-59, a valid IANA time zone, window 5-180 minutes.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
-        schedule : typing.Optional[BackupPolicySchedule]
+        schedule : typing.Optional[typing.Union[BackupPolicySchedule, typing.Dict[str, typing.Any]]]
+            New schedule (merged with the saved one).
 
         retention_days : typing.Optional[int]
+            Days to keep backups (1-365).
 
         full_backup_interval_days : typing.Optional[int]
+            Days between full backups (1-30).
 
         incremental_enabled : typing.Optional[bool]
+            Use incremental backups.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Replacement backup_storage SKU (optional).
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the saved policy (must be enabled). ``False`` sends the values as given.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4146,72 +4038,55 @@ class AsyncGpuVmsClient:
         Returns
         -------
         BackupPolicy
-            Backup policy updated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.update_gpu_vm_backup_policy(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.update_gpu_vm_backup_policy(
-            vm_id,
-            workspace_id=workspace_id,
-            schedule=schedule,
-            retention_days=retention_days,
-            full_backup_interval_days=full_backup_interval_days,
-            incremental_enabled=incremental_enabled,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.update_backup_policy("gpu", **clean_kwargs(locals())), request_options)
 
     async def enable_gpu_vm_backups(
         self,
         vm_id: str,
         *,
         workspace_id: str,
-        schedule: typing.Optional[BackupPolicySchedule] = OMIT,
+        schedule: typing.Optional[typing.Union[BackupPolicySchedule, typing.Dict[str, typing.Any]]] = OMIT,
         retention_days: typing.Optional[int] = OMIT,
         full_backup_interval_days: typing.Optional[int] = OMIT,
         incremental_enabled: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
-        Enables automated backups and creates the VM backup policy. Requires scope: vm.write.
+        Enables automatic backups for a GPU VM like the portal. Requires scope: vm.write.
+
+        ``billing_catalog`` is required by the API: the ``backup_storage`` SKU (code ``BACKUP-STD``); the public API
+        cannot list it yet, so copy it from an existing backup run. Values you omit come from the saved policy, or
+        the portal defaults (daily at 12:00 UTC, 30-minute window, 7-day retention, full backup every 7 days,
+        incremental on).
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
-        schedule : typing.Optional[BackupPolicySchedule]
+        schedule : typing.Optional[typing.Union[BackupPolicySchedule, typing.Dict[str, typing.Any]]]
+            Schedule: daily or weekly (weekly needs ``day_of_week``).
 
         retention_days : typing.Optional[int]
+            Days to keep backups (1-365, default 7).
 
         full_backup_interval_days : typing.Optional[int]
+            Days between full backups (1-30, default 7).
 
         incremental_enabled : typing.Optional[bool]
+            Use incremental backups (default ``True``).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Backup storage SKU (required).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4219,39 +4094,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         BackupPolicy
-            Backups enabled successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.enable_gpu_vm_backups(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.enable_gpu_vm_backups(
-            vm_id,
-            workspace_id=workspace_id,
-            schedule=schedule,
-            retention_days=retention_days,
-            full_backup_interval_days=full_backup_interval_days,
-            incremental_enabled=incremental_enabled,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.enable_backups("gpu", **clean_kwargs(locals())), request_options)
 
     async def disable_gpu_vm_backups(
         self,
@@ -4317,19 +4161,21 @@ class AsyncGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
-        Sets the next automated backup execution time. Requires scope: vm.write.
+        Sets the time of the next automatic backup. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         next_run_at : dt.datetime
+            Timezone-aware time of the next backup (naive values are rejected).
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4337,40 +4183,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         BackupPolicy
-            Next backup execution rescheduled successfully.
-
-        Examples
-        --------
-        import asyncio
-        import datetime
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.reschedule_gpu_vm_backup(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-                next_run_at=datetime.datetime.fromisoformat(
-                    "2024-01-15 09:30:00+00:00",
-                ),
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.reschedule_gpu_vm_backup(
-            vm_id,
-            workspace_id=workspace_id,
-            next_run_at=next_run_at,
-            requested_by=requested_by,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.reschedule_backup("gpu", **clean_kwargs(locals())), request_options)
 
     async def list_gpu_vm_backup_runs(
         self,
@@ -4380,25 +4194,31 @@ class AsyncGpuVmsClient:
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         search: typing.Optional[str] = None,
+        restorable_only: bool = False,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRunList:
         """
-        Lists backup runs and usable recovery points for one GPU VM. Requires scope: vm.read.
+        Lists backup runs (recovery points) of a GPU VM. Requires scope: vm.read.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         limit : typing.Optional[int]
-            Maximum number of records to return.
+            Page size (1-200, server default 50).
 
         offset : typing.Optional[int]
+            Items to skip (>= 0).
 
         search : typing.Optional[str]
+            Filter text (trimmed; blank is ignored).
+
+        restorable_only : bool
+            Keep only ``succeeded`` runs (the ones the portal offers for restore).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4406,32 +4226,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         BackupRunList
-            Backup runs returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.list_gpu_vm_backup_runs(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.list_gpu_vm_backup_runs(
-            vm_id, workspace_id=workspace_id, limit=limit, offset=offset, search=search, request_options=request_options
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.list_backup_runs("gpu", **clean_kwargs(locals())), request_options)
 
     async def create_gpu_vm_backup_run(
         self,
@@ -4440,22 +4236,35 @@ class AsyncGpuVmsClient:
         workspace_id: str,
         requested_by: typing.Optional[str] = OMIT,
         reason: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRun:
         """
-        Queues a manual backup using the VM's backup configuration. Requires scope: vm.write.
+        Starts a manual backup of a GPU VM. Requires scope: vm.write.
+
+        ``billing_catalog`` is required by the API: the ``backup_storage`` SKU (code ``BACKUP-STD``); copy it from
+        an existing backup run. Manual backups are never retried automatically.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         reason : typing.Optional[str]
+            Reason (at most 512 characters; blank is omitted).
+
+        billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            Backup storage SKU (required).
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the backup policy first and requires backups to be enabled.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4463,32 +4272,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         BackupRun
-            Backup run queued successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.create_gpu_vm_backup_run(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.create_gpu_vm_backup_run(
-            vm_id, workspace_id=workspace_id, requested_by=requested_by, reason=reason, request_options=request_options
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.create_backup_run("gpu", **clean_kwargs(locals())), request_options)
 
     async def restore_gpu_vm_backup(
         self,
@@ -4498,10 +4283,10 @@ class AsyncGpuVmsClient:
         recovery_point_id: str,
         target_mode: typing.Optional[RecoveryRestoreRequestTargetMode] = OMIT,
         target_vm_name: typing.Optional[str] = OMIT,
+        target_plan_id: typing.Optional[str] = OMIT,
         target_cpu: typing.Optional[int] = OMIT,
         target_ram_mb: typing.Optional[int] = OMIT,
         target_disk_gb: typing.Optional[int] = OMIT,
-        target_plan_id: typing.Optional[str] = OMIT,
         target_plan_name: typing.Optional[str] = OMIT,
         target_plan_code: typing.Optional[str] = OMIT,
         target_plan_type: typing.Optional[str] = OMIT,
@@ -4522,72 +4307,119 @@ class AsyncGpuVmsClient:
         selected_volume_id: typing.Optional[str] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         auto_start: typing.Optional[bool] = OMIT,
+        target_billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        target_volume_names: typing.Optional[typing.Dict[str, str]] = None,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RecoveryRestore:
         """
-        Restores a backup recovery point by replacing a VM, creating a new VM, or restoring one volume. Requires scope: vm.write.
+        Restores a backup recovery point like the portal: replace the VM, create a new VM, or restore one volume.
+        Requires scope: vm.write.
+
+        The backup must have ``succeeded``. For ``new_vm`` the target plan (default: the source VM's plan) fills
+        cpu/RAM/disk/GPU fields and ``target_billing_catalog``; names default to ``...-backup-restored-YYYYMMDD``.
+        ``auto_start`` is not sent (backup restores ignore it). Wait with ``wait_for_gpu_vm_backup_restore``.
 
         Parameters
         ----------
         vm_id : str
-            Virtual machine ID.
+            Virtual machine ID (24 hexadecimal characters).
 
         workspace_id : str
             The workspace ID to scope this request to.
 
         recovery_point_id : str
+            Recovery point (or run) ID of a succeeded backup.
 
         target_mode : typing.Optional[RecoveryRestoreRequestTargetMode]
+            ``replace`` (default), ``new_vm`` or ``volume_only``.
 
         target_vm_name : typing.Optional[str]
-
-        target_cpu : typing.Optional[int]
-
-        target_ram_mb : typing.Optional[int]
-
-        target_disk_gb : typing.Optional[int]
+            new_vm: name of the restored VM (1-255 characters). Default: ``<vm name>-backup-restored-YYYYMMDD``.
 
         target_plan_id : typing.Optional[str]
+            new_vm: compute plan for the restored VM. Default: the source VM's plan. The plan is looked up in ``GET
+            /compute/plans`` and fills cpu, RAM, disk, GPU fields, rates and ``target_billing_catalog``; it must be
+            selectable and at least as large as the captured root disk.
+
+        target_cpu : typing.Optional[int]
+            new_vm: vCPUs (1-256). Normally taken from the plan.
+
+        target_ram_mb : typing.Optional[int]
+            new_vm: RAM in MB (512-2097152). Normally taken from the plan.
+
+        target_disk_gb : typing.Optional[int]
+            new_vm: root disk in GB (10-10000, at least the captured root disk). Normally taken from the plan.
 
         target_plan_name : typing.Optional[str]
+            new_vm: plan display name (taken from the plan).
 
         target_plan_code : typing.Optional[str]
+            new_vm: plan code (taken from the plan).
 
         target_plan_type : typing.Optional[str]
+            new_vm: plan type.
 
         target_performance_category : typing.Optional[str]
+            new_vm: plan performance category.
 
         target_plan_monthly_rate : typing.Optional[float]
+            new_vm: monthly rate (taken from the plan).
 
         target_plan_hourly_rate : typing.Optional[float]
+            new_vm: hourly rate (taken from the plan).
 
         target_bandwidth_tb : typing.Optional[RecoveryRestoreRequestTargetBandwidthTb]
+            new_vm: included bandwidth.
 
         target_bandwidth_display : typing.Optional[str]
+            new_vm: bandwidth label.
 
         target_network_bandwidth : typing.Optional[str]
+            new_vm: network bandwidth label.
 
         target_compute_node_id : typing.Optional[str]
+            new_vm: leave unset; the platform places the VM.
 
         target_gpu_type : typing.Optional[str]
+            new_vm: GPU type.
 
         target_gpu_model : typing.Optional[str]
+            new_vm: GPU model (taken from the plan).
 
         target_gpu_count : typing.Optional[int]
+            new_vm: GPU count 0-16 (taken from the plan).
 
         target_gpu_memory_gb : typing.Optional[float]
+            new_vm: GPU memory (taken from the plan).
 
         target_gpu_memory_display : typing.Optional[str]
+            new_vm: GPU memory label.
 
         target_site_id : typing.Optional[str]
+            new_vm: site for the restored VM. Default: the plan's or source VM's site.
 
         target_site_name : typing.Optional[str]
+            new_vm: site label.
 
         selected_volume_id : typing.Optional[str]
+            volume_only: the captured volume to restore.
 
         requested_by : typing.Optional[str]
+            Optional audit label.
 
         auto_start : typing.Optional[bool]
+            Ignored for backup restores (kept for compatibility).
+
+        target_billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
+            new_vm: plan SKU (taken from the plan).
+
+        target_volume_names : typing.Optional[typing.Dict[str, str]]
+            new_vm: names for restored data volumes, keyed by captured source volume ID.
+
+        check_state : typing.Optional[bool]
+            Default ``True``: read the backup run for the ready rule (always read for ``new_vm`` and
+            ``volume_only``).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4595,62 +4427,8 @@ class AsyncGpuVmsClient:
         Returns
         -------
         RecoveryRestore
-            Backup restore started successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.gpu_vms.restore_gpu_vm_backup(
-                vm_id="vm_id",
-                workspace_id="workspace_id",
-                recovery_point_id="recovery_point_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.restore_gpu_vm_backup(
-            vm_id,
-            workspace_id=workspace_id,
-            recovery_point_id=recovery_point_id,
-            target_mode=target_mode,
-            target_vm_name=target_vm_name,
-            target_cpu=target_cpu,
-            target_ram_mb=target_ram_mb,
-            target_disk_gb=target_disk_gb,
-            target_plan_id=target_plan_id,
-            target_plan_name=target_plan_name,
-            target_plan_code=target_plan_code,
-            target_plan_type=target_plan_type,
-            target_performance_category=target_performance_category,
-            target_plan_monthly_rate=target_plan_monthly_rate,
-            target_plan_hourly_rate=target_plan_hourly_rate,
-            target_bandwidth_tb=target_bandwidth_tb,
-            target_bandwidth_display=target_bandwidth_display,
-            target_network_bandwidth=target_network_bandwidth,
-            target_compute_node_id=target_compute_node_id,
-            target_gpu_type=target_gpu_type,
-            target_gpu_model=target_gpu_model,
-            target_gpu_count=target_gpu_count,
-            target_gpu_memory_gb=target_gpu_memory_gb,
-            target_gpu_memory_display=target_gpu_memory_display,
-            target_site_id=target_site_id,
-            target_site_name=target_site_name,
-            selected_volume_id=selected_volume_id,
-            requested_by=requested_by,
-            auto_start=auto_start,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, workflows.restore_backup("gpu", **clean_kwargs(locals())), request_options)
 
     async def get_gpu_vm_backup_run(
         self, run_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
@@ -4756,7 +4534,7 @@ class AsyncGpuVmsClient:
         _response = await AsyncRawCloudVmsClient(
             client_wrapper=self._raw_client._client_wrapper
         ).get_compute_operation(
-            validate_operation_id(operation_id), workspace_id=workspace_id, request_options=request_options
+            validate_compute_operation_id(operation_id), workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -4785,4 +4563,369 @@ class AsyncGpuVmsClient:
             raise_on_failure=raise_on_failure,
             on_update=on_update,
             request_options=request_options,
+        )
+
+    async def list_all_gpu_vms(
+        self,
+        *,
+        workspace_id: str,
+        search: typing.Optional[str] = None,
+        sort_by: typing.Optional[str] = None,
+        sort_direction: typing.Optional[str] = None,
+        page_size: int = 100,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.List[GpuVm]:
+        """
+        Lists every GPU VM in the workspace, fetching ``page_size`` (1-100) per request. Requires scope: vm.read.
+
+        The paging, search and sort parameters are not yet part of the published API contract; behaviour may change.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        search : typing.Optional[str]
+            Filter text (at most 120 characters).
+
+        sort_by : typing.Optional[str]
+            ``created_at`` (default), ``name``, ``status`` or ``os_type``.
+
+        sort_direction : typing.Optional[str]
+            ``asc`` or ``desc`` (default).
+
+        page_size : int
+            Items per request (1-100).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.List[GpuVm]
+        """
+        return await acollect(self.iter_gpu_vms(workspace_id=workspace_id, search=search, sort_by=sort_by, sort_direction=sort_direction, page_size=page_size, request_options=request_options))
+
+    async def wait_for_gpu_vm_snapshot_restore(
+        self,
+        restore_id: str,
+        *,
+        workspace_id: str,
+        timeout: float = 1800.0,
+        poll_interval: float = 5.0,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryRestore:
+        """
+        Polls a snapshot restore until it succeeds (returned) or fails/is cancelled
+        (``RecoveryRestoreFailedError``).
+
+        ``OperationTimeoutError`` is raised when ``timeout`` seconds pass first.
+
+        Parameters
+        ----------
+        restore_id : str
+            Restore ID returned by ``restore_gpu_vm_snapshot``.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60; the portal polls every 5 s).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryRestore
+        """
+        return await self._wait_restore(self.get_gpu_vm_snapshot_restore, restore_id, workspace_id, timeout, poll_interval, request_options)
+
+    async def wait_for_gpu_vm_snapshot(
+        self,
+        snapshot_set_id: str,
+        *,
+        workspace_id: str,
+        vm_id: str,
+        timeout: float = 1800.0,
+        poll_interval: float = 5.0,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SnapshotSet:
+        """
+        Polls a new snapshot set until it succeeds (returned) or fails (``RecoveryFailedError``).
+
+        While a snapshot is being taken it is looked up in the VM's snapshot list.
+
+        Parameters
+        ----------
+        snapshot_set_id : str
+            Snapshot set ID returned by ``create_gpu_vm_snapshot``.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        vm_id : str
+            The snapshotted VM.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SnapshotSet
+        """
+        return await self._wait_snapshot(snapshot_set_id, vm_id, workspace_id, timeout, poll_interval, request_options)
+
+    async def list_all_gpu_vm_backup_runs(
+        self,
+        *,
+        workspace_id: str,
+        vm_id: typing.Optional[str] = None,
+        status: typing.Optional[typing.Sequence[str]] = None,
+        limit: typing.Optional[int] = None,
+        offset: typing.Optional[int] = None,
+        search: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BackupRunList:
+        """
+        Lists backup runs across the workspace (the portal Backups page). Requires scope: vm.read.
+
+        Not yet part of the published API contract; behaviour may change.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        vm_id : typing.Optional[str]
+            Only this VM's backups.
+
+        status : typing.Optional[typing.Sequence[str]]
+            Statuses to include (queued, running, succeeded, failed, cancelled); the portal shows ``['succeeded']``.
+
+        limit : typing.Optional[int]
+            Page size (1-200, server default 50).
+
+        offset : typing.Optional[int]
+            Items to skip (>= 0).
+
+        search : typing.Optional[str]
+            Filter text (trimmed; blank is ignored).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BackupRunList
+        """
+        return await run_async(self._raw_client._client_wrapper, workflows.list_all_backup_runs("gpu", **clean_kwargs(locals())), request_options)
+
+    async def delete_gpu_vm_backup_run(
+        self,
+        run_id: str,
+        *,
+        workspace_id: str,
+        check_state: typing.Optional[bool] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.Dict[str, typing.Any]:
+        """
+        Deletes a completed backup (recovery point). Requires scope: vm.write.
+
+        Not yet part of the published API contract; behaviour may change. The API refuses backups that a newer
+        incremental depends on, or that are being restored.
+
+        Parameters
+        ----------
+        run_id : str
+            Backup run ID.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        check_state : typing.Optional[bool]
+            ``True`` reads the run first and requires ``succeeded``.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, typing.Any]
+        """
+        return await run_async(self._raw_client._client_wrapper, workflows.delete_backup_run("gpu", **clean_kwargs(locals())), request_options)
+
+    async def wait_for_gpu_vm_backup_restore(
+        self,
+        restore_id: str,
+        *,
+        workspace_id: str,
+        timeout: float = 1800.0,
+        poll_interval: float = 5.0,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryRestore:
+        """
+        Polls a backup restore until it succeeds (returned) or fails/is cancelled (``RecoveryRestoreFailedError``).
+
+        Parameters
+        ----------
+        restore_id : str
+            Restore ID returned by ``restore_gpu_vm_backup``.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryRestore
+        """
+        return await self._wait_restore(self.get_gpu_vm_backup_restore, restore_id, workspace_id, timeout, poll_interval, request_options)
+
+    async def wait_for_gpu_vm_backup_run(
+        self,
+        run_id: str,
+        *,
+        workspace_id: str,
+        timeout: float = 1800.0,
+        poll_interval: float = 5.0,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BackupRun:
+        """
+        Polls a backup run until it succeeds (returned) or fails/is cancelled (``RecoveryFailedError``).
+
+        Parameters
+        ----------
+        run_id : str
+            Backup run ID returned by ``create_gpu_vm_backup_run``.
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BackupRun
+        """
+        return await self._wait_run(run_id, workspace_id, timeout, poll_interval, request_options)
+
+    async def wait_for_operation(
+        self,
+        operation_id: str,
+        *,
+        workspace_id: str,
+        timeout: float = 1200.0,
+        poll_interval: float = 5.0,
+        raise_on_failure: bool = True,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> OperationStatus:
+        """
+        Alias of ``wait_for_compute_operation`` (works for cloud and GPU VM operations).
+
+        Parameters
+        ----------
+        operation_id : str
+            Operation ID (``op_`` + 24 hexadecimal characters).
+
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        timeout : float
+            Seconds to wait (1-7200).
+
+        poll_interval : float
+            Seconds between polls (1-60).
+
+        raise_on_failure : bool
+            Raise ``OperationFailedError`` on failed/cancelled/timed_out.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OperationStatus
+        """
+        return await self.wait_for_compute_operation(operation_id, workspace_id=workspace_id, timeout=timeout, poll_interval=poll_interval, raise_on_failure=raise_on_failure, request_options=request_options)
+
+    async def _wait_restore(self, getter, restore_id, workspace_id, timeout, poll_interval, request_options):  # type: ignore[no-untyped-def]
+        restore_id = validate_required_text(restore_id, field="restore_id")
+        timeout = validate_wait_timeout(timeout)
+        poll_interval = validate_poll_interval(poll_interval, timeout)
+        return await apoll_until(
+            lambda: getter(restore_id, workspace_id=workspace_id, request_options=request_options),
+            lambda restore: restore.status,
+            success=frozenset({"succeeded"}),
+            failure=frozenset({"failed", "cancelled"}),
+            timeout=timeout,
+            poll_interval=poll_interval,
+            operation_id=restore_id,
+            error_factory=RecoveryRestoreFailedError,
+        )
+
+    async def _wait_run(self, run_id, workspace_id, timeout, poll_interval, request_options):  # type: ignore[no-untyped-def]
+        run_id = validate_required_text(run_id, field="run_id")
+        timeout = validate_wait_timeout(timeout)
+        poll_interval = validate_poll_interval(poll_interval, timeout)
+        return await apoll_until(
+            lambda: self.get_gpu_vm_backup_run(run_id, workspace_id=workspace_id, request_options=request_options),
+            lambda run: run.status,
+            success=frozenset({"succeeded"}),
+            failure=frozenset({"failed", "cancelled"}),
+            timeout=timeout,
+            poll_interval=poll_interval,
+            operation_id=run_id,
+            error_factory=lambda run: RecoveryFailedError(run, kind="backup run", id_field="run_id"),
+        )
+
+    async def _wait_snapshot(self, snapshot_set_id, vm_id, workspace_id, timeout, poll_interval, request_options):  # type: ignore[no-untyped-def]
+        snapshot_set_id = validate_required_text(snapshot_set_id, field="snapshot_set_id")
+        vm_id = validate_vm_id(vm_id)
+        timeout = validate_wait_timeout(timeout)
+        poll_interval = validate_poll_interval(poll_interval, timeout)
+
+        async def _fetch() -> SnapshotSet:
+            try:
+                return await self.get_gpu_vm_snapshot(snapshot_set_id, workspace_id=workspace_id, request_options=request_options)
+            except NotFoundError:
+                listing = await self.list_gpu_vm_snapshots(vm_id, workspace_id=workspace_id, limit=200, request_options=request_options)
+                for item in listing.snapshots:
+                    if item.snapshot_set_id == snapshot_set_id:
+                        return item
+                raise
+
+        return await apoll_until(
+            _fetch,
+            lambda snapshot: snapshot.status,
+            success=frozenset({"succeeded", "available"}),
+            failure=frozenset({"failed", "cancelled"}),
+            timeout=timeout,
+            poll_interval=poll_interval,
+            operation_id=snapshot_set_id,
+            error_factory=lambda snapshot: RecoveryFailedError(snapshot, kind="snapshot", id_field="snapshot_set_id"),
         )
