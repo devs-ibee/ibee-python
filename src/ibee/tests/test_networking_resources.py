@@ -124,6 +124,7 @@ def test_move_reserved_ip_uses_move_path_and_attachment_payload() -> None:
         vm_id="vm2",
         vpc_id="vpc1",
         subnet_id="subnet1",
+        check_state=False,  # 0.4.0 reads the IP first by default; this test covers the request shape only
     )
 
     assert result.public_ip_id == "ip1"

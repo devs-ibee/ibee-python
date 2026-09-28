@@ -97,6 +97,54 @@ auto-paging.
   snapshot/backup schedules, restore modes and naming. `IbeeValidationError` has
   `details`.
 
+- **Portal-parity networking** (sync and async; methods marked "not yet part of
+  the published API contract" may change):
+  - VPCs: `create_vpc` checks the name (1-80), a custom `cidr` (RFC1918, aligned,
+    /22-/28; the error suggests the aligned network) and sends `auto_cidr=false`
+    with it; `connectivity_type` accepts `private` (the portal default);
+    `nat_billing_catalog` for `nat_gateway` VPCs; `check_site`. `delete_vpc`
+    refuses while nodes are attached or a NAT gateway exists, and
+    `delete_nat_gateway=True` deletes the gateway first and waits for it.
+    `list_networking_sites(available_only=True)`.
+  - Subnets: `create_vpc_subnet` reads the VPC and checks containment, overlap,
+    the 10-subnet quota and `prefix_length`; DNS lists must be IPv4.
+  - Nodes: `attach_vpc_node(requested_private_ip=...)` (checked against the
+    subnet: not the network, broadcast or gateway address) and connectivity rules
+    with `check_state=True`.
+  - NAT gateways: `create_nat_gateway(billing_catalog=..., preflight_billing=...)`
+    (only for `nat_gateway` VPCs; Reserved IP eligibility);
+    `delete_nat_gateway(public_ip_action="reserve"|"release", billing_catalog=..., wait=...)`;
+    new `replace_nat_gateway_public_ip` and `wait_for_nat_gateway_absent`.
+  - Port forwarding: `target_type` (`vm`/`vip`) and `target_vm_ids`; ports must be
+    1-65535; duplicate protocol/external port, gateway availability and the
+    target (NAT-connected node or MetalLB virtual IP) are checked first.
+  - New virtual-IP methods: `list_vpc_virtual_ips`, `get_vpc_virtual_ip`,
+    `create_vpc_virtual_ip`, `delete_vpc_virtual_ip`.
+  - Reserved IPs: `reserve_ip(billing_catalog=..., check_billing=...)`; label and
+    reverse-DNS rules; release, attach, move and detach read the IP first and
+    apply the portal's rules (`attach_reserved_ip(detach_from_service=True)` moves
+    an IP off a NAT gateway or virtual IP). New
+    `convert_vm_public_ip_to_reserved_ip` (with a RESERVED-IP billing check) and
+    `attach_reserved_ip_to_virtual_ip`. New `ReservedIpTargetUnsupportedError`
+    (a `NotFoundError`) explains attach/move to a VM without a VPC attachment.
+  - Firewalls: new `list_firewall_group_summaries`; `create_firewall_group`
+    rejects duplicate names (any case) and `is_default=True`; rule create/update
+    check protocol, ports and IPv4 remote targets like the portal and send its
+    defaults (tcp, ingress, allow, `0.0.0.0/0`); system-managed rules cannot be
+    changed or deleted; attachment `limit` 1-500.
+  - Load balancers: `policy`, `health_check` and `observability` on create and
+    update; `tls` defaults to managed passthrough/terminate for
+    `tls_passthrough`/`https`; custom certificates, sticky sessions on L4 and
+    custom domains on non-HTTPS are rejected; backends, rules and custom domains
+    are validated; `include_deleted` on list and get; `check_billing` preflight.
+  - Types: `VpcVirtualIp`, `FirewallGroupSummary`, `LoadBalancerCustomDomain`;
+    `NatGateway.public_ip_source`/`billing_catalog`/..., `NatPortForwardingRule.target_type`/...,
+    `ReservedIp.allocation_method`/`attached_allocation_id`/`attached_network_id`/...,
+    `LoadBalancer.custom_domain`/`activated_at`/`deleted_at`/`deleted_by`.
+  - `ibee.IbeeBillingWarning`; `NAT_GATEWAY_SKU_CODE`/`RESERVED_IP_SKU_CODE`;
+    the networking rules in `ibee.validation` (CIDR, host-in-subnet, ports, remote
+    targets, reverse DNS, load-balancer bodies) and flows in `ibee.networking_workflows`.
+
 ### Changed
 
 - **Retries.** Only `GET`/`HEAD`/`OPTIONS` requests, and writes carrying an
@@ -152,6 +200,24 @@ auto-paging.
 - `get_*_vm_bandwidth` defaults `month` to the current UTC month.
 - VM creates are never retried automatically, even with an idempotency key.
 
+- **Networking rules are checked before sending**, and several networking writes
+  read current state first (pass `check_state=False` to skip): `delete_vpc`,
+  `create_vpc_subnet`, `create_nat_gateway`, `create_nat_port_forwarding_rule`,
+  `update_nat_port_forwarding_rule` (when ports change or it is enabled),
+  `release_reserved_ip`, `attach_reserved_ip`, `move_reserved_ip`,
+  `detach_reserved_ip`, `create_firewall_group`, `update_firewall_rule` and
+  `delete_firewall_rule`. `detach_reserved_ip` on an unattached IP returns it
+  without a request.
+- VPC `cidr` outside /22-/28 or RFC1918 space is rejected locally (the API
+  answered 422). `create_firewall_group(is_default=True)` raises (such groups were
+  hidden from lists). Firewall rules default to `0.0.0.0/0` and send the portal's
+  explicit defaults. `connectivity_type="public"` emits `DeprecationWarning`;
+  a NAT gateway (or `nat_gateway` VPC) created without a billing catalog emits
+  `IbeeBillingWarning`.
+- `delete_nat_gateway` returns `True`/`False` with `wait=True` (otherwise `None`).
+- The raw clients (`with_raw_response`) keep the 0.3.0 request bodies; use the
+  high-level methods for the new fields and checks.
+
 ### Fixed
 
 - Creates replayed after a committed first attempt no longer retry into a 409.
@@ -160,6 +226,12 @@ auto-paging.
 - Deleting a VM with an auto-assigned public IP no longer fails with 400.
 - Resizes now move billing to the target plan's SKU.
 - VM `id` is no longer `None` for records the API returns with `_id`.
+- HTTPS and TLS-passthrough load balancers no longer fail with 422 when `tls` is
+  omitted; custom certificates are refused before they cause a server error.
+- Firewall rules without a port for tcp/udp, with `port_end < port_start` or with
+  IPv6 targets are refused before they cause a server error.
+- `load_balancers.list_load_balancers(status="deleted")` now returns deleted
+  load balancers (sends `include_deleted=true`).
 
 ### Deprecated
 

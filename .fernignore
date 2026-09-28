@@ -37,3 +37,16 @@ src/ibee/gpu_vms/raw_client.py
 src/ibee/firewalls/client.py
 src/ibee/firewalls/raw_client.py
 src/ibee/vm_console/client.py
+src/ibee/networking_workflows.py
+src/ibee/vpcs/client.py
+src/ibee/vpcs/types/create_vpc_request_connectivity_type.py
+src/ibee/reserved_ips/client.py
+src/ibee/load_balancers/client.py
+src/ibee/types/vpc_connectivity_type.py
+src/ibee/types/nat_gateway.py
+src/ibee/types/nat_port_forwarding_rule.py
+src/ibee/types/reserved_ip.py
+src/ibee/types/load_balancer.py
+src/ibee/types/load_balancer_custom_domain.py
+src/ibee/types/vpc_virtual_ip.py
+src/ibee/types/firewall_group_summary.py

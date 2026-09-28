@@ -109,7 +109,14 @@ class Call:
     main: bool = False
 
 
-Flow = typing.Generator[Call, typing.Any, T]
+@dataclasses.dataclass(frozen=True)
+class Sleep:
+    """A pause between polls (``time.sleep`` / ``asyncio.sleep`` depending on the runner)."""
+
+    seconds: float
+
+
+Flow = typing.Generator[typing.Union[Call, Sleep], typing.Any, T]
 
 _PRESTEP_OPTION_KEYS = ("timeout_in_seconds", "max_retries", "additional_headers")
 
@@ -160,6 +167,12 @@ def run_sync(
             call = flow.throw(error) if error is not None else flow.send(value)
         except StopIteration as stop:
             return typing.cast(T, stop.value)
+        if isinstance(call, Sleep):
+            import time
+
+            time.sleep(max(call.seconds, 0.0))
+            value, error = None, None
+            continue
         try:
             response = client_wrapper.httpx_client.request(call.path, **_request_kwargs(call, request_options))
             value, error = _parse(call, response), None
@@ -178,6 +191,12 @@ async def run_async(
             call = flow.throw(error) if error is not None else flow.send(value)
         except StopIteration as stop:
             return typing.cast(T, stop.value)
+        if isinstance(call, Sleep):
+            import asyncio
+
+            await asyncio.sleep(max(call.seconds, 0.0))
+            value, error = None, None
+            continue
         try:
             response = await client_wrapper.httpx_client.request(call.path, **_request_kwargs(call, request_options))
             value, error = _parse(call, response), None
