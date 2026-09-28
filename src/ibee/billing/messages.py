@@ -22,6 +22,7 @@ CREATE_TYPE_LABELS: typing.Dict[str, str] = {
     "snapshot": "snapshot",
     "backup": "backup policy",
     "reserved_ip": "Reserved IP",
+    "nat_gateway": "NAT gateway",
     "container_registry": "container registry",
 }
 DEFAULT_CREATE_LABEL = "resource"

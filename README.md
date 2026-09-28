@@ -75,12 +75,13 @@ credential = client.object_storage.create_s3credential(
     allowed_buckets=["production-assets"],
 )
 
-# Create an isolated VPC and reserve a public IP
+# Create an isolated VPC (private by default in the portal) and reserve a public IP
 vpc = client.vpcs.create_vpc(
     workspace_id="907479",
     name="production",
     site_id="site_blr_01",
-    cidr="10.20.0.0/24",
+    cidr="10.20.0.0/24",  # RFC1918, aligned, /22-/28
+    connectivity_type="private",
 )
 reserved_ip = client.reserved_ips.reserve_ip(
     workspace_id="907479",
@@ -93,10 +94,11 @@ firewall_groups = client.firewalls.list_firewall_groups(workspace_id="907479")
 load_balancers = client.load_balancers.list_load_balancers(workspace_id="907479")
 ```
 
-The `vpcs` resource also manages subnets, VM attachments, NAT gateways, and
-port-forwarding rules. `reserved_ips` includes attach, move, and detach;
-`firewalls` and `load_balancers` provide their complete public lifecycle.
-Synchronous and async clients expose matching methods.
+The `vpcs` resource also manages subnets, VM attachments, NAT gateways,
+port-forwarding rules and virtual IPs. `reserved_ips` includes attach, move,
+detach and convert; `firewalls` and `load_balancers` provide their complete
+public lifecycle. Synchronous and async clients expose matching methods; see
+"Networking" below for the portal rules the SDK applies.
 
 To create a VM with explicit placement, pass the selected IDs. Omit `site_id`
 to let IBEE select an available site automatically:
@@ -273,6 +275,75 @@ licence, snapshot, backup and Reserved IP SKUs; plan capacity checks; VM-side
 public-network and VPC-attachment actions; GPU monitoring; password reveal; SSH
 key management; ISO installs; workspace-wide snapshot lists; converting backups
 to snapshots.
+
+## Networking
+
+Networking methods apply the portal's rules before sending and raise
+`IbeeValidationError` when one fails. Methods that need the current state (for
+example the VPC's CIDR and subnets) read it first; pass `check_state=False` to
+skip those reads. Methods marked "not yet part of the published API contract"
+in their docstrings may change.
+
+```python
+from ibee import Ibee, IbeeValidationError
+
+client = Ibee(token="YOUR_TOKEN")
+ws = "907479"
+
+# NAT gateway VPC. The NAT gateway is billed with the NAT-GATEWAY SKU; the public
+# API cannot list it yet, so copy billing_catalog from an existing NAT gateway.
+vpc = client.vpcs.create_vpc(
+    workspace_id=ws, name="edge", site_id="site_blr_01", connectivity_type="nat_gateway",
+    nat_billing_catalog=nat_catalog,  # omitted -> IbeeBillingWarning
+)
+
+# Subnets are checked against the VPC CIDR, existing subnets and the 10-subnet quota.
+subnet = client.vpcs.create_vpc_subnet(vpc.vpc_id, workspace_id=ws, name="apps", cidr="10.20.0.128/25")
+
+# Allocate a specific private IP (not the network, broadcast or gateway address).
+client.vpcs.attach_vpc_node(vpc.vpc_id, workspace_id=ws, vm_id=vm_id, subnet_id=subnet.subnet_id,
+                            requested_private_ip="10.20.0.140")
+
+# Port forwarding: single ports 1-65535; duplicates and the target are checked first.
+gw = client.vpcs.list_nat_gateways(vpc.vpc_id, workspace_id=ws)[0]
+client.vpcs.create_nat_port_forwarding_rule(
+    vpc.vpc_id, gw.nat_gateway_id, workspace_id=ws,
+    name="ssh", external_port=2222, internal_ip="10.20.0.140", internal_port=22,
+)
+
+# MetalLB virtual IP announced by NAT-connected nodes, exposed through a Reserved IP.
+vip = client.vpcs.create_vpc_virtual_ip(vpc.vpc_id, workspace_id=ws, subnet_id=subnet.subnet_id,
+                                        private_ip="10.20.0.200", announcer_vm_ids=[vm_id])
+client.reserved_ips.attach_reserved_ip_to_virtual_ip(reserved_ip_id, workspace_id=ws,
+                                                     virtual_ip_id=vip.virtual_ip_id)
+
+# Delete the NAT gateway (keep or release its address) and wait until it is gone.
+client.vpcs.delete_nat_gateway(vpc.vpc_id, gw.nat_gateway_id, workspace_id=ws,
+                               public_ip_action="release", wait=True)
+# Or let delete_vpc remove the gateway first:
+client.vpcs.delete_vpc(vpc.vpc_id, workspace_id=ws, delete_nat_gateway=True)
+
+# Keep a VM's current public IPv4 as a Reserved IP (billing is checked first).
+client.reserved_ips.convert_vm_public_ip_to_reserved_ip(workspace_id=ws, vm_id=vm_id, site_id="site_blr_01")
+
+# Firewall rules: tcp/udp need a port; remote targets are IPv4 (default 0.0.0.0/0).
+client.firewalls.create_firewall_rule(group_id, workspace_id=ws, protocol="tcp", port_start=443,
+                                      remote_targets=["203.0.113.0/24"])
+
+# Load balancers: HTTPS gets a managed certificate; policy and health checks are validated.
+client.load_balancers.create_l7load_balancer(
+    workspace_id=ws, name="web", protocol="https",
+    backends=[{"type": "ip", "target": "10.20.0.140", "port": 8080}],
+    policy={"timeout_ms": 30000, "retries": {"attempts": 3}},
+    health_check={"active": {"type": "http", "path": "/health"}},
+)
+```
+
+Not available in the public API yet: the portal's VM-side VPC attachment (NIC
+hot-plug), listing NAT / Reserved IP prices and billing catalogs, attaching a
+held Reserved IP to a VM without a VPC attachment (raises
+`ReservedIpTargetUnsupportedError`), custom load-balancer certificates, and
+reading back load-balancer routing, policy and health-check settings.
 
 ## Environments & tokens
 

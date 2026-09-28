@@ -81,6 +81,7 @@ _CREATE_TYPE_BY_PATH: typing.Tuple[typing.Tuple[typing.Pattern[str], str], ...] 
         (r"^/object-storage/buckets/?$", "object_storage"),
         (r"^/networking/load-balancers/(l4|l7)/?$", "load_balancer"),
         (r"^/networking/reserved-ips/?$", "reserved_ip"),
+        (r"^/networking/vpcs/[^/]+/nat-gateways/?$", "nat_gateway"),
         (r"^/cdn/distributions/[^/]+/custom-domains/?$", "custom_domain"),
         (r"^/cdn/distributions/?$", "cdn"),
         (r"^/secret-store/stores/[^/]+/secrets/?$", "secret"),

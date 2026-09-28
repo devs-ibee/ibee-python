@@ -51,6 +51,7 @@ if typing.TYPE_CHECKING:
     from .error_detail import ErrorDetail
     from .firewall_attachment import FirewallAttachment
     from .firewall_group import FirewallGroup
+    from .firewall_group_summary import FirewallGroupSummary
     from .firewall_rule import FirewallRule
     from .firewall_rule_fields import FirewallRuleFields
     from .firewall_rule_fields_action import FirewallRuleFieldsAction
@@ -71,6 +72,7 @@ if typing.TYPE_CHECKING:
     from .load_balancer_status import LoadBalancerStatus
     from .load_balancer_status_response import LoadBalancerStatusResponse
     from .load_balancer_tls import LoadBalancerTls
+    from .load_balancer_custom_domain import LoadBalancerCustomDomain
     from .load_balancer_tls_mode import LoadBalancerTlsMode
     from .manual_backup_run_request import ManualBackupRunRequest
     from .mount_guidance_acknowledge import MountGuidanceAcknowledge
@@ -153,6 +155,7 @@ if typing.TYPE_CHECKING:
     from .vpc_connectivity_type import VpcConnectivityType
     from .vpc_detail import VpcDetail
     from .vpc_summary import VpcSummary
+    from .vpc_virtual_ip import VpcVirtualIp
 
     from .batch_create_secret_item import BatchCreateSecretItem
     from .batch_create_secret_result import BatchCreateSecretResult
@@ -222,6 +225,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ErrorDetail": ".error_detail",
     "FirewallAttachment": ".firewall_attachment",
     "FirewallGroup": ".firewall_group",
+    "FirewallGroupSummary": ".firewall_group_summary",
     "FirewallRule": ".firewall_rule",
     "FirewallRuleFields": ".firewall_rule_fields",
     "FirewallRuleFieldsAction": ".firewall_rule_fields_action",
@@ -242,6 +246,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "LoadBalancerStatus": ".load_balancer_status",
     "LoadBalancerStatusResponse": ".load_balancer_status_response",
     "LoadBalancerTls": ".load_balancer_tls",
+    "LoadBalancerCustomDomain": ".load_balancer_custom_domain",
     "LoadBalancerTlsMode": ".load_balancer_tls_mode",
     "ManualBackupRunRequest": ".manual_backup_run_request",
     "MountGuidanceAcknowledge": ".mount_guidance_acknowledge",
@@ -324,6 +329,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "VpcConnectivityType": ".vpc_connectivity_type",
     "VpcDetail": ".vpc_detail",
     "VpcSummary": ".vpc_summary",
+    "VpcVirtualIp": ".vpc_virtual_ip",
 }
 
 _dynamic_imports.update(
@@ -421,6 +427,7 @@ __all__ = [
     "ErrorDetail",
     "FirewallAttachment",
     "FirewallGroup",
+    "FirewallGroupSummary",
     "FirewallRule",
     "FirewallRuleFields",
     "FirewallRuleFieldsAction",
@@ -441,6 +448,7 @@ __all__ = [
     "LoadBalancerStatus",
     "LoadBalancerStatusResponse",
     "LoadBalancerTls",
+    "LoadBalancerCustomDomain",
     "LoadBalancerTlsMode",
     "ManualBackupRunRequest",
     "MountGuidanceAcknowledge",
@@ -523,6 +531,7 @@ __all__ = [
     "VpcConnectivityType",
     "VpcDetail",
     "VpcSummary",
+    "VpcVirtualIp",
 ]
 
 __all__.extend(

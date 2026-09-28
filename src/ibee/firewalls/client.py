@@ -13,6 +13,10 @@ from ..types.firewall_rule_fields_direction import FirewallRuleFieldsDirection
 from ..types.firewall_rule_fields_protocol import FirewallRuleFieldsProtocol
 from .raw_client import AsyncRawFirewallsClient, RawFirewallsClient
 
+from .. import networking_workflows as nw
+from ..compute_workflows import clean_kwargs, run_async, run_sync
+from ..types.firewall_group_summary import FirewallGroupSummary
+
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
 
@@ -116,19 +120,31 @@ class FirewallsClient:
         name: str,
         description: typing.Optional[str] = OMIT,
         is_default: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Creates a firewall group with the platform's baseline rules. Requires scope: network.write.
+
+        The name is trimmed (1-120 characters) and must be unique regardless of case (existing groups are read
+        first). ``is_default`` groups are platform-managed and cannot be created.
+
         Parameters
         ----------
         workspace_id : str
             The workspace ID to scope this request to.
 
         name : str
+            Group name (1-120 characters).
 
         description : typing.Optional[str]
+            Optional description (sent only when not blank).
 
         is_default : typing.Optional[bool]
+            Kept for 0.3.0 compatibility; ``True`` is rejected and the field is never sent.
+
+        check_state : typing.Optional[bool]
+            ``False`` skips the duplicate-name check.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -136,28 +152,8 @@ class FirewallsClient:
         Returns
         -------
         FirewallGroup
-            Firewall group created successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.firewalls.create_firewall_group(
-            workspace_id="workspace_id",
-            name="name",
-        )
         """
-        _response = self._raw_client.create_firewall_group(
-            workspace_id=workspace_id,
-            name=name,
-            description=description,
-            is_default=is_default,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, nw.create_firewall_group(**clean_kwargs(locals())), request_options)
 
     def get_firewall_group(
         self, firewall_group_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
@@ -248,6 +244,11 @@ class FirewallsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Adds a firewall rule. Requires scope: network.write.
+
+        Portal rules: tcp/udp need ``port_start`` (``port_end`` defaults to it), icmp/any take no ports, remote
+        targets are IPv4 only (a bare address becomes /32; default anywhere).
+
         Parameters
         ----------
         firewall_group_id : str
@@ -257,20 +258,28 @@ class FirewallsClient:
             The workspace ID to scope this request to.
 
         description : typing.Optional[str]
+            Notes (trimmed).
 
         direction : typing.Optional[FirewallRuleFieldsDirection]
+            ``ingress`` (default; the portal manages ingress rules only) or ``egress``.
 
         protocol : typing.Optional[FirewallRuleFieldsProtocol]
+            ``tcp`` (default), ``udp``, ``icmp`` or ``any``.
 
         port_start : typing.Optional[int]
+            Required for tcp/udp (1-65535); not allowed for icmp/any.
 
         port_end : typing.Optional[int]
+            Range end (>= port_start; default port_start).
 
         remote_targets : typing.Optional[typing.Sequence[str]]
+            IPv4 addresses or CIDRs (normalised; default ``0.0.0.0/0``).
 
         action : typing.Optional[FirewallRuleFieldsAction]
+            ``allow`` (default) or ``drop``.
 
         priority : typing.Optional[int]
+            Optional priority.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -278,34 +287,8 @@ class FirewallsClient:
         Returns
         -------
         FirewallGroup
-            Firewall rule added successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.firewalls.create_firewall_rule(
-            firewall_group_id="firewall_group_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.create_firewall_rule(
-            firewall_group_id,
-            workspace_id=workspace_id,
-            description=description,
-            direction=direction,
-            protocol=protocol,
-            port_start=port_start,
-            port_end=port_end,
-            remote_targets=remote_targets,
-            action=action,
-            priority=priority,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, nw.create_firewall_rule(**clean_kwargs(locals())), request_options)
 
     def delete_firewall_rule(
         self,
@@ -313,9 +296,13 @@ class FirewallsClient:
         firewall_rule_id: str,
         *,
         workspace_id: str,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Deletes a firewall rule. Requires scope: network.write. System-managed rules cannot be removed (the group is
+        read first).
+
         Parameters
         ----------
         firewall_group_id : str
@@ -327,31 +314,17 @@ class FirewallsClient:
         workspace_id : str
             The workspace ID to scope this request to.
 
+        check_state : typing.Optional[bool]
+            ``False`` skips reading the group first.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
         FirewallGroup
-            Firewall rule deleted successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.firewalls.delete_firewall_rule(
-            firewall_group_id="firewall_group_id",
-            firewall_rule_id="firewall_rule_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.delete_firewall_rule(
-            firewall_group_id, firewall_rule_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, nw.delete_firewall_rule(**clean_kwargs(locals())), request_options)
 
     def update_firewall_rule(
         self,
@@ -368,9 +341,15 @@ class FirewallsClient:
         remote_targets: typing.Optional[typing.Sequence[str]] = OMIT,
         action: typing.Optional[FirewallRuleFieldsAction] = OMIT,
         priority: typing.Optional[int] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Updates a firewall rule. Requires scope: network.write.
+
+        At least one field is required; the create rules apply to the fields sent (changing the protocol to tcp/udp
+        needs ``port_start``). System-managed rules cannot be changed (the group is read first).
+
         Parameters
         ----------
         firewall_group_id : str
@@ -383,22 +362,34 @@ class FirewallsClient:
             The workspace ID to scope this request to.
 
         enabled : typing.Optional[bool]
+            Enable or disable the rule.
 
         description : typing.Optional[str]
+            Notes (trimmed).
 
         direction : typing.Optional[FirewallRuleFieldsDirection]
+            ``ingress`` (default; the portal manages ingress rules only) or ``egress``.
 
         protocol : typing.Optional[FirewallRuleFieldsProtocol]
+            ``tcp`` (default), ``udp``, ``icmp`` or ``any``.
 
         port_start : typing.Optional[int]
+            Required for tcp/udp (1-65535); not allowed for icmp/any.
 
         port_end : typing.Optional[int]
+            Range end (>= port_start; default port_start).
 
         remote_targets : typing.Optional[typing.Sequence[str]]
+            IPv4 addresses or CIDRs (normalised; default ``0.0.0.0/0``).
 
         action : typing.Optional[FirewallRuleFieldsAction]
+            ``allow`` (default) or ``drop``.
 
         priority : typing.Optional[int]
+            Optional priority.
+
+        check_state : typing.Optional[bool]
+            ``False`` skips reading the group first.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -406,37 +397,8 @@ class FirewallsClient:
         Returns
         -------
         FirewallGroup
-            Firewall rule updated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.firewalls.update_firewall_rule(
-            firewall_group_id="firewall_group_id",
-            firewall_rule_id="firewall_rule_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.update_firewall_rule(
-            firewall_group_id,
-            firewall_rule_id,
-            workspace_id=workspace_id,
-            enabled=enabled,
-            description=description,
-            direction=direction,
-            protocol=protocol,
-            port_start=port_start,
-            port_end=port_end,
-            remote_targets=remote_targets,
-            action=action,
-            priority=priority,
-            request_options=request_options,
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, nw.update_firewall_rule(**clean_kwargs(locals())), request_options)
 
     def list_firewall_group_attachments(
         self,
@@ -448,6 +410,8 @@ class FirewallsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[FirewallAttachment]:
         """
+        Lists the VM networks attached to a firewall group. Requires scope: network.read.
+
         Parameters
         ----------
         firewall_group_id : str
@@ -457,9 +421,10 @@ class FirewallsClient:
             The workspace ID to scope this request to.
 
         limit : typing.Optional[int]
-            Maximum number of records to return.
+            1-500 (the portal uses 500).
 
         skip : typing.Optional[int]
+            Items to skip (>= 0).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -467,23 +432,10 @@ class FirewallsClient:
         Returns
         -------
         typing.List[FirewallAttachment]
-            Firewall attachments returned successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.firewalls.list_firewall_group_attachments(
-            firewall_group_id="firewall_group_id",
-            workspace_id="workspace_id",
-        )
         """
-        _response = self._raw_client.list_firewall_group_attachments(
-            firewall_group_id, workspace_id=workspace_id, limit=limit, skip=skip, request_options=request_options
-        )
+        limit = validate_limit(limit, maximum=500)
+        skip = validate_offset(skip, field="skip")
+        _response = self._raw_client.list_firewall_group_attachments(firewall_group_id, workspace_id=workspace_id, limit=limit, skip=skip, request_options=request_options)
         return _response.data
 
     def attach_firewall_group(
@@ -495,6 +447,11 @@ class FirewallsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Attaches a firewall group to a VM. Requires scope: network.write.
+
+        A VM has one custom group: attaching replaces any other custom group on the VM. Only VMs on OVS/OVN networks
+        can attach groups (the API answers 400 otherwise).
+
         Parameters
         ----------
         firewall_group_id : str
@@ -504,6 +461,7 @@ class FirewallsClient:
             The workspace ID to scope this request to.
 
         vm_id : str
+            VM ID.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -511,25 +469,8 @@ class FirewallsClient:
         Returns
         -------
         FirewallGroup
-            VM attached successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.firewalls.attach_firewall_group(
-            firewall_group_id="firewall_group_id",
-            workspace_id="workspace_id",
-            vm_id="vm_id",
-        )
         """
-        _response = self._raw_client.attach_firewall_group(
-            firewall_group_id, workspace_id=workspace_id, vm_id=vm_id, request_options=request_options
-        )
-        return _response.data
+        return run_sync(self._raw_client._client_wrapper, nw.attach_firewall_group(**clean_kwargs(locals())), request_options)
 
     def detach_firewall_group(
         self,
@@ -576,6 +517,41 @@ class FirewallsClient:
             firewall_group_id, vm_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
+
+    def list_firewall_group_summaries(
+        self,
+        *,
+        workspace_id: str,
+        limit: typing.Optional[int] = None,
+        offset: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.List[FirewallGroupSummary]:
+        """
+        Lists firewall groups without their rules (name, status, rule and VM counts), like the portal's list.
+        Requires scope: network.read.
+
+        With neither ``limit`` nor ``offset`` every page is fetched. Not yet part of the published API contract;
+        behaviour may change.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        limit : typing.Optional[int]
+            Page size, 1-100.
+
+        offset : typing.Optional[int]
+            Items to skip (>= 0).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.List[FirewallGroupSummary]
+        """
+        return run_sync(self._raw_client._client_wrapper, nw.list_firewall_group_summaries(**clean_kwargs(locals())), request_options)
 
 
 class AsyncFirewallsClient:
@@ -649,19 +625,31 @@ class AsyncFirewallsClient:
         name: str,
         description: typing.Optional[str] = OMIT,
         is_default: typing.Optional[bool] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Creates a firewall group with the platform's baseline rules. Requires scope: network.write.
+
+        The name is trimmed (1-120 characters) and must be unique regardless of case (existing groups are read
+        first). ``is_default`` groups are platform-managed and cannot be created.
+
         Parameters
         ----------
         workspace_id : str
             The workspace ID to scope this request to.
 
         name : str
+            Group name (1-120 characters).
 
         description : typing.Optional[str]
+            Optional description (sent only when not blank).
 
         is_default : typing.Optional[bool]
+            Kept for 0.3.0 compatibility; ``True`` is rejected and the field is never sent.
+
+        check_state : typing.Optional[bool]
+            ``False`` skips the duplicate-name check.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -669,36 +657,8 @@ class AsyncFirewallsClient:
         Returns
         -------
         FirewallGroup
-            Firewall group created successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.firewalls.create_firewall_group(
-                workspace_id="workspace_id",
-                name="name",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.create_firewall_group(
-            workspace_id=workspace_id,
-            name=name,
-            description=description,
-            is_default=is_default,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, nw.create_firewall_group(**clean_kwargs(locals())), request_options)
 
     async def get_firewall_group(
         self, firewall_group_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
@@ -805,6 +765,11 @@ class AsyncFirewallsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Adds a firewall rule. Requires scope: network.write.
+
+        Portal rules: tcp/udp need ``port_start`` (``port_end`` defaults to it), icmp/any take no ports, remote
+        targets are IPv4 only (a bare address becomes /32; default anywhere).
+
         Parameters
         ----------
         firewall_group_id : str
@@ -814,20 +779,28 @@ class AsyncFirewallsClient:
             The workspace ID to scope this request to.
 
         description : typing.Optional[str]
+            Notes (trimmed).
 
         direction : typing.Optional[FirewallRuleFieldsDirection]
+            ``ingress`` (default; the portal manages ingress rules only) or ``egress``.
 
         protocol : typing.Optional[FirewallRuleFieldsProtocol]
+            ``tcp`` (default), ``udp``, ``icmp`` or ``any``.
 
         port_start : typing.Optional[int]
+            Required for tcp/udp (1-65535); not allowed for icmp/any.
 
         port_end : typing.Optional[int]
+            Range end (>= port_start; default port_start).
 
         remote_targets : typing.Optional[typing.Sequence[str]]
+            IPv4 addresses or CIDRs (normalised; default ``0.0.0.0/0``).
 
         action : typing.Optional[FirewallRuleFieldsAction]
+            ``allow`` (default) or ``drop``.
 
         priority : typing.Optional[int]
+            Optional priority.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -835,42 +808,8 @@ class AsyncFirewallsClient:
         Returns
         -------
         FirewallGroup
-            Firewall rule added successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.firewalls.create_firewall_rule(
-                firewall_group_id="firewall_group_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.create_firewall_rule(
-            firewall_group_id,
-            workspace_id=workspace_id,
-            description=description,
-            direction=direction,
-            protocol=protocol,
-            port_start=port_start,
-            port_end=port_end,
-            remote_targets=remote_targets,
-            action=action,
-            priority=priority,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, nw.create_firewall_rule(**clean_kwargs(locals())), request_options)
 
     async def delete_firewall_rule(
         self,
@@ -878,9 +817,13 @@ class AsyncFirewallsClient:
         firewall_rule_id: str,
         *,
         workspace_id: str,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Deletes a firewall rule. Requires scope: network.write. System-managed rules cannot be removed (the group is
+        read first).
+
         Parameters
         ----------
         firewall_group_id : str
@@ -892,39 +835,17 @@ class AsyncFirewallsClient:
         workspace_id : str
             The workspace ID to scope this request to.
 
+        check_state : typing.Optional[bool]
+            ``False`` skips reading the group first.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
         FirewallGroup
-            Firewall rule deleted successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.firewalls.delete_firewall_rule(
-                firewall_group_id="firewall_group_id",
-                firewall_rule_id="firewall_rule_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.delete_firewall_rule(
-            firewall_group_id, firewall_rule_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, nw.delete_firewall_rule(**clean_kwargs(locals())), request_options)
 
     async def update_firewall_rule(
         self,
@@ -941,9 +862,15 @@ class AsyncFirewallsClient:
         remote_targets: typing.Optional[typing.Sequence[str]] = OMIT,
         action: typing.Optional[FirewallRuleFieldsAction] = OMIT,
         priority: typing.Optional[int] = OMIT,
+        check_state: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Updates a firewall rule. Requires scope: network.write.
+
+        At least one field is required; the create rules apply to the fields sent (changing the protocol to tcp/udp
+        needs ``port_start``). System-managed rules cannot be changed (the group is read first).
+
         Parameters
         ----------
         firewall_group_id : str
@@ -956,22 +883,34 @@ class AsyncFirewallsClient:
             The workspace ID to scope this request to.
 
         enabled : typing.Optional[bool]
+            Enable or disable the rule.
 
         description : typing.Optional[str]
+            Notes (trimmed).
 
         direction : typing.Optional[FirewallRuleFieldsDirection]
+            ``ingress`` (default; the portal manages ingress rules only) or ``egress``.
 
         protocol : typing.Optional[FirewallRuleFieldsProtocol]
+            ``tcp`` (default), ``udp``, ``icmp`` or ``any``.
 
         port_start : typing.Optional[int]
+            Required for tcp/udp (1-65535); not allowed for icmp/any.
 
         port_end : typing.Optional[int]
+            Range end (>= port_start; default port_start).
 
         remote_targets : typing.Optional[typing.Sequence[str]]
+            IPv4 addresses or CIDRs (normalised; default ``0.0.0.0/0``).
 
         action : typing.Optional[FirewallRuleFieldsAction]
+            ``allow`` (default) or ``drop``.
 
         priority : typing.Optional[int]
+            Optional priority.
+
+        check_state : typing.Optional[bool]
+            ``False`` skips reading the group first.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -979,45 +918,8 @@ class AsyncFirewallsClient:
         Returns
         -------
         FirewallGroup
-            Firewall rule updated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.firewalls.update_firewall_rule(
-                firewall_group_id="firewall_group_id",
-                firewall_rule_id="firewall_rule_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.update_firewall_rule(
-            firewall_group_id,
-            firewall_rule_id,
-            workspace_id=workspace_id,
-            enabled=enabled,
-            description=description,
-            direction=direction,
-            protocol=protocol,
-            port_start=port_start,
-            port_end=port_end,
-            remote_targets=remote_targets,
-            action=action,
-            priority=priority,
-            request_options=request_options,
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, nw.update_firewall_rule(**clean_kwargs(locals())), request_options)
 
     async def list_firewall_group_attachments(
         self,
@@ -1029,6 +931,8 @@ class AsyncFirewallsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[FirewallAttachment]:
         """
+        Lists the VM networks attached to a firewall group. Requires scope: network.read.
+
         Parameters
         ----------
         firewall_group_id : str
@@ -1038,9 +942,10 @@ class AsyncFirewallsClient:
             The workspace ID to scope this request to.
 
         limit : typing.Optional[int]
-            Maximum number of records to return.
+            1-500 (the portal uses 500).
 
         skip : typing.Optional[int]
+            Items to skip (>= 0).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1048,31 +953,10 @@ class AsyncFirewallsClient:
         Returns
         -------
         typing.List[FirewallAttachment]
-            Firewall attachments returned successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.firewalls.list_firewall_group_attachments(
-                firewall_group_id="firewall_group_id",
-                workspace_id="workspace_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.list_firewall_group_attachments(
-            firewall_group_id, workspace_id=workspace_id, limit=limit, skip=skip, request_options=request_options
-        )
+        limit = validate_limit(limit, maximum=500)
+        skip = validate_offset(skip, field="skip")
+        _response = await self._raw_client.list_firewall_group_attachments(firewall_group_id, workspace_id=workspace_id, limit=limit, skip=skip, request_options=request_options)
         return _response.data
 
     async def attach_firewall_group(
@@ -1084,6 +968,11 @@ class AsyncFirewallsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FirewallGroup:
         """
+        Attaches a firewall group to a VM. Requires scope: network.write.
+
+        A VM has one custom group: attaching replaces any other custom group on the VM. Only VMs on OVS/OVN networks
+        can attach groups (the API answers 400 otherwise).
+
         Parameters
         ----------
         firewall_group_id : str
@@ -1093,6 +982,7 @@ class AsyncFirewallsClient:
             The workspace ID to scope this request to.
 
         vm_id : str
+            VM ID.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1100,33 +990,8 @@ class AsyncFirewallsClient:
         Returns
         -------
         FirewallGroup
-            VM attached successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.firewalls.attach_firewall_group(
-                firewall_group_id="firewall_group_id",
-                workspace_id="workspace_id",
-                vm_id="vm_id",
-            )
-
-
-        asyncio.run(main())
         """
-        _response = await self._raw_client.attach_firewall_group(
-            firewall_group_id, workspace_id=workspace_id, vm_id=vm_id, request_options=request_options
-        )
-        return _response.data
+        return await run_async(self._raw_client._client_wrapper, nw.attach_firewall_group(**clean_kwargs(locals())), request_options)
 
     async def detach_firewall_group(
         self,
@@ -1181,3 +1046,38 @@ class AsyncFirewallsClient:
             firewall_group_id, vm_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
+
+    async def list_firewall_group_summaries(
+        self,
+        *,
+        workspace_id: str,
+        limit: typing.Optional[int] = None,
+        offset: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.List[FirewallGroupSummary]:
+        """
+        Lists firewall groups without their rules (name, status, rule and VM counts), like the portal's list.
+        Requires scope: network.read.
+
+        With neither ``limit`` nor ``offset`` every page is fetched. Not yet part of the published API contract;
+        behaviour may change.
+
+        Parameters
+        ----------
+        workspace_id : str
+            The workspace ID to scope this request to.
+
+        limit : typing.Optional[int]
+            Page size, 1-100.
+
+        offset : typing.Optional[int]
+            Items to skip (>= 0).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.List[FirewallGroupSummary]
+        """
+        return await run_async(self._raw_client._client_wrapper, nw.list_firewall_group_summaries(**clean_kwargs(locals())), request_options)

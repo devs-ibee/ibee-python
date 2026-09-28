@@ -31,6 +31,7 @@ if typing.TYPE_CHECKING:
     from .factory import error_from_response, is_payment_block_error
     from .forbidden_error import ForbiddenError
     from .ibee_error import IbeeError
+    from .networking_errors import ReservedIpTargetUnsupportedError
     from .not_found_error import NotFoundError
     from .operation_errors import OperationFailedError, OperationTimeoutError
     from .payment_required_error import PaymentRequiredError
@@ -49,6 +50,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "RecoveryFailedError": ".compute_errors",
     "RecoveryRestoreFailedError": ".compute_errors",
     "ResizeBlockedError": ".compute_errors",
+    "ReservedIpTargetUnsupportedError": ".networking_errors",
     "ForbiddenError": ".forbidden_error",
     "GatewayTimeoutError": ".api_errors",
     "IbeeError": ".ibee_error",

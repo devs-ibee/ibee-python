@@ -107,7 +107,7 @@ def test_non_retryable_statuses_are_not_retried(status: int) -> None:
 def test_unkeyed_write_is_not_retried_on_503() -> None:
     handler, observed = _sequence((503, {"detail": "busy"}), (201, {}))
     with pytest.raises(ServiceUnavailableError) as info:
-        _client(handler).vpcs.create_vpc(workspace_id=WS, name="v", cidr="10.0.0.0/16", site_id="s")
+        _client(handler).vpcs.create_vpc(workspace_id=WS, name="v", cidr="10.0.0.0/24", site_id="s")
     assert len(observed) == 1
     assert info.value.idempotency_key is None
 
@@ -252,7 +252,7 @@ def test_async_keyed_retry_parity(monkeypatch: pytest.MonkeyPatch) -> None:
                 handler_409, _ = _sequence((409, {"detail": "x"}))
                 async with httpx.AsyncClient(transport=httpx.MockTransport(handler_409)) as other:
                     await AsyncIbee(token="t", base_url=BASE, httpx_client=other).vpcs.create_vpc(
-                        workspace_id=WS, name="v", cidr="10.0.0.0/16", site_id="s"
+                        workspace_id=WS, name="v", cidr="10.0.0.0/24", site_id="s"
                     )
 
     asyncio.run(run())
