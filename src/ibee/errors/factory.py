@@ -26,6 +26,7 @@ from .api_errors import (
 from .bad_gateway_error import BadGatewayError
 from .bad_request_error import BadRequestError
 from .billing_errors import BillingAdmissionError, BillingDeniedError, BillingForbiddenError
+from .compute_errors import ResizeBlockedError
 from .conflict_error import ConflictError
 from .forbidden_error import ForbiddenError
 from .not_found_error import NotFoundError
@@ -135,6 +136,9 @@ def _select_class(status_code: int, info: typing.Dict[str, typing.Any], raw_body
     if status_code == 404:
         return NotFoundError
     if status_code == 409:
+        detail = raw_body.get("detail") if isinstance(raw_body, dict) else None
+        if isinstance(detail, dict) and detail.get("decision"):
+            return ResizeBlockedError
         return ConflictError
     if status_code == 413:
         return PayloadTooLargeError

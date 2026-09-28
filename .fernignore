@@ -8,7 +8,8 @@ tests/
 src/ibee/__init__.py
 src/ibee/client.py
 src/ibee/environment.py
-src/ibee/validation.py
+src/ibee/validation/
+src/ibee/compute_workflows.py
 src/ibee/pagination.py
 src/ibee/operations.py
 src/ibee/idempotency.py
@@ -23,6 +24,8 @@ src/ibee/block_storage/
 src/ibee/cdn/
 src/ibee/types/__init__.py
 src/ibee/types/billing_eligibility.py
+src/ibee/types/cloud_vm.py
+src/ibee/types/gpu_vm.py
 src/ibee/types/billing_eligibility_enforcement_source.py
 src/ibee/types/billing_eligibility_operation.py
 src/ibee/types/billing_eligibility_service_enforcement_state.py
@@ -33,3 +36,4 @@ src/ibee/gpu_vms/client.py
 src/ibee/gpu_vms/raw_client.py
 src/ibee/firewalls/client.py
 src/ibee/firewalls/raw_client.py
+src/ibee/vm_console/client.py

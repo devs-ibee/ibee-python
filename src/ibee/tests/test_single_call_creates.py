@@ -10,6 +10,8 @@ from ibee import AsyncIbee, Ibee, IbeeEnvironment, LoadBalancerBackend
 from ibee.core.api_error import ApiError
 
 WORKSPACE_ID = "710995"
+# With an explicit billing_catalog and full shape, VM creates skip the plan/image lookups (single request).
+VM_SKU = {"sku_id": 11, "sku_code": "VM-2-8-50"}
 OperationName = typing.Literal[
     "secret-store", "secret", "bucket", "s3-credential", "nat-gateway",
     "reserved-ip", "l4-load-balancer", "l7-load-balancer", "cloud-vm", "gpu-vm",
@@ -29,7 +31,7 @@ def _sync(client: Ibee, name: OperationName) -> object:
     if name == "reserved-ip": return client.reserved_ips.reserve_ip(workspace_id=WORKSPACE_ID, site_id="site-1")
     if name == "l4-load-balancer": return client.load_balancers.create_l4load_balancer(workspace_id=WORKSPACE_ID, name="tcp", protocol="tcp", backends=[LoadBalancerBackend(target="10.0.0.10", port=80)])
     if name == "l7-load-balancer": return client.load_balancers.create_l7load_balancer(workspace_id=WORKSPACE_ID, name="http", protocol="http", backends=[LoadBalancerBackend(target="10.0.0.10", port=80)])
-    common = dict(workspace_id=WORKSPACE_ID, idempotency_key="create-1", name="vm", site_id="site-1", os_distro="ubuntu", os_type="linux", template_id="template-1", cpu=2, ram_mb=8192, plan_id="plan-1")
+    common = dict(workspace_id=WORKSPACE_ID, idempotency_key="create-1", name="vm", site_id="site-1", os_distro="ubuntu", os_type="linux", template_id="template-1", cpu=2, ram_mb=8192, disk_gb=50, plan_id="plan-1", billing_catalog=VM_SKU)
     if name == "cloud-vm": return client.cloud_vms.create_cloud_vm(**common)
     return client.gpu_vms.create_gpu_vm(**common, gpu_count=1, gpu_model="L4")
 
@@ -43,7 +45,7 @@ async def _async(client: AsyncIbee, name: OperationName) -> object:
     if name == "reserved-ip": return await client.reserved_ips.reserve_ip(workspace_id=WORKSPACE_ID, site_id="site-1")
     if name == "l4-load-balancer": return await client.load_balancers.create_l4load_balancer(workspace_id=WORKSPACE_ID, name="tcp", protocol="tcp", backends=[LoadBalancerBackend(target="10.0.0.10", port=80)])
     if name == "l7-load-balancer": return await client.load_balancers.create_l7load_balancer(workspace_id=WORKSPACE_ID, name="http", protocol="http", backends=[LoadBalancerBackend(target="10.0.0.10", port=80)])
-    common = dict(workspace_id=WORKSPACE_ID, idempotency_key="create-1", name="vm", site_id="site-1", os_distro="ubuntu", os_type="linux", template_id="template-1", cpu=2, ram_mb=8192, plan_id="plan-1")
+    common = dict(workspace_id=WORKSPACE_ID, idempotency_key="create-1", name="vm", site_id="site-1", os_distro="ubuntu", os_type="linux", template_id="template-1", cpu=2, ram_mb=8192, disk_gb=50, plan_id="plan-1", billing_catalog=VM_SKU)
     if name == "cloud-vm": return await client.cloud_vms.create_cloud_vm(**common)
     return await client.gpu_vms.create_gpu_vm(**common, gpu_count=1, gpu_model="L4")
 

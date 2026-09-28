@@ -6,7 +6,9 @@ A request is retried only when repeating it cannot create or change anything twi
 * writes that carry a non-empty idempotency key on a route that honours it
   (see :mod:`ibee.idempotency`).
 
-Such requests are retried on HTTP 429, 502, 503 and 504 only. HTTP 408, 409, 500
+Such requests are retried on HTTP 429, 502, 503 and 504 only. VM creates are never
+retried, even with a key: a replayed create is answered "VM with this name already
+exists" instead of returning the first result. HTTP 408, 409, 500
 and every other 4xx are never retried. Connection failures where the request was
 never sent (``httpx.ConnectError``/``httpx.ConnectTimeout``) are retried for any
 method; failures after the request may have been sent are retried only for
@@ -24,8 +26,11 @@ import typing
 import httpx
 
 from .idempotency import find_idempotency_key
+from .validation import normalize_api_path
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+#: Keyed routes that are still never retried automatically.
+NEVER_RETRIED_WRITES = re.compile(r"^/compute/(cloud-vms|gpu-vms)/?$")
 RETRYABLE_STATUS_CODES = frozenset({429, 502, 503, 504})
 INITIAL_RETRY_DELAY_SECONDS = 1.0
 MAX_RETRY_DELAY_SECONDS = 30.0
@@ -53,6 +58,8 @@ def is_retry_safe(
     """Whether repeating this request is safe (read-only, or keyed on a route that deduplicates)."""
     if method.upper() in SAFE_METHODS:
         return True
+    if method.upper() == "POST" and NEVER_RETRIED_WRITES.fullmatch(normalize_api_path(path)):
+        return False
     return find_idempotency_key(method, path, headers, json_body, params) is not None
 
 

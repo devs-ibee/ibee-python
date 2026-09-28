@@ -245,6 +245,9 @@ if typing.TYPE_CHECKING:
         OrganizationRestrictedError,
         OrganizationSuspendedError,
         PayloadTooLargeError,
+        RecoveryFailedError,
+        RecoveryRestoreFailedError,
+        ResizeBlockedError,
         RouteNotAvailableError,
         TooManyRequestsError,
         UnprocessableEntityError,
@@ -262,7 +265,7 @@ if typing.TYPE_CHECKING:
     from .operations import wait_for_compute_operation, wait_for_compute_operation_async
     from .pagination import paginate_offset, paginate_pages
     from .validation import IbeeValidationError, resolve_base_url, validate_workspace_id
-    from . import block_storage, cdn, idempotency, operations, pagination, retry, validation
+    from . import block_storage, cdn, compute_workflows, idempotency, operations, pagination, retry, validation
 _dynamic_imports: typing.Dict[str, str] = {
     "AsyncIbee": ".client",
     "AttachReservedIpRequest": ".types",
@@ -467,6 +470,9 @@ _dynamic_imports.update(
         "InvalidWorkspaceError": ".errors",
         "OperationFailedError": ".errors",
         "OperationTimeoutError": ".errors",
+        "RecoveryFailedError": ".errors",
+        "RecoveryRestoreFailedError": ".errors",
+        "ResizeBlockedError": ".errors",
         "OrganizationRestrictedError": ".errors",
         "OrganizationSuspendedError": ".errors",
         "PayloadTooLargeError": ".errors",
@@ -485,6 +491,7 @@ _dynamic_imports.update(
         "is_billing_topup_allowed": ".billing",
         "is_payment_block_error": ".errors",
         "operations": ".operations",
+        "compute_workflows": ".compute_workflows",
         "paginate_offset": ".pagination",
         "paginate_pages": ".pagination",
         "pagination": ".pagination",
@@ -754,6 +761,9 @@ __all__.extend(
         "OrganizationRestrictedError",
         "OrganizationSuspendedError",
         "PayloadTooLargeError",
+        "RecoveryFailedError",
+        "RecoveryRestoreFailedError",
+        "ResizeBlockedError",
         "RouteNotAvailableError",
         "TooManyRequestsError",
         "UnprocessableEntityError",
@@ -769,6 +779,7 @@ __all__.extend(
         "is_billing_topup_allowed",
         "is_payment_block_error",
         "operations",
+        "compute_workflows",
         "paginate_offset",
         "paginate_pages",
         "pagination",

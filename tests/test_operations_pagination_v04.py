@@ -47,8 +47,8 @@ def fake_time(monkeypatch: pytest.MonkeyPatch) -> FakeTime:
 
 def _op(status: str, **extra: object) -> dict:
     return {
-        "operation_id": "op-1",
-        "vm_id": "vm-1",
+        "operation_id": "op_0123456789abcdef01234567",
+        "vm_id": "0123456789abcdef01234567",
         "action": "start",
         "status": status,
         "submitted_at": "2026-08-04T10:00:00Z",
@@ -85,36 +85,36 @@ def test_wait_polls_until_succeeded(fake_time: FakeTime) -> None:
     client, observed = _ops_client((200, _op("accepted")), (200, _op("running")), (200, _op("succeeded")))
     updates: list = []
     result = client.cloud_vms.wait_for_compute_operation(
-        " op-1 ", workspace_id=WS, poll_interval=2, on_update=updates.append
+        " op_0123456789abcdef01234567 ", workspace_id=WS, poll_interval=2, on_update=updates.append
     )
     assert result.status == "succeeded"
     assert [u.status for u in updates] == ["accepted", "running", "succeeded"]
     assert fake_time.sleeps == [2.0, 2.0]
-    assert all(request.url.path == "/v1/compute/operations/op-1" for request in observed)
+    assert all(request.url.path == "/v1/compute/operations/op_0123456789abcdef01234567" for request in observed)
 
 
 def test_completed_is_a_legacy_success_alias() -> None:
     client, _ = _ops_client((200, _op("COMPLETED")))
-    assert wait_for_compute_operation(client, "op-1", workspace_id=WS).status == "COMPLETED"
+    assert wait_for_compute_operation(client, "op_0123456789abcdef01234567", workspace_id=WS).status == "COMPLETED"
 
 
 @pytest.mark.parametrize("status", ["failed", "cancelled", "timed_out"])
 def test_terminal_failures_raise_or_return(status: str) -> None:
     client, _ = _ops_client((200, _op(status, error_code="E_CAPACITY", error_message="no capacity")))
     with pytest.raises(OperationFailedError) as info:
-        client.gpu_vms.wait_for_compute_operation("op-1", workspace_id=WS)
+        client.gpu_vms.wait_for_compute_operation("op_0123456789abcdef01234567", workspace_id=WS)
     error = info.value
-    assert (error.operation_id, error.vm_id, error.status, error.error_code) == ("op-1", "vm-1", status, "E_CAPACITY")
+    assert (error.operation_id, error.vm_id, error.status, error.error_code) == ("op_0123456789abcdef01234567", "0123456789abcdef01234567", status, "E_CAPACITY")
     assert error.code == "operation_failed"
-    assert str(error) == f"start {status} for vm-1: E_CAPACITY: no capacity (operation op-1)"
-    returned = client.gpu_vms.wait_for_compute_operation("op-1", workspace_id=WS, raise_on_failure=False)
+    assert str(error) == f"start {status} for 0123456789abcdef01234567: E_CAPACITY: no capacity (operation op_0123456789abcdef01234567)"
+    returned = client.gpu_vms.wait_for_compute_operation("op_0123456789abcdef01234567", workspace_id=WS, raise_on_failure=False)
     assert returned.status == status
 
 
 def test_wait_times_out_on_the_client_deadline(fake_time: FakeTime) -> None:
     client, observed = _ops_client((200, _op("waiting")))
     with pytest.raises(OperationTimeoutError) as info:
-        client.cloud_vms.wait_for_compute_operation("op-1", workspace_id=WS, timeout=12, poll_interval=5)
+        client.cloud_vms.wait_for_compute_operation("op_0123456789abcdef01234567", workspace_id=WS, timeout=12, poll_interval=5)
     assert isinstance(info.value, TimeoutError)
     assert info.value.last_status == "waiting"
     assert info.value.timeout == 12
@@ -125,12 +125,12 @@ def test_wait_times_out_on_the_client_deadline(fake_time: FakeTime) -> None:
 
 def test_two_transient_failures_are_tolerated_and_the_third_raises() -> None:
     client, observed = _ops_client((503, {}), (502, {}), (200, _op("succeeded")))
-    assert client.cloud_vms.wait_for_compute_operation("op-1", workspace_id=WS).status == "succeeded"
+    assert client.cloud_vms.wait_for_compute_operation("op_0123456789abcdef01234567", workspace_id=WS).status == "succeeded"
     assert len(observed) == 3
 
     client, observed = _ops_client((503, {}), httpx.ConnectError("down"), (504, {}), (200, _op("succeeded")))
     with pytest.raises(Exception) as info:
-        client.cloud_vms.wait_for_compute_operation("op-1", workspace_id=WS)
+        client.cloud_vms.wait_for_compute_operation("op_0123456789abcdef01234567", workspace_id=WS)
     assert getattr(info.value, "status_code", None) == 504
     assert len(observed) == 3
 
@@ -139,14 +139,14 @@ def test_successful_poll_resets_failure_count() -> None:
     client, observed = _ops_client(
         (503, {}), (503, {}), (200, _op("running")), (503, {}), (503, {}), (200, _op("succeeded"))
     )
-    assert client.cloud_vms.wait_for_compute_operation("op-1", workspace_id=WS).status == "succeeded"
+    assert client.cloud_vms.wait_for_compute_operation("op_0123456789abcdef01234567", workspace_id=WS).status == "succeeded"
     assert len(observed) == 6
 
 
 def test_not_found_aborts_immediately() -> None:
     client, observed = _ops_client((404, {"detail": "Operation not found"}))
     with pytest.raises(NotFoundError):
-        client.cloud_vms.wait_for_compute_operation("op-1", workspace_id=WS)
+        client.cloud_vms.wait_for_compute_operation("op_0123456789abcdef01234567", workspace_id=WS)
     assert len(observed) == 1
 
 
@@ -163,19 +163,21 @@ def test_not_found_aborts_immediately() -> None:
 )
 def test_wait_validates_inputs(kwargs: dict, code: str) -> None:
     client, observed = _ops_client((200, _op("succeeded")))
-    arguments = {"operation_id": "op-1", "workspace_id": WS, **kwargs}
+    arguments = {"operation_id": "op_0123456789abcdef01234567", "workspace_id": WS, **kwargs}
     with pytest.raises(IbeeValidationError) as info:
         wait_for_compute_operation(client, **arguments)
     assert info.value.code == code
     assert observed == []
 
 
-def test_get_compute_operation_rejects_blank_ids_and_gpu_alias_uses_same_route() -> None:
+def test_get_compute_operation_rejects_malformed_ids_and_gpu_alias_uses_same_route() -> None:
     client, observed = _ops_client((200, _op("running")))
     with pytest.raises(IbeeValidationError):
         client.cloud_vms.get_compute_operation(" ", workspace_id=WS)
-    assert client.gpu_vms.get_compute_operation("op/1", workspace_id=WS).status == "running"
-    assert observed[0].url.raw_path.startswith(b"/v1/compute/operations/op%2F1")
+    with pytest.raises(IbeeValidationError):
+        client.cloud_vms.get_compute_operation("op/1", workspace_id=WS)
+    assert client.gpu_vms.get_compute_operation(" op_0123456789abcdef01234567 ", workspace_id=WS).status == "running"
+    assert observed[0].url.raw_path.startswith(b"/v1/compute/operations/op_0123456789abcdef01234567")
 
 
 def test_async_wait_parity(fake_time: FakeTime) -> None:
@@ -193,7 +195,7 @@ def test_async_wait_parity(fake_time: FakeTime) -> None:
     async def run():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
             client = AsyncIbee(token="t", base_url=BASE, httpx_client=http_client)
-            return await client.gpu_vms.wait_for_compute_operation("op-1", workspace_id=WS, on_update=on_update)
+            return await client.gpu_vms.wait_for_compute_operation("op_0123456789abcdef01234567", workspace_id=WS, on_update=on_update)
 
     assert asyncio.run(run()).status == "succeeded"
     assert seen == ["running", "succeeded"]

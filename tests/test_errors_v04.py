@@ -207,7 +207,7 @@ def test_async_transport_raises_typed_errors() -> None:
     async def run() -> None:
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
             client = AsyncIbee(token="t", base_url=BASE, httpx_client=http_client)
-            await client.cloud_vms.get_compute_operation("op-1", workspace_id="710995")
+            await client.cloud_vms.get_compute_operation("op_0123456789abcdef01234567", workspace_id="710995")
 
     with pytest.raises(NotFoundError) as info:
         asyncio.run(run())

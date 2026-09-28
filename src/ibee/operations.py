@@ -78,11 +78,13 @@ def poll_until(
     sleep: typing.Optional[typing.Callable[[float], None]] = None,
     clock: typing.Optional[typing.Callable[[], float]] = None,
     operation_id: typing.Optional[str] = None,
+    error_factory: typing.Optional[typing.Callable[[T], BaseException]] = None,
 ) -> T:
     """Call ``fetch`` until ``status_of(result)`` is terminal; the generic polling engine.
 
-    Returns the result on success; raises :class:`OperationFailedError` on failure
-    and :class:`OperationTimeoutError` when ``timeout`` seconds pass first.
+    Returns the result on success; raises :class:`OperationFailedError` (or the
+    exception built by ``error_factory``) on failure and
+    :class:`OperationTimeoutError` when ``timeout`` seconds pass first.
     """
     sleep = sleep or _sleep
     clock = clock or _clock
@@ -107,7 +109,7 @@ def poll_until(
             if status in success:
                 return current
             if status in failure:
-                raise OperationFailedError(current)
+                raise error_factory(current) if error_factory is not None else OperationFailedError(current)
         remaining = deadline - clock()
         if remaining <= 0:
             raise OperationTimeoutError(last, timeout=timeout, operation_id=operation_id)
@@ -127,6 +129,7 @@ async def apoll_until(
     sleep: typing.Optional[typing.Callable[[float], typing.Awaitable[None]]] = None,
     clock: typing.Optional[typing.Callable[[], float]] = None,
     operation_id: typing.Optional[str] = None,
+    error_factory: typing.Optional[typing.Callable[[T], BaseException]] = None,
 ) -> T:
     """Async variant of :func:`poll_until`. ``on_update`` may be sync or async."""
     sleep = sleep or _asleep
@@ -154,7 +157,7 @@ async def apoll_until(
             if status in success:
                 return current
             if status in failure:
-                raise OperationFailedError(current)
+                raise error_factory(current) if error_factory is not None else OperationFailedError(current)
         remaining = deadline - clock()
         if remaining <= 0:
             raise OperationTimeoutError(last, timeout=timeout, operation_id=operation_id)

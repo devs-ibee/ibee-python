@@ -15,10 +15,10 @@ import re
 import typing
 from urllib.parse import urlsplit
 
-from .errors.ibee_error import IbeeError
+from ..errors.ibee_error import IbeeError
 
 if typing.TYPE_CHECKING:
-    from .environment import IbeeEnvironment
+    from ..environment import IbeeEnvironment
 
 
 class IbeeValidationError(IbeeError, ValueError):
@@ -32,13 +32,24 @@ class IbeeValidationError(IbeeError, ValueError):
         The argument that failed validation, when there is one.
     message : str
         Human-readable description (also returned by ``str(error)``).
+    details : typing.Any
+        Extra context when there is some, for example the resize precheck result
+        (``decision``, ``reasons``, ``warnings``) or the eligible plan ids.
     """
 
     code: str = "validation_error"
 
-    def __init__(self, message: str, *, code: str = "validation_error", field: typing.Optional[str] = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "validation_error",
+        field: typing.Optional[str] = None,
+        details: typing.Any = None,
+    ) -> None:
         super().__init__(message, code=code)
         self.field = field
+        self.details = details
 
 
 # ---------------------------------------------------------------------------
@@ -91,7 +102,7 @@ def resolve_base_url(
     """
     if base_url is None:
         if environment is None:
-            from .environment import IbeeEnvironment
+            from ..environment import IbeeEnvironment
 
             environment = IbeeEnvironment.PRODUCTION
         base_url = environment if isinstance(environment, str) else environment.value
@@ -495,3 +506,11 @@ __all__ = [
     "validate_wait_timeout",
     "validate_workspace_id",
 ]
+
+# Compute, recovery and billing-SKU rules (0.4.0). Imported last: they build on the helpers above.
+from . import billing_catalog, compute, recovery  # noqa: E402
+from .billing_catalog import *  # noqa: E402,F401,F403
+from .compute import *  # noqa: E402,F401,F403
+from .recovery import *  # noqa: E402,F401,F403
+
+__all__ += [*billing_catalog.__all__, *compute.__all__, *recovery.__all__]  # noqa: PLE0605
