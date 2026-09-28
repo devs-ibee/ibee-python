@@ -54,3 +54,5 @@ src/ibee/storage_workflows.py
 src/ibee/object_storage/client.py
 src/ibee/types/s3credential.py
 src/ibee/types/billing_catalog_selection.py
+src/ibee/secret_store_workflows.py
+src/ibee/secret_store/client.py

@@ -182,6 +182,27 @@ auto-paging.
     `resolve_object_storage_region`, `validate_cdn_index_document`,
     `normalize_cdn_domain`, ...) and flows in `ibee.storage_workflows`.
 
+- Secret Store (portal parity):
+  - `secret_store.list_all_secret_stores` (archived stores included by default)
+    and `secret_store.list_all_secrets`, which fetch every page (sync and async).
+  - `create_secret_store(preflight_billing=, if_exists="error"|"return")` and
+    `create_secret(preflight_billing=)`: the portal's `SECRETMA-STD` billing check
+    (skipped with an `IbeeBillingWarning` when the token lacks `billing.read`), and
+    the portal's "store already exists" reuse on 409.
+  - `rollback_secret(check_target=True)`, `rotate_secret_identity_secret_id(check_auth_method=False)`
+    and `create_secret_identity_scope(check_store=False)` portal pre-checks.
+    `undelete_secret` accepts no `versions` and then restores the current version.
+  - Typed errors (exported from `ibee` and `ibee.errors`): `ResourceNotFoundError`,
+    `OrganizationLifecycleError`, `StoreNotActiveError`, `IdentityDisabledError`,
+    `AuthMethodMismatchError`, `ScopePermissionError`, `StoreArchivedError`,
+    `StoreDeletingError`, `SecretValueNotFoundError`, `ScopeValidationError`,
+    `CasConflictError` and `DeletionIncompleteError`, each a subclass of the 0.3.0
+    class for its status and carrying a `hint`.
+  - Secret Store rules in `ibee.validation` (`normalize_secret_name`,
+    `normalize_secret_value`, `build_store_create_body`, `build_identity_create_body`,
+    `build_scope_create_body`, `chunk_batch_secrets`, `check_rollback_target`,
+    `secret_version_state`, ...) and flows in `ibee.secret_store_workflows`.
+
 ### Changed
 
 - **Retries.** Only `GET`/`HEAD`/`OPTIONS` requests, and writes carrying an
@@ -289,6 +310,22 @@ auto-paging.
   answers `success: false` (pass `raise_on_failure=False` for the 0.3.0
   behaviour). CDN and Block Storage errors are now typed `ApiError` subclasses.
 
+- **Secret Store.** Every method validates before sending: secret names are
+  trimmed and lower-cased and must match `[a-z0-9][a-z0-9-]{1,63}`; values need
+  at least one non-blank key and no empty strings; store and identity names are
+  trimmed (1-128); bodies are limited to 64 KiB; `page`/`limit`/`q`, version
+  lists, `version` (>= 1, so `get_secret_version(..., 0)` no longer returns the
+  latest version) and `cas` are range-checked; Secret Store workspace ids must
+  have 2-128 digits. `create_secret_identity` always sends `token_policy_mode`
+  (default `read_only`) and no longer sends Kubernetes fields for AppRole;
+  `create_secret_identity_scope` sends its defaults explicitly (`read_only`,
+  version reads allowed) and refuses rollback/destroy on `read_only` scopes;
+  `update_secret_identity` requires `token_policy_mode` (0.3.0 sent an empty,
+  no-op body); `update_secret_store` and `update_secret_identity_scope` need at
+  least one field. `rollback_secret` reads the versions first and refuses the
+  current or a destroyed version (`check_target=False` restores 0.3.0 behaviour).
+  `list_secrets` omits a blank `q`. `get_secret_identity_access` is never retried.
+
 ### Fixed
 
 - Creates replayed after a committed first attempt no longer retry into a 409.
@@ -309,6 +346,12 @@ auto-paging.
 - `create_s3credential` no longer fails with 422 when `permission_type` is
   omitted.
 - A purge the CDN did not perform is no longer reported as a success.
+
+- Secret Store: uppercase secret names no longer fail with 422 (they are
+  lower-cased as in the portal); a "does not belong to workspace" 403 from
+  Secret Store is now `ResourceNotFoundError` rather than a generic
+  workspace error; a `cas` mismatch is now `CasConflictError` instead of an
+  opaque 502.
 
 ### Deprecated
 

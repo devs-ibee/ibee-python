@@ -131,23 +131,28 @@ when `plan_id` is provided.
 
 The synchronous and asynchronous Secret Store clients expose the complete store,
 secret-version, application-identity, and identity-scope lifecycle. Every call
-is scoped with `workspace_id`; value and identity-access responses can contain
-sensitive credentials and should never be logged.
+is scoped with `workspace_id` (a 2-128 digit id for Secret Store); value and
+identity-access responses can contain sensitive credentials and should never be
+logged.
 
 ```python
 store = client.secret_store.create_secret_store(
-    workspace_id="710995", name="payments"
+    workspace_id="710995",
+    name="payments",
+    preflight_billing=True,  # the portal's SECRETMA-STD billing check (needs billing.read)
+    if_exists="return",      # return the existing store instead of raising on 409
 )
 secret = client.secret_store.create_secret(
     store.id,
     workspace_id="710995",
-    secret_name="database",
+    secret_name="Database",  # trimmed and lower-cased -> "database"
     value={"username": "payments", "password": "replace-me"},
+    preflight_billing=True,
 )
 client.secret_store.patch_secret_value(
     secret.id,
     workspace_id="710995",
-    value={"username": "payments-v2"},
+    value={"username": "payments-v2", "legacy_key": None},  # None deletes a key
 )
 versions = client.secret_store.list_secret_versions(
     secret.id, workspace_id="710995"
@@ -155,6 +160,7 @@ versions = client.secret_store.list_secret_versions(
 client.secret_store.rollback_secret(
     secret.id, workspace_id="710995", version=1
 )
+every_store = client.secret_store.list_all_secret_stores(workspace_id="710995")
 ```
 
 Stores support archive, unarchive, and explicit permanent deletion. Secrets
@@ -162,6 +168,46 @@ support batch creation, soft deletion, undelete, version destruction, rollback,
 and permanent deletion. Workload identities support AppRole or Kubernetes
 authentication, credential rotation, session revocation, and per-store scopes.
 Permanent-delete and version-destroy operations are irreversible.
+
+The client applies the portal's rules before sending anything
+(`IbeeValidationError`):
+
+* store names are trimmed, 1-128 characters, and need a letter or digit;
+  `update_secret_store` needs `name` or `description`;
+* secret names are trimmed and lower-cased, then must be 2-64 characters of
+  `a-z`, `0-9` and `-`, starting with a letter or digit;
+* secret values are objects with at least one key; keys are trimmed and must not
+  be blank or collide, string values must not be empty;
+* bodies are limited to 64 KiB (`ibee.validation.chunk_batch_secrets` splits a
+  large batch); batches hold 1-500 items; version lists 1-100 integers >= 1;
+  `cas` is an integer >= 0; `page` >= 1 and `limit` 1-200; `q` at most 128 characters;
+* identities: `token_policy_mode` defaults to `read_only` and is always sent;
+  Kubernetes identities need `k8s_namespace` and `k8s_service_account`;
+  `update_secret_identity` needs `token_policy_mode`;
+* scopes default to `read_only` with version reads allowed; rollback and destroy
+  need `read_write`.
+
+Portal pre-steps: `rollback_secret` refuses the current, unknown or destroyed
+version (`check_target=True` by default); `rotate_secret_identity_secret_id(check_auth_method=True)`
+refuses Kubernetes or disabled identities; `create_secret_identity_scope(check_store=True)`
+refuses a store that is not active or already granted; `undelete_secret` without
+`versions` restores the current version. Each pre-step is skipped with a warning
+when the token lacks the read scope it needs.
+
+Secret Store answers most refusals with HTTP 403, so the SDK picks the error
+class from the message (all subclasses of the 0.3.0 classes):
+`ResourceNotFoundError` (missing or other-workspace store, secret, identity or
+scope), `OrganizationLifecycleError` (`state`, `operation`), `StoreNotActiveError`,
+`IdentityDisabledError`, `AuthMethodMismatchError`, `ScopePermissionError`,
+`StoreArchivedError` / `StoreDeletingError` (409), `SecretValueNotFoundError`
+(404), `ScopeValidationError` (422), `CasConflictError` (502 after `cas`) and
+`DeletionIncompleteError` (503, `failed_steps`; repeating the delete is safe).
+
+`get_secret_identity_access` and `rotate_secret_identity_secret_id` issue a new
+AppRole secret ID on every call (earlier ones stay valid), so they are never
+retried automatically; neither is any Secret Store create or value write.
+Runtime workload access (AppRole/Kubernetes login and runtime secret reads) is
+not part of the public API yet.
 
 ## Complete VM lifecycle
 
@@ -451,8 +497,10 @@ client.cloud_vms.reboot_cloud_vm("vm_123", workspace_id="907479", idempotency_ke
 ```
 
 A caller-supplied key must be 1-128 printable ASCII characters without spaces.
-Networking, snapshot, backup and object-storage writes do not deduplicate keys
-yet, so the SDK never retries them.
+Networking, snapshot, backup, object-storage and Secret Store writes do not
+deduplicate keys yet, so the SDK never retries them. The Secret Store identity
+access read (`get_secret_identity_access`) is not retried either, because every
+call issues a new credential.
 
 ## Waiting for operations
 
