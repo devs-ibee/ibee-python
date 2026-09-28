@@ -27,6 +27,14 @@ class OperationCase:
     query: dict[str, str] = field(default_factory=dict)
     body: dict[str, Any] | None = None
     idempotency_key: str | None = None
+    # (method, path) -> (status, json) for read-only pre-steps the SDK runs first (0.4.0).
+    presteps: dict[tuple[str, str], tuple[int, Any]] = field(default_factory=dict)
+
+
+SKU = {"sku_id": 5, "sku_code": "SNAPSHOT-STD"}
+BACKUP_SKU = {"sku_id": 6, "sku_code": "BACKUP-STD"}
+BLOCK_SKU = {"sku_id": 7, "sku_code": "BLOCK-STD"}
+VM_IDS = {"cloud": "0123456789abcdef0123456a", "gpu": "0123456789abcdef0123456b"}
 
 
 def _vm_cases(family: str) -> list[OperationCase]:
@@ -35,7 +43,7 @@ def _vm_cases(family: str) -> list[OperationCase]:
     collection = f"/v1/compute/{family}-vms"
     snapshot_collection = f"/v1/compute/{family}-vm-snapshots"
     backup_collection = f"/v1/compute/{family}-vm-backups"
-    vm_id = f"{family}-vm-1"
+    vm_id = VM_IDS[family]
     vm_path = f"{collection}/{vm_id}"
 
     def case(
@@ -48,6 +56,7 @@ def _vm_cases(family: str) -> list[OperationCase]:
         query: dict[str, str] | None = None,
         body: dict[str, Any] | None = None,
         idempotency_key: str | None = None,
+        presteps: dict[tuple[str, str], tuple[int, Any]] | None = None,
     ) -> OperationCase:
         return OperationCase(
             resource=resource,
@@ -59,6 +68,7 @@ def _vm_cases(family: str) -> list[OperationCase]:
             query={"workspace_id": WORKSPACE_ID, **(query or {})},
             body=body,
             idempotency_key=idempotency_key,
+            presteps=presteps or {},
         )
 
     return [
@@ -67,7 +77,7 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "PATCH",
             f"{vm_path}/actions/access",
             args=(vm_id,),
-            kwargs={"idempotency_key": f"{family}-access-1", "new_password": "example-only-password"},
+            kwargs={"idempotency_key": f"{family}-access-1", "new_password": "example-only-password", "check_state": False},
             body={"new_password": "example-only-password"},
             idempotency_key=f"{family}-access-1",
         ),
@@ -84,8 +94,9 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/actions/resize",
             args=(vm_id,),
-            kwargs={"idempotency_key": f"{family}-resize-1", "cpu": 4},
+            kwargs={"idempotency_key": f"{family}-resize-1", "cpu": 4, "check_state": False},
             body={"cpu": 4},
+            presteps={("POST", f"{vm_path}/actions/resize/precheck"): (200, {"decision": "in_place"})},
             idempotency_key=f"{family}-resize-1",
         ),
         case(
@@ -93,7 +104,7 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "PATCH",
             f"{vm_path}/actions/resize-plan",
             args=(vm_id,),
-            kwargs={"idempotency_key": f"{family}-plan-1", "cpu": 4, "ram_mb": 8192},
+            kwargs={"idempotency_key": f"{family}-plan-1", "cpu": 4, "ram_mb": 8192, "check_state": False},
             body={"cpu": 4, "ram_mb": 8192},
             idempotency_key=f"{family}-plan-1",
         ),
@@ -102,7 +113,7 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "PATCH",
             f"{vm_path}/actions/resize-root-disk",
             args=(vm_id,),
-            kwargs={"idempotency_key": f"{family}-disk-1", "new_size_gb": 160},
+            kwargs={"idempotency_key": f"{family}-disk-1", "new_size_gb": 160, "check_state": False},
             body={"new_size_gb": 160},
             idempotency_key=f"{family}-disk-1",
         ),
@@ -111,8 +122,8 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/actions/attach-volume",
             args=(vm_id,),
-            kwargs={"idempotency_key": f"{family}-attach-1", "volume_id": "volume-1"},
-            body={"volume_id": "volume-1"},
+            kwargs={"idempotency_key": f"{family}-attach-1", "volume_id": "64b0000000000000000000b1", "billing_catalog": BLOCK_SKU, "check_state": False},
+            body={"volume_id": "64b0000000000000000000b1", "mode": "single-writer", "billing_catalog": {**BLOCK_SKU, "attached_skus": {}}},
             idempotency_key=f"{family}-attach-1",
         ),
         case(
@@ -120,8 +131,8 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/actions/detach-volume",
             args=(vm_id,),
-            kwargs={"idempotency_key": f"{family}-detach-1", "volume_id": "volume-1"},
-            body={"volume_id": "volume-1"},
+            kwargs={"idempotency_key": f"{family}-detach-1", "volume_id": "64b0000000000000000000b1", "confirm_unmounted": True},
+            body={"volume_id": "64b0000000000000000000b1", "confirm_unmounted": True},
             idempotency_key=f"{family}-detach-1",
         ),
         case(
@@ -129,8 +140,8 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/mount-guidance/acknowledge",
             args=(vm_id,),
-            kwargs={"volume_id": "volume-1"},
-            body={"volume_id": "volume-1"},
+            kwargs={"volume_id": "64b0000000000000000000b1"},
+            body={"volume_id": "64b0000000000000000000b1"},
         ),
         case(
             f"list_{method_prefix}_events",
@@ -169,17 +180,22 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/snapshots",
             args=(vm_id,),
-            kwargs={"name": "before-upgrade", "mode": "root_only"},
-            body={"name": "before-upgrade", "mode": "root_only"},
+            kwargs={"name": " before-upgrade ", "mode": "root_only", "billing_catalog": SKU},
+            body={
+                "name": "before-upgrade",
+                "mode": "root_only",
+                "selected_data_volume_ids": [],
+                "billing_catalog": {**SKU, "attached_skus": {}},
+            },
         ),
         case(
             f"restore_{method_prefix}_snapshot",
             "POST",
             f"{snapshot_collection}/snapshot-1/actions/restore",
             args=("snapshot-1",),
-            kwargs={"vm_id": vm_id, "target_mode": "replace"},
+            kwargs={"vm_id": vm_id, "target_mode": "replace", "check_state": False},
             query={"vm_id": vm_id},
-            body={"target_mode": "replace"},
+            body={"target_mode": "replace", "auto_start": True},
         ),
         case(
             f"get_{method_prefix}_snapshot",
@@ -210,7 +226,7 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "PATCH",
             f"{vm_path}/backups/policy",
             args=(vm_id,),
-            kwargs={"retention_days": 14},
+            kwargs={"retention_days": 14, "check_state": False},
             body={"retention_days": 14},
         ),
         case(
@@ -218,8 +234,15 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/backups/enable",
             args=(vm_id,),
-            kwargs={"retention_days": 14},
-            body={"retention_days": 14},
+            kwargs={"retention_days": 14, "billing_catalog": BACKUP_SKU},
+            body={
+                "schedule": {"frequency": "daily", "hour": 12, "minute": 0, "timezone": "UTC", "window_minutes": 30},
+                "retention_days": 14,
+                "full_backup_interval_days": 7,
+                "incremental_enabled": True,
+                "billing_catalog": {**BACKUP_SKU, "attached_skus": {}},
+            },
+            presteps={("GET", f"{vm_path}/backups/policy"): (404, {"detail": "Backup policy not found"})},
         ),
         case(
             f"disable_{method_prefix}_backups",
@@ -250,16 +273,23 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/backups/runs",
             args=(vm_id,),
-            kwargs={"reason": "before-upgrade"},
-            body={"reason": "before-upgrade"},
+            kwargs={"reason": "before-upgrade", "billing_catalog": BACKUP_SKU},
+            body={"reason": "before-upgrade", "billing_catalog": {**BACKUP_SKU, "attached_skus": {}}},
         ),
         case(
             f"restore_{method_prefix}_backup",
             "POST",
             f"{vm_path}/backups/actions/restore",
             args=(vm_id,),
-            kwargs={"recovery_point_id": "recovery-point-1", "target_mode": "replace"},
+            kwargs={"recovery_point_id": "run-1", "target_mode": "replace", "check_state": False},
             body={"recovery_point_id": "recovery-point-1", "target_mode": "replace"},
+            # 0.4.0: the run is always read; the recovery point ID it reports is sent (portal behaviour).
+            presteps={
+                ("GET", f"{backup_collection}/runs/run-1"): (
+                    200,
+                    {"run_id": "run-1", "status": "succeeded", "recovery_point_id": "recovery-point-1"},
+                )
+            },
         ),
         case(
             f"get_{method_prefix}_backup_run",
@@ -284,9 +314,9 @@ CASES = [
         method_name="create_vm_console_session",
         http_method="POST",
         path="/v1/compute/console/sessions",
-        kwargs={"workspace_id": WORKSPACE_ID, "vm_id": "cloud-vm-1", "vm_type": "cloud"},
+        kwargs={"workspace_id": WORKSPACE_ID, "vm_id": VM_IDS["cloud"], "vm_type": "cloud"},
         query={"workspace_id": WORKSPACE_ID},
-        body={"vm_id": "cloud-vm-1", "vm_type": "cloud"},
+        body={"vm_id": VM_IDS["cloud"], "vm_type": "cloud", "requested_by": "api"},  # 0.4.0 default label
     ),
     OperationCase(
         resource="vm_console",
@@ -334,38 +364,46 @@ def test_lifecycle_matrix_is_complete_and_has_unique_client_methods() -> None:
     assert len({(case.resource, case.method_name) for case in CASES}) == 57
 
 
+def _handler(case: OperationCase, observed: list[httpx.Request]):
+    def handler(request: httpx.Request) -> httpx.Response:
+        observed.append(request)
+        prestep = case.presteps.get((request.method, request.url.path))
+        if prestep is not None:
+            status, body = prestep
+            return httpx.Response(status, json=body, request=request)
+        return _unauthorized(request)
+
+    return handler
+
+
+def _check(case: OperationCase, observed: list[httpx.Request]) -> None:
+    assert len(observed) == 1 + len(case.presteps)
+    assert [(request.method, request.url.path) for request in observed[:-1]] == list(case.presteps)
+    _assert_request(case, observed[-1])
+
+
 @pytest.mark.parametrize("case", CASES, ids=lambda case: f"{case.resource}.{case.method_name}")
 def test_sync_vm_lifecycle_request_contract(case: OperationCase) -> None:
     observed: list[httpx.Request] = []
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        observed.append(request)
-        return _unauthorized(request)
-
     client = Ibee(
         token="test-token",
         base_url="https://api.example.test/v1",
-        httpx_client=httpx.Client(transport=httpx.MockTransport(handler)),
+        httpx_client=httpx.Client(transport=httpx.MockTransport(_handler(case, observed))),
     )
     method = getattr(getattr(client, case.resource), case.method_name)
 
     with pytest.raises(UnauthorizedError):
         method(*case.args, **case.kwargs)
 
-    assert len(observed) == 1
-    _assert_request(case, observed[0])
+    _check(case, observed)
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda case: f"{case.resource}.{case.method_name}")
 def test_async_vm_lifecycle_request_contract(case: OperationCase) -> None:
     observed: list[httpx.Request] = []
 
-    def handler(request: httpx.Request) -> httpx.Response:
-        observed.append(request)
-        return _unauthorized(request)
-
     async def run() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(_handler(case, observed))) as http_client:
             client = AsyncIbee(
                 token="test-token",
                 base_url="https://api.example.test/v1",
@@ -377,5 +415,4 @@ def test_async_vm_lifecycle_request_contract(case: OperationCase) -> None:
 
     asyncio.run(run())
 
-    assert len(observed) == 1
-    _assert_request(case, observed[0])
+    _check(case, observed)

@@ -59,6 +59,7 @@ def test_object_storage_exposes_bucket_and_s3_credential_lifecycle() -> None:
     result = client.object_storage.create_s3credential(
         workspace_id="607005",
         name="ci",
+        permission_type="object_rw",
         bucket_scope="specific",
         allowed_buckets=["assets"],
     )
@@ -66,8 +67,10 @@ def test_object_storage_exposes_bucket_and_s3_credential_lifecycle() -> None:
     assert result.secret_access_key == "returned-once"
     assert len(observed) == 1
     assert observed[0].url.path == "/v1/object-storage/credentials"
+    # 0.4.0: permission_type is always sent (the API requires it).
     assert json.loads(observed[0].content) == {
         "name": "ci",
+        "permission_type": "object_rw",
         "bucket_scope": "specific",
         "allowed_buckets": ["assets"],
     }
