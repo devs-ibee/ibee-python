@@ -18,6 +18,7 @@ from .billing.client import _decision_from_response, _require_allowed
 from .billing.messages import estimate_eligibility_cost_minor
 from .core.pydantic_utilities import parse_obj_as
 from .core.request_options import RequestOptions
+from .errors.forbidden_error import ForbiddenError
 from .errors.not_found_error import NotFoundError
 from .types.backup_policy import BackupPolicy
 from .types.backup_run import BackupRun
@@ -32,7 +33,10 @@ from .types.vm_console_session import VmConsoleSession
 from .types.vm_resize_precheck import VmResizePrecheck
 from .validation import (
     IbeeValidationError,
+    assert_volume_attachable,
     assert_vm_action_allowed,
+    resolve_volume_billing_catalog,
+    validate_block_volume_id,
     build_vm_billing_catalog,
     normalize_billing_term,
     normalize_id_list,
@@ -879,27 +883,53 @@ def attach_volume(
     billing_catalog: typing.Any = None,
     requested_by: typing.Any = None,
     check_state: typing.Optional[bool] = None,
+    volume: typing.Any = None,
+    skip_volume_read: bool = False,
 ) -> Flow[OperationAccepted]:
-    """Portal attach: read the volume (SKU, state, site), check the VM's site, then attach."""
+    """Portal attach: read the volume (SKU, state, VM type, site), check the VM's site, then attach.
+
+    ``volume`` is an already-read volume record (used by the block-storage helper).
+    Without ``block-storage.read`` the volume cannot be read and ``billing_catalog``
+    must be passed; without ``vm.read`` the VM checks are skipped.
+    """
     vm_id = validate_vm_id(vm_id)
-    volume_id = validate_required_text(volume_id, field="volume_id")
+    volume_id = validate_block_volume_id(volume_id)
     attach_mode = validate_attach_mode(mode)
     requested = validate_requested_by(requested_by)
     catalog = None
     if billing_catalog is not None:
         catalog = validate_billing_catalog(billing_catalog, expected_product="block_storage")
     if catalog is None or check_state is not False:
-        volume = yield Call("GET", f"block-storage/volumes/{_seg(volume_id)}", params=_ws(workspace_id))
+        if volume is None and not skip_volume_read:
+            try:
+                volume = yield Call("GET", f"block-storage/volumes/{_seg(volume_id)}", params=_ws(workspace_id))
+            except ForbiddenError:
+                if catalog is None:
+                    raise IbeeValidationError(
+                        "billing_catalog is required; grant block-storage.read or pass billing_catalog",
+                        code="volume_unreadable",
+                        field="billing_catalog",
+                    )
+                volume = None
+        if volume is None and catalog is None:
+            raise IbeeValidationError(
+                "billing_catalog is required; grant block-storage.read or pass billing_catalog",
+                code="volume_unreadable",
+                field="billing_catalog",
+            )
         vm = None
         if check_state is not False:
-            vm = yield from get_vm(family, workspace_id, vm_id)
-            assert_vm_action_allowed(vm, "attach_volume")
-        validate_attach_preconditions(volume, vm)
-        if catalog is None:
-            name = record_get(volume, "name") or volume_id
-            catalog = validate_billing_catalog(
-                volume_billing_catalog(volume), context=f"Block volume {name}", expected_product="block_storage"
-            )
+            try:
+                vm = yield from get_vm(family, workspace_id, vm_id)
+            except ForbiddenError:
+                vm = None  # best effort: the API still checks the VM
+            if vm is not None:
+                assert_vm_action_allowed(vm, "attach_volume")
+        if volume is not None:
+            validate_attach_preconditions(volume, vm)
+            assert_volume_attachable(volume, family, vm)
+            if catalog is None:
+                catalog = resolve_volume_billing_catalog(volume)
     body = _compact({"volume_id": volume_id, "mode": attach_mode, "billing_catalog": catalog, "requested_by": requested})
     result = yield Call(
         "POST",
@@ -926,7 +956,7 @@ def detach_volume(
     check_state: typing.Optional[bool] = None,
 ) -> Flow[OperationAccepted]:
     vm_id = validate_vm_id(vm_id)
-    volume_id = validate_required_text(volume_id, field="volume_id")
+    volume_id = validate_block_volume_id(volume_id)
     validate_detach_confirmation(confirm_unmounted, force)
     requested = validate_requested_by(requested_by)
     if check_state:

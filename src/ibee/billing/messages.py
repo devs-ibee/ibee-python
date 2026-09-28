@@ -14,6 +14,7 @@ CREATE_TYPE_LABELS: typing.Dict[str, str] = {
     "gpu_vm": "GPU VM",
     "block_storage": "block storage volume",
     "object_storage": "object storage bucket",
+    "s3_credential": "S3 credential",
     "load_balancer": "load balancer",
     "cdn": "CDN distribution",
     "custom_domain": "custom domain",

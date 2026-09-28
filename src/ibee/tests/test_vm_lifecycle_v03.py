@@ -122,8 +122,8 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/actions/attach-volume",
             args=(vm_id,),
-            kwargs={"idempotency_key": f"{family}-attach-1", "volume_id": "volume-1", "billing_catalog": BLOCK_SKU, "check_state": False},
-            body={"volume_id": "volume-1", "mode": "single-writer", "billing_catalog": {**BLOCK_SKU, "attached_skus": {}}},
+            kwargs={"idempotency_key": f"{family}-attach-1", "volume_id": "64b0000000000000000000b1", "billing_catalog": BLOCK_SKU, "check_state": False},
+            body={"volume_id": "64b0000000000000000000b1", "mode": "single-writer", "billing_catalog": {**BLOCK_SKU, "attached_skus": {}}},
             idempotency_key=f"{family}-attach-1",
         ),
         case(
@@ -131,8 +131,8 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/actions/detach-volume",
             args=(vm_id,),
-            kwargs={"idempotency_key": f"{family}-detach-1", "volume_id": "volume-1", "confirm_unmounted": True},
-            body={"volume_id": "volume-1", "confirm_unmounted": True},
+            kwargs={"idempotency_key": f"{family}-detach-1", "volume_id": "64b0000000000000000000b1", "confirm_unmounted": True},
+            body={"volume_id": "64b0000000000000000000b1", "confirm_unmounted": True},
             idempotency_key=f"{family}-detach-1",
         ),
         case(
@@ -140,8 +140,8 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/mount-guidance/acknowledge",
             args=(vm_id,),
-            kwargs={"volume_id": "volume-1"},
-            body={"volume_id": "volume-1"},
+            kwargs={"volume_id": "64b0000000000000000000b1"},
+            body={"volume_id": "64b0000000000000000000b1"},
         ),
         case(
             f"list_{method_prefix}_events",

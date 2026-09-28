@@ -177,7 +177,7 @@ def test_caller_key_is_validated_and_sent_unchanged() -> None:
         (lambda c: c.cloud_vms.stop_cloud_vm("0123456789abcdef01234567", workspace_id=WS), "cloud-vm-stop-0123456789abcdef01234567-"),
         (lambda c: c.gpu_vms.update_gpu_vm_access("0123456789abcdef01234567", workspace_id=WS, new_password="Pw-123456789!", check_state=False), "gpu-vm-access-0123456789abcdef01234567-"),
         (lambda c: c.cloud_vms.resize_cloud_vm_root_disk("0123456789abcdef01234567", workspace_id=WS, new_size_gb=100, check_state=False), "cloud-vm-resize-root-disk-0123456789abcdef01234567-"),
-        (lambda c: c.gpu_vms.detach_gpu_vm_volume("0123456789abcdef01234567", workspace_id=WS, volume_id="v", confirm_unmounted=True), "gpu-vm-detach-volume-0123456789abcdef01234567-"),
+        (lambda c: c.gpu_vms.detach_gpu_vm_volume("0123456789abcdef01234567", workspace_id=WS, volume_id="64b0000000000000000000b1", confirm_unmounted=True), "gpu-vm-detach-volume-0123456789abcdef01234567-"),
     ],
 )
 def test_every_keyed_vm_route_gets_a_key(call, scope: str) -> None:
@@ -271,20 +271,21 @@ def test_block_storage_writes_carry_keys() -> None:
         return httpx.Response(200, json={}, request=request)
 
     block = _client(handler).block_storage
-    block.create_block_volume(workspace_id=WS, name="data", size_gb=10, site_id="s", idempotency_key="given-1")
-    block.attach_block_volume("vol-1", workspace_id=WS, node_name="n")
-    block.detach_block_volume("vol-1", workspace_id=WS, node_name="n")
-    block.resize_block_volume("vol-1", workspace_id=WS, new_size_gb=20)
-    block.delete_block_volume("vol-1", workspace_id=WS)
+    block.create_block_volume(workspace_id=WS, name="data", size_gb=10, site_id="s", site_name="S", idempotency_key="given-1")
+    block.attach_block_volume("64b0000000000000000000b1", workspace_id=WS, node_name="n")
+    block.detach_block_volume("64b0000000000000000000b1", workspace_id=WS, node_name="n", confirm_unmounted=True)
+    block.resize_block_volume("64b0000000000000000000b1", workspace_id=WS, new_size_gb=20, check_state=False)
+    block.delete_block_volume("64b0000000000000000000b1", workspace_id=WS, check_state=False)
 
     assert json.loads(observed[0].content)["idempotency_key"] == "given-1"
-    assert json.loads(observed[1].content)["idempotency_key"].startswith("block-volume-attach-vol-1-")
-    assert json.loads(observed[2].content)["idempotency_key"].startswith("block-volume-detach-vol-1-")
-    assert json.loads(observed[3].content)["idempotency_key"].startswith("block-volume-resize-vol-1-")
+    assert observed[0].headers["x-idempotency-key"] == "given-1"
+    assert json.loads(observed[1].content)["idempotency_key"].startswith("block-volume-attach-64b0000000000000000000b1-")
+    assert json.loads(observed[2].content)["idempotency_key"].startswith("block-volume-detach-64b0000000000000000000b1-")
+    assert json.loads(observed[3].content)["idempotency_key"].startswith("block-volume-resize-64b0000000000000000000b1-")
     assert observed[4].method == "DELETE"
-    assert observed[4].url.params["idempotency_key"].startswith("block-volume-delete-vol-1-")
+    assert observed[4].url.params["idempotency_key"].startswith("block-volume-delete-64b0000000000000000000b1-")
     with pytest.raises(IbeeValidationError):
-        block.create_block_volume(workspace_id=WS, name="d", size_gb=10, site_id="s", idempotency_key="a b")
+        block.create_block_volume(workspace_id=WS, name="data", size_gb=10, site_id="s", idempotency_key="a b")
 
 
 def test_async_block_storage_writes_carry_keys() -> None:
@@ -297,18 +298,18 @@ def test_async_block_storage_writes_carry_keys() -> None:
     async def run() -> None:
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
             block = AsyncIbee(token="t", base_url=BASE, httpx_client=http_client).block_storage
-            await block.create_block_volume(workspace_id=WS, name="data", size_gb=10, site_id="s")
-            await block.resize_block_volume("vol-1", workspace_id=WS, new_size_gb=20)
-            await block.delete_block_volume("vol-1", workspace_id=WS, idempotency_key="del-1")
+            await block.create_block_volume(workspace_id=WS, name="data", size_gb=10, site_id="s", resolve_site_name=False)
+            await block.resize_block_volume("64b0000000000000000000b1", workspace_id=WS, new_size_gb=20, check_state=False)
+            await block.delete_block_volume("64b0000000000000000000b1", workspace_id=WS, idempotency_key="del-1", check_state=False)
 
     asyncio.run(run())
     assert json.loads(observed[0].content)["idempotency_key"].startswith("block-volume-create-data-")
-    assert json.loads(observed[1].content)["idempotency_key"].startswith("block-volume-resize-vol-1-")
+    assert json.loads(observed[1].content)["idempotency_key"].startswith("block-volume-resize-64b0000000000000000000b1-")
     assert observed[2].url.params["idempotency_key"] == "del-1"
 
 
 def test_keyed_block_volume_create_is_retried_with_same_body(_no_sleep: list) -> None:
     handler, observed = _sequence((502, {}), (200, {"id": "vol-1"}))
-    _client(handler).block_storage.create_block_volume(workspace_id=WS, name="data", size_gb=10, site_id="s")
+    _client(handler).block_storage.create_block_volume(workspace_id=WS, name="data", size_gb=10, site_id="s", site_name="S")
     assert len(observed) == 2
     assert observed[0].content == observed[1].content

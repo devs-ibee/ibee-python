@@ -145,6 +145,43 @@ auto-paging.
     the networking rules in `ibee.validation` (CIDR, host-in-subnet, ports, remote
     targets, reverse DNS, load-balancer bodies) and flows in `ibee.networking_workflows`.
 
+- Storage (Block Storage, Object Storage, CDN) follows the portal:
+  - `block_storage.attach_block_volume_to_vm` / `detach_block_volume_from_vm`:
+    attach a volume to (or detach it from) a cloud or GPU VM the way the portal
+    does. The SDK reads the volume, picks the VM endpoint from its `vm_type`,
+    sends its Block Storage SKU as `billing_catalog`, and with `wait=True` polls
+    the operation (every 2 s, up to 120 s) and re-reads the volume.
+  - `block_storage.wait_for_volume_operation`, `iter_block_volumes` and
+    `list_all_block_volumes`; `list_block_volumes` takes `site_id`, `vm_type`,
+    `limit` (1-1000) and `offset`; `list_block_volume_operations` takes `limit`
+    (1-200).
+  - `create_block_volume` accepts `vm_type` and `delete_on_termination` (not yet
+    part of the published API contract), fills `site_name` from the compute
+    sites (`resolve_site_name=True`, needs `vm.read`, skipped when not allowed)
+    and sends its idempotency key in the body and as `X-Idempotency-Key`.
+  - `delete_block_volume` and `resize_block_volume` take `check_state`;
+    `attach_block_volume` (node level) takes `check_state`.
+  - `object_storage.iter_buckets` / `list_all_buckets` (follow
+    `next_continuation_token`) and `object_storage.delete_s3credential`, an alias
+    of `revoke_s3credential` named after what the API does (a permanent delete).
+  - `create_bucket(preflight_billing=)`, `create_s3credential(preflight_billing=)`,
+    `cdn.create_cdn_distribution(preflight_billing=, check_origin_public=)` and
+    `cdn.create_cdn_custom_domain(preflight_billing=)` run the portal's billing
+    check first (OBJECTST-STD; CDN without a SKU; CUSTOMDO-STD with 19 900 minor
+    units).
+  - `object_storage.delete_bucket(skip_preflight=, check_state=)`.
+  - `cdn.list_cdn_cache_policies` and `cdn.get_cdn_distribution_metrics(range=)`
+    (not yet part of the published API contract; behaviour may change) and
+    `cdn.wait_for_cdn_custom_domain` (verify every 15 s, up to 600 s).
+  - `ibee.CdnPurgeFailedError` (subclass of `ApiError`).
+  - Types: `BillingCatalogSelection` / `BillingSkuReference`;
+    `S3Credential.organization_id`, `workspace_id`, `permission_type`,
+    `bucket_scope`, `allowed_buckets` and `created_by_user_id`.
+  - The storage rules in `ibee.validation` (`validate_block_volume_name`,
+    `validate_bucket_name`, `build_s3_credential_body`, `build_cdn_purge_body`,
+    `resolve_object_storage_region`, `validate_cdn_index_document`,
+    `normalize_cdn_domain`, ...) and flows in `ibee.storage_workflows`.
+
 ### Changed
 
 - **Retries.** Only `GET`/`HEAD`/`OPTIONS` requests, and writes carrying an
@@ -218,6 +255,40 @@ auto-paging.
 - The raw clients (`with_raw_response`) keep the 0.3.0 request bodies; use the
   high-level methods for the new fields and checks.
 
+- **Block Storage checks (portal rules).** Volume ids must be 24 hexadecimal
+  characters. Create: name 3-255 lowercase letters, numbers and hyphens (the
+  error suggests a valid name; nothing is renamed silently), size a whole number
+  of GB from 10 to 10000, non-blank `site_id`, `volume_class`, `replica_count`
+  1-5, and `sku_code` upper-cased (root-disk SKUs rejected). Delete refuses an
+  attached or busy volume unless `force=True`. Resize refuses shrinking, and an
+  attached volume needs `vm_state="stopped"`/`"suspended"` or
+  `allow_online=True`. Node-level detach needs `confirm_unmounted`, `force` or a
+  stopped/suspended `vm_state`; `node_name` is now optional (the volume's only
+  attachment is used).
+- **VM volume attach/detach.** `attach_*_vm_volume` also refuses a volume created
+  for the other VM type, and without `block-storage.read` asks for an explicit
+  `billing_catalog`; the VM checks are skipped when the token lacks `vm.read`.
+  `detach_*_vm_volume` volume ids must be 24 hexadecimal characters.
+- **Object Storage.** `create_bucket` checks the portal's name rule (upper-case is
+  rejected), `region` is now optional (defaults to `in-south-1` on
+  https://api.ibee.ai and `in-south-2` on https://api.ibee.co.in; required for
+  other base URLs), sends `object_lock_enabled=true` with `default_retention`,
+  and checks the retention mode and days (1-36500) or years (1-100).
+  `delete_bucket` reads the bucket first and refuses one with Object Lock or with
+  objects (the API never deleted contents; the old docstring was wrong).
+  `create_s3credential` always sends `permission_type` (default `admin_rw`),
+  `bucket_scope` and `allowed_buckets`; `specific` scope needs `object_rw`/
+  `object_ro` and at least one bucket; names are 1-100 characters. It is never
+  retried automatically (the secret is returned once). `revoke_s3credential` is
+  documented as a permanent delete.
+- **CDN.** Distribution names (1-128), cache policies (`static-assets`, `media`,
+  `short`, `no-cache`), origins, website `index_document`, custom domains
+  (trimmed, lower-cased, host name with a subdomain), generate-URL options and
+  purge selectors are checked before sending. `update_cdn_distribution` needs at
+  least one field. `purge_cdn_cache` raises `CdnPurgeFailedError` when the API
+  answers `success: false` (pass `raise_on_failure=False` for the 0.3.0
+  behaviour). CDN and Block Storage errors are now typed `ApiError` subclasses.
+
 ### Fixed
 
 - Creates replayed after a committed first attempt no longer retry into a 409.
@@ -232,6 +303,12 @@ auto-paging.
   IPv6 targets are refused before they cause a server error.
 - `load_balancers.list_load_balancers(status="deleted")` now returns deleted
   load balancers (sends `include_deleted=true`).
+
+- VM volume attach through `attach_*_vm_volume` / `attach_block_volume_to_vm`
+  no longer fails with 422 (the Block Storage SKU is sent).
+- `create_s3credential` no longer fails with 422 when `permission_type` is
+  omitted.
+- A purge the CDN did not perform is no longer reported as a success.
 
 ### Deprecated
 

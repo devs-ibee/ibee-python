@@ -403,7 +403,7 @@ def test_backup_restore_new_vm_and_readiness() -> None:
 
 def _volume(**overrides):
     record = {
-        "volume_id": "vol-1",
+        "volume_id": "64b0000000000000000000b1",
         "name": "data",
         "state": "available",
         "site_id": "site-1",
@@ -416,13 +416,13 @@ def _volume(**overrides):
 
 
 def test_attach_reads_the_volume_sku_and_checks_site() -> None:
-    router = Router().add("GET", "block-storage/volumes/vol-1", (200, _volume()))
+    router = Router().add("GET", "block-storage/volumes/64b0000000000000000000b1", (200, _volume()))
     router.add("GET", f"compute/cloud-vms/{VM}", (200, vm()))
     router.add("POST", f"compute/cloud-vms/{VM}/actions/attach-volume", (202, ACCEPTED))
-    sync_client(router).cloud_vms.attach_cloud_vm_volume(VM, workspace_id=WS, volume_id="vol-1")
+    sync_client(router).cloud_vms.attach_cloud_vm_volume(VM, workspace_id=WS, volume_id="64b0000000000000000000b1")
     body = router.body("POST", f"compute/cloud-vms/{VM}/actions/attach-volume")
     assert body == {
-        "volume_id": "vol-1",
+        "volume_id": "64b0000000000000000000b1",
         "mode": "single-writer",
         "billing_catalog": {"sku_id": 12, "sku_code": "BLOCK-STD", "product_code": "block_storage", "attached_skus": {}},
     }
@@ -434,9 +434,9 @@ def test_attach_reads_the_volume_sku_and_checks_site() -> None:
         (_volume(site_id="site-9"), "site_mismatch"),
         (_volume(metadata={}), "invalid_billing_catalog"),
     ):
-        bad = Router().add("GET", "block-storage/volumes/vol-1", (200, volume)).add("GET", f"compute/cloud-vms/{VM}", (200, vm()))
+        bad = Router().add("GET", "block-storage/volumes/64b0000000000000000000b1", (200, volume)).add("GET", f"compute/cloud-vms/{VM}", (200, vm()))
         with pytest.raises(IbeeValidationError) as info:
-            sync_client(bad).cloud_vms.attach_cloud_vm_volume(VM, workspace_id=WS, volume_id="vol-1")
+            sync_client(bad).cloud_vms.attach_cloud_vm_volume(VM, workspace_id=WS, volume_id="64b0000000000000000000b1")
         assert info.value.code == code
 
 
@@ -444,15 +444,15 @@ def test_detach_requires_unmount_confirmation_or_force() -> None:
     router = Router().add("POST", f"compute/gpu-vms/{VM}/actions/detach-volume", (202, ACCEPTED))
     client = sync_client(router)
     with pytest.raises(IbeeValidationError):
-        client.gpu_vms.detach_gpu_vm_volume(VM, workspace_id=WS, volume_id="vol-1")
-    client.gpu_vms.detach_gpu_vm_volume(VM, workspace_id=WS, volume_id="vol-1", force=True)
-    assert router.body("POST", f"compute/gpu-vms/{VM}/actions/detach-volume") == {"volume_id": "vol-1", "force": True}
+        client.gpu_vms.detach_gpu_vm_volume(VM, workspace_id=WS, volume_id="64b0000000000000000000b1")
+    client.gpu_vms.detach_gpu_vm_volume(VM, workspace_id=WS, volume_id="64b0000000000000000000b1", force=True)
+    assert router.body("POST", f"compute/gpu-vms/{VM}/actions/detach-volume") == {"volume_id": "64b0000000000000000000b1", "force": True}
 
 
 def test_async_recovery_parity() -> None:
     router = _snapshot_restore_router()
     router.add("GET", "compute/cloud-vm-snapshots/restores/restore-1", (200, _restore("succeeded")))
-    router.add("GET", "block-storage/volumes/vol-1", (200, _volume()))
+    router.add("GET", "block-storage/volumes/64b0000000000000000000b1", (200, _volume()))
     router.add("POST", f"compute/cloud-vms/{VM}/actions/attach-volume", (202, ACCEPTED))
 
     async def run() -> None:
@@ -461,7 +461,7 @@ def test_async_recovery_parity() -> None:
             restore = await client.cloud_vms.restore_cloud_vm_snapshot("snap-1", workspace_id=WS, vm_id=VM, target_mode="new_vm")
             done = await client.cloud_vms.wait_for_cloud_vm_snapshot_restore(restore.restore_id, workspace_id=WS)
             assert done.status == "succeeded"
-            await client.cloud_vms.attach_cloud_vm_volume(VM, workspace_id=WS, volume_id="vol-1")
+            await client.cloud_vms.attach_cloud_vm_volume(VM, workspace_id=WS, volume_id="64b0000000000000000000b1")
             with pytest.raises(IbeeValidationError):
                 await client.cloud_vms.create_cloud_vm_snapshot(VM, workspace_id=WS, name="n")
 

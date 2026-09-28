@@ -50,3 +50,7 @@ src/ibee/types/load_balancer.py
 src/ibee/types/load_balancer_custom_domain.py
 src/ibee/types/vpc_virtual_ip.py
 src/ibee/types/firewall_group_summary.py
+src/ibee/storage_workflows.py
+src/ibee/object_storage/client.py
+src/ibee/types/s3credential.py
+src/ibee/types/billing_catalog_selection.py
