@@ -82,7 +82,10 @@ class SecretStoreLifecycleTest(unittest.TestCase):
                     "secret_name": "database-url",
                     "current_version": 2,
                     "oldest_version": 1,
-                    "versions": {},
+                    "versions": {
+                        "1": {"version": 1, "created_time": "t1", "deletion_time": "", "destroyed": False},
+                        "2": {"version": 2, "created_time": "t2", "deletion_time": "", "destroyed": False},
+                    },
                 }
             elif request.url.path.endswith("secrets:batchIngest"):
                 payload = {
@@ -226,6 +229,7 @@ class SecretStoreLifecycleTest(unittest.TestCase):
                 ("DELETE", f"/v1/secret-store/secrets/{SECRET_ID}/permanent"),
                 ("GET", f"/v1/secret-store/secrets/{SECRET_ID}/versions"),
                 ("GET", f"/v1/secret-store/secrets/{SECRET_ID}/versions/1"),
+                ("GET", f"/v1/secret-store/secrets/{SECRET_ID}/versions"),  # 0.4.0 rollback target check
                 ("POST", f"/v1/secret-store/secrets/{SECRET_ID}/rollback"),
                 ("GET", f"/v1/secret-store/stores/{STORE_ID}/identities"),
                 ("POST", f"/v1/secret-store/stores/{STORE_ID}/identities"),
@@ -255,12 +259,13 @@ class SecretStoreLifecycleTest(unittest.TestCase):
         sync_operations = operations(SecretStoreClient)
         async_operations = operations(AsyncSecretStoreClient)
         self.assertEqual(sync_operations, async_operations)
-        self.assertEqual(len(sync_operations), 35)
+        self.assertEqual(len(sync_operations), 37)
 
         raw_sync_operations = operations(RawSecretStoreClient)
         raw_async_operations = operations(AsyncRawSecretStoreClient)
-        self.assertEqual(raw_sync_operations, sync_operations)
-        self.assertEqual(raw_async_operations, sync_operations)
+        self.assertEqual(len(raw_sync_operations), 35)
+        self.assertEqual(sync_operations - raw_sync_operations, {"list_all_secret_stores", "list_all_secrets"})
+        self.assertEqual(raw_async_operations, raw_sync_operations)
 
         for operation in sync_operations:
             self.assertEqual(
@@ -268,6 +273,8 @@ class SecretStoreLifecycleTest(unittest.TestCase):
                 inspect.signature(getattr(AsyncSecretStoreClient, operation)),
                 operation,
             )
+            if operation not in raw_sync_operations:
+                continue
             self.assertEqual(
                 inspect.signature(getattr(RawSecretStoreClient, operation)).parameters,
                 inspect.signature(getattr(AsyncRawSecretStoreClient, operation)).parameters,

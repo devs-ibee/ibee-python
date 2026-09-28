@@ -1,3 +1,10 @@
+"""Deprecated billing admission helpers (not used by any SDK method).
+
+.. deprecated:: 0.4.0
+   Use ``client.billing.require_resource_eligibility`` and the helpers in
+   ``ibee.billing`` instead. This module will be removed in 0.5.0.
+"""
+
 from __future__ import annotations
 
 import typing
@@ -13,6 +20,9 @@ from .raw_client import AsyncRawBillingClient, RawBillingClient
 SECRET_MANAGER_SKU_CODE = "SECRETMA-STD"
 OBJECT_STORAGE_SKU_CODE = "OBJECTST-STD"
 LOAD_BALANCER_SKU_CODE = "LOADBALA-STD"
+NAT_GATEWAY_SKU_CODE = "NAT-GATEWAY"
+RESERVED_IP_SKU_CODE = "RESERVED-IP"
+CUSTOM_DOMAIN_SKU_CODE = "CUSTOMDO-STD"
 
 _SAFE_PREFLIGHT_OPTIONS = (
     "timeout_in_seconds",

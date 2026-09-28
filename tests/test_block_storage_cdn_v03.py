@@ -23,13 +23,13 @@ def test_block_storage_and_cdn_expose_all_23_new_operations() -> None:
     block = client.block_storage
     block.list_block_volumes(workspace_id=workspace)
     block.create_block_volume(workspace_id=workspace, name="data", size_gb=100,
-                              site_id="site-1", sku_code="BLOCKSTO-NVME")
-    block.get_block_volume("vol/1", workspace_id=workspace)
-    block.delete_block_volume("vol/1", workspace_id=workspace, force=True)
-    block.list_block_volume_operations("vol/1", workspace_id=workspace)
-    block.attach_block_volume("vol/1", workspace_id=workspace, node_name="node-1")
-    block.detach_block_volume("vol/1", workspace_id=workspace, node_name="node-1")
-    block.resize_block_volume("vol/1", workspace_id=workspace, new_size_gb=200)
+                              site_id="site-1", sku_code="BLOCKSTO-NVME", resolve_site_name=False)
+    block.get_block_volume("64b0000000000000000000b1", workspace_id=workspace)
+    block.delete_block_volume("64b0000000000000000000b1", workspace_id=workspace, force=True)
+    block.list_block_volume_operations("64b0000000000000000000b1", workspace_id=workspace)
+    block.attach_block_volume("64b0000000000000000000b1", workspace_id=workspace, node_name="node-1")
+    block.detach_block_volume("64b0000000000000000000b1", workspace_id=workspace, node_name="node-1", confirm_unmounted=True)
+    block.resize_block_volume("64b0000000000000000000b1", workspace_id=workspace, new_size_gb=200, check_state=False)
 
     cdn = client.cdn
     cdn.generate_cdn_url(workspace_id=workspace, bucket_name="assets", object_key="a b.png")
@@ -46,16 +46,19 @@ def test_block_storage_and_cdn_expose_all_23_new_operations() -> None:
     cdn.get_cdn_custom_domain("dist/1", "cdn.example.com", workspace_id=workspace)
     cdn.delete_cdn_custom_domain("dist/1", "cdn.example.com", workspace_id=workspace)
     cdn.verify_cdn_custom_domain("dist/1", "cdn.example.com", workspace_id=workspace)
-    cdn.purge_cdn_cache("dist/1", workspace_id=workspace, mode="all")
+    cdn.purge_cdn_cache("dist/1", workspace_id=workspace, mode="all", raise_on_failure=False)
 
     assert len(observed) == 23
     assert all(request.url.params["workspace_id"] == workspace for request in observed)
-    assert observed[2].url.raw_path.startswith(b"/v1/block-storage/volumes/vol%2F1")
+    assert observed[2].url.raw_path.startswith(b"/v1/block-storage/volumes/64b0000000000000000000b1")
     assert observed[11].url.raw_path.startswith(b"/v1/cdn/distributions/dist%2F1")
 
     block_create = observed[1]
     assert block_create.method == "POST"
-    assert json.loads(block_create.content) == {
+    create_body = json.loads(block_create.content)
+    # 0.4.0: the SDK fills a portal-style idempotency key so retries are safe.
+    assert create_body.pop("idempotency_key").startswith("block-volume-create-data-")
+    assert create_body == {
         "name": "data",
         "size_gb": 100,
         "site_id": "site-1",
