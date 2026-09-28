@@ -116,6 +116,7 @@ class SecretStoreClient:
         description: typing.Optional[str] = OMIT,
         preflight_billing: typing.Optional[bool] = None,
         if_exists: typing.Optional[typing.Literal["error", "return"]] = None,
+        billing_preflight: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretStore:
         """
@@ -128,6 +129,7 @@ class SecretStoreClient:
 
         ``preflight_billing=True`` first asks billing whether a ``SECRETMA-STD`` create is allowed
         (as the portal does; needs ``billing.read``, skipped with a warning without it).
+        ``billing_preflight`` is an alias of ``preflight_billing`` (the TypeScript SDK's ``billingPreflight``).
         ``if_exists="return"`` returns the existing store with that name (or store key,
         compared case-insensitively) instead of raising ``ConflictError`` on 409, as the portal does.
         The create is never retried automatically.
@@ -242,6 +244,7 @@ class SecretStoreClient:
         secret_name: str,
         value: typing.Dict[str, typing.Any],
         preflight_billing: typing.Optional[bool] = None,
+        billing_preflight: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Secret:
         """
@@ -252,7 +255,8 @@ class SecretStoreClient:
         characters of lowercase letters, digits and hyphens, starting with a letter or digit.
         ``value`` is an object with at least one key; keys are trimmed and must not be blank,
         and string values must not be empty. The body must be at most 64 KiB.
-        ``preflight_billing=True`` runs the portal's ``SECRETMA-STD`` billing check first.
+        ``preflight_billing=True`` runs the portal's ``SECRETMA-STD`` billing check first
+        (``billing_preflight`` is an alias, matching the TypeScript SDK's ``billingPreflight``).
 
         Examples
         --------
@@ -691,6 +695,7 @@ class AsyncSecretStoreClient:
         description: typing.Optional[str] = OMIT,
         preflight_billing: typing.Optional[bool] = None,
         if_exists: typing.Optional[typing.Literal["error", "return"]] = None,
+        billing_preflight: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretStore:
         """
@@ -703,6 +708,7 @@ class AsyncSecretStoreClient:
 
         ``preflight_billing=True`` first asks billing whether a ``SECRETMA-STD`` create is allowed
         (as the portal does; needs ``billing.read``, skipped with a warning without it).
+        ``billing_preflight`` is an alias of ``preflight_billing`` (the TypeScript SDK's ``billingPreflight``).
         ``if_exists="return"`` returns the existing store with that name (or store key,
         compared case-insensitively) instead of raising ``ConflictError`` on 409, as the portal does.
         The create is never retried automatically.
@@ -817,6 +823,7 @@ class AsyncSecretStoreClient:
         secret_name: str,
         value: typing.Dict[str, typing.Any],
         preflight_billing: typing.Optional[bool] = None,
+        billing_preflight: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Secret:
         """
@@ -827,7 +834,8 @@ class AsyncSecretStoreClient:
         characters of lowercase letters, digits and hyphens, starting with a letter or digit.
         ``value`` is an object with at least one key; keys are trimmed and must not be blank,
         and string values must not be empty. The body must be at most 64 KiB.
-        ``preflight_billing=True`` runs the portal's ``SECRETMA-STD`` billing check first.
+        ``preflight_billing=True`` runs the portal's ``SECRETMA-STD`` billing check first
+        (``billing_preflight`` is an alias, matching the TypeScript SDK's ``billingPreflight``).
 
         Examples
         --------

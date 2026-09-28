@@ -253,8 +253,12 @@ def test_snapshot_restore_volume_only_requires_an_attached_disk() -> None:
 def test_snapshot_restore_replace_checks_vm_state() -> None:
     router = _snapshot_restore_router(record=vm(status="resizing"))
     with pytest.raises(IbeeValidationError) as info:
-        sync_client(router).cloud_vms.restore_cloud_vm_snapshot("snap-1", workspace_id=WS, vm_id=VM)
+        sync_client(router).cloud_vms.restore_cloud_vm_snapshot("snap-1", workspace_id=WS, vm_id=VM, check_state=True)
     assert str(info.value) == "Snapshot restore is unavailable while the VM is resizing"
+    # The VM state check is opt-in (as in 0.3.0 and the TypeScript SDK): by default the VM is not read.
+    default = _snapshot_restore_router(record=vm(status="resizing"))
+    sync_client(default).cloud_vms.restore_cloud_vm_snapshot("snap-1", workspace_id=WS, vm_id=VM)
+    assert ("GET", f"compute/cloud-vms/{VM}") not in [(r.method, r.url.path.split("/v1/", 1)[-1]) for r in default.requests]
 
 
 def test_wait_for_restore_success_and_failure() -> None:
@@ -294,20 +298,72 @@ def test_enable_backups_uses_portal_defaults_or_the_saved_policy() -> None:
     assert body["schedule"] == {"frequency": "daily", "hour": 12, "minute": 0, "timezone": "UTC", "window_minutes": 30}
     assert (body["retention_days"], body["full_backup_interval_days"], body["incremental_enabled"]) == (7, 7, True)
 
-    saved = {"enabled": False, "schedule": {"frequency": "weekly", "day_of_week": 2, "hour": 3, "timezone": "Asia/Kolkata"}, "retention_days": 30}
-    router2 = Router().add("GET", f"compute/cloud-vms/{VM}/backups/policy", (200, saved))
-    router2.add("POST", f"compute/cloud-vms/{VM}/backups/enable", (200, POLICY))
+    saved_schedule = {"frequency": "weekly", "day_of_week": 2, "hour": 3, "minute": 0, "timezone": "Asia/Kolkata", "window_minutes": 30}
+    saved = {"policy_id": "pol-1", "enabled": False, "schedule": saved_schedule, "retention_days": 30,
+             "full_backup_interval_days": 5, "incremental_enabled": False}
+
+    def saved_router() -> Router:
+        r = Router().add("GET", f"compute/cloud-vms/{VM}/backups/policy", (200, saved))
+        return r.add("POST", f"compute/cloud-vms/{VM}/backups/enable", (200, POLICY))
+
+    # Re-enable with nothing passed: the saved policy is re-sent unchanged (portal).
+    router2 = saved_router()
     sync_client(router2).cloud_vms.enable_cloud_vm_backups(VM, workspace_id=WS, billing_catalog=BACKUP_SKU)
     body = router2.body("POST", f"compute/cloud-vms/{VM}/backups/enable")
-    assert body["schedule"] == {
-        "frequency": "weekly",
-        "hour": 3,
-        "minute": 0,
-        "timezone": "Asia/Kolkata",
-        "window_minutes": 30,
-        "day_of_week": 2,
-    }
-    assert body["retention_days"] == 30
+    assert body["schedule"] == saved_schedule
+    assert (body["retention_days"], body["full_backup_interval_days"], body["incremental_enabled"]) == (30, 5, False)
+
+    # Any setting passed: the caller's values over the portal defaults (saved values not merged; same as TS).
+    router3 = saved_router()
+    sync_client(router3).cloud_vms.enable_cloud_vm_backups(VM, workspace_id=WS, billing_catalog=BACKUP_SKU, retention_days=14)
+    body = router3.body("POST", f"compute/cloud-vms/{VM}/backups/enable")
+    assert body["schedule"] == {"frequency": "daily", "hour": 12, "minute": 0, "timezone": "UTC", "window_minutes": 30}
+    assert (body["retention_days"], body["full_backup_interval_days"], body["incremental_enabled"]) == (14, 7, True)
+
+    # A saved 0.3.0 'hourly' policy can still be re-enabled.
+    hourly = dict(saved, schedule={"frequency": "hourly", "hour": 0, "minute": 5})
+    router4 = Router().add("GET", f"compute/cloud-vms/{VM}/backups/policy", (200, hourly))
+    router4.add("POST", f"compute/cloud-vms/{VM}/backups/enable", (200, POLICY))
+    sync_client(router4).cloud_vms.enable_cloud_vm_backups(VM, workspace_id=WS, billing_catalog=BACKUP_SKU)
+    assert router4.body("POST", f"compute/cloud-vms/{VM}/backups/enable")["schedule"]["frequency"] == "hourly"
+
+
+def test_update_backup_policy_with_a_saved_hourly_schedule_uses_the_default_frequency() -> None:
+    hourly = dict(POLICY, schedule={"frequency": "hourly", "hour": 0, "minute": 5, "timezone": "UTC", "window_minutes": 30})
+    router = Router().add("GET", f"compute/gpu-vms/{VM}/backups/policy", (200, hourly))
+    router.add("PATCH", f"compute/gpu-vms/{VM}/backups/policy", (200, POLICY))
+    sync_client(router).gpu_vms.update_gpu_vm_backup_policy(VM, workspace_id=WS, schedule={"hour": 3})
+    schedule = router.body("PATCH", f"compute/gpu-vms/{VM}/backups/policy")["schedule"]
+    assert (schedule["frequency"], schedule["hour"], schedule["minute"]) == ("daily", 3, 5)
+    assert "day_of_week" not in schedule
+
+
+def test_backup_enable_and_run_preflight_billing() -> None:
+    denied = {"organization_id": "org", "allowed": False, "reason": "initial_topup_required", "sku_code": "BACKUP-STD"}
+    for call in ("enable", "run"):
+        router = Router().add("GET", f"compute/cloud-vms/{VM}/backups/policy", (404, {"detail": "not found"}))
+        router.add("POST", "billing/resource-eligibility", (200, denied))
+        client = sync_client(router)
+        with pytest.raises(BillingDeniedError):
+            if call == "enable":
+                client.cloud_vms.enable_cloud_vm_backups(VM, workspace_id=WS, billing_catalog=BACKUP_SKU, preflight_billing=True)
+            else:
+                client.cloud_vms.create_cloud_vm_backup_run(VM, workspace_id=WS, billing_catalog=BACKUP_SKU, preflight_billing=True)
+        assert router.body("POST", "billing/resource-eligibility")["sku_code"] == "BACKUP-STD"
+        assert not any(r.url.path.endswith(("/backups/enable", "/backups/runs")) for r in router.requests)
+
+    async def main() -> None:
+        router = Router().add(
+            "POST", "billing/resource-eligibility", (200, {"organization_id": "org", "allowed": True, "reason": "eligible", "sku_code": "BACKUP-STD"})
+        )
+        router.add("POST", f"compute/gpu-vms/{VM}/backups/runs", (202, _run("queued")))
+        async with async_transport(router) as http:
+            await async_client(router, http).gpu_vms.create_gpu_vm_backup_run(
+                VM, workspace_id=WS, billing_catalog=BACKUP_SKU, preflight_billing=True
+            )
+        assert [c[0] for c in router.calls()] == ["POST", "POST"]
+
+    asyncio.run(main())
 
 
 def test_backup_schedule_rules_are_local() -> None:

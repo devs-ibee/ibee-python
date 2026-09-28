@@ -553,6 +553,31 @@ class FirewallsClient:
         """
         return run_sync(self._raw_client._client_wrapper, nw.list_firewall_group_summaries(**clean_kwargs(locals())), request_options)
 
+    def iter_firewall_group_summaries(
+        self,
+        *,
+        workspace_id: str,
+        page_size: int = 100,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.Iterator[FirewallGroupSummary]:
+        """
+        Iterates over every firewall group summary in the workspace, ``page_size`` (1-100) per request.
+        Requires scope: network.read.
+
+        Not yet part of the published API contract; behaviour may change.
+        """
+        workspace_id = validate_workspace_id(workspace_id)
+        size = validate_page_size(page_size, maximum=100)
+
+        def _fetch(limit: int, offset: int) -> typing.List[FirewallGroupSummary]:
+            return run_sync(
+                self._raw_client._client_wrapper,
+                nw.list_firewall_group_summaries(workspace_id=workspace_id, limit=limit, offset=offset),
+                request_options,
+            )
+
+        return paginate_offset(_fetch, page_size=size, id_keys=("firewall_group_id", "id"))
+
 
 class AsyncFirewallsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -1081,3 +1106,28 @@ class AsyncFirewallsClient:
         typing.List[FirewallGroupSummary]
         """
         return await run_async(self._raw_client._client_wrapper, nw.list_firewall_group_summaries(**clean_kwargs(locals())), request_options)
+
+    def iter_firewall_group_summaries(
+        self,
+        *,
+        workspace_id: str,
+        page_size: int = 100,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.AsyncIterator[FirewallGroupSummary]:
+        """
+        Asynchronously iterates over every firewall group summary in the workspace (``async for``).
+        Requires scope: network.read.
+
+        Not yet part of the published API contract; behaviour may change.
+        """
+        workspace_id = validate_workspace_id(workspace_id)
+        size = validate_page_size(page_size, maximum=100)
+
+        async def _fetch(limit: int, offset: int) -> typing.List[FirewallGroupSummary]:
+            return await run_async(
+                self._raw_client._client_wrapper,
+                nw.list_firewall_group_summaries(workspace_id=workspace_id, limit=limit, offset=offset),
+                request_options,
+            )
+
+        return apaginate_offset(_fetch, page_size=size, id_keys=("firewall_group_id", "id"))

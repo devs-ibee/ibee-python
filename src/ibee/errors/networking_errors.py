@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import typing
 
+from ..validation import IbeeValidationError
 from .not_found_error import NotFoundError
 
 RESERVED_IP_TARGET_UNSUPPORTED_MESSAGE = (
@@ -14,10 +15,11 @@ RESERVED_IP_TARGET_UNSUPPORTED_MESSAGE = (
 _VPC_ALLOCATION_MARKER = "require a vpc network allocation"
 
 
-class ReservedIpTargetUnsupportedError(NotFoundError):
+class ReservedIpTargetUnsupportedError(NotFoundError, IbeeValidationError):
     """404 from Reserved IP attach/move because the target VM has no VPC network allocation.
 
-    Subclasses ``NotFoundError`` so 0.3.0 handlers keep working; ``message``
+    Subclasses ``NotFoundError`` so 0.3.0 handlers keep working, and
+    ``IbeeValidationError`` (``field='vm_id'``) like the TypeScript SDK; ``message``
     explains what to do instead.
     """
 
@@ -27,6 +29,7 @@ class ReservedIpTargetUnsupportedError(NotFoundError):
         super()._populate(raw_body)
         self.code = "reserved_ip_target_unsupported"
         self.message = RESERVED_IP_TARGET_UNSUPPORTED_MESSAGE
+        self.field = "vm_id"
 
     def __str__(self) -> str:
         return f"{RESERVED_IP_TARGET_UNSUPPORTED_MESSAGE} (status_code: {self.status_code}, body: {self.body})"

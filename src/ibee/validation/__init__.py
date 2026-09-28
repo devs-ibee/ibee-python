@@ -454,8 +454,14 @@ def is_billable_create(method: str, path: typing.Optional[str]) -> bool:
 
 
 def encoded_json_size(body: typing.Any) -> int:
-    """Size in bytes of the compact UTF-8 JSON encoding of ``body``."""
-    return len(json.dumps(body, ensure_ascii=False, separators=(",", ":"), default=str).encode("utf-8"))
+    """Size in bytes of ``body`` as sent: the larger of the two encodings httpx uses.
+
+    httpx 0.28+ sends compact UTF-8 JSON; older httpx sends ``json.dumps`` defaults
+    (ASCII escapes and spaces after separators), which can be larger.
+    """
+    compact = len(json.dumps(body, ensure_ascii=False, separators=(",", ":"), default=str).encode("utf-8"))
+    legacy = len(json.dumps(body, default=str).encode("utf-8"))
+    return max(compact, legacy)
 
 
 def check_billable_body_size(method: str, path: typing.Optional[str], body: typing.Any) -> None:

@@ -49,6 +49,7 @@ from ..validation import (
     validate_metrics_range,
     validate_poll_interval,
     validate_required_text,
+    validate_requested_by,
     validate_vm_id,
     validate_wait_timeout,
 )
@@ -261,7 +262,7 @@ class GpuVmsClient:
 
         billing_term : typing.Optional[str]
             ``HOURLY``, ``MONTHLY`` or ``YEARLY`` (default: the plan SKU unchanged, billed hourly). The plan must
-            offer the term.
+            offer the term; it is also applied to an explicit ``billing_catalog`` (which must offer it).
 
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
             Advanced: send this SKU object instead of the one built from the plan (checked: sku_id, sku_code, no
@@ -739,16 +740,17 @@ class GpuVmsClient:
             Target plan (recommended; the portal only resizes to plans).
 
         billing_term : typing.Optional[str]
-            With ``plan_id``: ``HOURLY`` (default), ``MONTHLY`` or ``YEARLY``.
+            With ``plan_id`` or ``billing_catalog``: ``HOURLY`` (default with ``plan_id``), ``MONTHLY`` or
+            ``YEARLY``. The plan (or the explicit catalog) must offer the term.
 
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
-            Advanced: explicit target SKU object.
+            Advanced: explicit target SKU object; ``billing_term`` is applied to it when given.
 
         windows_license : typing.Optional[typing.Dict[str, typing.Any]]
             Windows VMs: licence SKU (default: the one on the VM's current billing catalog).
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the VM and require ``running``, ``stopped`` or ``error``.
+            ``True`` reads the VM and requires ``running``, ``stopped`` or ``error`` (off by default, as in 0.3.0).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -815,16 +817,18 @@ class GpuVmsClient:
             Take cpu/RAM and the new billing SKU from this plan.
 
         billing_term : typing.Optional[str]
-            With ``plan_id``: ``HOURLY`` (default), ``MONTHLY`` or ``YEARLY``.
+            With ``plan_id`` or ``billing_catalog``: ``HOURLY`` (default with ``plan_id``), ``MONTHLY`` or
+            ``YEARLY``. The plan (or the explicit catalog) must offer the term.
 
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
-            Advanced: explicit target SKU object.
+            Advanced: explicit target SKU object; ``billing_term`` is applied to it when given.
 
         windows_license : typing.Optional[typing.Dict[str, typing.Any]]
             Windows VMs with ``plan_id``: licence SKU (default: the VM's current one).
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the VM for the state, no-change and downgrade rules.
+            Default: read the VM for the no-change and downgrade rules (``False`` skips the read); ``True`` also
+            requires ``running``, ``stopped`` or ``error``.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -880,7 +884,8 @@ class GpuVmsClient:
             Advanced: target SKU object.
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the VM for the grow-only and state rules.
+            Default: read the VM for the grow-only rule (``False`` skips the read); ``True`` also requires
+            ``running``, ``stopped`` or ``error``.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -937,8 +942,8 @@ class GpuVmsClient:
             The volume's Block Storage SKU. Read from the volume when omitted.
 
         check_state : typing.Optional[bool]
-            Default ``True``: also read the VM (state and site). ``False`` with ``billing_catalog`` skips both
-            reads.
+            Default: also read the VM for the site check (skipped without vm.read); ``True`` also applies the VM
+            state rule. ``False`` with ``billing_catalog`` skips both reads.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -994,7 +999,8 @@ class GpuVmsClient:
             Optional audit label.
 
         check_state : typing.Optional[bool]
-            ``True`` reads the volume first and requires it to be attached to this VM.
+            ``True`` reads the volume first (block-storage.read) and requires it to be attached to this VM; the
+            check is skipped when the token lacks that scope.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1396,8 +1402,9 @@ class GpuVmsClient:
             new_vm: saved SSH key IDs.
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the snapshot and VM for the ready/state rules (always read for ``new_vm`` and
-            ``volume_only``).
+            Default: read the snapshot for the ready rule (and the VM for ``new_vm``/``volume_only``); ``True``
+            also requires the VM to be ``running`` or ``stopped``. ``False`` skips the reads ``replace`` does not
+            need.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1547,12 +1554,12 @@ class GpuVmsClient:
             token="YOUR_TOKEN",
         )
         client.gpu_vms.get_gpu_vm_backup_policy(
-            vm_id="vm_id",
+            vm_id="65f1c2a9e4b0a1b2c3d4e5f6",
             workspace_id="workspace_id",
         )
         """
         _response = self._raw_client.get_gpu_vm_backup_policy(
-            vm_id, workspace_id=workspace_id, request_options=request_options
+            validate_vm_id(vm_id), workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -1626,15 +1633,17 @@ class GpuVmsClient:
         incremental_enabled: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        preflight_billing: bool = False,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
         Enables automatic backups for a GPU VM like the portal. Requires scope: vm.write.
 
         ``billing_catalog`` is required by the API: the ``backup_storage`` SKU (code ``BACKUP-STD``); the public API
-        cannot list it yet, so copy it from an existing backup run. Values you omit come from the saved policy, or
-        the portal defaults (daily at 12:00 UTC, 30-minute window, 7-day retention, full backup every 7 days,
-        incremental on).
+        cannot list it yet, so copy it from an existing backup run. Called with no schedule or retention settings
+        on a VM that has a saved policy, the saved policy is re-sent unchanged (portal re-enable). Otherwise the
+        values you pass are applied over the portal defaults (daily at 12:00 UTC, 30-minute window, 7-day
+        retention, full backup every 7 days, incremental on); the saved values are not merged in.
 
         Parameters
         ----------
@@ -1661,6 +1670,10 @@ class GpuVmsClient:
 
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
             Backup storage SKU (required).
+
+        preflight_billing : bool
+            Check billing eligibility for the backup SKU first (needs billing.read) and raise
+            ``BillingDeniedError`` when it is not allowed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1708,12 +1721,15 @@ class GpuVmsClient:
             token="YOUR_TOKEN",
         )
         client.gpu_vms.disable_gpu_vm_backups(
-            vm_id="vm_id",
+            vm_id="65f1c2a9e4b0a1b2c3d4e5f6",
             workspace_id="workspace_id",
         )
         """
         _response = self._raw_client.disable_gpu_vm_backups(
-            vm_id, workspace_id=workspace_id, requested_by=requested_by, request_options=request_options
+            validate_vm_id(vm_id),
+            workspace_id=workspace_id,
+            requested_by=requested_by if requested_by is OMIT else validate_requested_by(requested_by),
+            request_options=request_options,
         )
         return _response.data
 
@@ -1804,6 +1820,7 @@ class GpuVmsClient:
         reason: typing.Optional[str] = OMIT,
         billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
         check_state: typing.Optional[bool] = None,
+        preflight_billing: bool = False,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRun:
         """
@@ -1831,6 +1848,10 @@ class GpuVmsClient:
 
         check_state : typing.Optional[bool]
             ``True`` reads the backup policy first and requires backups to be enabled.
+
+        preflight_billing : bool
+            Check billing eligibility for the backup SKU first (needs billing.read) and raise
+            ``BillingDeniedError`` when it is not allowed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2112,7 +2133,7 @@ class GpuVmsClient:
         client = Ibee(
             token="YOUR_TOKEN",
         )
-        accepted = client.gpu_vms.start_gpu_vm("vm-id", workspace_id="710995")
+        accepted = client.gpu_vms.start_gpu_vm("65f1c2a9e4b0a1b2c3d4e5f6", workspace_id="710995")
         client.gpu_vms.wait_for_compute_operation(accepted.operation_id, workspace_id="710995")
         """
         return wait_for_compute_operation(
@@ -2251,7 +2272,7 @@ class GpuVmsClient:
         *,
         workspace_id: str,
         vm_id: typing.Optional[str] = None,
-        status: typing.Optional[typing.Sequence[str]] = None,
+        status: typing.Optional[typing.Union[str, typing.Sequence[str]]] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         search: typing.Optional[str] = None,
@@ -2270,8 +2291,9 @@ class GpuVmsClient:
         vm_id : typing.Optional[str]
             Only this VM's backups.
 
-        status : typing.Optional[typing.Sequence[str]]
-            Statuses to include (queued, running, succeeded, failed, cancelled); the portal shows ``['succeeded']``.
+        status : typing.Optional[typing.Union[str, typing.Sequence[str]]]
+            Statuses to include (queued, running, succeeded, failed, cancelled). Default ``['succeeded']`` (the
+            portal Backups page); pass ``"all"`` or ``[]`` for every status.
 
         limit : typing.Optional[int]
             Page size (1-200, server default 50).
@@ -2663,7 +2685,7 @@ class AsyncGpuVmsClient:
 
         billing_term : typing.Optional[str]
             ``HOURLY``, ``MONTHLY`` or ``YEARLY`` (default: the plan SKU unchanged, billed hourly). The plan must
-            offer the term.
+            offer the term; it is also applied to an explicit ``billing_catalog`` (which must offer it).
 
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
             Advanced: send this SKU object instead of the one built from the plan (checked: sku_id, sku_code, no
@@ -3141,16 +3163,17 @@ class AsyncGpuVmsClient:
             Target plan (recommended; the portal only resizes to plans).
 
         billing_term : typing.Optional[str]
-            With ``plan_id``: ``HOURLY`` (default), ``MONTHLY`` or ``YEARLY``.
+            With ``plan_id`` or ``billing_catalog``: ``HOURLY`` (default with ``plan_id``), ``MONTHLY`` or
+            ``YEARLY``. The plan (or the explicit catalog) must offer the term.
 
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
-            Advanced: explicit target SKU object.
+            Advanced: explicit target SKU object; ``billing_term`` is applied to it when given.
 
         windows_license : typing.Optional[typing.Dict[str, typing.Any]]
             Windows VMs: licence SKU (default: the one on the VM's current billing catalog).
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the VM and require ``running``, ``stopped`` or ``error``.
+            ``True`` reads the VM and requires ``running``, ``stopped`` or ``error`` (off by default, as in 0.3.0).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3217,16 +3240,18 @@ class AsyncGpuVmsClient:
             Take cpu/RAM and the new billing SKU from this plan.
 
         billing_term : typing.Optional[str]
-            With ``plan_id``: ``HOURLY`` (default), ``MONTHLY`` or ``YEARLY``.
+            With ``plan_id`` or ``billing_catalog``: ``HOURLY`` (default with ``plan_id``), ``MONTHLY`` or
+            ``YEARLY``. The plan (or the explicit catalog) must offer the term.
 
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
-            Advanced: explicit target SKU object.
+            Advanced: explicit target SKU object; ``billing_term`` is applied to it when given.
 
         windows_license : typing.Optional[typing.Dict[str, typing.Any]]
             Windows VMs with ``plan_id``: licence SKU (default: the VM's current one).
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the VM for the state, no-change and downgrade rules.
+            Default: read the VM for the no-change and downgrade rules (``False`` skips the read); ``True`` also
+            requires ``running``, ``stopped`` or ``error``.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3282,7 +3307,8 @@ class AsyncGpuVmsClient:
             Advanced: target SKU object.
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the VM for the grow-only and state rules.
+            Default: read the VM for the grow-only rule (``False`` skips the read); ``True`` also requires
+            ``running``, ``stopped`` or ``error``.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3339,8 +3365,8 @@ class AsyncGpuVmsClient:
             The volume's Block Storage SKU. Read from the volume when omitted.
 
         check_state : typing.Optional[bool]
-            Default ``True``: also read the VM (state and site). ``False`` with ``billing_catalog`` skips both
-            reads.
+            Default: also read the VM for the site check (skipped without vm.read); ``True`` also applies the VM
+            state rule. ``False`` with ``billing_catalog`` skips both reads.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3396,7 +3422,8 @@ class AsyncGpuVmsClient:
             Optional audit label.
 
         check_state : typing.Optional[bool]
-            ``True`` reads the volume first and requires it to be attached to this VM.
+            ``True`` reads the volume first (block-storage.read) and requires it to be attached to this VM; the
+            check is skipped when the token lacks that scope.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3798,8 +3825,9 @@ class AsyncGpuVmsClient:
             new_vm: saved SSH key IDs.
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the snapshot and VM for the ready/state rules (always read for ``new_vm`` and
-            ``volume_only``).
+            Default: read the snapshot for the ready rule (and the VM for ``new_vm``/``volume_only``); ``True``
+            also requires the VM to be ``running`` or ``stopped``. ``False`` skips the reads ``replace`` does not
+            need.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3970,7 +3998,7 @@ class AsyncGpuVmsClient:
 
         async def main() -> None:
             await client.gpu_vms.get_gpu_vm_backup_policy(
-                vm_id="vm_id",
+                vm_id="65f1c2a9e4b0a1b2c3d4e5f6",
                 workspace_id="workspace_id",
             )
 
@@ -3978,7 +4006,7 @@ class AsyncGpuVmsClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.get_gpu_vm_backup_policy(
-            vm_id, workspace_id=workspace_id, request_options=request_options
+            validate_vm_id(vm_id), workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -4052,15 +4080,17 @@ class AsyncGpuVmsClient:
         incremental_enabled: typing.Optional[bool] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        preflight_billing: bool = False,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
         Enables automatic backups for a GPU VM like the portal. Requires scope: vm.write.
 
         ``billing_catalog`` is required by the API: the ``backup_storage`` SKU (code ``BACKUP-STD``); the public API
-        cannot list it yet, so copy it from an existing backup run. Values you omit come from the saved policy, or
-        the portal defaults (daily at 12:00 UTC, 30-minute window, 7-day retention, full backup every 7 days,
-        incremental on).
+        cannot list it yet, so copy it from an existing backup run. Called with no schedule or retention settings
+        on a VM that has a saved policy, the saved policy is re-sent unchanged (portal re-enable). Otherwise the
+        values you pass are applied over the portal defaults (daily at 12:00 UTC, 30-minute window, 7-day
+        retention, full backup every 7 days, incremental on); the saved values are not merged in.
 
         Parameters
         ----------
@@ -4087,6 +4117,10 @@ class AsyncGpuVmsClient:
 
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
             Backup storage SKU (required).
+
+        preflight_billing : bool
+            Check billing eligibility for the backup SKU first (needs billing.read) and raise
+            ``BillingDeniedError`` when it is not allowed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4139,7 +4173,7 @@ class AsyncGpuVmsClient:
 
         async def main() -> None:
             await client.gpu_vms.disable_gpu_vm_backups(
-                vm_id="vm_id",
+                vm_id="65f1c2a9e4b0a1b2c3d4e5f6",
                 workspace_id="workspace_id",
             )
 
@@ -4147,7 +4181,10 @@ class AsyncGpuVmsClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.disable_gpu_vm_backups(
-            vm_id, workspace_id=workspace_id, requested_by=requested_by, request_options=request_options
+            validate_vm_id(vm_id),
+            workspace_id=workspace_id,
+            requested_by=requested_by if requested_by is OMIT else validate_requested_by(requested_by),
+            request_options=request_options,
         )
         return _response.data
 
@@ -4238,6 +4275,7 @@ class AsyncGpuVmsClient:
         reason: typing.Optional[str] = OMIT,
         billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = None,
         check_state: typing.Optional[bool] = None,
+        preflight_billing: bool = False,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRun:
         """
@@ -4265,6 +4303,10 @@ class AsyncGpuVmsClient:
 
         check_state : typing.Optional[bool]
             ``True`` reads the backup policy first and requires backups to be enabled.
+
+        preflight_billing : bool
+            Check billing eligibility for the backup SKU first (needs billing.read) and raise
+            ``BillingDeniedError`` when it is not allowed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4690,7 +4732,7 @@ class AsyncGpuVmsClient:
         *,
         workspace_id: str,
         vm_id: typing.Optional[str] = None,
-        status: typing.Optional[typing.Sequence[str]] = None,
+        status: typing.Optional[typing.Union[str, typing.Sequence[str]]] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         search: typing.Optional[str] = None,
@@ -4709,8 +4751,9 @@ class AsyncGpuVmsClient:
         vm_id : typing.Optional[str]
             Only this VM's backups.
 
-        status : typing.Optional[typing.Sequence[str]]
-            Statuses to include (queued, running, succeeded, failed, cancelled); the portal shows ``['succeeded']``.
+        status : typing.Optional[typing.Union[str, typing.Sequence[str]]]
+            Statuses to include (queued, running, succeeded, failed, cancelled). Default ``['succeeded']`` (the
+            portal Backups page); pass ``"all"`` or ``[]`` for every status.
 
         limit : typing.Optional[int]
             Page size (1-200, server default 50).

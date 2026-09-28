@@ -62,6 +62,7 @@ class VmConsoleClient:
         console_type : typing.Optional[VmConsoleSessionCreateRequestConsoleType]
 
         requested_by : typing.Optional[str]
+            Audit label (1-128 characters); default ``"api"``.
 
         user_id : typing.Optional[str]
 
@@ -85,7 +86,7 @@ class VmConsoleClient:
         )
         client.vm_console.create_vm_console_session(
             workspace_id="workspace_id",
-            vm_id="vm_id",
+            vm_id="65f1c2a9e4b0a1b2c3d4e5f6",
         )
         """
         return run_sync(self._raw_client._client_wrapper, workflows.create_console_session(**clean_kwargs(locals())), request_options)
@@ -221,6 +222,7 @@ class AsyncVmConsoleClient:
         console_type : typing.Optional[VmConsoleSessionCreateRequestConsoleType]
 
         requested_by : typing.Optional[str]
+            Audit label (1-128 characters); default ``"api"``.
 
         user_id : typing.Optional[str]
 

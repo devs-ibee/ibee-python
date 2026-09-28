@@ -31,6 +31,7 @@ from .types.s3credential_revoked import S3CredentialRevoked
 from .validation import (
     IbeeValidationError,
     NODE_LEVEL_ADVANCED_NOTE,
+    validate_billing_catalog,
     VOLUME_OPERATION_FAILED_MESSAGE,
     VOLUME_OPERATION_POLL_INTERVAL_SECONDS,
     VOLUME_OPERATION_TIMEOUT_MESSAGE,
@@ -418,18 +419,21 @@ def attach_block_volume_to_vm(
     vm_id = validate_vm_id(vm_id)
     requested_type = validate_volume_vm_type(vm_type)
     validate_volume_attach_mode(mode)
+    if billing_catalog is not None:
+        # Checked before any request (the VM attach checks it again).
+        validate_billing_catalog(billing_catalog, expected_product="block_storage")
     if wait:
         validate_poll_interval(poll_interval, validate_wait_timeout(timeout))
     try:
         volume = yield from _get_volume(workspace_id, volume_id)
     except ForbiddenError:
-        if billing_catalog is None or requested_type is None:
+        if billing_catalog is None:
             raise IbeeValidationError(
-                "Reading the volume needs block-storage.read; grant it or pass billing_catalog and vm_type",
+                "billing_catalog is required; grant block-storage.read or pass billing_catalog",
                 code="volume_unreadable",
                 field="billing_catalog",
             )
-        volume = None
+        volume = None  # vm_type defaults to 'cloud' (as in the TypeScript SDK)
     target_type = requested_type or (volume_vm_type(volume) if volume is not None else "cloud")
     if volume is not None:
         assert_volume_attachable(volume, target_type)
@@ -586,8 +590,12 @@ def delete_bucket(
 ) -> Flow[DeleteResponse]:
     name = validate_bucket_path_name(bucket_name)
     if check_state is not False:
-        bucket = yield Call("GET", _bucket_path(name), params=_ws(workspace_id))
-        check_bucket_deletable(bucket, skip_preflight=bool(skip_preflight))
+        try:
+            bucket = yield Call("GET", _bucket_path(name), params=_ws(workspace_id))
+        except ForbiddenError:
+            bucket = None  # no object-storage.read: the API still refuses non-empty or locked buckets
+        if bucket is not None:
+            check_bucket_deletable(bucket, skip_preflight=bool(skip_preflight))
     result = yield Call("DELETE", _bucket_path(name), params=_ws(workspace_id), parse=DeleteResponse, main=True)
     return typing.cast(DeleteResponse, result)
 

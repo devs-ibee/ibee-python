@@ -93,7 +93,7 @@ def base_client(router: Router, base_url: str) -> Ibee:
 
 @pytest.mark.parametrize(
     ("name", "message"),
-    [("ab", "at least 3 characters"), ("My Data", "try 'my-data'"), ("data_1", "Lowercase letters"), ("  ", "Enter a volume name")],
+    [("ab", "at least 3 characters"), ("My Data", "try 'my-data'"), ("data_1", "Lowercase letters"), ("  ", "Enter a volume name"), ("a" * 256, "at most 255")],
 )
 def test_volume_name_rule(name: str, message: str) -> None:
     with pytest.raises(IbeeValidationError, match=message):

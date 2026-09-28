@@ -72,7 +72,13 @@ auto-paging.
   `precheck_*_vm_resize(plan_id=...)`, `resize_*_vm_plan(plan_id=..., billing_catalog=...)`,
   `resize_*_vm_root_disk(billing_catalog=...)`.
 - `check_state` on power, access, resize, delete, attach/detach, snapshot and
-  restore methods (portal state matrix).
+  restore methods: `check_state=True` applies the portal state matrix (off by
+  default, as in 0.3.0 and the TypeScript SDK).
+- `preflight_billing` on `enable_*_vm_backups` and `create_*_vm_backup_run`;
+  `firewalls.iter_firewall_group_summaries`; `billing_preflight` as an alias of
+  `preflight_billing` on Secret Store creates (the TypeScript SDK's name).
+- `billing_term` is applied to an explicit `billing_catalog` on VM create and
+  resize (it was ignored); a term the catalog does not offer is rejected.
 - `list_all_cloud_vms` / `list_all_gpu_vms`; VM records expose the API's `_id` as `id`.
 - Recovery: `billing_catalog` on `create_*_vm_snapshot`, `enable_*_vm_backups`,
   `update_*_vm_backup_policy` and `create_*_vm_backup_run` (the API requires it;
@@ -244,9 +250,28 @@ auto-paging.
   and `gpu_model` are now optional on create (taken from the plan/image) but must
   match them when given; `disk_gb` is always sent (0.3.0 left it to a 50/140 GB
   server default).
-- VM access updates, `resize_*`, `resize_*_vm_plan` and `resize_*_vm_root_disk`
-  read the VM first by default (`check_state=False` skips it); resize also runs
-  the precheck. Backup enable/update read the saved policy.
+- VM access updates, `resize_*_vm_plan` and `resize_*_vm_root_disk` read the VM
+  first by default for their required checks (access rules, no-op/downgrade,
+  grow-only); `check_state=False` skips the read. The VM state matrix (for
+  example "resize needs running, stopped or error", "restore needs running or
+  stopped") runs only with `check_state=True`; `resize_*` reads the VM only for
+  `plan_id` or `check_state=True`. Delete is refused locally only while the VM is
+  `deleting`/`deleted` (the portal rule; the API answers 409 during a resize).
+  Resize also runs the precheck. Backup enable/update read the saved policy.
+- `enable_*_vm_backups` follows the portal: with no schedule or retention
+  settings on a VM with a saved policy the saved policy is re-sent unchanged;
+  otherwise the values passed are applied over the portal defaults (saved values
+  are not merged). A saved `hourly` schedule (allowed by 0.3.0) no longer blocks
+  `update_*_vm_backup_policy`; the portal default frequency (`daily`) is used
+  unless you pass one.
+- `list_all_*_vm_backup_runs` returns succeeded runs by default (the portal
+  Backups page); pass `status="all"` (or `[]`) for every status.
+- `target_volume_names` on new-VM restores must name every captured data volume.
+- Console sessions send `requested_by="api"` unless you pass one.
+- `detach_*_vm_volume(check_state=True)` skips the attachment check when the
+  token lacks `block-storage.read`.
+- Automatic idempotency keys for VM volume attach/detach use
+  `<volume id>-<vm id>` as identity, as the TypeScript SDK does.
 - Snapshot create, backup enable and manual backup run raise
   `IbeeValidationError` without `billing_catalog` (0.3.0 always got 422).
   Backup schedules are `daily` or `weekly` only (weekly needs `day_of_week`),
@@ -265,7 +290,26 @@ auto-paging.
   `release_reserved_ip`, `attach_reserved_ip`, `move_reserved_ip`,
   `detach_reserved_ip`, `create_firewall_group`, `update_firewall_rule` and
   `delete_firewall_rule`. `detach_reserved_ip` on an unattached IP returns it
-  without a request.
+  without a request. These pre-step reads are skipped when the token lacks the
+  read scope (so a 0.3.0 key with only `network.write`/`firewall.write` keeps
+  working); with `check_state=True` a 403 is raised. Reads the request needs
+  (`attach_reserved_ip(detach_from_service=True)`, `delete_vpc(delete_nat_gateway=True)`,
+  reserving a NAT address without a catalog) raise a 403 that names the scope.
+- `delete_vpc` refuses while virtual IPs exist, and `delete_vpc_virtual_ip`
+  refuses while a port-forwarding rule targets the virtual IP.
+- `update_nat_port_forwarding_rule` checks a changed target like create (a NAT
+  node for `vm`, an available MetalLB VIP for `vip`) and fills `target_vm_ids`
+  from the VIP's announcers; `target_type="vip"` without them raises when the
+  VIP cannot be read.
+- `delete_nat_gateway(public_ip_action="reserve")` recognises legacy gateways
+  backed by a Reserved IP (no `public_ip_source`) and needs no catalog for them.
+- A 400 "Only OVS/OVN-backed VM networks" from `attach_firewall_group` is raised
+  as `IbeeValidationError` (`firewall_attach_unsupported`).
+- Networking and firewall enum inputs (`connectivity_type`, node `connectivity`,
+  VIP `purpose`, firewall `protocol`/`direction`/`action`, load-balancer choices)
+  are trimmed and matched case-insensitively. A blank firewall rule
+  `description` on update is omitted instead of clearing the field.
+- `ReservedIpTargetUnsupportedError` also subclasses `IbeeValidationError`.
 - VPC `cidr` outside /22-/28 or RFC1918 space is rejected locally (the API
   answered 422). `create_firewall_group(is_default=True)` raises (such groups were
   hidden from lists). Firewall rules default to `0.0.0.0/0` and send the portal's
@@ -345,10 +389,22 @@ auto-paging.
   no longer fails with 422 (the Block Storage SKU is sent).
 - `create_s3credential` no longer fails with 422 when `permission_type` is
   omitted.
+- `delete_bucket` no longer fails with 403 for a token without
+  `object-storage.read` (the checks are skipped, as for Block Storage).
+- `attach_block_volume_to_vm` checks an explicit `billing_catalog` before any
+  request; without `block-storage.read` it needs only `billing_catalog`
+  (`vm_type` defaults to `cloud`, as in the TypeScript SDK).
+- Volume names over 255 characters get a length error instead of a misleading
+  suggestion.
+- The 64 KiB create-body check measures the larger of the two encodings httpx
+  uses, so older httpx versions no longer send an over-limit body.
+- `get_*_vm_backup_policy` and `disable_*_vm_backups` validate `vm_id` (and
+  `requested_by`) before sending.
 - A purge the CDN did not perform is no longer reported as a success.
 
 - Secret Store: uppercase secret names no longer fail with 422 (they are
-  lower-cased as in the portal); a "does not belong to workspace" 403 from
+  lower-cased as in the portal); `list_all_secret_stores(include_archived=None)`
+  includes archived stores (the documented default); a "does not belong to workspace" 403 from
   Secret Store is now `ResourceNotFoundError` rather than a generic
   workspace error; a `cas` mismatch is now `CasConflictError` instead of an
   opaque 502.

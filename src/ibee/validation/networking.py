@@ -385,9 +385,16 @@ def validate_network_billing_catalog(
 VPC_CONNECTIVITY_TYPES: typing.Tuple[str, ...] = ("private", "nat_gateway", "public")
 
 
+def _enum_text(value: typing.Any) -> typing.Any:
+    """Enum inputs are matched trimmed and case-insensitively (like the TypeScript SDK)."""
+    value = getattr(value, "value", value)
+    return value.strip().lower() if isinstance(value, str) else value
+
+
 def validate_vpc_connectivity_type(value: typing.Any) -> typing.Optional[str]:
     if not _given(value):
         return None
+    value = _enum_text(value)
     if value not in VPC_CONNECTIVITY_TYPES:
         raise IbeeValidationError(
             "connectivity_type must be one of: private, nat_gateway, public.",
@@ -631,6 +638,7 @@ def build_node_attach_body(
         "subnet_id": validate_resource_id(subnet_id, field="subnet_id"),
     }
     if _given(connectivity):
+        connectivity = _enum_text(connectivity)
         if connectivity not in NODE_CONNECTIVITY:
             raise IbeeValidationError(
                 "connectivity must be one of: private, nat, public_ip.",
@@ -748,9 +756,17 @@ def build_nat_create_body(
     return body
 
 
-def default_nat_delete_ip_action(gateway: typing.Any, has_reserved_ip_catalog: bool = False) -> str:
-    """Portal default for ``public_ip_action`` on NAT delete."""
-    if record_get(gateway, "public_ip_source") == "reserved" or has_reserved_ip_catalog:
+def default_nat_delete_ip_action(
+    gateway: typing.Any, has_reserved_ip_catalog: bool = False, *, uses_reserved_ip: typing.Optional[bool] = None
+) -> str:
+    """Portal default for ``public_ip_action`` on NAT delete.
+
+    ``uses_reserved_ip`` is the portal ``natGatewayUsesReservedIp`` result when known (legacy gateways without
+    ``public_ip_source`` are Reserved-IP backed when their ``public_ip_id`` is a Reserved IP attached to them);
+    otherwise ``public_ip_source == 'reserved'`` decides.
+    """
+    reserved = uses_reserved_ip if uses_reserved_ip is not None else record_get(gateway, "public_ip_source") == "reserved"
+    if reserved or has_reserved_ip_catalog:
         return "reserve"
     return "release"
 
@@ -760,8 +776,13 @@ def build_nat_delete_body(
     public_ip_action: typing.Any = None,
     billing_catalog: typing.Any = None,
     gateway: typing.Any = None,
+    uses_reserved_ip: typing.Optional[bool] = None,
 ) -> typing.Optional[typing.Dict[str, typing.Any]]:
-    """Body for NAT delete (``None`` means send no body, like the portal list page)."""
+    """Body for NAT delete (``None`` means send no body, like the portal list page).
+
+    Reserving without ``billing_catalog`` is allowed only for a Reserved-IP-backed gateway:
+    ``uses_reserved_ip`` when given, else ``gateway.public_ip_source == 'reserved'``.
+    """
     if not _given(public_ip_action):
         if _given(billing_catalog):
             raise IbeeValidationError(
@@ -783,7 +804,13 @@ def build_nat_delete_body(
                 field="billing_catalog",
             )
         body["billing_catalog"] = validate_network_billing_catalog(billing_catalog)
-    elif public_ip_action == "reserve" and gateway is not None and record_get(gateway, "public_ip_source") != "reserved":
+    elif (
+        public_ip_action == "reserve"
+        and gateway is not None
+        and not (
+            uses_reserved_ip if uses_reserved_ip is not None else record_get(gateway, "public_ip_source") == "reserved"
+        )
+    ):
         raise IbeeValidationError(
             "Reserving a platform NAT IP requires the RESERVED-IP billing_catalog.",
             code="billing_catalog_required",
@@ -808,6 +835,7 @@ def validate_pf_protocol(value: typing.Any) -> str:
 
 
 def validate_pf_target_type(value: typing.Any) -> str:
+    value = _enum_text(value)
     if value not in PF_TARGET_TYPES:
         raise IbeeValidationError("target_type must be 'vm' or 'vip'.", code="invalid_target_type", field="target_type")
     return typing.cast(str, value)
@@ -1008,7 +1036,7 @@ def build_virtual_ip_create_body(
     nodes: typing.Optional[typing.Iterable[typing.Any]] = None,
 ) -> typing.Dict[str, typing.Any]:
     subnet_value = validate_resource_id(subnet_id, field="subnet_id")
-    kind = purpose if _given(purpose) else "metallb"
+    kind = _enum_text(purpose) if _given(purpose) else "metallb"
     if kind not in VIRTUAL_IP_PURPOSES:
         raise IbeeValidationError("purpose must be 'metallb' or 'custom'.", code="invalid_purpose", field="purpose")
     if subnet is not None:

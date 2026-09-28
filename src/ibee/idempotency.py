@@ -118,8 +118,9 @@ def ve_auto_key_scope(
 ) -> typing.Optional[typing.Tuple[str, typing.Optional[str]]]:
     """For a keyed VM write, return ``(scope, identity)`` used to build its automatic key.
 
-    ``scope`` is ``<cloud|gpu>-vm-<action>``; identity is the VM id (or the VM name
-    for create). Returns ``None`` for any other request.
+    ``scope`` is ``<cloud|gpu>-vm-<action>``; identity is the VM id (the VM name for
+    create, ``<volume id>-<vm id>`` for volume attach/detach). Returns ``None`` for any
+    other request.
     """
     match = VE_KEYED_ROUTE.fullmatch(normalize_api_path(path).lstrip("/"))
     if match is None:
@@ -138,6 +139,11 @@ def ve_auto_key_scope(
         return (f"{family}-vm-delete", vm_id) if method == "DELETE" else None
     if method not in ("POST", "PATCH"):
         return None
+    if action in ("attach-volume", "detach-volume") and isinstance(json_body, dict):
+        volume_id = json_body.get("volume_id")
+        if volume_id is not None and str(volume_id).strip():
+            # Same identity as the TypeScript SDK: <volume id>-<vm id>.
+            return f"{family}-vm-{action}", f"{str(volume_id).strip()}-{vm_id}"
     return f"{family}-vm-{action}", vm_id
 
 

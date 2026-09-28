@@ -112,6 +112,10 @@ def validate_block_volume_name(name: typing.Any) -> str:
         raise IbeeValidationError(
             "Volume name must be at least 3 characters", code="invalid_volume_name", field="name"
         )
+    if len(text) > 255:
+        raise IbeeValidationError(
+            "Volume name must be at most 255 characters", code="invalid_volume_name", field="name"
+        )
     if not BLOCK_VOLUME_NAME_PATTERN.fullmatch(text):
         suggestion = suggest_block_volume_name(text)[:255]
         raise IbeeValidationError(

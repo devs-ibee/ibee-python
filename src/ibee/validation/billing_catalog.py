@@ -252,6 +252,32 @@ def _apply_term(
     return catalog
 
 
+def apply_billing_term_to_catalog(
+    catalog: typing.Any, term: typing.Optional[str], *, label: str = "Selected plan"
+) -> typing.Dict[str, typing.Any]:
+    """Apply ``term`` to a caller-supplied ``billing_catalog`` (explicit create / resize).
+
+    With ``billing_options`` the matching option is applied and the options are
+    dropped; without options the catalog's own ``billing_interval`` must match (it
+    is set to ``term`` when missing). Raises ``unsupported_billing_term`` otherwise.
+    ``term=None`` returns the catalog unchanged.
+    """
+    result = dict(_as_record(catalog) or {})
+    if term is None:
+        return result
+    if billing_options_of(result):
+        result = billing_catalog_for_term(result, select_billing_option(result, term, label=label))
+        result.pop("billing_options", None)
+        return result
+    interval = str(result.get("billing_interval") or "").strip().upper()
+    if interval and interval != term:
+        raise IbeeValidationError(
+            f"{label} does not support {term.lower()} billing", code="unsupported_billing_term", field="billing_term"
+        )
+    result["billing_interval"] = term
+    return result
+
+
 def build_windows_license_sku(
     windows_license: typing.Any, *, term: typing.Optional[str], cpu: int
 ) -> typing.Dict[str, typing.Any]:
@@ -340,6 +366,7 @@ def build_vm_billing_catalog(
 __all__ = [
     "BILLING_TERMS",
     "ROOT_DISK_COMPONENTS",
+    "apply_billing_term_to_catalog",
     "billing_catalog_for_term",
     "billing_options_of",
     "build_vm_billing_catalog",

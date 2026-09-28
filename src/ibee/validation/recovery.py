@@ -158,12 +158,20 @@ def validate_backup_schedule(
     """Full backup schedule object, as the portal sends it.
 
     Missing fields come from ``base`` (for example the saved policy) and then from
-    the portal defaults (daily at 12:00 UTC, 30-minute window). ``frequency`` is
+    the portal defaults (daily at 12:00 UTC, 30-minute window). A saved frequency
+    other than daily/weekly (such as ``hourly``) is replaced by the default. ``frequency`` is
     ``daily`` or ``weekly``; ``day_of_week`` (0=Monday .. 6=Sunday) is required for
     weekly schedules and dropped for daily ones.
     """
     merged: typing.Dict[str, typing.Any] = dict(DEFAULT_BACKUP_SCHEDULE)
-    for source in (base, schedule):
+    saved = dict(as_plain(base))
+    saved_frequency = getattr(saved.get("frequency"), "value", saved.get("frequency"))
+    if saved_frequency is not None and str(saved_frequency).strip().lower() not in BACKUP_FREQUENCIES:
+        # A saved frequency the portal cannot show (e.g. 'hourly' from 0.3.0) falls back to the
+        # portal default ('daily') instead of failing a call that did not pass a frequency.
+        saved.pop("frequency", None)
+        saved.pop("day_of_week", None)
+    for source in (saved, schedule):
         for key, value in as_plain(source).items():
             if value is not None:
                 merged[key] = getattr(value, "value", value)
@@ -445,7 +453,7 @@ def recovery_target_volume_names(
 def validate_target_volume_names(
     manifest: typing.Sequence[typing.Any], names: typing.Any
 ) -> typing.Dict[str, str]:
-    """Keys must be captured data volume ids; values 1-255 characters after trimming."""
+    """Keys must be exactly the captured data volume ids; values 1-255 characters after trimming."""
     if not isinstance(names, typing.Mapping):
         raise IbeeValidationError(
             "target_volume_names must map source volume ids to names.", code="invalid_target_volume_names", field="target_volume_names"
@@ -461,6 +469,13 @@ def validate_target_volume_names(
                 field="target_volume_names",
             )
         result[volume_id] = validate_required_text(value, field="target_volume_names", max_length=255, label="Volume name")
+    missing = [volume_id for volume_id in sorted(captured) if volume_id and volume_id not in result]
+    if missing:
+        raise IbeeValidationError(
+            f"target_volume_names is missing a name for: {', '.join(missing)}.",
+            code="invalid_target_volume_names",
+            field="target_volume_names",
+        )
     return result
 
 
