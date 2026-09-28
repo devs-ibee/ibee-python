@@ -501,3 +501,123 @@ def test_async_create_delete_resize_parity() -> None:
     assert router.body("POST", "compute/cloud-vms")["billing_catalog"]["billing_interval"] == "HOURLY"
     assert router.body("DELETE", f"compute/cloud-vms/{VM}") == {"public_ip_action": "release"}
     assert router.body("POST", f"compute/cloud-vms/{VM}/actions/resize")["cpu"] == 4
+
+
+# review fixes ------------------------------------------------------------------------
+
+_CALLER_CATALOG = {
+    "sku_id": 101,
+    "sku_code": "VM-STD-2-4",
+    "billing_options": [
+        {"billing_interval": "HOURLY", "unit_price_minor": 250, "committed": False},
+        {"billing_interval": "MONTHLY", "unit_price_minor": 150000, "committed": True, "commitment_period": "MONTHLY"},
+    ],
+}
+
+
+def test_billing_term_is_applied_to_an_explicit_billing_catalog() -> None:
+    single = Router().add("POST", "compute/cloud-vms", (202, ACCEPTED))
+    _create(
+        sync_client(single),
+        billing_catalog=_CALLER_CATALOG,
+        billing_term="MONTHLY",
+        cpu=2,
+        ram_mb=4096,
+        disk_gb=50,
+        os_type="linux",
+        os_distro="ubuntu",
+    )
+    assert single.calls() == [("POST", "compute/cloud-vms")]
+    catalog = single.body("POST", "compute/cloud-vms")["billing_catalog"]
+    assert catalog["billing_interval"] == "MONTHLY" and catalog["unit_price_minor"] == 150000
+    assert "billing_options" not in catalog
+
+    lookup = _catalog_router()
+    _create(sync_client(lookup), billing_catalog=_CALLER_CATALOG, billing_term="MONTHLY")
+    assert lookup.body("POST", "compute/cloud-vms")["billing_catalog"]["billing_interval"] == "MONTHLY"
+
+    for router, kwargs in (
+        (Router().add("POST", "compute/cloud-vms", (202, ACCEPTED)), dict(cpu=2, ram_mb=4096, disk_gb=50, os_type="linux", os_distro="ubuntu")),
+        (_catalog_router(), {}),
+    ):
+        with pytest.raises(IbeeValidationError) as info:
+            _create(sync_client(router), billing_catalog=_CALLER_CATALOG, billing_term="YEARLY", **kwargs)
+        assert info.value.code == "unsupported_billing_term"
+        assert ("POST", "compute/cloud-vms") not in router.calls()
+
+    fixed = {"sku_id": 1, "sku_code": "X", "billing_interval": "HOURLY"}
+    with pytest.raises(IbeeValidationError) as info:
+        _create(sync_client(_catalog_router()), billing_catalog=fixed, billing_term="MONTHLY")
+    assert info.value.code == "unsupported_billing_term"
+
+
+def test_resize_applies_billing_term_to_an_explicit_catalog() -> None:
+    router = Router()
+    router.add("POST", f"compute/cloud-vms/{VM}/actions/resize/precheck", (200, {"decision": "in_place"}))
+    router.add("POST", f"compute/cloud-vms/{VM}/actions/resize", (202, ACCEPTED))
+    sync_client(router).cloud_vms.resize_cloud_vm(
+        VM, workspace_id=WS, cpu=4, ram_mb=8192, disk_gb=80, billing_catalog=_CALLER_CATALOG, billing_term="MONTHLY"
+    )
+    assert router.body("POST", f"compute/cloud-vms/{VM}/actions/resize")["billing_catalog"]["billing_interval"] == "MONTHLY"
+    plan_router = Router().add("GET", f"compute/gpu-vms/{VM}", (200, vm()))
+    plan_router.add("PATCH", f"compute/gpu-vms/{VM}/actions/resize-plan", (202, ACCEPTED))
+    with pytest.raises(IbeeValidationError) as info:
+        sync_client(plan_router).gpu_vms.resize_gpu_vm_plan(
+            VM, workspace_id=WS, cpu=4, ram_mb=8192, billing_catalog=_CALLER_CATALOG, billing_term="YEARLY"
+        )
+    assert info.value.code == "unsupported_billing_term"
+    assert ("PATCH", f"compute/gpu-vms/{VM}/actions/resize-plan") not in plan_router.calls()
+
+
+def test_vm_state_matrix_is_opt_in() -> None:
+    # resize with an explicit shape: the VM is not read unless check_state=True
+    router = Router()
+    router.add("POST", f"compute/cloud-vms/{VM}/actions/resize/precheck", (200, {"decision": "in_place"}))
+    router.add("POST", f"compute/cloud-vms/{VM}/actions/resize", (202, ACCEPTED))
+    sync_client(router).cloud_vms.resize_cloud_vm(VM, workspace_id=WS, cpu=4, ram_mb=8192, disk_gb=80)
+    assert ("GET", f"compute/cloud-vms/{VM}") not in router.calls()
+    sync_client(_resize_router(record=vm(status="provisioning"))).cloud_vms.resize_cloud_vm(VM, workspace_id=WS, plan_id="plan-2")
+    with pytest.raises(IbeeValidationError) as info:
+        sync_client(_resize_router(record=vm(status="provisioning"))).cloud_vms.resize_cloud_vm(
+            VM, workspace_id=WS, plan_id="plan-2", check_state=True
+        )
+    assert info.value.code == "invalid_vm_state"
+
+    # resize-plan / root disk still read the VM (required checks) but gate state only on request
+    def patch_router(action: str) -> Router:
+        r = Router().add("GET", f"compute/cloud-vms/{VM}", (200, vm(status="provisioning", disk_gb=50)))
+        return r.add("PATCH", f"compute/cloud-vms/{VM}/actions/{action}", (202, ACCEPTED))
+
+    client = sync_client(patch_router("resize-plan"))
+    client.cloud_vms.resize_cloud_vm_plan(VM, workspace_id=WS, cpu=4, ram_mb=8192)
+    with pytest.raises(IbeeValidationError):
+        client.cloud_vms.resize_cloud_vm_plan(VM, workspace_id=WS, cpu=4, ram_mb=8192, check_state=True)
+    disk = sync_client(patch_router("resize-root-disk"))
+    disk.cloud_vms.resize_cloud_vm_root_disk(VM, workspace_id=WS, new_size_gb=100)
+    with pytest.raises(IbeeValidationError):
+        disk.cloud_vms.resize_cloud_vm_root_disk(VM, workspace_id=WS, new_size_gb=100, check_state=True)
+
+
+def test_delete_state_gate_matches_the_portal() -> None:
+    router = Router().add("GET", f"compute/cloud-vms/{VM}", (200, vm(status="resizing")))
+    router.add("DELETE", f"compute/cloud-vms/{VM}", (202, ACCEPTED))
+    sync_client(router).cloud_vms.delete_cloud_vm(VM, workspace_id=WS)
+    assert router.calls()[-1] == ("DELETE", f"compute/cloud-vms/{VM}")
+    release = Router().add("DELETE", f"compute/cloud-vms/{VM}", (202, ACCEPTED))
+    sync_client(release).cloud_vms.delete_cloud_vm(VM, workspace_id=WS, public_ip_action="release")
+    assert release.calls() == [("DELETE", f"compute/cloud-vms/{VM}")]
+
+
+def test_async_state_matrix_opt_in_parity() -> None:
+    async def main() -> None:
+        router = Router()
+        router.add("POST", f"compute/cloud-vms/{VM}/actions/resize/precheck", (200, {"decision": "in_place"}))
+        router.add("POST", f"compute/cloud-vms/{VM}/actions/resize", (202, ACCEPTED))
+        async with async_transport(router) as http:
+            await async_client(router, http).cloud_vms.resize_cloud_vm(
+                VM, workspace_id=WS, cpu=4, ram_mb=8192, disk_gb=80, billing_catalog=_CALLER_CATALOG, billing_term="MONTHLY"
+            )
+        assert ("GET", f"compute/cloud-vms/{VM}") not in router.calls()
+        assert router.body("POST", f"compute/cloud-vms/{VM}/actions/resize")["billing_catalog"]["billing_interval"] == "MONTHLY"
+
+    asyncio.run(main())

@@ -10,11 +10,13 @@ with :mod:`ibee.validation` before the request it guards.
 
 from __future__ import annotations
 
+import re
 import typing
 import warnings
 from urllib.parse import quote
 
 from .compute_workflows import RESPONSE, Call, Flow, Sleep, billing_preflight
+from .errors.bad_request_error import BadRequestError
 from .errors.forbidden_error import ForbiddenError
 from .errors.networking_errors import as_reserved_ip_target_error, is_vpc_allocation_required
 from .errors.not_found_error import NotFoundError
@@ -78,6 +80,8 @@ from .validation import (
     validate_resource_id,
 )
 
+T = typing.TypeVar("T")
+
 UNCONTRACTED = "Not yet part of the published API contract; behaviour may change."
 NAT_DELETE_WAIT_ATTEMPTS = 20
 NAT_DELETE_WAIT_INTERVAL = 0.5
@@ -132,6 +136,29 @@ def _preflight(workspace_id: str, sku_code: str, resource_type: str) -> Flow[typ
             f"{exc.message} (the billing check needs the billing.read scope; pass the option that "
             "disables the billing check to skip it)"
         ).strip()
+        raise
+
+
+def _optional(flow: Flow[T], check_state: typing.Optional[bool]) -> Flow[typing.Optional[T]]:
+    """Run a pre-step read; without the read scope (403) skip it unless ``check_state=True``.
+
+    Pre-step reads only repeat checks the API also enforces, so a token that holds
+    just the write scope (as in 0.3.0) still reaches the request it asked for.
+    """
+    try:
+        return (yield from flow)
+    except ForbiddenError:
+        if check_state is True:
+            raise
+        return None
+
+
+def _required(flow: Flow[T], hint: str) -> Flow[T]:
+    """Run a read the request cannot do without; a 403 is re-raised with ``hint``."""
+    try:
+        return (yield from flow)
+    except ForbiddenError as exc:
+        exc.message = f"{exc.message} ({hint})".strip()
         raise
 
 
@@ -289,13 +316,33 @@ def delete_vpc(
     vpc_id = _pid(vpc_id, "vpc_id")
     build_nat_delete_body(public_ip_action=nat_public_ip_action, billing_catalog=nat_billing_catalog)
     if check_state is not False or delete_nat_gateway:
-        vpc = yield from get_vpc(workspace_id, vpc_id)
-        check_vpc_deletable(vpc, deleting_nat_gateway=delete_nat_gateway)
-        gateways = (vpc.get("nat_gateways") or []) if delete_nat_gateway else []
+        if delete_nat_gateway:
+            vpc: typing.Optional[typing.Dict[str, typing.Any]] = yield from _required(
+                get_vpc(workspace_id, vpc_id), "grant network.read to delete the NAT gateway first"
+            )
+        else:
+            vpc = yield from _optional(get_vpc(workspace_id, vpc_id), check_state)
+        if vpc is not None:
+            check_vpc_deletable(vpc, deleting_nat_gateway=delete_nat_gateway)
+        if check_state is not False:
+            virtual_ips = yield from _optional(list_virtual_ips_raw(workspace_id, vpc_id), check_state)
+            if virtual_ips:
+                raise IbeeValidationError(
+                    "Delete all virtual IP reservations before deleting the VPC.",
+                    code="vpc_has_virtual_ips",
+                    field="vpc_id",
+                )
+        gateways = ((vpc or {}).get("nat_gateways") or []) if delete_nat_gateway else []
         for gateway in gateways:
             gateway_id = str(record_get(gateway, "nat_gateway_id") or "")
+            uses_reserved = None
+            if nat_public_ip_action == "reserve" and not _given(nat_billing_catalog):
+                uses_reserved = yield from _gateway_uses_reserved_ip(workspace_id, gateway_id, gateway)
             body = build_nat_delete_body(
-                public_ip_action=nat_public_ip_action, billing_catalog=nat_billing_catalog, gateway=gateway
+                public_ip_action=nat_public_ip_action,
+                billing_catalog=nat_billing_catalog,
+                gateway=gateway,
+                uses_reserved_ip=uses_reserved,
             )
             yield Call("DELETE", vpc_path(vpc_id, "nat-gateways", gateway_id), params=_ws(workspace_id), json=body, parse=None)
             gone = yield from wait_for_nat_gateway_absent(
@@ -335,7 +382,7 @@ def create_vpc_subnet(
     build_subnet_create_body(name=name, cidr=cidr, auto_cidr=auto_cidr, prefix_length=prefix_length, dns=dns)
     vpc = None
     if check_state is not False:
-        vpc = yield from get_vpc(workspace_id, vpc_id)
+        vpc = yield from _optional(get_vpc(workspace_id, vpc_id), check_state)
     body = build_subnet_create_body(
         name=name, cidr=cidr, auto_cidr=auto_cidr, prefix_length=prefix_length, dns=dns, vpc=vpc
     )
@@ -375,7 +422,7 @@ def attach_vpc_node(
     )
     subnet = vpc = None
     if "requested_private_ip" in body and check_state is not False:
-        subnet = yield from get_subnet(workspace_id, vpc_id, body["subnet_id"])
+        subnet = yield from _optional(get_subnet(workspace_id, vpc_id, body["subnet_id"]), check_state)
     if check_state is True:
         vpc = yield from get_vpc(workspace_id, vpc_id)
     if subnet is not None or vpc is not None:
@@ -415,11 +462,15 @@ def create_nat_gateway(
         name=name, subnet_id=subnet_id, reserved_public_ip_id=reserved_public_ip_id, billing_catalog=billing_catalog
     )
     if check_state is not False:
-        vpc = yield from get_vpc(workspace_id, vpc_id)
-        check_nat_vpc(vpc)
-        if "reserved_public_ip_id" in body and not vpc.get("nat_gateways"):
-            reserved_ip = yield from get_reserved_ip_raw(workspace_id, body["reserved_public_ip_id"])
-            check_nat_reserved_ip(reserved_ip, vpc.get("site_id"))
+        vpc = yield from _optional(get_vpc(workspace_id, vpc_id), check_state)
+        if vpc is not None:
+            check_nat_vpc(vpc)
+            if "reserved_public_ip_id" in body and not vpc.get("nat_gateways"):
+                reserved_ip = yield from _optional(
+                    get_reserved_ip_raw(workspace_id, body["reserved_public_ip_id"]), check_state
+                )
+                if reserved_ip is not None:
+                    check_nat_reserved_ip(reserved_ip, vpc.get("site_id"))
     if "billing_catalog" not in body:
         warnings.warn(
             "The NAT gateway will be created without a billing catalog and will not be metered. "
@@ -451,7 +502,10 @@ def delete_nat_gateway(
     body = build_nat_delete_body(public_ip_action=public_ip_action, billing_catalog=billing_catalog)
     needs_gateway = body is not None and body["public_ip_action"] == "reserve" and "billing_catalog" not in body
     if check_state is True or (needs_gateway and check_state is not False):
-        gateways = yield from list_gateways_raw(workspace_id, vpc_id)
+        gateways = yield from _required(
+            list_gateways_raw(workspace_id, vpc_id),
+            "grant network.read, or pass the RESERVED-IP billing_catalog, to reserve the NAT gateway's address",
+        )
         gateway = next((g for g in gateways if g.get("nat_gateway_id") == nat_gateway_id), None)
         if gateway is None:
             raise IbeeValidationError(
@@ -459,7 +513,10 @@ def delete_nat_gateway(
                 code="nat_gateway_not_found",
                 field="nat_gateway_id",
             )
-        body = build_nat_delete_body(public_ip_action=public_ip_action, billing_catalog=billing_catalog, gateway=gateway)
+        uses_reserved = yield from _gateway_uses_reserved_ip(workspace_id, nat_gateway_id, gateway)
+        body = build_nat_delete_body(
+            public_ip_action=public_ip_action, billing_catalog=billing_catalog, gateway=gateway, uses_reserved_ip=uses_reserved
+        )
         if check_state is True:
             virtual_ips = yield from list_virtual_ips_raw(workspace_id, vpc_id)
             if any(vip.get("public_ip_id") for vip in virtual_ips):
@@ -480,6 +537,25 @@ def delete_nat_gateway(
             attempts=wait_attempts,
             interval=wait_interval,
         )
+    )
+
+
+def _gateway_uses_reserved_ip(workspace_id: str, nat_gateway_id: str, gateway: typing.Any) -> Flow[bool]:
+    """Portal ``natGatewayUsesReservedIp``: ``public_ip_source == 'reserved'``, or (legacy gateways without a
+    source) a ``public_ip_id`` that is a Reserved IP attached to this gateway."""
+    source = record_get(gateway, "public_ip_source")
+    if source:
+        return str(source) == "reserved"
+    public_ip_id = str(record_get(gateway, "public_ip_id") or "").strip()
+    if not public_ip_id:
+        return False
+    try:
+        reserved = yield from get_reserved_ip_raw(workspace_id, public_ip_id)
+    except (ForbiddenError, NotFoundError):
+        return False
+    return (
+        record_get(reserved, "attached_resource_type") == "nat_gateway"
+        and str(record_get(reserved, "attached_resource_id") or "") == nat_gateway_id
     )
 
 
@@ -510,6 +586,42 @@ def replace_nat_gateway_public_ip(
 # ---------------------------------------------------------------------------
 # Port forwarding
 # ---------------------------------------------------------------------------
+
+
+def _check_pf_target(
+    workspace_id: str,
+    vpc_id: str,
+    nat_gateway_id: str,
+    target: typing.Dict[str, typing.Any],
+    check_state: typing.Optional[bool],
+    *,
+    fill_targets: bool,
+) -> Flow[None]:
+    """Portal target check: a ``vm`` target is a NAT-connected node on this gateway; a ``vip`` target is an
+    available MetalLB virtual IP whose announcers are the ``target_vm_ids`` (filled from it when empty)."""
+    if target.get("target_type") == "vm":
+        nodes = yield from _optional(list_nodes_raw(workspace_id, vpc_id), check_state)
+        if nodes is not None:
+            check_pf_vm_target(nodes, target["internal_ip"], nat_gateway_id)
+        return None
+    virtual_ips = yield from _optional(list_virtual_ips_raw(workspace_id, vpc_id), check_state)
+    if virtual_ips is None:
+        if fill_targets and not target.get("target_vm_ids"):
+            raise IbeeValidationError(
+                "target_vm_ids is required when the virtual IPs cannot be read (grant network.read)",
+                code="invalid_target_vm_ids",
+                field="target_vm_ids",
+            )
+        return None
+    vip = find_pf_vip_target(virtual_ips, target["internal_ip"])
+    if fill_targets and not target.get("target_vm_ids"):
+        target["target_vm_ids"] = list(vip.get("announcer_vm_ids") or [])
+    if not target.get("target_vm_ids"):
+        raise IbeeValidationError(
+            "Select at least one MetalLB announcer node.", code="invalid_target_vm_ids", field="target_vm_ids"
+        )
+    check_pf_vip_announcers(list(target["target_vm_ids"]), vip)
+    return None
 
 
 def create_nat_port_forwarding_rule(
@@ -543,19 +655,13 @@ def create_nat_port_forwarding_rule(
         enabled=enabled,
     )
     if check_state is not False:
-        gateways = yield from list_gateways_raw(workspace_id, vpc_id)
-        check_gateway_available(gateways, nat_gateway_id)
-        rules = yield from list_rules_raw(workspace_id, vpc_id, nat_gateway_id)
-        check_pf_duplicate(rules, body["protocol"], body["external_port"])
-        if body["target_type"] == "vm":
-            nodes = yield from list_nodes_raw(workspace_id, vpc_id)
-            check_pf_vm_target(nodes, body["internal_ip"], nat_gateway_id)
-        else:
-            virtual_ips = yield from list_virtual_ips_raw(workspace_id, vpc_id)
-            vip = find_pf_vip_target(virtual_ips, body["internal_ip"])
-            if not body["target_vm_ids"]:
-                body["target_vm_ids"] = list(vip.get("announcer_vm_ids") or [])
-            check_pf_vip_announcers(body["target_vm_ids"], vip)
+        gateways = yield from _optional(list_gateways_raw(workspace_id, vpc_id), check_state)
+        if gateways is not None:
+            check_gateway_available(gateways, nat_gateway_id)
+        rules = yield from _optional(list_rules_raw(workspace_id, vpc_id, nat_gateway_id), check_state)
+        if rules is not None:
+            check_pf_duplicate(rules, body["protocol"], body["external_port"])
+        yield from _check_pf_target(workspace_id, vpc_id, nat_gateway_id, body, check_state, fill_targets=True)
     if body["target_type"] == "vip" and not body["target_vm_ids"]:
         raise IbeeValidationError(
             "Select at least one MetalLB announcer node.", code="invalid_target_vm_ids", field="target_vm_ids"
@@ -599,17 +705,51 @@ def update_nat_port_forwarding_rule(
     )
     if check_state is not False:
         if body.get("enabled") is True:
-            gateways = yield from list_gateways_raw(workspace_id, vpc_id)
-            check_gateway_available(gateways, nat_gateway_id)
-        if "external_port" in body or "protocol" in body:
-            rules = yield from list_rules_raw(workspace_id, vpc_id, nat_gateway_id)
-            current = next((r for r in rules if r.get("port_forward_rule_id") == rule_id), {})
-            check_pf_duplicate(
-                rules,
-                body.get("protocol") or str(current.get("protocol") or "tcp").lower(),
-                body.get("external_port", current.get("external_port")),
-                exclude_rule_id=rule_id,
+            gateways = yield from _optional(list_gateways_raw(workspace_id, vpc_id), check_state)
+            if gateways is not None:
+                check_gateway_available(gateways, nat_gateway_id)
+        target_changed = "target_type" in body or "internal_ip" in body
+        if "external_port" in body or "protocol" in body or target_changed:
+            rules = yield from _optional(list_rules_raw(workspace_id, vpc_id, nat_gateway_id), check_state)
+            current = next(
+                (
+                    r
+                    for r in rules or []
+                    if (r.get("port_forward_rule_id") or r.get("port_forwarding_rule_id") or r.get("rule_id")) == rule_id
+                ),
+                {},
             )
+            if rules is not None and ("external_port" in body or "protocol" in body):
+                check_pf_duplicate(
+                    rules,
+                    body.get("protocol") or str(current.get("protocol") or "tcp").lower(),
+                    body.get("external_port", current.get("external_port")),
+                    exclude_rule_id=rule_id,
+                )
+            if target_changed:
+                internal = body.get("internal_ip") or current.get("internal_ip")
+                merged: typing.Dict[str, typing.Any] = {
+                    "target_type": body.get("target_type") or str(current.get("target_type") or "vm").lower(),
+                    "internal_ip": internal,
+                    "target_vm_ids": body.get("target_vm_ids")
+                    if "target_vm_ids" in body
+                    else (current.get("target_vm_ids") if "target_type" not in body else None),
+                }
+                if internal:
+                    yield from _check_pf_target(
+                        workspace_id,
+                        vpc_id,
+                        nat_gateway_id,
+                        merged,
+                        check_state,
+                        fill_targets=body.get("target_type") == "vip",
+                    )
+                    if body.get("target_type") == "vip" and "target_vm_ids" not in body and merged.get("target_vm_ids"):
+                        body["target_vm_ids"] = list(merged["target_vm_ids"])
+    if body.get("target_type") == "vip" and not body.get("target_vm_ids"):
+        raise IbeeValidationError(
+            "target_vm_ids is required with target_type='vip'.", code="invalid_target_vm_ids", field="target_vm_ids"
+        )
     path = vpc_path(vpc_id, "nat-gateways", nat_gateway_id, "port-forwarding-rules", rule_id)
     return (
         yield Call("PATCH", path, params=_ws(workspace_id), json=body, parse=NatPortForwardingRule, main=True)
@@ -652,8 +792,10 @@ def create_vpc_virtual_ip(
     build_virtual_ip_create_body(subnet_id=subnet_id, private_ip=private_ip, purpose=purpose, announcer_vm_ids=announcer_vm_ids)
     subnet = nodes = None
     if check_state is not False:
-        subnet = yield from get_subnet(workspace_id, vpc_id, validate_resource_id(subnet_id, field="subnet_id"))
-        nodes = yield from list_nodes_raw(workspace_id, vpc_id)
+        subnet = yield from _optional(
+            get_subnet(workspace_id, vpc_id, validate_resource_id(subnet_id, field="subnet_id")), check_state
+        )
+        nodes = yield from _optional(list_nodes_raw(workspace_id, vpc_id), check_state)
     body = build_virtual_ip_create_body(
         subnet_id=subnet_id,
         private_ip=private_ip,
@@ -673,8 +815,23 @@ def delete_vpc_virtual_ip(
     vpc_id = _pid(vpc_id, "vpc_id")
     virtual_ip_id = _pid(virtual_ip_id, "virtual_ip_id")
     if check_state is not False:
-        vip = yield from get_vpc_virtual_ip(workspace_id=workspace_id, vpc_id=vpc_id, virtual_ip_id=virtual_ip_id)
-        check_virtual_ip_deletable(vip)
+        vip = yield from _optional(
+            get_vpc_virtual_ip(workspace_id=workspace_id, vpc_id=vpc_id, virtual_ip_id=virtual_ip_id), check_state
+        )
+        if vip is not None:
+            check_virtual_ip_deletable(vip)
+            gateways = yield from _optional(list_gateways_raw(workspace_id, vpc_id), check_state)
+            for gateway in gateways or []:
+                gateway_id = str(gateway.get("nat_gateway_id") or "")
+                if not gateway_id:
+                    continue
+                rules = yield from _optional(list_rules_raw(workspace_id, vpc_id, gateway_id), check_state)
+                if any(rule.get("internal_ip") == vip.private_ip for rule in rules or []):
+                    raise IbeeValidationError(
+                        "Delete port-forwarding rules that target this virtual IP first.",
+                        code="virtual_ip_has_rules",
+                        field="virtual_ip_id",
+                    )
     yield Call("DELETE", vpc_path(vpc_id, "virtual-ips", virtual_ip_id), params=_ws(workspace_id), parse=None, main=True)
     return None
 
@@ -722,8 +879,9 @@ def update_reserved_ip(
 def release_reserved_ip(*, workspace_id: str, reserved_ip_id: str, check_state: typing.Optional[bool] = None) -> Flow[None]:
     reserved_ip_id = _pid(reserved_ip_id, "reserved_ip_id")
     if check_state is not False:
-        current = yield from get_reserved_ip_raw(workspace_id, reserved_ip_id)
-        check_reserved_ip_releasable(current)
+        current = yield from _optional(get_reserved_ip_raw(workspace_id, reserved_ip_id), check_state)
+        if current is not None:
+            check_reserved_ip_releasable(current)
     yield Call("DELETE", reserved_ip_path(reserved_ip_id), params=_ws(workspace_id), parse=None, main=True)
     return None
 
@@ -754,8 +912,14 @@ def attach_reserved_ip(
     reserved_ip_id = _pid(reserved_ip_id, "reserved_ip_id")
     body = build_reserved_ip_target_body(vm_id=vm_id, vpc_id=vpc_id, subnet_id=subnet_id)
     if check_state is not False or detach_from_service:
-        current = yield from get_reserved_ip_raw(workspace_id, reserved_ip_id)
-        if check_reserved_ip_attachable(current, detach_from_service=detach_from_service):
+        if detach_from_service:
+            current: typing.Optional[typing.Dict[str, typing.Any]] = yield from _required(
+                get_reserved_ip_raw(workspace_id, reserved_ip_id),
+                "grant network.read to detach from a NAT gateway/VIP first",
+            )
+        else:
+            current = yield from _optional(get_reserved_ip_raw(workspace_id, reserved_ip_id), check_state)
+        if current is not None and check_reserved_ip_attachable(current, detach_from_service=detach_from_service):
             yield Call("POST", reserved_ip_path(reserved_ip_id, "detach"), params=_ws(workspace_id), parse=None)
     return (yield from _target_call(workspace_id, reserved_ip_id, "attach", body))
 
@@ -772,16 +936,17 @@ def move_reserved_ip(
     reserved_ip_id = _pid(reserved_ip_id, "reserved_ip_id")
     body = build_reserved_ip_target_body(vm_id=vm_id, vpc_id=vpc_id, subnet_id=subnet_id)
     if check_state is not False:
-        current = yield from get_reserved_ip_raw(workspace_id, reserved_ip_id)
-        check_reserved_ip_movable(current, body["vm_id"])
+        current = yield from _optional(get_reserved_ip_raw(workspace_id, reserved_ip_id), check_state)
+        if current is not None:
+            check_reserved_ip_movable(current, body["vm_id"])
     return (yield from _target_call(workspace_id, reserved_ip_id, "move", body))
 
 
 def detach_reserved_ip(*, workspace_id: str, reserved_ip_id: str, check_state: typing.Optional[bool] = None) -> Flow[ReservedIp]:
     reserved_ip_id = _pid(reserved_ip_id, "reserved_ip_id")
     if check_state is not False:
-        current = yield from get_reserved_ip_raw(workspace_id, reserved_ip_id)
-        if not check_reserved_ip_detachable(current):
+        current = yield from _optional(get_reserved_ip_raw(workspace_id, reserved_ip_id), check_state)
+        if current is not None and not check_reserved_ip_detachable(current):
             from .core.pydantic_utilities import parse_obj_as
 
             return typing.cast(ReservedIp, parse_obj_as(type_=ReservedIp, object_=current))  # type: ignore[arg-type]
@@ -824,8 +989,9 @@ def attach_reserved_ip_to_virtual_ip(
     reserved_ip_id = _pid(reserved_ip_id, "reserved_ip_id")
     body = {"virtual_ip_id": validate_resource_id(virtual_ip_id, field="virtual_ip_id")}
     if check_state is not False:
-        current = yield from get_reserved_ip_raw(workspace_id, reserved_ip_id)
-        check_reserved_ip_unattached(current)
+        current = yield from _optional(get_reserved_ip_raw(workspace_id, reserved_ip_id), check_state)
+        if current is not None:
+            check_reserved_ip_unattached(current)
     return (
         yield Call(
             "POST", reserved_ip_path(reserved_ip_id, "attach-virtual-ip"), params=_ws(workspace_id), json=body, parse=ReservedIp, main=True
@@ -889,11 +1055,16 @@ def create_firewall_group(
 ) -> Flow[FirewallGroup]:
     body = build_firewall_group_body(name=name, description=description, is_default=is_default)
     if check_state is not False:
-        groups = yield from _all_summaries(workspace_id)
-        check_firewall_name_unique(body["name"], groups)
+        groups = yield from _optional(_all_summaries(workspace_id), check_state)
+        if groups is not None:
+            check_firewall_name_unique(body["name"], groups)
     return (
         yield Call("POST", "networking/firewall-groups", params=_ws(workspace_id), json=body, parse=FirewallGroup, main=True)
     )
+
+
+def _get_firewall_group(workspace_id: str, group_id: str) -> Flow[typing.Any]:
+    return (yield Call("GET", firewall_path(group_id), params=_ws(workspace_id)))
 
 
 def create_firewall_rule(
@@ -956,8 +1127,9 @@ def update_firewall_rule(
         enabled=enabled,
     )
     if check_state is not False:
-        group = yield Call("GET", firewall_path(group_id), params=_ws(workspace_id))
-        check_rule_not_system_managed(group, rule_id)
+        group = yield from _optional(_get_firewall_group(workspace_id, group_id), check_state)
+        if group is not None:
+            check_rule_not_system_managed(group, rule_id)
     return (
         yield Call("PATCH", firewall_path(group_id, "rules", rule_id), params=_ws(workspace_id), json=body, parse=FirewallGroup, main=True)
     )
@@ -969,8 +1141,9 @@ def delete_firewall_rule(
     group_id = _pid(firewall_group_id, "firewall_group_id")
     rule_id = _pid(firewall_rule_id, "firewall_rule_id")
     if check_state is not False:
-        group = yield Call("GET", firewall_path(group_id), params=_ws(workspace_id))
-        check_rule_not_system_managed(group, rule_id, deleting=True)
+        group = yield from _optional(_get_firewall_group(workspace_id, group_id), check_state)
+        if group is not None:
+            check_rule_not_system_managed(group, rule_id, deleting=True)
     return (
         yield Call("DELETE", firewall_path(group_id, "rules", rule_id), params=_ws(workspace_id), parse=FirewallGroup, main=True)
     )
@@ -979,9 +1152,20 @@ def delete_firewall_rule(
 def attach_firewall_group(*, workspace_id: str, firewall_group_id: str, vm_id: typing.Any = None) -> Flow[FirewallGroup]:
     group_id = _pid(firewall_group_id, "firewall_group_id")
     body = {"vm_id": _pid(vm_id, "vm_id")}
-    return (
-        yield Call("POST", firewall_path(group_id, "attachments"), params=_ws(workspace_id), json=body, parse=FirewallGroup, main=True)
-    )
+    try:
+        return (
+            yield Call(
+                "POST", firewall_path(group_id, "attachments"), params=_ws(workspace_id), json=body, parse=FirewallGroup, main=True
+            )
+        )
+    except BadRequestError as exc:
+        if re.search(r"OVS/OVN", str(getattr(exc, "message", "") or exc.body or exc), re.IGNORECASE):
+            raise IbeeValidationError(
+                "This VM's network cannot take firewall groups: only VMs on an active OVS/OVN network are eligible.",
+                code="firewall_attach_unsupported",
+                field="vm_id",
+            ) from exc
+        raise
 
 
 # ---------------------------------------------------------------------------

@@ -287,15 +287,24 @@ def test_delete_vpc_refuses_with_nodes_or_nat() -> None:
 def test_delete_vpc_deletes_nat_gateway_first_and_waits() -> None:
     router = Router()
     router.add("GET", V, [(200, vpc_record(nat_gateways=[gateway()])), (200, vpc_record(nat_gateways=[gateway(status="deleting")])), (200, vpc_record())])
+    router.add("GET", f"{V}/virtual-ips", (200, []))
     router.add("DELETE", f"{V}/nat-gateways/nat-1", (204, None))
     router.add("DELETE", V, (204, None))
     assert sync_client(router).vpcs.delete_vpc("vpc-1", workspace_id=WS, delete_nat_gateway=True, wait_interval=0) is None
-    assert router.calls() == [("GET", V), ("DELETE", f"{V}/nat-gateways/nat-1"), ("GET", V), ("GET", V), ("DELETE", V)]
+    assert router.calls() == [
+        ("GET", V),
+        ("GET", f"{V}/virtual-ips"),
+        ("DELETE", f"{V}/nat-gateways/nat-1"),
+        ("GET", V),
+        ("GET", V),
+        ("DELETE", V),
+    ]
     assert router.last("DELETE", f"{V}/nat-gateways/nat-1").content == b""
 
 
 def test_delete_vpc_stops_when_nat_gateway_keeps_reconciling() -> None:
     router = Router().add("GET", V, (200, vpc_record(nat_gateways=[gateway()])))
+    router.add("GET", f"{V}/virtual-ips", (200, []))
     router.add("DELETE", f"{V}/nat-gateways/nat-1", (204, None))
     with pytest.raises(IbeeValidationError, match="still reconciling"):
         sync_client(router).vpcs.delete_vpc("vpc-1", workspace_id=WS, delete_nat_gateway=True, wait_attempts=2, wait_interval=0)
@@ -568,6 +577,7 @@ def test_create_virtual_ip_checks_subnet_and_announcers() -> None:
 
 def test_delete_virtual_ip_guard() -> None:
     router = Router().add("GET", f"{V}/virtual-ips", (200, [vip(public_ip_id="rip-1"), vip(virtual_ip_id="pvip-2")]))
+    router.add("GET", f"{V}/nat-gateways", (200, []))
     router.add("DELETE", f"{V}/virtual-ips/pvip-2", (204, None))
     client = sync_client(router)
     with pytest.raises(IbeeValidationError, match="Detach the Reserved IP before deleting this reservation"):
@@ -583,7 +593,7 @@ def test_async_vpc_flows() -> None:
     router.add("GET", V, [(200, vpc_record(nat_gateways=[gateway()])), (200, vpc_record())])
     router.add("DELETE", f"{V}/nat-gateways/nat-1", (204, None))
     router.add("DELETE", V, (204, None))
-    router.add("GET", f"{V}/virtual-ips", (200, [vip()]))
+    router.add("GET", f"{V}/virtual-ips", [(200, []), (200, [vip()])])
     router.add("POST", "networking/vpcs", (201, vpc_record(connectivity_type="private")))
 
     async def run() -> None:

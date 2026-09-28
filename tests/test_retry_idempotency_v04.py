@@ -177,7 +177,7 @@ def test_caller_key_is_validated_and_sent_unchanged() -> None:
         (lambda c: c.cloud_vms.stop_cloud_vm("0123456789abcdef01234567", workspace_id=WS), "cloud-vm-stop-0123456789abcdef01234567-"),
         (lambda c: c.gpu_vms.update_gpu_vm_access("0123456789abcdef01234567", workspace_id=WS, new_password="Pw-123456789!", check_state=False), "gpu-vm-access-0123456789abcdef01234567-"),
         (lambda c: c.cloud_vms.resize_cloud_vm_root_disk("0123456789abcdef01234567", workspace_id=WS, new_size_gb=100, check_state=False), "cloud-vm-resize-root-disk-0123456789abcdef01234567-"),
-        (lambda c: c.gpu_vms.detach_gpu_vm_volume("0123456789abcdef01234567", workspace_id=WS, volume_id="64b0000000000000000000b1", confirm_unmounted=True), "gpu-vm-detach-volume-0123456789abcdef01234567-"),
+        (lambda c: c.gpu_vms.detach_gpu_vm_volume("0123456789abcdef01234567", workspace_id=WS, volume_id="64b0000000000000000000b1", confirm_unmounted=True), "gpu-vm-detach-volume-64b0000000000000000000b1-0123456789abcde"),
     ],
 )
 def test_every_keyed_vm_route_gets_a_key(call, scope: str) -> None:

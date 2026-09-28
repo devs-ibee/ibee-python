@@ -33,6 +33,7 @@ from .types.vm_console_session import VmConsoleSession
 from .types.vm_resize_precheck import VmResizePrecheck
 from .validation import (
     IbeeValidationError,
+    apply_billing_term_to_catalog,
     assert_volume_attachable,
     assert_vm_action_allowed,
     resolve_volume_billing_catalog,
@@ -305,6 +306,12 @@ def _maybe_state(vm: typing.Any, action: str, check_state: typing.Optional[bool]
         assert_vm_action_allowed(vm, action)
 
 
+def _opt_in_state(vm: typing.Any, action: str, check_state: typing.Optional[bool]) -> None:
+    """The portal state matrix, applied only with ``check_state=True`` (0.3.0 default kept)."""
+    if check_state is True and vm is not None:
+        assert_vm_action_allowed(vm, action)
+
+
 # ---------------------------------------------------------------------------
 # VM lifecycle
 # ---------------------------------------------------------------------------
@@ -418,6 +425,8 @@ def create_vm(
 
     if billing_catalog is not None:
         catalog = validate_billing_catalog(billing_catalog, context="billing_catalog")
+        # The caller's catalog gets the chosen term too (the plan must offer it).
+        catalog = apply_billing_term_to_catalog(catalog, term, label="billing_catalog")
         attached = catalog.get("attached_skus") or {}
         if shape["os_type"] == "windows":
             if "windows_license" not in attached:
@@ -500,7 +509,7 @@ def delete_vm(
     requested = validate_requested_by(requested_by)
     action = None if public_ip_action is None else str(public_ip_action).strip().lower()
     vm = None
-    if not (check_state is False and action == "release"):
+    if not (check_state is not True and action == "release"):
         vm = yield from get_vm(family, workspace_id, vm_id)
         _maybe_state(vm, "delete", check_state)
     body = resolve_delete_public_ip_action(
@@ -631,7 +640,8 @@ def _resize_billing_catalog(
 ) -> typing.Optional[typing.Dict[str, typing.Any]]:
     term = normalize_billing_term(billing_term)
     if billing_catalog is not None:
-        return validate_billing_catalog(billing_catalog, context="billing_catalog")
+        catalog = validate_billing_catalog(billing_catalog, context="billing_catalog")
+        return apply_billing_term_to_catalog(catalog, term, label="billing_catalog")
     if plan is None:
         if term is not None:
             raise IbeeValidationError(
@@ -708,9 +718,9 @@ def resize(
     requested = validate_requested_by(requested_by)
     vm = None
     plan = None
-    if plan_id is not None or check_state is not False:
+    if plan_id is not None or check_state is True:
         vm = yield from get_vm(family, workspace_id, vm_id)
-        _maybe_state(vm, "resize", check_state)
+        _opt_in_state(vm, "resize", check_state)
     if plan_id is not None:
         plan = yield from _plan_target(family, workspace_id, vm or {}, validate_required_text(plan_id, field="plan_id"))
     target = validate_resize_target(**_explicit_or_plan(plan, cpu=cpu, ram_mb=ram_mb, disk_gb=disk_gb))
@@ -768,8 +778,9 @@ def resize_plan(
     vm = None
     plan = None
     if plan_id is not None or check_state is not False:
+        # Required pre-step: the no-op / downgrade check needs the current shape.
         vm = yield from get_vm(family, workspace_id, vm_id)
-        _maybe_state(vm, "resize_plan", check_state)
+        _opt_in_state(vm, "resize_plan", check_state)
     if plan_id is not None:
         plan = yield from _plan_target(family, workspace_id, vm or {}, validate_required_text(plan_id, field="plan_id"))
     shape = validate_resize_target(**_explicit_or_plan(plan, cpu=cpu, ram_mb=ram_mb), require_one=False)
@@ -818,8 +829,9 @@ def resize_root_disk(
     size = validate_resize_target(disk_gb=new_size_gb)["disk_gb"]
     catalog = validate_billing_catalog(billing_catalog) if billing_catalog is not None else None
     if check_state is not False:
+        # Required pre-step: the new size must exceed the current root disk.
         vm = yield from get_vm(family, workspace_id, vm_id)
-        assert_vm_action_allowed(vm, "resize_root_disk")
+        _opt_in_state(vm, "resize_root_disk", check_state)
         validate_root_disk_growth(vm, size)
     body = _compact(
         {"new_size_gb": size, "allow_online": allow_online, "billing_catalog": catalog, "requested_by": requested}
@@ -848,7 +860,8 @@ def create_console_session(
 ) -> Flow[VmConsoleSession]:
     vm_id = validate_vm_id(vm_id)
     validate_console_target(vm_type, console_type)
-    requested = validate_requested_by(requested_by)
+    # Like the TypeScript SDK, API sessions are labelled "api" unless the caller names one.
+    requested = validate_requested_by(requested_by) or "api"
     if check_state:
         vm = yield from get_vm("cloud", workspace_id, vm_id)
         assert_vm_action_allowed(vm, "console")
@@ -923,8 +936,7 @@ def attach_volume(
                 vm = yield from get_vm(family, workspace_id, vm_id)
             except ForbiddenError:
                 vm = None  # best effort: the API still checks the VM
-            if vm is not None:
-                assert_vm_action_allowed(vm, "attach_volume")
+            _opt_in_state(vm, "attach_volume", check_state)
         if volume is not None:
             validate_attach_preconditions(volume, vm)
             assert_volume_attachable(volume, family, vm)
@@ -960,9 +972,12 @@ def detach_volume(
     validate_detach_confirmation(confirm_unmounted, force)
     requested = validate_requested_by(requested_by)
     if check_state:
-        volume = yield Call("GET", f"block-storage/volumes/{_seg(volume_id)}", params=_ws(workspace_id))
+        try:
+            volume = yield Call("GET", f"block-storage/volumes/{_seg(volume_id)}", params=_ws(workspace_id))
+        except ForbiddenError:
+            volume = None  # best effort without block-storage.read: the API still checks the attachment
         attachments = record_get(volume, "attachments") or []
-        if not any(str(record_get(item, "vm_id") or "").strip() == vm_id for item in attachments):
+        if volume is not None and not any(str(record_get(item, "vm_id") or "").strip() == vm_id for item in attachments):
             raise IbeeValidationError(
                 "The volume is not attached to this VM.", code="volume_not_attached", field="volume_id"
             )
@@ -1177,9 +1192,9 @@ def restore_snapshot(
             (yield Call("GET", f"{snapshot_collection(family)}/{_seg(snapshot_set_id)}", params=_ws(workspace_id)))
         )
         validate_snapshot_ready(snapshot)
-    if check_state is not False or mode == "new_vm":
+    if check_state is True or mode == "new_vm" or (mode == "volume_only" and check_state is not False):
         vm = yield from get_vm(family, workspace_id, vm_id)
-        if check_state is not False:
+        if check_state is True:
             validate_restore_vm_state(vm)
     body: typing.Dict[str, typing.Any] = {"target_mode": mode}
     if mode == "volume_only":
@@ -1252,8 +1267,15 @@ def enable_backups(
     incremental_enabled: typing.Any = None,
     billing_catalog: typing.Any = None,
     requested_by: typing.Any = None,
+    preflight_billing: bool = False,
 ) -> Flow[BackupPolicy]:
-    """Portal enable: start from the saved policy (or the portal defaults) and apply the caller's values."""
+    """Portal enable.
+
+    Re-enable with no settings passed re-sends the saved policy unchanged (portal
+    "re-enable with existing policy"). Otherwise the caller's values are applied
+    over the portal defaults (daily at 12:00 UTC, 30-minute window, 7-day
+    retention, weekly full backup, incremental on), as the portal's save does.
+    """
     vm_id = validate_vm_id(vm_id)
     catalog = _require_catalog(billing_catalog, help_text=BACKUP_SKU_HELP, product="backup_storage")
     requested = validate_requested_by(requested_by)
@@ -1261,23 +1283,35 @@ def enable_backups(
         retention_days=retention_days, full_backup_interval_days=full_backup_interval_days, incremental_enabled=incremental_enabled
     )
     check_backup_schedule_input(schedule)
+    no_settings = all(value is None for value in (schedule, retention_days, full_backup_interval_days, incremental_enabled))
     policy = yield from _get_policy(family, workspace_id, vm_id)
-    saved = policy or {}
-    body: typing.Dict[str, typing.Any] = {
-        "schedule": validate_backup_schedule(schedule, base=saved.get("schedule")),
-        **validate_backup_retention(
-            retention_days=retention_days if retention_days is not None else saved.get("retention_days", 7),
-            full_backup_interval_days=full_backup_interval_days
-            if full_backup_interval_days is not None
-            else saved.get("full_backup_interval_days", 7),
-            incremental_enabled=incremental_enabled
-            if incremental_enabled is not None
-            else saved.get("incremental_enabled", True),
-        ),
-        "billing_catalog": catalog,
-    }
+    body: typing.Dict[str, typing.Any]
+    if policy is not None and policy.get("policy_id") and no_settings:
+        saved_schedule = policy.get("schedule")
+        body = {
+            "schedule": dict(saved_schedule) if isinstance(saved_schedule, dict) else validate_backup_schedule(None),
+            "retention_days": policy.get("retention_days") if policy.get("retention_days") is not None else 7,
+            "full_backup_interval_days": policy.get("full_backup_interval_days")
+            if policy.get("full_backup_interval_days") is not None
+            else 7,
+            "incremental_enabled": policy.get("incremental_enabled")
+            if policy.get("incremental_enabled") is not None
+            else True,
+        }
+    else:
+        body = {
+            "schedule": validate_backup_schedule(schedule),
+            **validate_backup_retention(
+                retention_days=7 if retention_days is None else retention_days,
+                full_backup_interval_days=7 if full_backup_interval_days is None else full_backup_interval_days,
+                incremental_enabled=True if incremental_enabled is None else incremental_enabled,
+            ),
+        }
+    body["billing_catalog"] = catalog
     if requested is not None:
         body["requested_by"] = requested
+    if preflight_billing:
+        yield from billing_preflight(workspace_id, sku_code=catalog.get("sku_code"), resource_type="backup")
     result = yield Call(
         "POST", f"{vm_path(family, vm_id)}/backups/enable", params=_ws(workspace_id), json=body, parse=BackupPolicy, main=True
     )
@@ -1359,6 +1393,7 @@ def create_backup_run(
     billing_catalog: typing.Any = None,
     requested_by: typing.Any = None,
     check_state: typing.Optional[bool] = None,
+    preflight_billing: bool = False,
 ) -> Flow[BackupRun]:
     vm_id = validate_vm_id(vm_id)
     catalog = _require_catalog(billing_catalog, help_text=BACKUP_SKU_HELP, product="backup_storage")
@@ -1373,6 +1408,8 @@ def create_backup_run(
                 code="backups_disabled",
                 field="vm_id",
             )
+    if preflight_billing:
+        yield from billing_preflight(workspace_id, sku_code=catalog.get("sku_code"), resource_type="backup")
     result = yield Call(
         "POST", f"{vm_path(family, vm_id)}/backups/runs", params=_ws(workspace_id), json=body, parse=BackupRun, main=True
     )
@@ -1416,7 +1453,13 @@ def list_all_backup_runs(
     search: typing.Any = None,
 ) -> Flow[BackupRunList]:
     query = validate_recovery_list_params(limit=limit, offset=offset, search=search)
-    statuses = validate_backup_statuses(status)
+    # Portal Backups page default: succeeded runs. ``"all"`` (or an empty list) lists every status.
+    if status is None:
+        statuses: typing.Optional[typing.List[str]] = ["succeeded"]
+    elif isinstance(status, str) and status.strip().lower() == "all":
+        statuses = None
+    else:
+        statuses = validate_backup_statuses(status)
     vm = validate_optional_text(vm_id, field="vm_id")
     params = _ws(workspace_id, vm_type="cloud" if family == "cloud" else None, vm_id=vm, **query)
     if statuses:

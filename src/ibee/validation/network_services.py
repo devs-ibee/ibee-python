@@ -345,7 +345,7 @@ def build_firewall_rule_body(
     """Validate a firewall rule create (``update=False``) or partial update body."""
     body: typing.Dict[str, typing.Any] = {}
     if _given(protocol) or not update:
-        value = protocol if _given(protocol) else "tcp"
+        value = _enum_text(protocol) if _given(protocol) else "tcp"
         if value not in FIREWALL_PROTOCOLS:
             raise IbeeValidationError(FIREWALL_PROTOCOL_MESSAGE, code="invalid_protocol", field="protocol")
         body["protocol"] = value
@@ -375,12 +375,12 @@ def build_firewall_rule_body(
     elif not update:
         body["remote_targets"] = ["0.0.0.0/0"]
     if _given(action) or not update:
-        value = action if _given(action) else "allow"
+        value = _enum_text(action) if _given(action) else "allow"
         if value not in FIREWALL_ACTIONS:
             raise IbeeValidationError("action must be 'allow' or 'drop'.", code="invalid_action", field="action")
         body["action"] = value
     if _given(direction) or not update:
-        value = direction if _given(direction) else "ingress"
+        value = _enum_text(direction) if _given(direction) else "ingress"
         if value not in FIREWALL_DIRECTIONS:
             raise IbeeValidationError(
                 "direction must be 'ingress' or 'egress'.", code="invalid_direction", field="direction"
@@ -389,7 +389,7 @@ def build_firewall_rule_body(
     if _given(description):
         if not isinstance(description, str):
             raise IbeeValidationError("description must be a string.", code="invalid_description", field="description")
-        if description.strip() or update:
+        if description.strip():  # blank is omitted on create and update (portal)
             body["description"] = description.strip()
     if _given(priority):
         if not isinstance(priority, numbers.Integral) or isinstance(priority, bool):
@@ -443,8 +443,14 @@ def _plain(value: typing.Any, field: str) -> typing.Dict[str, typing.Any]:
     return {key: item for key, item in record.items() if item is not None}
 
 
+def _enum_text(value: typing.Any) -> typing.Any:
+    """Enum inputs are matched trimmed and case-insensitively (like the TypeScript SDK)."""
+    value = getattr(value, "value", value)
+    return value.strip().lower() if isinstance(value, str) else value
+
+
 def _choice(value: typing.Any, choices: typing.Sequence[str], field: str) -> str:
-    text = getattr(value, "value", value)
+    text = _enum_text(value)
     if text not in choices:
         raise IbeeValidationError(
             f"{field} must be one of: {', '.join(choices)}.", code=f"invalid_{field.split('.')[-1]}", field=field

@@ -309,7 +309,7 @@ CASES = [
         path="/v1/compute/console/sessions",
         kwargs={"workspace_id": WORKSPACE_ID, "vm_id": VM_IDS["cloud"], "vm_type": "cloud"},
         query={"workspace_id": WORKSPACE_ID},
-        body={"vm_id": VM_IDS["cloud"], "vm_type": "cloud"},
+        body={"vm_id": VM_IDS["cloud"], "vm_type": "cloud", "requested_by": "api"},  # 0.4.0 default label
     ),
     OperationCase(
         resource="vm_console",

@@ -250,7 +250,8 @@ class BlockStorageClient:
         mode : typing.Optional[str]
             ``single-writer`` (default, as the portal) or ``multi-writer``.
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
-            Only needed when the token cannot read the volume (then pass ``vm_type`` too).
+            Only needed when the token cannot read the volume; ``vm_type`` then defaults to ``cloud``
+            (pass ``vm_type='gpu'`` for a GPU VM).
         wait : bool
             Poll the operation until it finishes; raises ``OperationFailedError`` or ``OperationTimeoutError``.
         """
@@ -278,7 +279,8 @@ class BlockStorageClient:
 
         Unmount the volume inside the server first and pass ``confirm_unmounted=True`` (the portal's
         mandatory tick), or ``force=True``. The VM is found from the volume's attachments when
-        ``vm_id`` is omitted. With ``wait=True`` the operation is polled and
+        ``vm_id`` is omitted. Without ``block-storage.read`` pass ``vm_id`` (and ``vm_type``, default
+        ``cloud``; pass ``'gpu'`` for a GPU VM). With ``wait=True`` the operation is polled and
         ``{"operation": ..., "volume": ...}`` is returned.
         """
         return run_sync(self._client_wrapper, sw.detach_block_volume_from_vm(**clean_kwargs(locals())), request_options)
@@ -600,7 +602,8 @@ class AsyncBlockStorageClient:
         mode : typing.Optional[str]
             ``single-writer`` (default, as the portal) or ``multi-writer``.
         billing_catalog : typing.Optional[typing.Dict[str, typing.Any]]
-            Only needed when the token cannot read the volume (then pass ``vm_type`` too).
+            Only needed when the token cannot read the volume; ``vm_type`` then defaults to ``cloud``
+            (pass ``vm_type='gpu'`` for a GPU VM).
         wait : bool
             Poll the operation until it finishes; raises ``OperationFailedError`` or ``OperationTimeoutError``.
         """
@@ -628,7 +631,8 @@ class AsyncBlockStorageClient:
 
         Unmount the volume inside the server first and pass ``confirm_unmounted=True`` (the portal's
         mandatory tick), or ``force=True``. The VM is found from the volume's attachments when
-        ``vm_id`` is omitted. With ``wait=True`` the operation is polled and
+        ``vm_id`` is omitted. Without ``block-storage.read`` pass ``vm_id`` (and ``vm_type``, default
+        ``cloud``; pass ``'gpu'`` for a GPU VM). With ``wait=True`` the operation is polled and
         ``{"operation": ..., "volume": ...}`` is returned.
         """
         return await run_async(self._client_wrapper, sw.detach_block_volume_from_vm(**clean_kwargs(locals())), request_options)

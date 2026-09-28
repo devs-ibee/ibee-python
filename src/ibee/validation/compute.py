@@ -465,8 +465,8 @@ def assert_vm_action_allowed(vm: typing.Any, action: str) -> None:
     """Portal state matrix for VM actions.
 
     ``start`` needs ``stopped``; ``stop``/``reboot``/``access``/``console`` need
-    ``running``; ``delete`` is refused while ``deleting``/``deleted`` (and while a
-    resize runs); resizes and volume attach/detach need ``running``, ``stopped`` or
+    ``running``; ``delete`` is refused while ``deleting``/``deleted`` (the API
+    answers 409 while a resize runs); resizes and volume attach/detach need ``running``, ``stopped`` or
     ``error``; snapshots are refused while the VM is changing state.
     """
     status = vm_status(vm)
@@ -476,7 +476,7 @@ def assert_vm_action_allowed(vm: typing.Any, action: str) -> None:
     elif action in ("stop", "reboot", "access", "console"):
         allowed = status == "running"
     elif action == "delete":
-        allowed = status not in {"deleting", "deleted", "resizing", "resizing_plan", "resizing_disk"}
+        allowed = status not in {"deleting", "deleted"}
     elif action in ("resize", "resize_plan", "resize_root_disk", "attach_volume", "detach_volume"):
         allowed = status in _RESIZE_STATES
     elif action == "snapshot":

@@ -101,31 +101,31 @@ detach and convert; `firewalls` and `load_balancers` provide their complete
 public lifecycle. Synchronous and async clients expose matching methods; see
 "Networking" below for the portal rules the SDK applies.
 
-To create a VM with explicit placement, pass the selected IDs. Omit `site_id`
-to let IBEE select an available site automatically:
+To create a VM, pass the site, plan and image you selected. `site_id` is
+required (list sites with `compute_catalog.list_compute_sites`); the SDK reads
+the plan and image, fills the shape from them and builds `billing_catalog` for
+the billing term, like the portal:
 
 ```python
 vm = client.cloud_vms.create_cloud_vm(
     workspace_id="907479",
-    idempotency_key="create-web-server-01",
     name="web-server-01",
     site_id="site_blr_01",
-    os_distro="ubuntu",
-    os_type="linux",
-    template_id="tmpl_ubuntu_2204",
     plan_id="plan_standard_2c_4g",
-    cpu=2,
-    ram_mb=4096,
-    disk_gb=80,
-    ssh_key_ids=["ssh_key_123"],
+    template_id="tmpl_ubuntu_2204",
+    billing_term="MONTHLY",          # default HOURLY; the plan must offer it
+    ssh_keys=["ssh-ed25519 AAAAC3Nza... me@laptop"],
     tags=["prod", "web"],
 )
 ```
 
-`plan_id` is the selected instance plan. `template_id` is the selected OS
-template or image. `ssh_key_ids` are the SSH keys to inject at first boot.
-In the current SDK, `cpu` and `ram_mb` are still required fallback fields even
-when `plan_id` is provided.
+`plan_id` is the selected instance plan and `template_id` the selected OS
+template or image. `cpu`, `ram_mb`, `disk_gb`, `os_type` and `os_distro` are
+optional: they default to the plan and image and, when given, must match them.
+For a single-request create without the plan and image lookups, pass
+`billing_catalog` together with the full shape (`cpu`, `ram_mb`, `disk_gb`,
+`os_type`, `os_distro`, and `gpu_count` for GPU VMs). With an API token prefer
+`ssh_keys` (public keys) over `ssh_key_ids`.
 
 ## Secret Store lifecycle
 
@@ -266,9 +266,9 @@ client.cloud_vms.resize_cloud_vm_plan(VM, workspace_id=WS, cpu=2, ram_mb=4096, c
 client.cloud_vms.resize_cloud_vm_root_disk(VM, workspace_id=WS, new_size_gb=100)  # grow only
 
 # Volumes: attach reads the volume's Block Storage SKU and checks state and site.
-op = client.cloud_vms.attach_cloud_vm_volume(VM, workspace_id=WS, volume_id="vol_789")
+op = client.cloud_vms.attach_cloud_vm_volume(VM, workspace_id=WS, volume_id="66f0c2a1b4d3e5f601234999")
 client.cloud_vms.wait_for_compute_operation(op.operation_id, workspace_id=WS, poll_interval=2, timeout=120)
-client.cloud_vms.detach_cloud_vm_volume(VM, workspace_id=WS, volume_id="vol_789", confirm_unmounted=True)
+client.cloud_vms.detach_cloud_vm_volume(VM, workspace_id=WS, volume_id="66f0c2a1b4d3e5f601234999", confirm_unmounted=True)
 
 # Monitoring
 events = client.cloud_vms.list_cloud_vm_events(VM, workspace_id=WS, limit=100)      # 1-500
@@ -296,7 +296,7 @@ client.cloud_vms.enable_cloud_vm_backups(
 run = client.cloud_vms.create_cloud_vm_backup_run(VM, workspace_id=WS, reason="pre-upgrade", billing_catalog=backup_sku)
 client.cloud_vms.wait_for_cloud_vm_backup_run(run.run_id, workspace_id=WS)
 points = client.cloud_vms.list_cloud_vm_backup_runs(VM, workspace_id=WS, restorable_only=True)
-workspace_backups = client.cloud_vms.list_all_cloud_vm_backup_runs(workspace_id=WS, status=["succeeded"])
+workspace_backups = client.cloud_vms.list_all_cloud_vm_backup_runs(workspace_id=WS)  # succeeded; status="all" for every run
 client.cloud_vms.restore_cloud_vm_backup(VM, workspace_id=WS, recovery_point_id=run.recovery_point_id)
 client.cloud_vms.delete_cloud_vm_backup_run(run.run_id, workspace_id=WS)
 
@@ -309,10 +309,15 @@ client.vm_console.close_vm_console_session(session.session_id, workspace_id=WS, 
 Use the corresponding `gpu_vms` methods for GPU instances. The async client
 provides the same method names and arguments.
 
-Pre-steps are read-only requests (`vm.read`, and `block_storage.read` for attach).
-Methods that read the VM for a state check take `check_state`: pass `False` to
-skip the read. `resize_*`, `update_*_access` and restores check state by default;
-start/stop/reboot, snapshot create and detach only when you pass `check_state=True`.
+Pre-steps are read-only requests (`vm.read`, and `block-storage.read` for attach).
+Methods that can check the portal's VM state rules take `check_state`. The
+state rules (for example "start needs a stopped VM") run only when you pass
+`check_state=True`, as in 0.3.0 and the TypeScript SDK. A few reads are part of
+the request itself and run by default: `update_*_access` (access rules),
+`resize_*_vm_plan` (no-op and downgrade check), `resize_*_vm_root_disk` (grow
+only), `delete_*_vm` (public IP choice; skipped for `public_ip_action="release"`) and
+attach (the volume's SKU and site). Pass `check_state=False` to skip the reads
+that are not needed to build the request.
 The rules live in `ibee.validation` (for example `validate_vm_id`,
 `resolve_delete_public_ip_action`, `build_vm_billing_catalog`,
 `validate_backup_schedule`) and can be used directly.
@@ -328,8 +333,10 @@ to snapshots.
 Networking methods apply the portal's rules before sending and raise
 `IbeeValidationError` when one fails. Methods that need the current state (for
 example the VPC's CIDR and subnets) read it first; pass `check_state=False` to
-skip those reads. Methods marked "not yet part of the published API contract"
-in their docstrings may change.
+skip those reads. When the token lacks the read scope (for example a key with
+only `network.write`) those checks are skipped and the API enforces the rules;
+pass `check_state=True` to require them. Methods marked "not yet part of the
+published API contract" in their docstrings may change.
 
 ```python
 from ibee import Ibee, IbeeValidationError
@@ -340,7 +347,7 @@ ws = "907479"
 # NAT gateway VPC. The NAT gateway is billed with the NAT-GATEWAY SKU; the public
 # API cannot list it yet, so copy billing_catalog from an existing NAT gateway.
 vpc = client.vpcs.create_vpc(
-    workspace_id=ws, name="edge", site_id="site_blr_01", connectivity_type="nat_gateway",
+    workspace_id=ws, name="edge", site_id="site_blr_01", cidr="10.20.0.0/24", connectivity_type="nat_gateway",
     nat_billing_catalog=nat_catalog,  # omitted -> IbeeBillingWarning
 )
 
@@ -485,6 +492,10 @@ Routes that honour idempotency keys, and fill one automatically when you omit it
 * block-storage volume create, attach, detach and resize (body `idempotency_key`)
   and delete (query `idempotency_key`).
 
+VM creates (cloud and GPU) are never retried automatically, even with an
+idempotency key: a replayed create is rejected as a name conflict. Retry a
+create yourself only after checking whether the first attempt created the VM.
+
 Generated keys follow the portal's format (`cloud-vm-start-<vm id>-<hash>-<random>`).
 The same key is reused on every automatic retry and is recorded on any raised
 error as `error.idempotency_key`, so you can retry the logical call safely:
@@ -492,8 +503,8 @@ error as `error.idempotency_key`, so you can retry the logical call safely:
 ```python
 from ibee import build_idempotency_key
 
-key = build_idempotency_key("cloud-vm-reboot", "vm_123")
-client.cloud_vms.reboot_cloud_vm("vm_123", workspace_id="907479", idempotency_key=key)
+key = build_idempotency_key("cloud-vm-reboot", "65f1c2a9e4b0a1b2c3d4e5f6")
+client.cloud_vms.reboot_cloud_vm("65f1c2a9e4b0a1b2c3d4e5f6", workspace_id="907479", idempotency_key=key)
 ```
 
 A caller-supplied key must be 1-128 printable ASCII characters without spaces.
@@ -510,7 +521,7 @@ attach/detach return an operation. Wait for it to finish:
 ```python
 from ibee.errors import OperationFailedError, OperationTimeoutError
 
-accepted = client.cloud_vms.start_cloud_vm("vm_123", workspace_id="907479")
+accepted = client.cloud_vms.start_cloud_vm("65f1c2a9e4b0a1b2c3d4e5f6", workspace_id="907479")
 try:
     operation = client.cloud_vms.wait_for_compute_operation(
         accepted.operation_id,

@@ -172,7 +172,9 @@ def list_secret_stores(
 def list_all_secret_stores(
     *, workspace_id: str, include_archived: typing.Any = True, page_size: typing.Any = None
 ) -> Flow[typing.List[SecretStore]]:
-    params = _ws(workspace_id, include_archived=_optional_bool(include_archived, "include_archived"))
+    # None means the documented default (archived stores included, as the portal lists them).
+    include = True if include_archived is None else _optional_bool(include_archived, "include_archived")
+    params = _ws(workspace_id, include_archived=include)
     return (yield from _collect_pages("secret-store/stores", params, "stores", _page_size(page_size), SecretStoreList))
 
 
@@ -183,11 +185,12 @@ def create_secret_store(
     description: typing.Any = None,
     preflight_billing: typing.Any = None,
     if_exists: typing.Any = None,
+    billing_preflight: typing.Any = None,
 ) -> Flow[SecretStore]:
     params = _ws(workspace_id)
     body = build_store_create_body(name, description)
     mode = validate_if_exists(if_exists)
-    if preflight_billing:
+    if preflight_billing or billing_preflight:
         yield from secret_manager_preflight(params["workspace_id"], resource_type="secret_store")
     try:
         return (yield Call("POST", "secret-store/stores", params=params, json=body, parse=SecretStore, main=True))
@@ -251,11 +254,17 @@ def list_all_secrets(
 
 
 def create_secret(
-    *, workspace_id: str, store_id: typing.Any, secret_name: typing.Any, value: typing.Any, preflight_billing: typing.Any = None
+    *,
+    workspace_id: str,
+    store_id: typing.Any,
+    secret_name: typing.Any,
+    value: typing.Any,
+    preflight_billing: typing.Any = None,
+    billing_preflight: typing.Any = None,
 ) -> Flow[Secret]:
     path, params = f"{_store(store_id)}/secrets", _ws(workspace_id)
     body = build_secret_create_body(secret_name, value)
-    if preflight_billing:
+    if preflight_billing or billing_preflight:
         yield from secret_manager_preflight(params["workspace_id"], resource_type="secret")
     return (yield Call("POST", path, params=params, json=body, parse=Secret, main=True))
 

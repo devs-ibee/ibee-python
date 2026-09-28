@@ -199,8 +199,8 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Deletes an empty bucket. Requires scope: object-storage.delete (and object-storage.read for
-        the checks).
+        Deletes an empty bucket. Requires scope: object-storage.delete; the checks read the bucket and are
+        skipped when the token lacks object-storage.read.
 
         The API refuses to delete a bucket that still holds objects (``ConflictError``); it does not
         delete contents. Like the portal, the bucket is read first: a bucket with Object Lock
@@ -570,8 +570,8 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Deletes an empty bucket. Requires scope: object-storage.delete (and object-storage.read for
-        the checks).
+        Deletes an empty bucket. Requires scope: object-storage.delete; the checks read the bucket and are
+        skipped when the token lacks object-storage.read.
 
         The API refuses to delete a bucket that still holds objects (``ConflictError``); it does not
         delete contents. Like the portal, the bucket is read first: a bucket with Object Lock

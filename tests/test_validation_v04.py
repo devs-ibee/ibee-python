@@ -298,6 +298,19 @@ def test_billable_create_body_limit_is_enforced_before_sending() -> None:
 
     check_billable_body_size("POST", "compute/cloud-vms", {"name": "x" * 1000})
     check_billable_body_size("PATCH", "compute/cloud-vms/vm-1", {"name": "x" * 70_000})
+
+
+def test_billable_body_size_counts_the_larger_legacy_encoding() -> None:
+    from ibee.validation import encoded_json_size
+
+    # 11,000 non-ASCII chars: ~33 KB as compact UTF-8, ~66 KB as ASCII-escaped JSON (httpx < 0.28).
+    body = {"name": "\u00e9" * 11_000}
+    compact = len(json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+    assert compact < 65_536
+    assert encoded_json_size(body) == len(json.dumps(body).encode("utf-8")) > 65_536
+    with pytest.raises(IbeeValidationError) as info:
+        check_billable_body_size("POST", "compute/cloud-vms", body)
+    assert info.value.code == "request_body_too_large"
     with pytest.raises(IbeeValidationError):
         check_billable_body_size("POST", "/v1/cdn/distributions/d-1/custom-domains", {"d": "x" * 70_000})
 
