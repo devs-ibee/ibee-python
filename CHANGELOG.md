@@ -17,7 +17,16 @@ auto-paging.
   `BillingForbiddenError`, `BillingDeniedError`, `BillingAdmissionError`,
   `PayloadTooLargeError`, `UnprocessableEntityError`, `OrganizationSuspendedError`,
   `TooManyRequestsError`, `InternalServerError`, `GatewayTimeoutError`, plus
-  `ibee.errors.error_from_response` and `ibee.errors.is_payment_block_error`.
+  `ibee.errors.error_from_response` and `ibee.errors.is_payment_block_error`
+  (billing error classes, then HTTP 402, then a structured code or billing
+  reason; the server message is checked for whole phrases such as "insufficient
+  balance" only when the error has no code of its own, and a missing scope is
+  never a payment wall).
+- A canonical table of the SDK-raised error codes (shared with the TypeScript
+  SDK) in the README. "Nothing to update" is always `no_changes`; an attached
+  Reserved IP is always `reserved_ip_attached`; a missing Reserved IP for public
+  IP connectivity is always `reserved_ip_required`; `rules`/`custom_domain` on an
+  L4 load balancer raise `invalid_rules`/`invalid_custom_domain`.
 - `ApiError` now exposes `code` (stable, lower-case), `raw_code`, `message`,
   `reason`, `raw_body`, `details`, `required_scope`, `billing_sku_code`,
   `admission_context_id`, `request_id`, `retry_after`, `idempotency_key` and
@@ -89,7 +98,9 @@ auto-paging.
   `list_*_vm_backup_runs`; `preflight_billing` on snapshot create.
 - New: `delete_cloud_vm_backup_run` / `delete_gpu_vm_backup_run` and
   `list_all_cloud_vm_backup_runs` / `list_all_gpu_vm_backup_runs` (not yet part
-  of the published API contract); waiters `wait_for_*_vm_snapshot`,
+  of the published API contract; they need the backend release that provides
+  them, available on the development environment today; production answers
+  404/405 until then); waiters `wait_for_*_vm_snapshot`,
   `wait_for_*_vm_snapshot_restore`, `wait_for_*_vm_backup_restore`,
   `wait_for_*_vm_backup_run`; `wait_for_operation` alias.
 - `attach_*_vm_volume` reads the volume and sends its Block Storage SKU as
@@ -171,7 +182,8 @@ auto-paging.
     `next_continuation_token`) and `object_storage.delete_s3credential`, an alias
     of `revoke_s3credential` named after what the API does (a permanent delete).
   - `create_bucket(preflight_billing=)`, `create_s3credential(preflight_billing=)`,
-    `cdn.create_cdn_distribution(preflight_billing=, check_origin_public=)` and
+    `cdn.create_cdn_distribution(preflight_billing=, check_origin_public=)` (the
+    origin read is best effort: a 404 or 403 skips the check) and
     `cdn.create_cdn_custom_domain(preflight_billing=)` run the portal's billing
     check first (OBJECTST-STD; CDN without a SKU; CUSTOMDO-STD with 19 900 minor
     units).
@@ -279,6 +291,11 @@ auto-paging.
 - `detach_*_vm_volume` needs `confirm_unmounted=True` or `force=True`.
 - Snapshot restores send `auto_start=True` by default; backup restores no longer
   send `auto_start` (the API ignores it).
+- `restore_*_vm_backup` always reads the backup run (`recovery_point_id` may be a
+  run ID or a recovery point ID), requires it to have succeeded, and sends the
+  recovery point ID the run reports (resolved like the portal: the run's
+  `recovery_point_id`, its metadata, then its storage prefix). `check_state`
+  no longer skips this read.
 - Console sessions are cloud-only (`vm_type="gpu"` is rejected locally).
 - `get_*_vm_bandwidth` defaults `month` to the current UTC month.
 - VM creates are never retried automatically, even with an idempotency key.
@@ -295,8 +312,12 @@ auto-paging.
   working); with `check_state=True` a 403 is raised. Reads the request needs
   (`attach_reserved_ip(detach_from_service=True)`, `delete_vpc(delete_nat_gateway=True)`,
   reserving a NAT address without a catalog) raise a 403 that names the scope.
-- `delete_vpc` refuses while virtual IPs exist, and `delete_vpc_virtual_ip`
-  refuses while a port-forwarding rule targets the virtual IP.
+- `delete_vpc` refuses while virtual IPs exist (checked with the node and NAT
+  checks, by default and with `delete_nat_gateway=True`, before any NAT gateway
+  is deleted), and `delete_vpc_virtual_ip` refuses while a port-forwarding rule
+  targets the virtual IP. When the NAT gateway is still listed after the wait,
+  `delete_vpc` raises `IbeeError` with code `nat_gateway_deleting` (not an
+  `IbeeValidationError`: the gateway delete was accepted).
 - `update_nat_port_forwarding_rule` checks a changed target like create (a NAT
   node for `vm`, an available MetalLB VIP for `vip`) and fills `target_vm_ids`
   from the VIP's announcers; `target_type="vip"` without them raises when the

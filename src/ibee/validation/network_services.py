@@ -755,8 +755,11 @@ def build_lb_body(
         body["observability"] = validate_lb_observability(observability)
     if layer == "l4":
         if _given(rules) or (custom_domain is not ... and custom_domain is not None):
+            offending = "rules" if _given(rules) else "custom_domain"
             raise IbeeValidationError(
-                "custom_domain and rules are only available on L7 load balancers.", code="invalid_field", field="rules"
+                "custom_domain and rules are only available on L7 load balancers.",
+                code=f"invalid_{offending}",
+                field=offending,
             )
     else:
         if _given(rules):

@@ -178,7 +178,7 @@ def test_vpc_placement_rules_and_reserved_ip_sku() -> None:
             network_connectivity="public_ip",
             reserved_public_ip_id="rip-1",
         )
-    assert info.value.code == "reserved_ip_in_use"
+    assert info.value.code == "reserved_ip_attached"
 
     router = router_for({"connectivity_type": "private"}, {"site_id": "site-1", "billing_catalog": {"sku_id": 3, "sku_code": "rip-std"}})
     _create(sync_client(router), **network, network_connectivity="public_ip", reserved_public_ip_id="rip-1", firewall_group_ids=["fw-1"])

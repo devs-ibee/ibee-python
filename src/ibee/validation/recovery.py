@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime as dt
 import math
 import numbers
+import re
 import typing
 
 from . import IbeeValidationError, validate_limit, validate_offset, validate_search
@@ -562,6 +563,43 @@ def validate_backup_ready(run: typing.Any) -> None:
         )
 
 
+_RECOVERY_POINT_PATH = re.compile(r"/recovery-points/([^/]+)", re.IGNORECASE)
+_RECOVERY_POINT_TOKEN = re.compile(r"\b(rp-[^/\s]+)", re.IGNORECASE)
+
+
+def _recovery_point_from_path(value: typing.Any) -> str:
+    path = str(value or "").strip()
+    if not path:
+        return ""
+    match = _RECOVERY_POINT_PATH.search(path) or _RECOVERY_POINT_TOKEN.search(path)
+    return match.group(1).strip() if match else ""
+
+
+def resolve_backup_recovery_point_id(run: typing.Any) -> str:
+    """The recovery point ID of a backup run, resolved exactly like the portal's restore dialog.
+
+    Order: ``recovery_point_id``; ``metadata.recovery_point_id`` / ``metadata.recoveryPointId``; the
+    ``/recovery-points/<id>`` segment (or an ``rp-...`` token) of ``r2_prefix``, then of
+    ``metadata.r2_manifest_key``, then of ``metadata.r2_prefix``. Raises ``recovery_point_not_ready``
+    ("Selected backup is missing recovery point id") when none is found.
+    """
+    direct = str(record_get(run, "recovery_point_id") or "").strip()
+    if direct:
+        return direct
+    metadata = record_get(run, "metadata")
+    metadata = metadata if isinstance(metadata, typing.Mapping) else {}
+    from_metadata = str(metadata.get("recovery_point_id") or metadata.get("recoveryPointId") or "").strip()
+    if from_metadata:
+        return from_metadata
+    for candidate in (record_get(run, "r2_prefix"), metadata.get("r2_manifest_key"), metadata.get("r2_prefix")):
+        found = _recovery_point_from_path(candidate)
+        if found:
+            return found
+    raise IbeeValidationError(
+        "Selected backup is missing recovery point id", code="recovery_point_not_ready", field="recovery_point_id"
+    )
+
+
 def validate_restore_vm_state(vm: typing.Any) -> None:
     status = str(getattr(record_get(vm, "status"), "value", record_get(vm, "status")) or "").strip().lower()
     if status not in ("running", "stopped"):
@@ -670,6 +708,7 @@ __all__ = [
     "recovery_default_vm_name",
     "recovery_min_root_disk_gb",
     "recovery_target_volume_names",
+    "resolve_backup_recovery_point_id",
     "restore_target_from_plan",
     "select_restore_plan",
     "validate_attach_mode",

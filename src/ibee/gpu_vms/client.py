@@ -1916,7 +1916,8 @@ class GpuVmsClient:
             The workspace ID to scope this request to.
 
         recovery_point_id : str
-            Recovery point (or run) ID of a succeeded backup.
+            Recovery point ID or run ID of a succeeded backup. The run is read and the recovery point ID it
+            reports (``recovery_point_id``, else from its metadata or storage prefix, as in the portal) is sent.
 
         target_mode : typing.Optional[RecoveryRestoreRequestTargetMode]
             ``replace`` (default), ``new_vm`` or ``volume_only``.
@@ -2005,8 +2006,8 @@ class GpuVmsClient:
             new_vm: names for restored data volumes, keyed by captured source volume ID.
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the backup run for the ready rule (always read for ``new_vm`` and
-            ``volume_only``).
+            Kept for compatibility; the backup run is always read (it must have succeeded, and the
+            recovery point ID it reports is what is sent).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2281,7 +2282,9 @@ class GpuVmsClient:
         """
         Lists backup runs across the workspace (the portal Backups page). Requires scope: vm.read.
 
-        Not yet part of the published API contract; behaviour may change.
+        Needs the backend release that provides this operation: currently available on the development
+        environment; production returns 404/405 until then. Not yet part of the published API contract;
+        behaviour may change.
 
         Parameters
         ----------
@@ -2324,8 +2327,10 @@ class GpuVmsClient:
         """
         Deletes a completed backup (recovery point). Requires scope: vm.write.
 
-        Not yet part of the published API contract; behaviour may change. The API refuses backups that a newer
-        incremental depends on, or that are being restored.
+        Needs the backend release that provides this operation: currently available on the development
+        environment; production returns 404/405 until then. Not yet part of the published API contract;
+        behaviour may change.
+        The API refuses backups that a newer incremental depends on, or that are being restored.
 
         Parameters
         ----------
@@ -4371,7 +4376,8 @@ class AsyncGpuVmsClient:
             The workspace ID to scope this request to.
 
         recovery_point_id : str
-            Recovery point (or run) ID of a succeeded backup.
+            Recovery point ID or run ID of a succeeded backup. The run is read and the recovery point ID it
+            reports (``recovery_point_id``, else from its metadata or storage prefix, as in the portal) is sent.
 
         target_mode : typing.Optional[RecoveryRestoreRequestTargetMode]
             ``replace`` (default), ``new_vm`` or ``volume_only``.
@@ -4460,8 +4466,8 @@ class AsyncGpuVmsClient:
             new_vm: names for restored data volumes, keyed by captured source volume ID.
 
         check_state : typing.Optional[bool]
-            Default ``True``: read the backup run for the ready rule (always read for ``new_vm`` and
-            ``volume_only``).
+            Kept for compatibility; the backup run is always read (it must have succeeded, and the
+            recovery point ID it reports is what is sent).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4741,7 +4747,9 @@ class AsyncGpuVmsClient:
         """
         Lists backup runs across the workspace (the portal Backups page). Requires scope: vm.read.
 
-        Not yet part of the published API contract; behaviour may change.
+        Needs the backend release that provides this operation: currently available on the development
+        environment; production returns 404/405 until then. Not yet part of the published API contract;
+        behaviour may change.
 
         Parameters
         ----------
@@ -4784,8 +4792,10 @@ class AsyncGpuVmsClient:
         """
         Deletes a completed backup (recovery point). Requires scope: vm.write.
 
-        Not yet part of the published API contract; behaviour may change. The API refuses backups that a newer
-        incremental depends on, or that are being restored.
+        Needs the backend release that provides this operation: currently available on the development
+        environment; production returns 404/405 until then. Not yet part of the published API contract;
+        behaviour may change.
+        The API refuses backups that a newer incremental depends on, or that are being restored.
 
         Parameters
         ----------

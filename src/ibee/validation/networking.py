@@ -692,7 +692,7 @@ def build_node_attach_body(
             if vpc_type == "private" and "reserved_public_ip_id" not in body:
                 raise IbeeValidationError(
                     "public_ip connectivity in a private VPC needs reserved_public_ip_id.",
-                    code="reserved_public_ip_required",
+                    code="reserved_ip_required",
                     field="reserved_public_ip_id",
                 )
     return body
