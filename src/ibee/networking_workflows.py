@@ -18,6 +18,7 @@ from urllib.parse import quote
 from .compute_workflows import RESPONSE, Call, Flow, Sleep, billing_preflight
 from .errors.bad_request_error import BadRequestError
 from .errors.forbidden_error import ForbiddenError
+from .errors.ibee_error import IbeeError
 from .errors.networking_errors import as_reserved_ip_target_error, is_vpc_allocation_required
 from .errors.not_found_error import NotFoundError
 from .types.firewall_group import FirewallGroup
@@ -312,7 +313,13 @@ def delete_vpc(
     wait_attempts: int = NAT_DELETE_WAIT_ATTEMPTS,
     wait_interval: float = NAT_DELETE_WAIT_INTERVAL,
 ) -> Flow[None]:
-    """Portal VPC delete: refuse while nodes are attached; optionally delete the NAT gateway first."""
+    """Portal VPC delete with the API's dependency rules.
+
+    The dependency checks (attached nodes, NAT gateway, virtual IPs; the API refuses the delete with
+    409 for each) run together: by default and whenever ``delete_nat_gateway`` is set.
+    ``check_state=False`` without ``delete_nat_gateway`` skips them all. Without the read scope the
+    default checks are skipped (``check_state=True`` re-raises the 403).
+    """
     vpc_id = _pid(vpc_id, "vpc_id")
     build_nat_delete_body(public_ip_action=nat_public_ip_action, billing_catalog=nat_billing_catalog)
     if check_state is not False or delete_nat_gateway:
@@ -324,7 +331,7 @@ def delete_vpc(
             vpc = yield from _optional(get_vpc(workspace_id, vpc_id), check_state)
         if vpc is not None:
             check_vpc_deletable(vpc, deleting_nat_gateway=delete_nat_gateway)
-        if check_state is not False:
+            # Checked before any NAT gateway is deleted, so a VPC that would still be refused is left intact.
             virtual_ips = yield from _optional(list_virtual_ips_raw(workspace_id, vpc_id), check_state)
             if virtual_ips:
                 raise IbeeValidationError(
@@ -353,10 +360,10 @@ def delete_vpc(
                 interval=wait_interval,
             )
             if not gone:
-                raise IbeeValidationError(
+                # Server state, not a client input error: the gateway DELETE was accepted.
+                raise IbeeError(
                     "The NAT gateway deletion is still reconciling; retry deleting the VPC shortly.",
                     code="nat_gateway_deleting",
-                    field="vpc_id",
                 )
     yield Call("DELETE", vpc_path(vpc_id), params=_ws(workspace_id), parse=None, main=True)
     return None

@@ -238,9 +238,11 @@ class VpcsClient:
         """
         Deletes a VPC and its subnets, with the portal's dependency checks. Requires scope: network.write.
 
-        The VPC is read first: deleting is refused while nodes are attached, and while a NAT gateway exists unless
+        The VPC and its virtual IPs are read first (the API refuses the delete with 409 in each case): deleting is
+        refused while nodes are attached, while virtual IP reservations exist, and while a NAT gateway exists unless
         ``delete_nat_gateway=True``, which deletes the gateway first (like the portal's 'Delete NAT Gateway first'
-        button) and waits until it is gone. The API also refuses (409) while virtual IPs exist.
+        button) and waits until it is gone. If it is still listed after ``wait_attempts`` polls, ``IbeeError`` with
+        code ``nat_gateway_deleting`` is raised (the gateway delete was accepted; retry the VPC delete shortly).
 
         Parameters
         ----------
@@ -251,7 +253,8 @@ class VpcsClient:
             The workspace ID to scope this request to.
 
         check_state : typing.Optional[bool]
-            ``False`` skips reading the VPC first (plain delete).
+            ``False`` skips the dependency checks (plain delete); with ``delete_nat_gateway`` they still run.
+            ``True`` raises a 403 instead of skipping them when the token lacks ``network.read``.
 
         delete_nat_gateway : bool
             Delete the VPC's NAT gateway first and wait for it to disappear.
@@ -1529,9 +1532,11 @@ class AsyncVpcsClient:
         """
         Deletes a VPC and its subnets, with the portal's dependency checks. Requires scope: network.write.
 
-        The VPC is read first: deleting is refused while nodes are attached, and while a NAT gateway exists unless
+        The VPC and its virtual IPs are read first (the API refuses the delete with 409 in each case): deleting is
+        refused while nodes are attached, while virtual IP reservations exist, and while a NAT gateway exists unless
         ``delete_nat_gateway=True``, which deletes the gateway first (like the portal's 'Delete NAT Gateway first'
-        button) and waits until it is gone. The API also refuses (409) while virtual IPs exist.
+        button) and waits until it is gone. If it is still listed after ``wait_attempts`` polls, ``IbeeError`` with
+        code ``nat_gateway_deleting`` is raised (the gateway delete was accepted; retry the VPC delete shortly).
 
         Parameters
         ----------
@@ -1542,7 +1547,8 @@ class AsyncVpcsClient:
             The workspace ID to scope this request to.
 
         check_state : typing.Optional[bool]
-            ``False`` skips reading the VPC first (plain delete).
+            ``False`` skips the dependency checks (plain delete); with ``delete_nat_gateway`` they still run.
+            ``True`` raises a 403 instead of skipping them when the token lacks ``network.read``.
 
         delete_nat_gateway : bool
             Delete the VPC's NAT gateway first and wait for it to disappear.

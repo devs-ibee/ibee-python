@@ -188,7 +188,7 @@ def build_store_update_body(name: typing.Any = None, description: typing.Any = N
         body["description"] = normalized_description
     if not body:
         raise IbeeValidationError(
-            "Provide name or description to update the store.", code="empty_update", field="name"
+            "Provide name or description to update the store.", code="no_changes", field="name"
         )
     assert_secret_store_body_size(body)
     return body
@@ -590,7 +590,7 @@ def build_scope_update_body(
     if not body:
         raise IbeeValidationError(
             "Provide at least one of access_mode, allow_version_read, allow_rollback or allow_destroy.",
-            code="empty_update",
+            code="no_changes",
             field="access_mode",
         )
     validate_scope_permissions(body.get("access_mode"), body.get("allow_rollback"), body.get("allow_destroy"))

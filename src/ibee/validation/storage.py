@@ -644,7 +644,7 @@ def build_cdn_distribution_update_body(
         body["enabled"] = _bool(enabled, field="enabled")
     if not body:
         raise IbeeValidationError(
-            "Provide at least one of name, cache_policy, enabled", code="empty_update", field=None
+            "Provide at least one of name, cache_policy, enabled", code="no_changes", field=None
         )
     return body
 

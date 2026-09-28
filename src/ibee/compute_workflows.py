@@ -36,6 +36,7 @@ from .validation import (
     apply_billing_term_to_catalog,
     assert_volume_attachable,
     assert_vm_action_allowed,
+    resolve_backup_recovery_point_id,
     resolve_volume_billing_catalog,
     validate_block_volume_id,
     build_vm_billing_catalog,
@@ -1498,7 +1499,11 @@ def restore_backup(
     check_state: typing.Optional[bool] = None,
     **targets: typing.Any,
 ) -> Flow[RecoveryRestore]:
-    """Portal backup restore (replace, new VM, or one volume). ``auto_start`` is not sent (backups ignore it)."""
+    """Portal backup restore (replace, new VM, or one volume). ``auto_start`` is not sent (backups ignore it).
+
+    The run is always read first to check it succeeded and to send the recovery point ID it reports
+    (``check_state`` does not skip this read).
+    """
     vm_id = validate_vm_id(vm_id)
     recovery_point_id = validate_required_text(recovery_point_id, field="recovery_point_id")
     mode = validate_restore_mode(target_mode)
@@ -1514,16 +1519,14 @@ def restore_backup(
         )
     )
     validate_restore_mode_combination(mode, fields)
-    run: typing.Dict[str, typing.Any] = {}
-    if check_state is not False or mode != "replace":
-        run = _recovery_point_dict(
-            (
-                yield Call(
-                    "GET", f"{backup_collection(family)}/runs/{_seg(recovery_point_id)}", params=_ws(workspace_id)
-                )
-            )
-        )
-        validate_backup_ready(run)
+    # Always read the run (the lookup accepts a run ID or a recovery point ID): only a succeeded
+    # backup can be restored, and the restore needs the recovery point ID the run reports, resolved
+    # like the portal's restore dialog.
+    run = _recovery_point_dict(
+        (yield Call("GET", f"{backup_collection(family)}/runs/{_seg(recovery_point_id)}", params=_ws(workspace_id)))
+    )
+    validate_backup_ready(run)
+    recovery_point_id = resolve_backup_recovery_point_id(run)
     body: typing.Dict[str, typing.Any] = {"recovery_point_id": recovery_point_id, "target_mode": mode}
     if mode == "volume_only":
         selected = str(selected_volume_id).strip()

@@ -10,7 +10,7 @@ import pytest
 
 from _compute_fixtures import WS, Router, async_client, async_transport, sync_client
 from ibee import IbeeBillingWarning, IbeeValidationError
-from ibee.errors import BillingDeniedError, ForbiddenError, NotFoundError
+from ibee.errors import BillingDeniedError, ForbiddenError, IbeeError, NotFoundError
 from ibee.validation import (
     default_nat_delete_ip_action,
     network_billing_catalog,
@@ -306,8 +306,11 @@ def test_delete_vpc_stops_when_nat_gateway_keeps_reconciling() -> None:
     router = Router().add("GET", V, (200, vpc_record(nat_gateways=[gateway()])))
     router.add("GET", f"{V}/virtual-ips", (200, []))
     router.add("DELETE", f"{V}/nat-gateways/nat-1", (204, None))
-    with pytest.raises(IbeeValidationError, match="still reconciling"):
+    with pytest.raises(IbeeError, match="still reconciling") as info:
         sync_client(router).vpcs.delete_vpc("vpc-1", workspace_id=WS, delete_nat_gateway=True, wait_attempts=2, wait_interval=0)
+    # Server state, not an input error: same class and code as the TypeScript SDK.
+    assert type(info.value) is IbeeError and not isinstance(info.value, IbeeValidationError)
+    assert info.value.code == "nat_gateway_deleting"
     assert ("DELETE", V) not in router.calls()
 
 

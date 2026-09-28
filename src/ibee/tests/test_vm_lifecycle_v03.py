@@ -281,8 +281,15 @@ def _vm_cases(family: str) -> list[OperationCase]:
             "POST",
             f"{vm_path}/backups/actions/restore",
             args=(vm_id,),
-            kwargs={"recovery_point_id": "recovery-point-1", "target_mode": "replace", "check_state": False},
+            kwargs={"recovery_point_id": "run-1", "target_mode": "replace", "check_state": False},
             body={"recovery_point_id": "recovery-point-1", "target_mode": "replace"},
+            # 0.4.0: the run is always read; the recovery point ID it reports is sent (portal behaviour).
+            presteps={
+                ("GET", f"{backup_collection}/runs/run-1"): (
+                    200,
+                    {"run_id": "run-1", "status": "succeeded", "recovery_point_id": "recovery-point-1"},
+                )
+            },
         ),
         case(
             f"get_{method_prefix}_backup_run",

@@ -699,8 +699,10 @@ def create_cdn_distribution(
     if check_origin_public and body["origin_type"] == "bucket":
         try:
             bucket = yield Call("GET", _bucket_path(body["origin_id"]), params=_ws(workspace_id))
-        except NotFoundError:
-            bucket = None  # origin_id may be a bucket id rather than a name; the API checks it
+        except (NotFoundError, ForbiddenError):
+            # Best effort: origin_id may be a bucket id rather than a name (404), or the token may lack
+            # object-storage.read (403); the API checks the origin either way.
+            bucket = None
         if bucket is not None:
             check_cdn_origin_public(bucket)
     if preflight_billing:

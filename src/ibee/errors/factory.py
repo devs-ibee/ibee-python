@@ -211,30 +211,88 @@ def error_from_response(
     return error
 
 
+#: Structured codes (error ``code``, operation ``error_code``) that mean a payment wall.
+PAYMENT_BLOCK_CODES = frozenset(
+    {"billing_denied", "payment_required", "insufficient_balance", "insufficient_funds"} | _DENIED_REASONS
+)
+#: Conservative text fallback, used only when an error carries no structured code: whole phrases,
+#: never a bare "insufficient" (``insufficient_scope``, "insufficient capacity") or "balance" ("load balancer").
+PAYMENT_BLOCK_PHRASES = (
+    "insufficient balance",
+    "insufficient wallet balance",
+    "insufficient funds",
+    "insufficient credit",
+    "payment required",
+    "add a payment method",
+    "top up",
+    "top-up",
+)
+
+
+def _lookup(error: typing.Any, *names: str) -> typing.Any:
+    for name in names:
+        value = error.get(name) if isinstance(error, typing.Mapping) else getattr(error, name, None)
+        if value is not None:
+            return value
+    return None
+
+
+def _norm(value: typing.Any) -> str:
+    return str(getattr(value, "value", value) or "").strip().lower()
+
+
 def is_payment_block_error(error: typing.Any) -> bool:
     """Whether an exception is a billing/payment wall rather than an ordinary failure.
 
-    True for ``BillingDeniedError``/``BillingForbiddenError``, any HTTP 402, codes
-    ``billing_denied``/``insufficient_balance``/``insufficient_funds``, or a message
-    mentioning "insufficient", "payment required", "add a payment method" or "top up".
+    Checked in order (the TypeScript SDK applies the same rules):
+
+    1. ``BillingDeniedError`` / ``BillingForbiddenError`` -> ``True``.
+    2. A missing scope (``InsufficientScopeError`` or code ``insufficient_scope``) -> ``False``.
+    3. HTTP status 402 -> ``True``.
+    4. A structured code (``code``, or an operation's ``error_code``) or billing reason (``reason``,
+       parsed from ``billing_reason``) of ``billing_denied``, ``payment_required``,
+       ``insufficient_balance``, ``insufficient_funds`` or a billing denial reason such as
+       ``initial_topup_required`` or ``credit_limit_exceeded`` -> ``True``.
+    5. An API error whose body carried its own code -> ``False`` (the code is authoritative).
+    6. Otherwise only the server's (or exception's) message is checked, for whole phrases such as
+       "insufficient balance", "payment required", "add a payment method" or "top up".
     """
     if error is None:
         return False
     if isinstance(error, (BillingDeniedError, BillingForbiddenError)):
         return True
-    status = getattr(error, "status_code", None)
-    if status is None:
-        status = getattr(error, "status", None)
+    code = _norm(_lookup(error, "code"))
+    if isinstance(error, InsufficientScopeError) or code == "insufficient_scope":
+        return False
+    status = _lookup(error, "status_code", "status")
     if status == 402:
         return True
-    code = str(getattr(error, "code", "") or "").strip().lower()
-    if code in ("billing_denied", "insufficient_balance", "insufficient_funds"):
+    reason = _norm(_lookup(error, "reason", "billing_reason"))
+    error_code = _norm(_lookup(error, "error_code"))
+    if code in PAYMENT_BLOCK_CODES or error_code in PAYMENT_BLOCK_CODES or reason in PAYMENT_BLOCK_CODES:
         return True
-    message = str(getattr(error, "message", None) or (error.args[0] if getattr(error, "args", None) else "") or "")
-    lowered = message.lower()
-    return any(
-        text in lowered for text in ("insufficient", "payment required", "add a payment method", "top up")
-    )
+    if isinstance(error, ApiError):
+        if getattr(error, "raw_code", None):
+            return False
+        message = getattr(error, "message", None)
+        if message == _fallback_message(error.status_code):
+            message = None  # the SDK's placeholder, not a server message
+    else:
+        message = _lookup(error, "message")
+        if message is None and isinstance(error, BaseException) and error.args:
+            message = error.args[0]
+    lowered = " ".join(str(message or "").lower().split())
+    return any(phrase in lowered for phrase in PAYMENT_BLOCK_PHRASES)
 
 
-__all__ = ["create_type_for_path", "error_from_response", "is_payment_block_error"]
+def _fallback_message(status_code: typing.Optional[int]) -> str:
+    return f"IBEE API error {status_code}" if status_code is not None else "IBEE API error"
+
+
+__all__ = [
+    "PAYMENT_BLOCK_CODES",
+    "PAYMENT_BLOCK_PHRASES",
+    "create_type_for_path",
+    "error_from_response",
+    "is_payment_block_error",
+]

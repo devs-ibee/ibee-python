@@ -929,7 +929,7 @@ def validate_vm_network_placement(
         if _text(record_get(reserved_ip, key)):
             raise IbeeValidationError(
                 "The Reserved IP is already attached to another resource.",
-                code="reserved_ip_in_use",
+                code="reserved_ip_attached",
                 field="reserved_public_ip_id",
             )
     from .billing_catalog import require_billing_sku

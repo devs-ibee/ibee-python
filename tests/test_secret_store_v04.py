@@ -212,7 +212,7 @@ def test_store_name_and_update_rules() -> None:
     assert build_store_update_body(name="---") == {"name": "---"}  # the key is not regenerated on rename
     with pytest.raises(IbeeValidationError) as info:
         build_store_update_body()
-    assert info.value.code == "empty_update"
+    assert info.value.code == "no_changes"
 
 
 def test_paging_versions_cas_and_ids() -> None:

@@ -93,8 +93,8 @@ class CdnClient:
         cache_policy : str
             ``static-assets`` (default), ``media``, ``short`` or ``no-cache``.
         check_origin_public : typing.Optional[bool]
-            ``True`` reads the bucket first and refuses a private one (needs ``object-storage.read``;
-            skipped when no bucket has that name).
+            ``True`` reads the bucket first and refuses a private one. Best effort: skipped when no bucket has
+            that name (404) or the token lacks ``object-storage.read`` (403); the API still checks the origin.
         preflight_billing : typing.Optional[bool]
             ``True`` runs the portal's billing eligibility check first (needs ``billing.read``).
         """
@@ -347,8 +347,8 @@ class AsyncCdnClient:
         cache_policy : str
             ``static-assets`` (default), ``media``, ``short`` or ``no-cache``.
         check_origin_public : typing.Optional[bool]
-            ``True`` reads the bucket first and refuses a private one (needs ``object-storage.read``;
-            skipped when no bucket has that name).
+            ``True`` reads the bucket first and refuses a private one. Best effort: skipped when no bucket has
+            that name (404) or the token lacks ``object-storage.read`` (403); the API still checks the origin.
         preflight_billing : typing.Optional[bool]
             ``True`` runs the portal's billing eligibility check first (needs ``billing.read``).
         """
