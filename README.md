@@ -71,6 +71,7 @@ bucket = client.object_storage.create_bucket(
 credential = client.object_storage.create_s3credential(
     workspace_id="907479",
     name="application-key",
+    permission_type="object_rw",  # admin_rw (default) keys cannot be limited to buckets
     bucket_scope="specific",
     allowed_buckets=["production-assets"],
 )
@@ -528,12 +529,72 @@ call reserves funds; the edge repeats the check on the real create. Wallet
 top-ups are only available in the IBEE portal (Billing > Add Credits); use
 `ibee.billing.is_billing_topup_allowed(decision)` to decide whether to suggest one.
 
-## Block Storage and CDN
+## Storage: Block Storage, Object Storage and CDN
 
-Block Storage is exposed at `client.block_storage` with list, create, get,
-delete, operations, attach, detach, and resize methods. CDN is exposed at
-`client.cdn` with distribution, static-website, custom-domain, URL-generation,
-verification, and cache-purge methods.
+The storage clients apply the portal's rules before sending anything and raise
+`IbeeValidationError` when a value would be refused.
+
+```python
+from ibee import CdnPurgeFailedError, Ibee
+
+client = Ibee(token="YOUR_TOKEN")
+ws = "907479"
+
+# Block Storage. Names: 3-255 lowercase letters, numbers and hyphens; size 10-10000 GB.
+# Billing uses the site's Block Storage plan; site_name is filled from the compute sites.
+created = client.block_storage.create_block_volume(
+    workspace_id=ws, name="app-data", size_gb=100, site_id="site-1", vm_type="cloud"
+)
+volume_id = created["volume"]["id"]
+
+# Attach to a VM like the portal: the volume is read, the VM must be in its site and of
+# its vm_type, and its Block Storage SKU is sent. wait=True polls every 2 s for up to 2 min.
+done = client.block_storage.attach_block_volume_to_vm(volume_id, "VM_ID", workspace_id=ws, wait=True)
+
+# Detach: unmount inside the server first (the portal's mandatory confirmation).
+client.block_storage.detach_block_volume_from_vm(volume_id, workspace_id=ws, confirm_unmounted=True, wait=True)
+
+# Grow (never shrink); an attached volume needs vm_state="stopped" or allow_online=True.
+client.block_storage.resize_block_volume(volume_id, workspace_id=ws, new_size_gb=200)
+# Delete refuses an attached volume unless force=True (which detaches and erases it).
+client.block_storage.delete_block_volume(volume_id, workspace_id=ws)
+every_volume = client.block_storage.list_all_block_volumes(workspace_id=ws, vm_type="cloud")
+
+# Object Storage. Bucket names: 3-63 lowercase letters, numbers and hyphens.
+# region defaults to in-south-1 (api.ibee.ai) or in-south-2 (api.ibee.co.in).
+client.object_storage.create_bucket(
+    workspace_id=ws, name="audit-logs", default_retention={"mode": "COMPLIANCE", "days": 30}
+)  # Object Lock is enabled automatically for retention
+client.object_storage.delete_bucket("audit-logs", workspace_id=ws)  # empty, unlocked buckets only
+key = client.object_storage.create_s3credential(workspace_id=ws)  # admin_rw "Default Key"
+print(key.secret_access_key)  # shown once; the request is never retried
+client.object_storage.delete_s3credential(key.access_key_id, workspace_id=ws)  # permanent
+
+# CDN: only public buckets can be origins; cache_policy is static-assets, media, short or no-cache.
+dist = client.cdn.create_cdn_distribution(workspace_id=ws, name="assets", origin_id="public-assets",
+                                          check_origin_public=True)
+domain = client.cdn.create_cdn_custom_domain(dist["id"], workspace_id=ws, domain="cdn.example.com")
+client.cdn.wait_for_cdn_custom_domain(dist["id"], "cdn.example.com", workspace_id=ws)  # after adding the CNAME
+try:
+    client.cdn.purge_cdn_cache(dist["id"], workspace_id=ws, mode="prefix", prefixes=["/img/"])
+except CdnPurgeFailedError as error:  # the CDN answered success: false
+    print(error.mode, error.message)
+```
+
+Notes:
+
+- Making a bucket private (`update_bucket(..., is_public=False)`) disables its
+  public URL and deletes any CDN distribution that uses it as origin.
+- `revoke_s3credential` and `delete_s3credential` permanently delete the key;
+  the public API has no "revoked but kept" state.
+- The node-level `attach_block_volume` / `detach_block_volume` only record a
+  storage-node attachment; use the `*_to_vm` / `*_from_vm` methods for VMs.
+- `cdn.list_cdn_cache_policies` and `cdn.get_cdn_distribution_metrics` are not
+  yet part of the published API contract; behaviour may change.
+- Not available through the public API yet: Block Storage plan and price
+  discovery, bucket emptying, CORS/lifecycle/notification settings, object
+  operations (use the S3 endpoint with S3 credentials), region discovery and CDN
+  custom origins.
 
 Requires Python 3.10+.
 

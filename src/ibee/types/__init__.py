@@ -51,6 +51,7 @@ if typing.TYPE_CHECKING:
     from .error_detail import ErrorDetail
     from .firewall_attachment import FirewallAttachment
     from .firewall_group import FirewallGroup
+    from .billing_catalog_selection import BillingCatalogSelection, BillingSkuReference
     from .firewall_group_summary import FirewallGroupSummary
     from .firewall_rule import FirewallRule
     from .firewall_rule_fields import FirewallRuleFields
@@ -225,6 +226,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ErrorDetail": ".error_detail",
     "FirewallAttachment": ".firewall_attachment",
     "FirewallGroup": ".firewall_group",
+    "BillingCatalogSelection": ".billing_catalog_selection",
+    "BillingSkuReference": ".billing_catalog_selection",
     "FirewallGroupSummary": ".firewall_group_summary",
     "FirewallRule": ".firewall_rule",
     "FirewallRuleFields": ".firewall_rule_fields",
@@ -427,6 +430,8 @@ __all__ = [
     "ErrorDetail",
     "FirewallAttachment",
     "FirewallGroup",
+    "BillingCatalogSelection",
+    "BillingSkuReference",
     "FirewallGroupSummary",
     "FirewallRule",
     "FirewallRuleFields",

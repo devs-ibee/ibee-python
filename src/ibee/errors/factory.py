@@ -79,6 +79,7 @@ _CREATE_TYPE_BY_PATH: typing.Tuple[typing.Tuple[typing.Pattern[str], str], ...] 
         (r"^/compute/gpu-vms/?$", "gpu_vm"),
         (r"^/block-storage/volumes/?$", "block_storage"),
         (r"^/object-storage/buckets/?$", "object_storage"),
+        (r"^/object-storage/credentials/?$", "s3_credential"),
         (r"^/networking/load-balancers/(l4|l7)/?$", "load_balancer"),
         (r"^/networking/reserved-ips/?$", "reserved_ip"),
         (r"^/networking/vpcs/[^/]+/nat-gateways/?$", "nat_gateway"),

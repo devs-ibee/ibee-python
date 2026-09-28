@@ -507,13 +507,14 @@ __all__ = [
     "validate_workspace_id",
 ]
 
-# Compute, recovery, billing-SKU and networking rules (0.4.0). Imported last: they build on the helpers above.
-from . import billing_catalog, compute, network_services, networking, recovery  # noqa: E402
+# Compute, recovery, billing-SKU, networking and storage rules (0.4.0). Imported last: they build on the helpers above.
+from . import billing_catalog, compute, network_services, networking, recovery, storage  # noqa: E402
 from .billing_catalog import *  # noqa: E402,F401,F403
 from .compute import *  # noqa: E402,F401,F403
 from .network_services import *  # noqa: E402,F401,F403
 from .networking import *  # noqa: E402,F401,F403
 from .recovery import *  # noqa: E402,F401,F403
+from .storage import *  # noqa: E402,F401,F403
 
 __all__ += [  # noqa: PLE0605
     *billing_catalog.__all__,
@@ -521,4 +522,5 @@ __all__ += [  # noqa: PLE0605
     *recovery.__all__,
     *networking.__all__,
     *network_services.__all__,
+    *storage.__all__,
 ]

@@ -36,6 +36,7 @@ if typing.TYPE_CHECKING:
     from .operation_errors import OperationFailedError, OperationTimeoutError
     from .payment_required_error import PaymentRequiredError
     from .service_unavailable_error import ServiceUnavailableError
+    from .storage_errors import CdnPurgeFailedError
     from .unauthorized_error import UnauthorizedError
 _dynamic_imports: typing.Dict[str, str] = {
     "ApiError": "..core.api_error",
@@ -46,6 +47,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "BillingDeniedError": ".billing_errors",
     "BillingEligibilityError": ".billing_eligibility_error",
     "BillingForbiddenError": ".billing_errors",
+    "CdnPurgeFailedError": ".storage_errors",
     "ConflictError": ".conflict_error",
     "RecoveryFailedError": ".compute_errors",
     "RecoveryRestoreFailedError": ".compute_errors",
