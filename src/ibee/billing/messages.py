@@ -28,7 +28,7 @@ CREATE_TYPE_LABELS: typing.Dict[str, str] = {
 }
 DEFAULT_CREATE_LABEL = "resource"
 
-#: Reasons that mean "add credits and retry".
+#: Historical reason names only; never an authorization signal.
 TOPUP_REASONS = frozenset({"initial_topup_required", "insufficient_balance", "billing_limit_exhausted"})
 #: Known reasons billing uses to deny a create.
 DENIED_REASONS = frozenset(
@@ -47,9 +47,10 @@ DENIED_REASONS = frozenset(
 #: Known reasons billing uses to allow a request.
 ALLOWED_REASONS = frozenset({"ok", "usage_based_sku", "status_only", "operation_allowed"})
 
-INR_MINIMUM_TOPUP_MINOR = 200_000
+# Deprecated compatibility name. Only upstream can supply a minimum.
+INR_MINIMUM_TOPUP_MINOR = None
 COMMITTED_MONTHLY_HOURS = 731
-TOPUP_GUIDANCE = "Add credits in the IBEE portal (Billing > Add Credits), then retry."
+TOPUP_GUIDANCE = "Review billing in the IBEE portal for funding requirements and available actions."
 
 
 def _get(decision: typing.Any, *names: str) -> typing.Any:
@@ -79,9 +80,9 @@ def create_type_label(create_type: typing.Optional[str]) -> str:
     return CREATE_TYPE_LABELS.get(str(create_type or "").strip().lower(), DEFAULT_CREATE_LABEL)
 
 
-def minimum_topup_minor(currency: typing.Optional[str]) -> int:
-    """Deprecated legacy display constant, not an authoritative top-up requirement."""
-    return INR_MINIMUM_TOPUP_MINOR if str(currency or "").strip().upper() == "INR" else 0
+def minimum_topup_minor(currency: typing.Optional[str]) -> typing.Optional[int]:
+    """Deprecated: currency alone cannot establish a minimum; return unknown."""
+    return None
 
 
 def billing_block_message(
@@ -94,22 +95,21 @@ def billing_block_message(
     reason = _decision_reason(decision_or_reason)
     if not isinstance(decision_or_reason, str) and decision_or_reason is not None:
         billing_state = billing_state or _get(decision_or_reason, "billing_state")
-        currency = currency or _get(decision_or_reason, "currency")
     state = str(billing_state or "").strip().upper()
     label = create_type_label(create_type)
+    guidance = (
+        "You can add credits in the IBEE portal."
+        if is_billing_topup_allowed(decision_or_reason)
+        else "Review billing for available actions."
+    )
     if reason == "initial_topup_required":
-        if currency and str(currency).strip().upper() != "INR":
-            return f"Add funds to your wallet before creating your first {label}."
-        return f"Add at least ₹2,000 to your wallet before creating your first {label}."
+        return f"Billing requires an initial wallet top-up before creating your first {label}. {guidance}"
     if reason == "insufficient_balance":
-        return f"Your available wallet balance does not cover this {label}. Add credits and try again."
+        return f"Your available wallet balance does not cover this {label}. {guidance}"
     if reason == "credit_limit_exceeded":
         return f"Creating this {label} would exceed this organization's credit limit."
     if reason == "billing_limit_exhausted" or state == "PAST_DUE":
-        return (
-            f"Billing needs attention before creating a {label}. "
-            "Add credits or settle the outstanding usage, then try again."
-        )
+        return f"Billing needs attention before creating a {label}. {guidance}"
     if reason == "overage_cap_exceeded" or state == "HARD_SUSPENDED":
         return (
             f"This organization is billing-suspended, so new {label} creation is blocked. "
@@ -123,17 +123,11 @@ def billing_block_message(
 
 
 def is_billing_topup_allowed(decision_or_reason: typing.Any) -> bool:
-    """Whether adding wallet credits can resolve this denial (drives the portal's "Add Credits")."""
-    if decision_or_reason is not None and not isinstance(decision_or_reason, str):
-        operations = _get(decision_or_reason, "allowed_operations")
-        if isinstance(operations, (list, tuple)) and any(
-            str(item or "").strip() == "billing_topup" for item in operations
-        ):
-            return True
-        reason = str(_get(decision_or_reason, "reason", "can_create_reason") or "")
-    else:
-        reason = decision_or_reason or ""
-    return reason.strip().lower() in TOPUP_REASONS
+    """True only when upstream explicitly lists the billing_topup operation."""
+    operations = _get(decision_or_reason, "allowed_operations")
+    return isinstance(operations, (list, tuple)) and any(
+        isinstance(item, str) and item == "billing_topup" for item in operations
+    )
 
 
 def estimate_eligibility_cost_minor(

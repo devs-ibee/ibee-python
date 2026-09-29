@@ -470,9 +470,9 @@ from ibee.errors import BillingDeniedError, InsufficientScopeError, is_payment_b
 try:
     client.cloud_vms.create_cloud_vm(...)
 except BillingDeniedError as exc:
-    print(exc.message)          # portal wording, e.g. "Add at least ₹2,000 ..."
+    print(exc.message)          # denial feedback; no assumed minimum or currency
     if exc.topup_allowed:
-        print("Add credits in the IBEE portal (Billing > Add Credits), then retry.")
+        print("Upstream explicitly allows adding credits in the IBEE portal.")
 except InsufficientScopeError as exc:
     print(f"token is missing scope {exc.required_scope}")
 ```
@@ -664,7 +664,7 @@ Use `client.billing.check_resource_eligibility(...)` for an explicit diagnostic 
 It returns `allowed: false` as data and supports `REVOKE_CREDENTIAL` and `SECURITY_RECOVERY`.
 The explicitly invoked `require_resource_eligibility` convenience method retains its throwing contract for compatibility; product methods never call it.
 An explicit query does not authorize or reserve funds for a later mutation.
-Legacy estimate/minimum-top-up utilities are deprecated display/calculation helpers only; they are not authoritative prices or admission rules.
+Legacy estimate utilities are deprecated arithmetic helpers, not authoritative prices or admission rules. `minimum_topup_minor(...)` and `INR_MINIMUM_TOPUP_MINOR` now return `None` (unknown); callers must obtain any minimum and currency upstream. `is_billing_topup_allowed(...)` and error `topup_allowed` are true only when upstream explicitly lists `billing_topup` in `allowed_operations`; reasons and absent/empty operation lists never grant permission.
 
 ## Storage: Block Storage, Object Storage and CDN
 
