@@ -5,7 +5,7 @@
 import typing
 from importlib import import_module
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 if typing.TYPE_CHECKING:
     from .types import (

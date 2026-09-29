@@ -296,8 +296,8 @@ class CloudVmsClient:
             Optional audit label (1-128 characters).
 
         preflight_billing : bool
-            Check billing eligibility for the plan SKU first (needs billing.read) and raise ``BillingDeniedError``
-            when it is not allowed.
+            Check Billing account status first (needs billing.read). Upstream create
+            quotes the selected term and decides affordability; no client cost is estimated.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2743,8 +2743,8 @@ class AsyncCloudVmsClient:
             Optional audit label (1-128 characters).
 
         preflight_billing : bool
-            Check billing eligibility for the plan SKU first (needs billing.read) and raise ``BillingDeniedError``
-            when it is not allowed.
+            Check Billing account status first (needs billing.read). Upstream create
+            quotes the selected term and decides affordability; no client cost is estimated.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
