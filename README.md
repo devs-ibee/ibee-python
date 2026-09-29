@@ -655,19 +655,22 @@ The async client's `iter_*` methods return async iterators (`async for`).
 Billable creates are admitted at the public API edge before the request reaches
 the product service. This applies equally to raw REST, the Python and
 TypeScript SDKs, and the CLI, so create methods send exactly one request. To
-check billing first, as the portal does:
+check account billing status first:
 
 ```python
-from ibee.billing import estimate_eligibility_cost_minor
-
-cost = estimate_eligibility_cost_minor("MONTHLY", 12500, count=1)  # HOURLY uses 731 hours
 decision = client.billing.require_resource_eligibility(
     workspace_id="907479",
-    sku_code="STANDARD-2-8-50",
-    estimated_cost_minor=cost,
     resource_type="vm",
 )
 ```
+
+VM creation with `preflight_billing=True` makes this account-status check; it
+does not calculate an hourly/monthly affordability estimate or send a SKU-only
+probe (the legacy eligibility endpoint prices those monthly). The selected
+catalog term is sent to create, where the upstream catalog quote and Billing
+make the cost decision. A successful status check is not purchase approval.
+Explicit eligibility amounts and the legacy estimate helper remain available
+for caller-requested diagnostics, but VM create never uses them automatically.
 
 `require_resource_eligibility` returns the decision only when `allowed` is exactly
 `True`, raises `BillingDeniedError` (402) with the portal's message otherwise, and
