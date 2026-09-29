@@ -151,8 +151,7 @@ class ObjectStorageClient:
             Optional tags stored alongside bucket metadata.
 
         preflight_billing : typing.Optional[bool]
-            ``True`` runs the portal's billing eligibility check (OBJECTST-STD, needs ``billing.read``)
-            first. The API checks billing on create anyway.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -323,7 +322,7 @@ class ObjectStorageClient:
             Bucket names for ``specific`` scope (trimmed, blanks and duplicates removed; at least one).
 
         preflight_billing : typing.Optional[bool]
-            ``True`` runs the billing eligibility check (OBJECTST-STD, needs ``billing.read``) first.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration. ``max_retries`` defaults to 0 for this request.
@@ -522,8 +521,7 @@ class AsyncObjectStorageClient:
             Optional tags stored alongside bucket metadata.
 
         preflight_billing : typing.Optional[bool]
-            ``True`` runs the portal's billing eligibility check (OBJECTST-STD, needs ``billing.read``)
-            first. The API checks billing on create anyway.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -694,7 +692,7 @@ class AsyncObjectStorageClient:
             Bucket names for ``specific`` scope (trimmed, blanks and duplicates removed; at least one).
 
         preflight_billing : typing.Optional[bool]
-            ``True`` runs the billing eligibility check (OBJECTST-STD, needs ``billing.read``) first.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration. ``max_retries`` defaults to 0 for this request.

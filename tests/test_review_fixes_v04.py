@@ -387,9 +387,5 @@ def test_secret_store_billing_preflight_alias() -> None:
     router = Router().add("POST", "billing/resource-eligibility", (403, {"error": "insufficient_scope", "required_scope": "billing.read"}))
     router.add("POST", "secret-store/stores", (201, {"id": "st-1", "name": "app", "store_key": "app"}))
     client = sync_client(router)
-    with pytest.warns(IbeeBillingWarning, match="billing.read"):
-        try:
-            client.secret_store.create_secret_store(workspace_id=WS, name="app", billing_preflight=True)
-        except Exception:  # noqa: BLE001 - only the preflight request matters here
-            pass
-    assert ("POST", "billing/resource-eligibility") in router.calls()
+    client.secret_store.create_secret_store(workspace_id=WS, name="app", billing_preflight=True)
+    assert router.calls() == [("POST", "secret-store/stores")]

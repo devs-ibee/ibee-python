@@ -80,7 +80,7 @@ def create_type_label(create_type: typing.Optional[str]) -> str:
 
 
 def minimum_topup_minor(currency: typing.Optional[str]) -> int:
-    """Minimum wallet top-up in minor units: 200000 (INR 2,000) for INR, otherwise 0."""
+    """Deprecated legacy display constant, not an authoritative top-up requirement."""
     return INR_MINIMUM_TOPUP_MINOR if str(currency or "").strip().upper() == "INR" else 0
 
 
@@ -142,7 +142,7 @@ def estimate_eligibility_cost_minor(
     count: typing.Any = 1,
     hourly_period_hours: typing.Any = COMMITTED_MONTHLY_HOURS,
 ) -> int:
-    """Estimated cost to send with an eligibility check, as the portal computes it.
+    """Deprecated legacy arithmetic helper; never use this as an admission decision.
 
     ``HOURLY`` plans are estimated over 731 hours; ``MONTHLY`` and ``YEARLY`` plans
     use their full period price. The result is multiplied by ``count`` and rounded.

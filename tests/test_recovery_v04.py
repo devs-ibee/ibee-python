@@ -153,14 +153,14 @@ def test_snapshot_create_selective_with_state_check_and_preflight() -> None:
 def test_snapshot_preflight_denial() -> None:
     router = Router().add(
         "POST",
-        "billing/resource-eligibility",
-        (200, {"organization_id": "org", "allowed": False, "reason": "initial_topup_required", "sku_code": "SNAPSHOT-STD"}),
+        f"compute/cloud-vms/{VM}/snapshots",
+        (402, {"error": "billing_denied", "billing_reason": "initial_topup_required", "billing_sku_code": "SNAPSHOT-STD"}),
     )
     with pytest.raises(BillingDeniedError):
         sync_client(router).cloud_vms.create_cloud_vm_snapshot(
             VM, workspace_id=WS, name="n", billing_catalog=SNAP_SKU, preflight_billing=True
         )
-    assert router.calls() == [("POST", "billing/resource-eligibility")]
+    assert router.calls() == [("POST", f"compute/cloud-vms/{VM}/snapshots")]
 
 
 def test_snapshot_list_limits_and_delete_guard() -> None:
@@ -342,15 +342,16 @@ def test_backup_enable_and_run_preflight_billing() -> None:
     denied = {"organization_id": "org", "allowed": False, "reason": "initial_topup_required", "sku_code": "BACKUP-STD"}
     for call in ("enable", "run"):
         router = Router().add("GET", f"compute/cloud-vms/{VM}/backups/policy", (404, {"detail": "not found"}))
-        router.add("POST", "billing/resource-eligibility", (200, denied))
+        mutation = f"compute/cloud-vms/{VM}/backups/" + ("enable" if call == "enable" else "runs")
+        router.add("POST", mutation, (402, {"error": "billing_denied", "billing_reason": "initial_topup_required"}))
         client = sync_client(router)
         with pytest.raises(BillingDeniedError):
             if call == "enable":
                 client.cloud_vms.enable_cloud_vm_backups(VM, workspace_id=WS, billing_catalog=BACKUP_SKU, preflight_billing=True)
             else:
                 client.cloud_vms.create_cloud_vm_backup_run(VM, workspace_id=WS, billing_catalog=BACKUP_SKU, preflight_billing=True)
-        assert router.body("POST", "billing/resource-eligibility")["sku_code"] == "BACKUP-STD"
-        assert not any(r.url.path.endswith(("/backups/enable", "/backups/runs")) for r in router.requests)
+        assert ("POST", "billing/resource-eligibility") not in router.calls()
+        assert ("POST", mutation) in router.calls()
 
     async def main() -> None:
         router = Router().add(
@@ -361,7 +362,7 @@ def test_backup_enable_and_run_preflight_billing() -> None:
             await async_client(router, http).gpu_vms.create_gpu_vm_backup_run(
                 VM, workspace_id=WS, billing_catalog=BACKUP_SKU, preflight_billing=True
             )
-        assert [c[0] for c in router.calls()] == ["POST", "POST"]
+        assert router.calls() == [("POST", f"compute/gpu-vms/{VM}/backups/runs")]
 
     asyncio.run(main())
 

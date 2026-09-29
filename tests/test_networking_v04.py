@@ -393,7 +393,7 @@ def test_create_nat_gateway_with_reserved_ip_catalog_and_preflight() -> None:
     )
     assert result.public_ip_source == "reserved"
     assert router.body("POST", f"{V}/nat-gateways") == {"reserved_public_ip_id": "rip-1", "billing_catalog": NAT_CATALOG}
-    assert router.body("POST", "billing/resource-eligibility")["sku_code"] == "NAT-GATEWAY"
+    assert ("POST", "billing/resource-eligibility") not in router.calls()
 
 
 def test_create_nat_gateway_rejects_attached_reserved_ip_and_warns_without_catalog() -> None:
@@ -415,10 +415,12 @@ def test_nat_gateway_edge_billing_denial_is_typed() -> None:
 
 def test_preflight_forbidden_explains_billing_scope() -> None:
     router = Router().add("GET", V, (200, vpc_record()))
-    router.add("POST", "billing/resource-eligibility", (403, {"detail": "Missing scope"}))
+    router.add("POST", f"{V}/nat-gateways", (403, {"detail": "Missing scope"}))
     with pytest.raises(ForbiddenError) as info:
         sync_client(router).vpcs.create_nat_gateway("vpc-1", workspace_id=WS, billing_catalog=NAT_CATALOG, preflight_billing=True)
-    assert "billing.read" in info.value.message
+    assert "Missing scope" in info.value.message
+    assert "billing.read" not in info.value.message
+    assert ("POST", "billing/resource-eligibility") not in router.calls()
 
 
 def test_delete_nat_gateway_bodies() -> None:
