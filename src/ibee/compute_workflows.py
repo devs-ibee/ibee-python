@@ -15,7 +15,6 @@ import dataclasses
 import typing
 
 from .billing.client import _decision_from_response, _require_allowed
-from .billing.messages import estimate_eligibility_cost_minor
 from .core.pydantic_utilities import parse_obj_as
 from .core.request_options import RequestOptions
 from .errors.forbidden_error import ForbiddenError
@@ -286,7 +285,7 @@ def list_images(workspace_id: str, vm_type: str, site_id: typing.Optional[str]) 
 def billing_preflight(
     workspace_id: str,
     *,
-    sku_code: typing.Optional[str],
+    sku_code: typing.Optional[str] = None,
     estimated_cost_minor: typing.Optional[int] = None,
     resource_type: str = "resource",
 ) -> Flow[typing.Any]:
@@ -316,14 +315,6 @@ def _opt_in_state(vm: typing.Any, action: str, check_state: typing.Optional[bool
 # ---------------------------------------------------------------------------
 # VM lifecycle
 # ---------------------------------------------------------------------------
-
-
-def _catalog_estimate(catalog: typing.Mapping[str, typing.Any], plan: typing.Mapping[str, typing.Any]) -> int:
-    interval = catalog.get("billing_interval") or "HOURLY"
-    price = catalog.get("unit_price_minor")
-    if price is None:
-        price = plan.get("hourly_price_minor") if str(interval).upper() == "HOURLY" else plan.get("monthly_price_minor")
-    return estimate_eligibility_cost_minor(interval, price, 1)
 
 
 def create_vm(
@@ -453,10 +444,11 @@ def create_vm(
         )
 
     if preflight_billing:
+        # This endpoint has no selected-term input. A SKU-only probe uses its
+        # monthly price, so check account status here. The create's upstream
+        # quote and Billing admission decide selected-term affordability.
         yield from billing_preflight(
             workspace_id,
-            sku_code=catalog.get("sku_code"),
-            estimated_cost_minor=_catalog_estimate(catalog, plan),
             resource_type="gpu_vm" if vm_type == "gpu" else "vm",
         )
 

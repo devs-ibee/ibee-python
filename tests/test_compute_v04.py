@@ -226,7 +226,47 @@ def test_create_preflight_billing_denied_stops_before_create() -> None:
     assert info.value.topup_allowed is True
     assert ("POST", "compute/cloud-vms") not in router.calls()
     eligibility = router.body("POST", "billing/resource-eligibility")
-    assert eligibility == {"sku_code": "VM-STD-2-4", "estimated_cost_minor": 250 * 731}
+    assert eligibility == {}
+
+
+@pytest.mark.parametrize("family", ["cloud", "gpu"])
+@pytest.mark.parametrize("term", ["HOURLY", "MONTHLY"])
+@pytest.mark.parametrize("asynchronous", [False, True])
+def test_vm_preflight_leaves_selected_term_affordability_to_upstream(family, term, asynchronous):
+    router = _catalog_router(family)
+    router.add("POST", "billing/resource-eligibility", (200, {
+        "organization_id": "org", "allowed": True, "reason": "status_only",
+        "effective_balance_minor": 3500,
+    }))
+    def create(client):
+        resource = getattr(client, f"{family}_vms")
+        method = getattr(resource, f"create_{family}_vm")
+        return method(workspace_id=WS, name="test", site_id="site-1", plan_id="plan-1",
+                      template_id="tmpl-ubuntu", billing_term=term, preflight_billing=True)
+    if asynchronous:
+        async def run():
+            async with async_transport(router) as transport:
+                return await create(async_client(router, transport))
+        result = asyncio.run(run())
+    else:
+        result = create(sync_client(router))
+    assert result.operation_id == OP
+    assert router.body("POST", "billing/resource-eligibility") == {}
+    assert router.body("POST", f"compute/{family}-vms")["billing_catalog"]["billing_interval"] == term
+
+
+def test_account_preflight_does_not_override_upstream_create_denial():
+    router = _catalog_router(create=(402, {
+        "error": "billing_denied", "billing_reason": "insufficient_balance",
+        "billing_sku_code": "VM-STD-2-4", "admission_context_id": "adm_upstream",
+    }))
+    router.add("POST", "billing/resource-eligibility", (200, {
+        "organization_id": "org", "allowed": True, "reason": "status_only",
+    }))
+    with pytest.raises(BillingDeniedError) as info:
+        _create(sync_client(router), preflight_billing=True)
+    assert info.value.admission_context_id == "adm_upstream"
+    assert router.calls().count(("POST", "compute/cloud-vms")) == 1
 
 
 def test_create_is_not_retried_and_explicit_mode_is_one_request() -> None:
