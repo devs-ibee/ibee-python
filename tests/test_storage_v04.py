@@ -460,11 +460,10 @@ def test_bucket_retention_rules() -> None:
 
 
 def test_bucket_create_preflight_and_409_is_not_retried() -> None:
-    router = Router().add("POST", "billing/resource-eligibility", (200, DENIED))
+    router = Router().add("POST", "object-storage/buckets", (402, {"error": "billing_denied", "billing_reason": "insufficient_balance"}))
     with pytest.raises(BillingDeniedError):
         sync_client(router).object_storage.create_bucket(workspace_id=WS, name="assets", region="r", preflight_billing=True)
-    assert router.calls() == [("POST", "billing/resource-eligibility")]
-    assert router.body("POST", "billing/resource-eligibility")["sku_code"] == "OBJECTST-STD"
+    assert router.calls() == [("POST", "object-storage/buckets")]
 
     conflict = Router().add("POST", "object-storage/buckets", (409, {"detail": "Bucket already exists"}))
     client = Ibee(token="t", base_url="https://api.example.test/v1", httpx_client=httpx.Client(transport=httpx.MockTransport(conflict)))
@@ -602,7 +601,7 @@ def test_cdn_distribution_validation_and_origin_check() -> None:
         workspace_id=WS, name=" site ", origin_id="b-123", check_origin_public=True, preflight_billing=True
     )
     assert by_id.body("POST", "cdn/distributions") == {"name": "site", "origin_type": "bucket", "origin_id": "b-123", "cache_policy": "static-assets"}
-    assert "sku_code" not in by_id.body("POST", "billing/resource-eligibility")
+    assert ("POST", "billing/resource-eligibility") not in by_id.calls()
 
 
 def test_cdn_index_document_and_domain_rules() -> None:
@@ -625,7 +624,7 @@ def test_cdn_custom_domain_preflight_and_normalised_paths() -> None:
     router.add("GET", "cdn/distributions/d1/custom-domains/cdn.example.com", (200, {"domain": "cdn.example.com"}))
     client = sync_client(router)
     client.cdn.create_cdn_custom_domain("d1", workspace_id=WS, domain="CDN.example.com", preflight_billing=True)
-    assert router.body("POST", "billing/resource-eligibility") == {"sku_code": "CUSTOMDO-STD", "estimated_cost_minor": 19900}
+    assert ("POST", "billing/resource-eligibility") not in router.calls()
     assert router.body("POST", "cdn/distributions/d1/custom-domains") == {"domain": "cdn.example.com"}
     client.cdn.get_cdn_custom_domain("d1", " CDN.EXAMPLE.COM ", workspace_id=WS)
 

@@ -145,7 +145,7 @@ class LoadBalancersClient:
             ``{logs_enabled: bool}``. Not yet part of the published API contract; behaviour may change.
 
         check_billing : bool
-            Check billing eligibility for LOADBALA-STD first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -221,7 +221,7 @@ class LoadBalancersClient:
             ``{logs_enabled: bool}``. Not yet part of the published API contract; behaviour may change.
 
         check_billing : bool
-            Check billing eligibility for LOADBALA-STD first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -587,7 +587,7 @@ class AsyncLoadBalancersClient:
             ``{logs_enabled: bool}``. Not yet part of the published API contract; behaviour may change.
 
         check_billing : bool
-            Check billing eligibility for LOADBALA-STD first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -663,7 +663,7 @@ class AsyncLoadBalancersClient:
             ``{logs_enabled: bool}``. Not yet part of the published API contract; behaviour may change.
 
         check_billing : bool
-            Check billing eligibility for LOADBALA-STD first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

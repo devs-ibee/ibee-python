@@ -53,7 +53,7 @@ def test_reserve_ip_body_and_optional_billing_check() -> None:
     }
     assert router.calls() == [("POST", "networking/reserved-ips")]
     client.reserved_ips.reserve_ip(workspace_id=WS, site_id="site-1", check_billing=True)
-    assert router.calls()[-2] == ("POST", "billing/resource-eligibility")
+    assert ("POST", "billing/resource-eligibility") not in router.calls()
     with pytest.raises(IbeeValidationError, match="Choose a location"):
         client.reserved_ips.reserve_ip(workspace_id=WS, site_id=" ")
     with pytest.raises(IbeeValidationError, match="120"):
@@ -169,17 +169,17 @@ def test_convert_vm_public_ip_runs_billing_check_by_default() -> None:
         workspace_id=WS, vm_id=" vm-1 ", site_id="site-1", label=" keep ", billing_catalog=CATALOG
     )
     assert result.allocation_method == "converted"
-    assert router.calls() == [("POST", "billing/resource-eligibility"), ("POST", "networking/reserved-ips/convert")]
+    assert router.calls() == [("POST", "networking/reserved-ips/convert")]
     assert router.body("POST", "networking/reserved-ips/convert") == {
         "vm_id": "vm-1",
         "site_id": "site-1",
         "label": "keep",
         "billing_catalog": {"sku_id": 3, "sku_code": "RESERVED-IP", "unit_price_minor": 100},
     }
-    denied = Router().add("POST", "billing/resource-eligibility", (200, {**ALLOWED, "allowed": False, "reason": "insufficient_balance"}))
+    denied = Router().add("POST", "networking/reserved-ips/convert", (402, {"error": "billing_denied", "billing_reason": "insufficient_balance"}))
     with pytest.raises(BillingDeniedError):
         sync_client(denied).reserved_ips.convert_vm_public_ip_to_reserved_ip(workspace_id=WS, vm_id="vm-1", site_id="site-1")
-    assert denied.calls() == [("POST", "billing/resource-eligibility")]
+    assert denied.calls() == [("POST", "networking/reserved-ips/convert")]
     skip = Router().add("POST", "networking/reserved-ips/convert", (201, rip()))
     sync_client(skip).reserved_ips.convert_vm_public_ip_to_reserved_ip(workspace_id=WS, vm_id="vm-1", site_id="site-1", billing_check=False)
     assert skip.calls() == [("POST", "networking/reserved-ips/convert")]
@@ -414,7 +414,7 @@ def test_create_l7_https_defaults_rules_and_custom_domain() -> None:
         check_billing=True,
     )
     body = router.body("POST", f"{LB}/l7")
-    assert router.calls()[0] == ("POST", "billing/resource-eligibility")
+    assert ("POST", "billing/resource-eligibility") not in router.calls()
     assert body["tls"] == {"mode": "terminate", "certificate_source": "managed"}
     assert body["routing"] == {"algorithm": "least_request", "sticky_header": "X-User-ID"}
     assert body["rules"] == [{"priority": 1, "path_prefix": "/", "headers": {"x-env": "prod"}}]

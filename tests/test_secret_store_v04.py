@@ -337,27 +337,26 @@ def test_create_store_trims_and_preflights_billing() -> None:
         workspace_id=WS, name="  Production ", description=" main ", preflight_billing=True
     )
     assert created.id == STORE
-    assert router.calls() == [("POST", "billing/resource-eligibility"), ("POST", "secret-store/stores")]
-    assert router.body("POST", "billing/resource-eligibility")["sku_code"] == "SECRETMA-STD"
+    assert router.calls() == [("POST", "secret-store/stores")]
     assert router.body("POST", "secret-store/stores") == {"name": "Production", "description": "main"}
 
 
 def test_create_store_billing_denied_stops_before_create() -> None:
     denied = {**ELIGIBLE, "allowed": False, "reason": "insufficient_balance"}
-    router = Router().add("POST", "billing/resource-eligibility", (200, denied))
+    router = Router().add("POST", "secret-store/stores", (402, {"error": "billing_denied", "billing_reason": "insufficient_balance"}))
     with pytest.raises(BillingDeniedError):
         sync_client(router).secret_store.create_secret_store(workspace_id=WS, name="p", preflight_billing=True)
-    assert router.calls() == [("POST", "billing/resource-eligibility")]
+    assert router.calls() == [("POST", "secret-store/stores")]
 
 
 def test_preflight_without_billing_scope_warns_and_creates() -> None:
     router = Router().add("POST", "billing/resource-eligibility", (403, scope_denied())).add(
         "POST", f"secret-store/stores/{STORE}/secrets", (201, secret())
     )
-    with pytest.warns(IbeeBillingWarning, match="billing.read"):
-        sync_client(router).secret_store.create_secret(
-            STORE, workspace_id=WS, secret_name="Database-URL", value={" url ": "x"}, preflight_billing=True
-        )
+    sync_client(router).secret_store.create_secret(
+        STORE, workspace_id=WS, secret_name="Database-URL", value={" url ": "x"}, preflight_billing=True
+    )
+    assert ("POST", "billing/resource-eligibility") not in router.calls()
     assert router.body("POST", f"secret-store/stores/{STORE}/secrets") == {
         "secret_name": "database-url",
         "value": {"url": "x"},

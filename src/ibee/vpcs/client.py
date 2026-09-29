@@ -123,7 +123,7 @@ class VpcsClient:
         (10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16), aligned to its prefix and /22-/28; ``auto_cidr`` is then sent
         as ``false``. Without ``cidr`` the platform picks a free range. ``connectivity_type`` ``private`` (the
         portal default) or ``nat_gateway`` (managed outbound internet through a NAT gateway); ``public`` is
-        deprecated. The NAT gateway created with a ``nat_gateway`` VPC is not checked by billing admission, so pass
+        deprecated. Upstream decides admission for the managed NAT gateway; pass
         ``nat_billing_catalog``; without it an ``IbeeBillingWarning`` is emitted. Rules are checked before the
         request and raise ``IbeeValidationError``.
 
@@ -747,8 +747,7 @@ class VpcsClient:
             change.
 
         preflight_billing : bool
-            Check billing eligibility for NAT-GATEWAY first (needs billing.read) and raise ``BillingDeniedError``
-            when it is not allowed.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         check_state : typing.Optional[bool]
             ``False`` skips reading the VPC and Reserved IP first.
@@ -2091,8 +2090,7 @@ class AsyncVpcsClient:
             change.
 
         preflight_billing : bool
-            Check billing eligibility for NAT-GATEWAY first (needs billing.read) and raise ``BillingDeniedError``
-            when it is not allowed.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         check_state : typing.Optional[bool]
             ``False`` skips reading the VPC and Reserved IP first.
