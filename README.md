@@ -139,7 +139,7 @@ logged.
 store = client.secret_store.create_secret_store(
     workspace_id="710995",
     name="payments",
-    preflight_billing=True,  # the portal's SECRETMA-STD billing check (needs billing.read)
+    preflight_billing=True,  # deprecated no-op; upstream decides admission
     if_exists="return",      # return the existing store instead of raising on 409
 )
 secret = client.secret_store.create_secret(
@@ -234,7 +234,7 @@ op = client.cloud_vms.create_cloud_vm(
     ssh_keys=["ssh-ed25519 AAAAC3Nza... me@laptop"],  # preferred over ssh_key_ids for API tokens
     firewall_group_ids=["fw_123"],  # at most one
     vpc_id="vpc_1", subnet_id="subnet_1", network_connectivity="private",  # private | nat | public_ip
-    preflight_billing=True,         # optional billing eligibility check (needs billing.read)
+    preflight_billing=True,         # deprecated no-op; upstream decides admission
 )
 # Windows images need the Windows licence SKU (not listed by the public API yet):
 #   windows_license={"sku_id": ..., "sku_code": ..., "billing_options": [...]}
@@ -470,9 +470,9 @@ from ibee.errors import BillingDeniedError, InsufficientScopeError, is_payment_b
 try:
     client.cloud_vms.create_cloud_vm(...)
 except BillingDeniedError as exc:
-    print(exc.message)          # portal wording, e.g. "Add at least ₹2,000 ..."
+    print(exc.message)          # denial feedback; no assumed minimum or currency
     if exc.topup_allowed:
-        print("Add credits in the IBEE portal (Billing > Add Credits), then retry.")
+        print("Upstream explicitly allows adding credits in the IBEE portal.")
 except InsufficientScopeError as exc:
     print(f"token is missing scope {exc.required_scope}")
 ```
@@ -650,37 +650,21 @@ first_page = client.gpu_vms.list_gpu_vms(workspace_id="907479", limit=10)
 
 The async client's `iter_*` methods return async iterators (`async for`).
 
-## Billing preflight
+## Billing and lifecycle authority
 
-Billable creates are admitted at the public API edge before the request reaches
-the product service. This applies equally to raw REST, the Python and
-TypeScript SDKs, and the CLI, so create methods send exactly one request. To
-check account billing status first:
+All product mutations go to the upstream API for fresh Billing and lifecycle decisions.
+The SDK does not query eligibility, estimate prices, or veto writes based on a diagnostic decision.
+Catalog shape, selected term, tenant/workspace, scope, resource state, and destructive-action checks remain in place.
+Upstream billing denial, restriction, suspension, and inactive-token errors propagate to callers.
 
-```python
-decision = client.billing.require_resource_eligibility(
-    workspace_id="907479",
-    resource_type="vm",
-)
-```
+`preflight_billing`, `billing_preflight`, `check_billing`, and `billing_check` are deprecated compatibility no-ops on product methods, for both true and false values.
+They do not require `billing.read`. This applies to compute, recovery, networking, storage, CDN and secrets.
 
-VM creation with `preflight_billing=True` makes this account-status check; it
-does not calculate an hourly/monthly affordability estimate or send a SKU-only
-probe (the legacy eligibility endpoint prices those monthly). The selected
-catalog term is sent to create, where the upstream catalog quote and Billing
-make the cost decision. A successful status check is not purchase approval.
-Explicit eligibility amounts and the legacy estimate helper remain available
-for caller-requested diagnostics, but VM create never uses them automatically.
-
-`require_resource_eligibility` returns the decision only when `allowed` is exactly
-`True`, raises `BillingDeniedError` (402) with the portal's message otherwise, and
-raises `BillingAdmissionError` (502) if billing returns an incomplete decision.
-`check_resource_eligibility` returns the decision without raising. The decision
-includes `billing_state`, `service_enforcement_state`, `effective_balance_minor`
-or `credit_headroom_minor`, `allowed_operations` and `resource_limits`. Neither
-call reserves funds; the edge repeats the check on the real create. Wallet
-top-ups are only available in the IBEE portal (Billing > Add Credits); use
-`ibee.billing.is_billing_topup_allowed(decision)` to decide whether to suggest one.
+Use `client.billing.check_resource_eligibility(...)` for an explicit diagnostic query.
+It returns `allowed: false` as data and supports `REVOKE_CREDENTIAL` and `SECURITY_RECOVERY`.
+The explicitly invoked `require_resource_eligibility` convenience method retains its throwing contract for compatibility; product methods never call it.
+An explicit query does not authorize or reserve funds for a later mutation.
+Legacy estimate utilities are deprecated arithmetic helpers, not authoritative prices or admission rules. `minimum_topup_minor(...)` and `INR_MINIMUM_TOPUP_MINOR` now return `None` (unknown); callers must obtain any minimum and currency upstream. `is_billing_topup_allowed(...)` and error `topup_allowed` are true only when upstream explicitly lists `billing_topup` in `allowed_operations`; reasons and absent/empty operation lists never grant permission.
 
 ## Storage: Block Storage, Object Storage and CDN
 

@@ -296,8 +296,7 @@ class CloudVmsClient:
             Optional audit label (1-128 characters).
 
         preflight_billing : bool
-            Check Billing account status first (needs billing.read). Upstream create
-            quotes the selected term and decides affordability; no client cost is estimated.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -385,7 +384,7 @@ class CloudVmsClient:
             Optional audit label (1-128 characters).
 
         preflight_billing : bool
-            With ``reserve``: check billing eligibility for the Reserved IP SKU first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         check_state : typing.Optional[bool]
             ``False`` skips reading the VM when ``public_ip_action='release'`` is given (no state check).
@@ -1218,7 +1217,7 @@ class CloudVmsClient:
             Snapshot storage SKU (required).
 
         preflight_billing : bool
-            Check billing eligibility for the SKU first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         check_state : typing.Optional[bool]
             ``True`` reads the VM first: refused while it changes state; selective volumes must be attached.
@@ -1663,8 +1662,7 @@ class CloudVmsClient:
             Backup storage SKU (required).
 
         preflight_billing : bool
-            Check billing eligibility for the backup SKU first (needs billing.read) and raise
-            ``BillingDeniedError`` when it is not allowed.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1841,8 +1839,7 @@ class CloudVmsClient:
             ``True`` reads the backup policy first and requires backups to be enabled.
 
         preflight_billing : bool
-            Check billing eligibility for the backup SKU first (needs billing.read) and raise
-            ``BillingDeniedError`` when it is not allowed.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2743,8 +2740,7 @@ class AsyncCloudVmsClient:
             Optional audit label (1-128 characters).
 
         preflight_billing : bool
-            Check Billing account status first (needs billing.read). Upstream create
-            quotes the selected term and decides affordability; no client cost is estimated.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2832,7 +2828,7 @@ class AsyncCloudVmsClient:
             Optional audit label (1-128 characters).
 
         preflight_billing : bool
-            With ``reserve``: check billing eligibility for the Reserved IP SKU first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         check_state : typing.Optional[bool]
             ``False`` skips reading the VM when ``public_ip_action='release'`` is given (no state check).
@@ -3665,7 +3661,7 @@ class AsyncCloudVmsClient:
             Snapshot storage SKU (required).
 
         preflight_billing : bool
-            Check billing eligibility for the SKU first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         check_state : typing.Optional[bool]
             ``True`` reads the VM first: refused while it changes state; selective volumes must be attached.
@@ -4134,8 +4130,7 @@ class AsyncCloudVmsClient:
             Backup storage SKU (required).
 
         preflight_billing : bool
-            Check billing eligibility for the backup SKU first (needs billing.read) and raise
-            ``BillingDeniedError`` when it is not allowed.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4320,8 +4315,7 @@ class AsyncCloudVmsClient:
             ``True`` reads the backup policy first and requires backups to be enabled.
 
         preflight_billing : bool
-            Check billing eligibility for the backup SKU first (needs billing.read) and raise
-            ``BillingDeniedError`` when it is not allowed.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

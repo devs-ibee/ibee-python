@@ -214,19 +214,16 @@ def test_gpu_create_takes_gpu_fields_from_plan_and_keeps_catalog_unmodified() ->
     assert info.value.field == "os_type"
 
 
-def test_create_preflight_billing_denied_stops_before_create() -> None:
+def test_create_ignores_diagnostic_denial_with_preflight_enabled() -> None:
     router = _catalog_router()
     router.add(
         "POST",
         "billing/resource-eligibility",
         (200, {"organization_id": "org", "allowed": False, "reason": "insufficient_balance", "sku_code": "VM-STD-2-4"}),
     )
-    with pytest.raises(BillingDeniedError) as info:
-        _create(sync_client(router), preflight_billing=True)
-    assert info.value.topup_allowed is True
-    assert ("POST", "compute/cloud-vms") not in router.calls()
-    eligibility = router.body("POST", "billing/resource-eligibility")
-    assert eligibility == {}
+    _create(sync_client(router), preflight_billing=True)
+    assert ("POST", "compute/cloud-vms") in router.calls()
+    assert ("POST", "billing/resource-eligibility") not in router.calls()
 
 
 @pytest.mark.parametrize("family", ["cloud", "gpu"])
@@ -251,7 +248,7 @@ def test_vm_preflight_leaves_selected_term_affordability_to_upstream(family, ter
     else:
         result = create(sync_client(router))
     assert result.operation_id == OP
-    assert router.body("POST", "billing/resource-eligibility") == {}
+    assert ("POST", "billing/resource-eligibility") not in router.calls()
     assert router.body("POST", f"compute/{family}-vms")["billing_catalog"]["billing_interval"] == term
 
 

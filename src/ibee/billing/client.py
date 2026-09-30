@@ -114,7 +114,8 @@ class BillingClient:
 
         Raises ``BillingDeniedError`` (HTTP 402, ``code="billing_denied"``) with the
         portal's message for ``resource_type`` (for example ``vm``, ``gpu_vm``,
-        ``block_storage``) and ``topup_allowed`` when adding credits would help.
+        ``block_storage``) and ``topup_allowed``, which is true only when upstream lists
+        ``billing_topup`` in ``allowed_operations``.
         Raises ``BillingAdmissionError`` (502, ``code="invalid_billing_decision"``) when
         billing returns an incomplete decision or prices a different SKU. The API edge
         repeats this check on the real create; the preflight never reserves funds.

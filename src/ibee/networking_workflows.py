@@ -129,15 +129,8 @@ def firewall_path(firewall_group_id: str, *rest: str) -> str:
 
 
 def _preflight(workspace_id: str, sku_code: str, resource_type: str) -> Flow[typing.Any]:
-    """Billing preflight that explains a missing ``billing.read`` scope."""
-    try:
-        return (yield from billing_preflight(workspace_id, sku_code=sku_code, resource_type=resource_type))
-    except ForbiddenError as exc:
-        exc.message = (
-            f"{exc.message} (the billing check needs the billing.read scope; pass the option that "
-            "disables the billing check to skip it)"
-        ).strip()
-        raise
+    """Deprecated compatibility wrapper; mutation admission is upstream."""
+    return (yield from billing_preflight(workspace_id, sku_code=sku_code, resource_type=resource_type))
 
 
 def _optional(flow: Flow[T], check_state: typing.Optional[bool]) -> Flow[typing.Optional[T]]:

@@ -6,7 +6,7 @@ Each flow is a generator of :class:`~ibee.compute_workflows.Call` objects driven
 so ``Ibee`` and ``AsyncIbee`` share one implementation. Every rule lives in
 :mod:`ibee.validation.secret_store` and is checked before the request it guards.
 
-Optional pre-steps (billing preflight, rollback target, rotate and scope checks) need
+Optional pre-steps (rollback target, rotate and scope checks) need
 read scopes; when the token lacks one (403 ``insufficient_scope``) the pre-step is
 skipped and the request is sent, because the API enforces the same rule.
 """
@@ -116,20 +116,8 @@ def _skip_warning(step: str, error: InsufficientScopeError, default_scope: str) 
 
 
 def secret_manager_preflight(workspace_id: str, *, resource_type: str) -> Flow[None]:
-    """The portal's SECRETMA-STD billing check before a store or secret create.
-
-    Continues only when billing answers ``allowed: true`` for ``SECRETMA-STD``
-    (``BillingDeniedError`` otherwise). Skipped with an ``IbeeBillingWarning`` when the
-    token lacks ``billing.read``: the API edge still enforces billing on the create.
-    """
-    try:
-        yield from billing_preflight(workspace_id, sku_code=SECRET_MANAGER_SKU_CODE, resource_type=resource_type)
-    except InsufficientScopeError as exc:
-        warnings.warn(
-            PRESTEP_SKIPPED_MESSAGE.format(step="Billing preflight", scope=exc.required_scope or "billing.read"),
-            IbeeBillingWarning,
-            stacklevel=4,
-        )
+    """Deprecated compatibility wrapper; mutation admission is upstream."""
+    yield from billing_preflight(workspace_id, sku_code=SECRET_MANAGER_SKU_CODE, resource_type=resource_type)
 
 
 def _page_size(page_size: typing.Any) -> int:

@@ -163,9 +163,21 @@ def test_edge_billing_denial_uses_portal_copy() -> None:
     assert error.reason == "initial_topup_required"
     assert error.sku_code == "STANDARD-2-8"
     assert error.admission_context_id == "adm-1"
-    assert error.topup_allowed is True
-    assert str(error) == "Add at least ₹2,000 to your wallet before creating your first cloud VM."
+    assert error.topup_allowed is False
+    assert str(error) == "Billing requires an initial wallet top-up before creating your first cloud VM. Review billing for available actions."
     assert is_payment_block_error(error)
+
+
+@pytest.mark.parametrize("operations, expected", [(None, False), ([], False), (["billing_topup"], True), ("billing_topup", False)])
+@pytest.mark.parametrize("nested", [False, True])
+def test_billing_error_preserves_only_explicit_topup_allowance(operations: object, expected: bool, nested: bool) -> None:
+    payload = {"error": "billing_denied", "billing_reason": "insufficient_balance", "allowed_operations": operations}
+    if nested:
+        payload = {"detail": {"code": "billing_denied", "reason": "insufficient_balance", "allowed_operations": operations}}
+    error = error_from_response(402, payload)
+    assert isinstance(error, BillingDeniedError)
+    assert error.topup_allowed is expected
+    assert ("You can add credits" in str(error)) is expected
 
 
 def test_typed_body_keeps_0_3_0_error_model() -> None:

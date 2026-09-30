@@ -14,7 +14,6 @@ from __future__ import annotations
 import dataclasses
 import typing
 
-from .billing.client import _decision_from_response, _require_allowed
 from .core.pydantic_utilities import parse_obj_as
 from .core.request_options import RequestOptions
 from .errors.forbidden_error import ForbiddenError
@@ -289,16 +288,13 @@ def billing_preflight(
     estimated_cost_minor: typing.Optional[int] = None,
     resource_type: str = "resource",
 ) -> Flow[typing.Any]:
-    """Portal-style billing check: continue only when ``allowed`` is exactly ``True``.
+    """Deprecated compatibility no-op shared by mutation workflows.
 
-    Needs the ``billing.read`` scope. Raises ``BillingDeniedError`` otherwise.
+    Billing admission and pricing belong to the upstream mutation. Explicit
+    diagnostics remain available through ``billing.check_resource_eligibility``.
+    Keep this a generator so sync and async callers retain the same contract.
     """
-    body = _compact({"sku_code": sku_code, "estimated_cost_minor": estimated_cost_minor})
-    response = yield Call(
-        "POST", "billing/resource-eligibility", params=_ws(workspace_id), json=body, parse=RESPONSE
-    )
-    decision = _decision_from_response(response, sku_code=body.get("sku_code"))
-    return _require_allowed(decision, resource_type)
+    yield from ()
 
 
 def _maybe_state(vm: typing.Any, action: str, check_state: typing.Optional[bool]) -> None:
@@ -444,9 +440,7 @@ def create_vm(
         )
 
     if preflight_billing:
-        # This endpoint has no selected-term input. A SKU-only probe uses its
-        # monthly price, so check account status here. The create's upstream
-        # quote and Billing admission decide selected-term affordability.
+        # Legacy flag: the shared helper performs no request or decision.
         yield from billing_preflight(
             workspace_id,
             resource_type="gpu_vm" if vm_type == "gpu" else "vm",

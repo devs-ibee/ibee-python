@@ -82,7 +82,7 @@ __all__ = [
     "wait_for_volume_operation",
 ]
 
-#: Estimate the portal checks (with CUSTOMDO-STD) before adding a CDN custom domain.
+#: Deprecated historical display estimate; never sent or used for admission.
 CUSTOM_DOMAIN_ESTIMATED_COST_MINOR = 19900
 #: ``ibee cdn domains verify --wait`` cadence (the portal asks users to retry after a few minutes).
 CDN_DOMAIN_POLL_INTERVAL_SECONDS = 15.0
@@ -758,7 +758,6 @@ def create_cdn_custom_domain(
         yield from billing_preflight(
             workspace_id,
             sku_code=CUSTOM_DOMAIN_SKU_CODE,
-            estimated_cost_minor=CUSTOM_DOMAIN_ESTIMATED_COST_MINOR,
             resource_type="custom_domain",
         )
     return (yield from _simple("POST", path, workspace_id, json=body))
@@ -820,4 +819,3 @@ def purge_cdn_cache(
     body = build_cdn_purge_body(mode, paths=paths, hostnames=hostnames, tags=tags, prefixes=prefixes)
     result = yield from _simple("POST", path, workspace_id, json=body)
     return raise_for_cdn_purge(result) if raise_on_failure else result
-

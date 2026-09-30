@@ -36,7 +36,7 @@ class BillingDeniedError(PaymentRequiredError, BillingEligibilityError):
     admission_context_id : typing.Optional[str]
         Edge admission reference, useful for support.
     topup_allowed : bool
-        ``True`` when adding wallet credits in the portal can resolve the denial.
+        ``True`` only when upstream explicitly allows ``billing_topup``.
     decision : typing.Any
         The full eligibility decision, when available.
     message : str
@@ -83,7 +83,11 @@ class BillingDeniedError(PaymentRequiredError, BillingEligibilityError):
         self.admission_context_id = (
             getattr(self, "_explicit_admission_context_id", None) or self.admission_context_id
         )
-        source = decision if decision is not None else (self.reason or "")
+        feedback = self.details if isinstance(self.details, dict) else self.raw_body
+        source = decision if decision is not None else {
+            "reason": self.reason,
+            "allowed_operations": _field(feedback, "allowed_operations"),
+        }
         self.topup_allowed = is_billing_topup_allowed(source)
         self.message = billing_block_message(source, getattr(self, "create_type", "resource"))
 
