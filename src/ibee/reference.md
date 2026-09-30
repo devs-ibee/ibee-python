@@ -13168,7 +13168,7 @@ client.vm_console.close_vm_console_session(
 <dl>
 <dd>
 
-Uses the same centralized billing admission flow as the IBEE portal. Call this endpoint immediately before a billable resource create and continue only when `allowed` is exactly `true`. Product create APIs do not accept or evaluate client-supplied billing state. This point-in-time check does not reserve funds. Requires scope: billing.read.
+Uses the same centralized billing admission flow as the IBEE portal. This is an explicit diagnostic query; `allowed: false` is returned as data. Product mutations obtain fresh upstream decisions without an SDK preflight. Product create APIs do not accept or evaluate client-supplied billing state. This point-in-time check does not reserve funds. Requires scope: billing.read.
 </dd>
 </dl>
 </dd>

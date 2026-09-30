@@ -88,7 +88,7 @@ class ReservedIpsClient:
             same site. Not yet part of the published API contract; behaviour may change.
 
         check_billing : bool
-            Check billing eligibility for RESERVED-IP first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -351,8 +351,7 @@ class ReservedIpsClient:
         network.write (and billing.read for the billing check).
 
         The VM must have a public IPv4 that is not already reserved and no VPC attachment; ``site_id`` must be the
-        VM's site. The API edge does not check billing for this request, so the SDK checks billing eligibility for
-        RESERVED-IP first (``billing_check``). Not yet part of the published API contract; behaviour may change.
+        VM's site. ``billing_check`` is a deprecated no-op; upstream decides admission.
 
         Parameters
         ----------
@@ -372,7 +371,7 @@ class ReservedIpsClient:
             The RESERVED-IP billing SKU object (``sku_id`` and ``sku_code``).
 
         billing_check : bool
-            Check billing eligibility for RESERVED-IP first and raise ``BillingDeniedError`` when it is not allowed.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -496,7 +495,7 @@ class AsyncReservedIpsClient:
             same site. Not yet part of the published API contract; behaviour may change.
 
         check_billing : bool
-            Check billing eligibility for RESERVED-IP first (needs billing.read).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -767,8 +766,7 @@ class AsyncReservedIpsClient:
         network.write (and billing.read for the billing check).
 
         The VM must have a public IPv4 that is not already reserved and no VPC attachment; ``site_id`` must be the
-        VM's site. The API edge does not check billing for this request, so the SDK checks billing eligibility for
-        RESERVED-IP first (``billing_check``). Not yet part of the published API contract; behaviour may change.
+        VM's site. ``billing_check`` is a deprecated no-op; upstream decides admission.
 
         Parameters
         ----------
@@ -788,7 +786,7 @@ class AsyncReservedIpsClient:
             The RESERVED-IP billing SKU object (``sku_id`` and ``sku_code``).
 
         billing_check : bool
-            Check billing eligibility for RESERVED-IP first and raise ``BillingDeniedError`` when it is not allowed.
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

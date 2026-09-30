@@ -96,7 +96,7 @@ class CdnClient:
             ``True`` reads the bucket first and refuses a private one. Best effort: skipped when no bucket has
             that name (404) or the token lacks ``object-storage.read`` (403); the API still checks the origin.
         preflight_billing : typing.Optional[bool]
-            ``True`` runs the portal's billing eligibility check first (needs ``billing.read``).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
         """
         return run_sync(self._client_wrapper, sw.create_cdn_distribution(**clean_kwargs(locals())), request_options)
 
@@ -198,7 +198,7 @@ class CdnClient:
         ``domain`` is trimmed and lower-cased; it must be a valid host name of 3-253 characters with
         a subdomain (for example ``cdn.example.com``). Then create the returned
         ``validation.cname_record`` at your DNS provider and call ``verify_cdn_custom_domain``.
-        ``preflight_billing=True`` runs the portal's billing check first (CUSTOMDO-STD, needs ``billing.read``).
+        ``preflight_billing`` is a deprecated no-op; upstream decides admission.
         """
         return run_sync(self._client_wrapper, sw.create_cdn_custom_domain(**clean_kwargs(locals())), request_options)
 
@@ -350,7 +350,7 @@ class AsyncCdnClient:
             ``True`` reads the bucket first and refuses a private one. Best effort: skipped when no bucket has
             that name (404) or the token lacks ``object-storage.read`` (403); the API still checks the origin.
         preflight_billing : typing.Optional[bool]
-            ``True`` runs the portal's billing eligibility check first (needs ``billing.read``).
+            Deprecated no-op. The upstream mutation decides billing and lifecycle admission.
         """
         return await run_async(self._client_wrapper, sw.create_cdn_distribution(**clean_kwargs(locals())), request_options)
 
@@ -452,7 +452,7 @@ class AsyncCdnClient:
         ``domain`` is trimmed and lower-cased; it must be a valid host name of 3-253 characters with
         a subdomain (for example ``cdn.example.com``). Then create the returned
         ``validation.cname_record`` at your DNS provider and call ``verify_cdn_custom_domain``.
-        ``preflight_billing=True`` runs the portal's billing check first (CUSTOMDO-STD, needs ``billing.read``).
+        ``preflight_billing`` is a deprecated no-op; upstream decides admission.
         """
         return await run_async(self._client_wrapper, sw.create_cdn_custom_domain(**clean_kwargs(locals())), request_options)
 

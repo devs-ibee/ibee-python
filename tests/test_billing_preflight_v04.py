@@ -119,9 +119,9 @@ def test_require_raises_billing_denied_with_portal_copy() -> None:
     assert error.code == "billing_denied"
     assert error.reason == "insufficient_balance"
     assert error.sku_code == "STANDARD-2-8-50"
-    assert error.topup_allowed is True
+    assert error.topup_allowed is False
     assert error.decision.allowed is False
-    assert str(error) == "Your available wallet balance does not cover this GPU VM. Add credits and try again."
+    assert str(error) == "Your available wallet balance does not cover this GPU VM. Review billing for available actions."
 
 
 @pytest.mark.parametrize(
@@ -161,10 +161,10 @@ def test_async_require_parity() -> None:
 
 def test_billing_block_message_matches_portal() -> None:
     assert billing_block_message("initial_topup_required", "vm") == (
-        "Add at least ₹2,000 to your wallet before creating your first cloud VM."
+        "Billing requires an initial wallet top-up before creating your first cloud VM. Review billing for available actions."
     )
     assert billing_block_message({"reason": "initial_topup_required", "currency": "USD"}, "cdn") == (
-        "Add funds to your wallet before creating your first CDN distribution."
+        "Billing requires an initial wallet top-up before creating your first CDN distribution. Review billing for available actions."
     )
     assert billing_block_message({"reason": "x", "billing_state": "PAST_DUE"}, "snapshot").startswith(
         "Billing needs attention before creating a snapshot."
@@ -186,13 +186,38 @@ def test_billing_block_message_matches_portal() -> None:
 
 
 def test_topup_rules_and_minimums() -> None:
-    assert is_billing_topup_allowed("Initial_Topup_Required ")
-    assert is_billing_topup_allowed({"reason": "billing_limit_exhausted"})
+    assert not is_billing_topup_allowed("Initial_Topup_Required ")
+    assert not is_billing_topup_allowed({"reason": "billing_limit_exhausted"})
     assert is_billing_topup_allowed({"reason": "x", "allowed_operations": ["billing_topup"]})
     assert not is_billing_topup_allowed("credit_limit_exceeded")
     assert not is_billing_topup_allowed(None)
-    assert minimum_topup_minor("inr") == 200_000
-    assert minimum_topup_minor("USD") == 0
+    assert minimum_topup_minor("inr") is None
+    assert minimum_topup_minor("USD") is None
+
+
+@pytest.mark.parametrize("reason", ["initial_topup_required", "insufficient_balance", "billing_limit_exhausted"])
+@pytest.mark.parametrize("operations", [None, [], "billing_topup", {}, [True, 1, None], ["BILLING_TOPUP"], [" billing_topup "]])
+def test_topup_permission_is_never_inferred(reason: str, operations: object) -> None:
+    payload = {"reason": reason, "allowed_operations": operations}
+    assert not is_billing_topup_allowed(payload)
+    assert "add credits" not in billing_block_message(payload).lower()
+
+
+@pytest.mark.parametrize("currency", [None, "", "INR", "USD", "EUR"])
+def test_feedback_never_invents_a_currency_or_minimum(currency: object) -> None:
+    payload = {"reason": "initial_topup_required", "currency": currency, "allowed_operations": ["billing_topup"]}
+    assert billing_block_message(payload, "vm") == (
+        "Billing requires an initial wallet top-up before creating your first cloud VM. You can add credits in the IBEE portal."
+    )
+    assert minimum_topup_minor(currency) is None
+
+
+def test_typed_diagnostic_preserves_explicit_topup_permission() -> None:
+    client = _client(_decision(allowed=False, reason="insufficient_balance", allowed_operations=["billing_topup"]))
+    with pytest.raises(BillingDeniedError) as info:
+        client.billing.require_resource_eligibility(workspace_id=WS)
+    assert info.value.topup_allowed is True
+    assert "You can add credits" in str(info.value)
 
 
 def test_estimate_eligibility_cost_minor() -> None:
