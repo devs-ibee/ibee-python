@@ -116,12 +116,13 @@ def parse_error_payload(
             info["message"] = _text(plain.get("message"))
         elif isinstance(error, dict):
             info["raw_code"] = _text(error.get("code"))
+            info["reason"] = _text(error.get("reason")) or _text(error.get("billing_reason"))
             info["message"] = _text(error.get("message"))
             info["details"] = error.get("details")
         elif isinstance(detail, dict):
             info["raw_code"] = _text(detail.get("code")) or _text(detail.get("error_code")) or _text(detail.get("error"))
             info["message"] = _text(detail.get("message"))
-            info["reason"] = _text(detail.get("reason"))
+            info["reason"] = _text(detail.get("reason")) or _text(detail.get("billing_reason"))
             info["details"] = detail
             info["required_scope"] = _text(detail.get("required_scope"))
         elif isinstance(detail, list):

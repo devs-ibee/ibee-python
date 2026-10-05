@@ -10,8 +10,6 @@ from ..errors.billing_errors import BillingAdmissionError, BillingDeniedError
 from .models import BillingEligibility
 from .raw_client import AsyncRawBillingClient, RawBillingClient, eligibility_request_body
 
-_OPERATION_NOTE = "Not yet part of the published API contract; behaviour may change."
-
 
 def _invalid_decision(message: str, payload: typing.Any) -> BillingAdmissionError:
     return BillingAdmissionError(
@@ -85,11 +83,11 @@ class BillingClient:
             Estimated cost in minor currency units (>= 0; floats are rounded). See
             ``ibee.billing.estimate_eligibility_cost_minor``.
         operation : typing.Optional[str]
-            Operation to evaluate, default ``CREATE_RESOURCE`` (one of
+            Optional operation to evaluate (one of
             ``CREATE_RESOURCE``, ``CREATE_CREDENTIAL``, ``INCREASE_CAPACITY``,
             ``MUTATE_RESOURCE``, ``READ_RESOURCE``, ``DELETE_RESOURCE``,
-            ``REVOKE_CREDENTIAL``, ``SECURITY_RECOVERY``). Not yet part of the published
-            API contract; behaviour may change.
+            ``REVOKE_CREDENTIAL``, ``SECURITY_RECOVERY``). When omitted, the server
+            defaults to ``CREATE_RESOURCE``.
         """
         return self._raw_client.check_resource_eligibility(
             workspace_id=workspace_id,
@@ -119,7 +117,7 @@ class BillingClient:
         Raises ``BillingAdmissionError`` (502, ``code="invalid_billing_decision"``) when
         billing returns an incomplete decision or prices a different SKU. The API edge
         repeats this check on the real create; the preflight never reserves funds.
-        ``operation`` is not yet part of the published API contract; behaviour may change.
+        Omitting ``operation`` preserves the server's ``CREATE_RESOURCE`` default.
         """
         body = eligibility_request_body(
             sku_code=sku_code, estimated_cost_minor=estimated_cost_minor, operation=operation
@@ -152,7 +150,6 @@ class AsyncBillingClient:
         Check whether billing permits a prospective resource create (read-only query).
 
         Same parameters and semantics as ``BillingClient.check_resource_eligibility``.
-        ``operation`` is not yet part of the published API contract; behaviour may change.
         """
         response = await self._raw_client.check_resource_eligibility(
             workspace_id=workspace_id,
@@ -175,7 +172,6 @@ class AsyncBillingClient:
     ) -> BillingEligibility:
         """
         Portal-style billing preflight; see ``BillingClient.require_resource_eligibility``.
-        ``operation`` is not yet part of the published API contract; behaviour may change.
         """
         body = eligibility_request_body(
             sku_code=sku_code, estimated_cost_minor=estimated_cost_minor, operation=operation

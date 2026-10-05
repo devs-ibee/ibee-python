@@ -11,7 +11,10 @@ import pytest
 
 import ibee.core.http_client as http_client_module
 from ibee import AsyncIbee, Ibee, IbeeValidationError
-from ibee.errors import ConflictError, InternalServerError, ServiceUnavailableError
+from ibee.errors import (
+    BillingDeniedError, ConflictError, InternalServerError,
+    OrganizationRestrictedError, OrganizationSuspendedError, ServiceUnavailableError,
+)
 from ibee.retry import is_retry_safe, parse_retry_after, retry_delay, should_retry_status
 
 BASE = "https://api.example.test/v1"
@@ -102,6 +105,57 @@ def test_non_retryable_statuses_are_not_retried(status: int) -> None:
     with pytest.raises(Exception):
         _client(handler).cloud_vms.get_cloud_vm("0123456789abcdef01234567", workspace_id=WS)
     assert len(observed) == 1
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+@pytest.mark.parametrize("method", ["GET", "DELETE"])
+@pytest.mark.parametrize("envelope", ["edge", "detail", "error"])
+@pytest.mark.parametrize("status,code,error_type", [
+    (402, "billing_denied", BillingDeniedError),
+    (403, "organization_restricted", OrganizationRestrictedError),
+    (423, "organization_suspended", OrganizationSuspendedError),
+])
+def test_policy_denials_preserve_metadata_without_retrying(
+    asynchronous, method, envelope, status, code, error_type, _no_sleep,
+):
+    raw_code = code if envelope == "edge" else code.upper()
+    fields = {"message": "Upstream policy decision", "billing_reason": "operator_review_required"}
+    payload = {"error": raw_code, **fields} if envelope == "edge" else {
+        envelope: {"code": raw_code, **fields},
+    }
+    calls = []
+    path = "compute/cloud-vms/0123456789abcdef01234567"
+    headers = {"X-Idempotency-Key": "policy-key"} if method == "DELETE" else {}
+    assert is_retry_safe(method, path, headers)
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(status, json=payload, headers={"X-Request-ID": "req-policy", "Retry-After": "0"})
+
+    kwargs = {"method": method, "path": path, "params": {"workspace_id": WS}, "headers": headers}
+
+    def invoke():
+        if asynchronous:
+            async def run():
+                async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as transport:
+                    client = AsyncIbee(token="t", base_url=BASE, httpx_client=transport, max_retries=3)
+                    await client._client_wrapper.httpx_client.request(**kwargs)
+            return asyncio.run(run())
+        with httpx.Client(transport=httpx.MockTransport(handler)) as transport:
+            client = Ibee(token="t", base_url=BASE, httpx_client=transport, max_retries=3)
+            return client._client_wrapper.httpx_client.request(**kwargs)
+
+    with pytest.raises(error_type) as caught:
+        invoke()
+    error = caught.value
+    assert (error.status_code, error.code, error.raw_code) == (status, code, raw_code)
+    assert error.reason == fields["billing_reason"]
+    assert error.request_id == "req-policy"
+    assert error.raw_body == payload
+    assert error.idempotency_key == ("policy-key" if method == "DELETE" else None)
+    assert error.retryable is False
+    assert len(calls) == 1
+    assert _no_sleep == []
 
 
 def test_unkeyed_write_is_not_retried_on_503() -> None:

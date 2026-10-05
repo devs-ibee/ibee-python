@@ -20,7 +20,7 @@ client = Ibee(token="YOUR_TOKEN")
 # Product create methods send one write request. VM creates first read the plan
 # and image (see "Complete VM lifecycle"). The public API edge checks billing
 # authoritatively before routing billable creates. Applications can optionally
-# call client.billing.require_resource_eligibility(...) first (see "Billing preflight").
+# call client.billing.require_resource_eligibility(...) first (see "Billing and lifecycle authority").
 
 # List cloud VMs (every page)
 vms = client.cloud_vms.list_cloud_vms(workspace_id="907479")
@@ -48,7 +48,7 @@ plans = client.compute_catalog.list_compute_plans(
     workspace_id="907479",
     vm_type="cloud",
     site_id="site_blr_01",
-    currency="INR",
+    # Omit currency to use the organization's profile currency.
     billing_interval="MONTHLY",
 )
 images = client.compute_catalog.list_compute_images(
@@ -652,7 +652,7 @@ The async client's `iter_*` methods return async iterators (`async for`).
 
 ## Billing and lifecycle authority
 
-All product mutations go to the upstream API for fresh Billing and lifecycle decisions.
+The upstream API owns Billing and lifecycle decisions for product mutations.
 The SDK does not query eligibility, estimate prices, or veto writes based on a diagnostic decision.
 Catalog shape, selected term, tenant/workspace, scope, resource state, and destructive-action checks remain in place.
 Upstream billing denial, restriction, suspension, and inactive-token errors propagate to callers.

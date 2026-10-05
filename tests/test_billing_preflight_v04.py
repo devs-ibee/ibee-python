@@ -83,6 +83,53 @@ def test_check_does_not_raise_on_denial_and_omits_blank_sku() -> None:
     assert json.loads(observed[0].content) == {}
 
 
+@pytest.mark.parametrize("asynchronous", [False, True])
+@pytest.mark.parametrize("metadata", [
+    {},
+    {
+        "operation": "SECURITY_RECOVERY",
+        "service_enforcement_state": "FULL_PROJECT_SUSPEND",
+        "enforcement_revision": 0,
+        "enforcement_source": "MANUAL_ADMIN",
+        "enforcement_reason_code": "operator_review_required",
+        "allowed_operations": ["READ_RESOURCE", "SECURITY_RECOVERY"],
+        "resource_limits": {"vm": 0, "gpu_vm": -1},
+    },
+    {
+        "operation": "FUTURE_OPERATION",
+        "service_enforcement_state": "FUTURE_STATE",
+        "enforcement_revision": 42,
+        "enforcement_source": "FUTURE_SOURCE",
+        "enforcement_reason_code": "future_reason",
+        "allowed_operations": [],
+        "resource_limits": {},
+        "future_field": {"retained": True},
+    },
+])
+def test_eligibility_retains_optional_enforcement_metadata(asynchronous, metadata):
+    payload = {"organization_id": "org-1", "allowed": False, "reason": "upstream", **metadata}
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, json=payload)
+
+    if asynchronous:
+        async def run():
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as transport:
+                client = AsyncIbee(token="t", base_url=BASE, httpx_client=transport)
+                return await client.billing.check_resource_eligibility(workspace_id=WS, operation="SECURITY_RECOVERY")
+        result = asyncio.run(run())
+    else:
+        result = _client(payload, calls).billing.check_resource_eligibility(workspace_id=WS, operation="SECURITY_RECOVERY")
+    assert result.dict(exclude_unset=True) == payload
+    for field, value in metadata.items():
+        assert getattr(result, field) == value
+    assert len(calls) == 1
+    assert calls[0].url.path == "/v1/billing/resource-eligibility"
+    assert json.loads(calls[0].content) == {"operation": "SECURITY_RECOVERY"}
+
+
 @pytest.mark.parametrize(
     ("kwargs", "code"),
     [

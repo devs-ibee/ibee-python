@@ -31,7 +31,7 @@ def test_shared_preflight_leaves_mutation_response_authoritative(resource_type, 
         calls.append(request)
         assert request.url.path == "/v1/product/mutation"
         assert request.url.params["workspace_id"] == "710995"
-        return httpx.Response(status, json=payload)
+        return httpx.Response(status, json=payload, headers={"X-Request-ID": "req-policy", "Retry-After": "0"})
 
     def flow():
         # All billing-enabled product workflows delegate to this compatibility helper.
@@ -58,6 +58,11 @@ def test_shared_preflight_leaves_mutation_response_authoritative(resource_type, 
             invoke()
         assert caught.value.status_code == status
         assert caught.value.code == code
+        assert caught.value.raw_code == code
+        assert caught.value.reason == "insufficient_balance"
+        assert caught.value.request_id == "req-policy"
+        assert caught.value.retryable is False
+        assert caught.value.raw_body == payload
         assert caught.value.admission_context_id == "adm_upstream"
     assert len(calls) == 1
     assert "estimated_cost_minor" not in calls[0].content.decode()
