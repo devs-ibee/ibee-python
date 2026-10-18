@@ -10,6 +10,9 @@
   Storage's ``idempotency_key`` field) on 429 and 503 only. A response that carries
   a billing or admission answer is never retried. Network errors are retried under
   the same rule, and any request whose connection never opened is retried.
+  VM creates (cloud and GPU) are never retried: whether the server de-duplicates a
+  replayed create with the same key is unverified, so a replay could create a
+  second VM.
   Errors carry ``idempotency_key``, so a caller can retry with the same key.
 * Errors: every status >= 400 raises the status-named error class from
   ``ibee.errors`` (``ApiError`` for other statuses) with the body and headers
@@ -118,6 +121,14 @@ def raise_for_status(response: httpx.Response, idempotency_key: typing.Optional[
     raise error
 
 
+#: VM creates (POST to these collections) are never retried.
+NEVER_RETRIED_CREATES = frozenset({"compute/cloud-vms", "compute/gpu-vms"})
+
+
+def _never_retried(method: str, path: typing.Optional[str]) -> bool:
+    return method.upper() == "POST" and (path or "").strip("/") in NEVER_RETRIED_CREATES
+
+
 def _retry_transport_error(exc: httpx.TransportError, retry_safe: bool) -> bool:
     # A connection that never opened sent nothing, so any request may be retried.
     return retry_safe or isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout))
@@ -138,6 +149,7 @@ class IbeeHttpClient(HttpClient):
         params, headers, key = prepare(params, headers, request_options, self.workspace_id)
         key = key or _body_key(kwargs.get("json"))
         max_retries = (request_options or {}).get("max_retries", self.base_max_retries)
+        max_retries = 0 if _never_retried(method, path) else max_retries
         retry_safe = method.upper() in SAFE_METHODS or key is not None
         attempt = 0
         while True:
@@ -168,6 +180,7 @@ class AsyncIbeeHttpClient(AsyncHttpClient):
         params, headers, key = prepare(params, headers, request_options, self.workspace_id)
         key = key or _body_key(kwargs.get("json"))
         max_retries = (request_options or {}).get("max_retries", self.base_max_retries)
+        max_retries = 0 if _never_retried(method, path) else max_retries
         retry_safe = method.upper() in SAFE_METHODS or key is not None
         attempt = 0
         while True:

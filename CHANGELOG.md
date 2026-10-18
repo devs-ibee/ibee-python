@@ -27,9 +27,10 @@ server's answer comes back unchanged: the client-side rule layers are gone.
 - `idempotency_key` is optional wherever the contract has `X-Idempotency-Key`: the SDK
   sends a random UUID when you pass none (0.4.x built portal-style keys).
 - Retries: reads on 429/502/503/504; writes only with an idempotency key and only on
-  429/503 (VM creates included, since they always carry a key); never when the answer
-  carries a billing or admission code (0.4.x retried keyed writes on 502/504 and on
-  billing admission errors).
+  429/503; never when the answer carries a billing or admission code (0.4.x retried
+  keyed writes on 502/504 and on billing admission errors). VM creates (cloud and GPU)
+  are still never retried, as in 0.4.x and the TypeScript SDK and Terraform provider:
+  whether the server de-duplicates a replayed create is unverified.
 - Errors are raised by status only (`ibee.errors.<Status>Error`, or `ApiError`). `body`
   is the response body as received; `code` is the server's code as sent (0.4.x
   lower-cased it) and `message` is `None` when the server sent none (0.4.x used

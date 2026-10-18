@@ -105,7 +105,7 @@ URL, a token for the other environment) raises `ibee.client.IbeeValidationError`
   `idempotency_key`, the SDK sends a random one and reuses it on every retry.
 - Reads (GET, HEAD, OPTIONS) are retried on 429, 502, 503 and 504.
 - Writes are retried only when they carry an idempotency key, and only on 429 and
-  503.
+  503. VM creates (cloud and GPU) are never retried.
 - A response with a billing or admission answer (`billing_reason`,
   `admission_context_id`, or a billing, admission, catalog or quote code) is never
   retried, and neither is any other status.

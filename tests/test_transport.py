@@ -113,6 +113,20 @@ def test_keyed_write_is_retried_with_the_same_key(status: int) -> None:
     assert len(keys) == 2 and keys[0] == keys[1]
 
 
+@pytest.mark.parametrize("family", ["cloud", "gpu"])
+@pytest.mark.parametrize("failure", [(503, {"detail": "busy"}), (429, {}), httpx.ConnectError("refused")])
+def test_vm_create_is_never_retried(family: str, failure: object) -> None:
+    rec = Recorder(failure, (202, ACCEPTED))
+    vms = getattr(client(rec, workspace_id=WS), f"{family}_vms")
+    shape = dict(cpu=2, ram_mb=2048, disk_gb=40, os_type="linux", os_distro="ubuntu", billing_catalog={"sku_id": 1, "sku_code": "VM"})
+    if family == "gpu":
+        shape.update(gpu_count=1, gpu_model="L4")
+    with pytest.raises((ApiError, httpx.ConnectError)):
+        getattr(vms, f"create_{family}_vm")(name="a", plan_id="p", template_id="t", **shape)
+    assert len(rec.requests) == 1
+    assert rec.requests[0].headers["x-idempotency-key"]
+
+
 @pytest.mark.parametrize("status", [502, 504])
 def test_keyed_write_is_not_retried_on_502_or_504(status: int) -> None:
     rec = Recorder((status, {"detail": "upstream"}), (202, ACCEPTED))
