@@ -13,8 +13,10 @@ from ..core.request_options import RequestOptions
 from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.forbidden_error import ForbiddenError
+from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
 from ..errors.payment_required_error import PaymentRequiredError
+from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.bucket import Bucket
 from ..types.bucket_list import BucketList
@@ -39,7 +41,7 @@ class RawObjectStorageClient:
     def list_buckets(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
         continuation_token: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -49,8 +51,8 @@ class RawObjectStorageClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         limit : typing.Optional[int]
             Maximum number of buckets to return.
@@ -108,6 +110,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -120,9 +133,9 @@ class RawObjectStorageClient:
     def create_bucket(
         self,
         *,
-        workspace_id: str,
         name: str,
         region: str,
+        workspace_id: typing.Optional[str] = None,
         is_public: typing.Optional[bool] = OMIT,
         object_lock_enabled: typing.Optional[bool] = OMIT,
         default_retention: typing.Optional[DefaultRetention] = OMIT,
@@ -134,14 +147,14 @@ class RawObjectStorageClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
             Unique bucket name within the workspace.
 
         region : str
             Required Object Storage region identifier. This must match a region configured for the target environment; it is not a compute `site_id` or display name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
@@ -238,6 +251,28 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -248,7 +283,11 @@ class RawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_bucket(
-        self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Bucket]:
         """
         Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
@@ -258,8 +297,8 @@ class RawObjectStorageClient:
         bucket_name : str
             Logical bucket name.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -320,6 +359,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -330,7 +380,11 @@ class RawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete_bucket(
-        self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteResponse]:
         """
         Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
@@ -340,8 +394,8 @@ class RawObjectStorageClient:
         bucket_name : str
             Logical bucket name.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -402,6 +456,28 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -415,8 +491,8 @@ class RawObjectStorageClient:
         self,
         bucket_name: str,
         *,
-        workspace_id: str,
         is_public: bool,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Bucket]:
         """
@@ -427,10 +503,10 @@ class RawObjectStorageClient:
         bucket_name : str
             Logical bucket name.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         is_public : bool
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -509,6 +585,28 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -519,15 +617,15 @@ class RawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def list_s3credentials(
-        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[S3CredentialList]:
         """
         Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -577,6 +675,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -589,7 +698,7 @@ class RawObjectStorageClient:
     def create_s3credential(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         permission_type: typing.Optional[str] = OMIT,
         bucket_scope: typing.Optional[CreateS3CredentialRequestBucketScope] = OMIT,
@@ -601,8 +710,8 @@ class RawObjectStorageClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -692,6 +801,28 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -702,7 +833,11 @@ class RawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_s3credential(
-        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        access_key_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[S3Credential]:
         """
         Returns credential metadata without the secret key. Requires scope: object-storage.read.
@@ -712,8 +847,8 @@ class RawObjectStorageClient:
         access_key_id : str
             S3 access key ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -774,6 +909,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -784,7 +930,11 @@ class RawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def revoke_s3credential(
-        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        access_key_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[S3CredentialRevoked]:
         """
         Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
@@ -794,8 +944,8 @@ class RawObjectStorageClient:
         access_key_id : str
             S3 access key ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -856,6 +1006,28 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -873,7 +1045,7 @@ class AsyncRawObjectStorageClient:
     async def list_buckets(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
         continuation_token: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -883,8 +1055,8 @@ class AsyncRawObjectStorageClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         limit : typing.Optional[int]
             Maximum number of buckets to return.
@@ -942,6 +1114,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -954,9 +1137,9 @@ class AsyncRawObjectStorageClient:
     async def create_bucket(
         self,
         *,
-        workspace_id: str,
         name: str,
         region: str,
+        workspace_id: typing.Optional[str] = None,
         is_public: typing.Optional[bool] = OMIT,
         object_lock_enabled: typing.Optional[bool] = OMIT,
         default_retention: typing.Optional[DefaultRetention] = OMIT,
@@ -968,14 +1151,14 @@ class AsyncRawObjectStorageClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
             Unique bucket name within the workspace.
 
         region : str
             Required Object Storage region identifier. This must match a region configured for the target environment; it is not a compute `site_id` or display name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         is_public : typing.Optional[bool]
             Whether the bucket allows unauthenticated read access.
@@ -1072,6 +1255,28 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1082,7 +1287,11 @@ class AsyncRawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_bucket(
-        self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Bucket]:
         """
         Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
@@ -1092,8 +1301,8 @@ class AsyncRawObjectStorageClient:
         bucket_name : str
             Logical bucket name.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1154,6 +1363,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1164,7 +1384,11 @@ class AsyncRawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete_bucket(
-        self, bucket_name: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteResponse]:
         """
         Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
@@ -1174,8 +1398,8 @@ class AsyncRawObjectStorageClient:
         bucket_name : str
             Logical bucket name.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1236,6 +1460,28 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1249,8 +1495,8 @@ class AsyncRawObjectStorageClient:
         self,
         bucket_name: str,
         *,
-        workspace_id: str,
         is_public: bool,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Bucket]:
         """
@@ -1261,10 +1507,10 @@ class AsyncRawObjectStorageClient:
         bucket_name : str
             Logical bucket name.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         is_public : bool
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1343,6 +1589,28 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1353,15 +1621,15 @@ class AsyncRawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def list_s3credentials(
-        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[S3CredentialList]:
         """
         Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1411,6 +1679,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1423,7 +1702,7 @@ class AsyncRawObjectStorageClient:
     async def create_s3credential(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         permission_type: typing.Optional[str] = OMIT,
         bucket_scope: typing.Optional[CreateS3CredentialRequestBucketScope] = OMIT,
@@ -1435,8 +1714,8 @@ class AsyncRawObjectStorageClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -1526,6 +1805,28 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1536,7 +1837,11 @@ class AsyncRawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_s3credential(
-        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        access_key_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[S3Credential]:
         """
         Returns credential metadata without the secret key. Requires scope: object-storage.read.
@@ -1546,8 +1851,8 @@ class AsyncRawObjectStorageClient:
         access_key_id : str
             S3 access key ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1608,6 +1913,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1618,7 +1934,11 @@ class AsyncRawObjectStorageClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def revoke_s3credential(
-        self, access_key_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        access_key_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[S3CredentialRevoked]:
         """
         Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
@@ -1628,8 +1948,8 @@ class AsyncRawObjectStorageClient:
         access_key_id : str
             S3 access key ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1681,6 +2001,28 @@ class AsyncRawObjectStorageClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

@@ -1,5 +1,140 @@
 # Changelog
 
+## 0.5.0
+
+The SDK is now generated from the public API contract 0.4.0 (Fern), with a small
+hand-written layer: `ibee/client.py` (configuration), `ibee/transport.py` (retries,
+idempotency keys, errors), `ibee/core/api_error.py` (error fields) and
+`ibee/held.py` (temporary behaviours). Requests are sent as you pass them and the
+server's answer comes back unchanged: the client-side rule layers are gone.
+
+### Added
+
+- Every operation of contract 0.4.0, generated (sync and async), including typed
+  Block Storage and CDN models, the VM delete body, `vpc_id`/`subnet_id`/
+  `network_connectivity`/`vpc_attachment_mode`/`reserved_public_ip_id`/`ssh_keys` on
+  VM create, `limit`/`offset` on VM and firewall group lists, `LockedError` (423) and
+  the billing eligibility fields `operation`, `resource_type`, `quantity`, `size_gb`.
+- Configuration from the environment: `IBEE_API_TOKEN` (then `IBEE_TOKEN`),
+  `IBEE_WORKSPACE_ID`, `IBEE_BASE_URL`, `IBEE_ENDPOINT` and `IBEE_ENV`.
+  `Ibee(workspace_id=...)` sets the workspace for every call; `workspace_id` is now
+  optional on every method.
+- `ApiError.code`, `.billing_reason`, `.message`, `.admission_context_id`,
+  `.required_scope`, `.request_id` and `.raw_body` read the server's fields as sent.
+
+### Changed
+
+- `idempotency_key` is optional wherever the contract has `X-Idempotency-Key`: the SDK
+  sends a random UUID when you pass none (0.4.x built portal-style keys).
+- Retries: reads on 429/502/503/504; writes only with an idempotency key and only on
+  429/503 (VM creates included, since they always carry a key); never when the answer
+  carries a billing or admission code (0.4.x retried keyed writes on 502/504 and on
+  billing admission errors).
+- Errors are raised by status only (`ibee.errors.<Status>Error`, or `ApiError`). `body`
+  is the response body as received; `code` is the server's code as sent (0.4.x
+  lower-cased it) and `message` is `None` when the server sent none (0.4.x used
+  "IBEE API error <status>" or its own billing sentences).
+- The server's defaults apply where 0.4.x filled in portal values: backup hour and
+  frequency, VM attach `mode` (`single-writer`), `vpc_attachment_mode` (`primary`),
+  bucket region. Requests the client used to refuse (names, sizes,
+  CIDRs, ports, states, plan "selectable and priced", a Reserved IP without a VPC, an
+  eligibility `operation` outside a fixed list) are now sent and answered by the
+  server.
+- A billing term a plan does not offer is sent as asked instead of being refused.
+- `delete_cloud_vm`/`delete_gpu_vm` without an auto-assigned public IP send `{}`
+  (generated) instead of no body.
+
+### Breaking changes (removed)
+
+- Modules: `ibee.validation`, `ibee.billing` helpers (`billing_block_message`,
+  `is_billing_topup_allowed`, `estimate_eligibility_cost_minor`,
+  `minimum_topup_minor`, `COMMITTED_MONTHLY_HOURS` and the 731-hour estimator),
+  `ibee.compute_workflows`, `ibee.networking_workflows`, `ibee.storage_workflows`,
+  `ibee.secret_store_workflows`, `ibee.operations`, `ibee.pagination`,
+  `ibee.idempotency`, `ibee.retry`, and the hand error modules under `ibee.errors`.
+- Top-level names: `ApiError` (use `ibee.core.api_error.ApiError`),
+  `IbeeValidationError` (now `ibee.client.IbeeValidationError`, raised only for bad
+  configuration), `IbeeError`, `IbeeBillingWarning`, `__version__` (use
+  `importlib.metadata.version("ibee")`), `resolve_base_url` (now in `ibee.client`),
+  `validate_workspace_id`, `error_from_response`, `is_payment_block_error`,
+  `build_idempotency_key`, `build_stable_idempotency_key`, `paginate_offset`,
+  `paginate_pages`, `wait_for_compute_operation`, `wait_for_compute_operation_async`,
+  `billing_block_message`, `estimate_eligibility_cost_minor`,
+  `is_billing_topup_allowed`, and the types not in the contract
+  (`BillingSkuReference`, `FirewallGroupSummary`, `LoadBalancerCustomDomain`,
+  `VpcVirtualIp`, `BillingEligibilityOperation`, `BillingEligibilityEnforcementSource`,
+  `BillingEligibilityServiceEnforcementState`).
+- Error classes: `ApiKeyInactiveError`, `AuthMethodMismatchError`,
+  `BillingAdmissionError`, `BillingDeniedError`, `BillingEligibilityError`,
+  `BillingForbiddenError`, `CasConflictError`, `CdnPurgeFailedError`,
+  `DeletionIncompleteError`, `IdentityDisabledError`, `InsufficientScopeError`,
+  `InternalServerError` (500 is now `ApiError`), `InvalidWorkspaceError`,
+  `OperationFailedError`, `OperationTimeoutError`, `OrganizationLifecycleError`,
+  `OrganizationRestrictedError`, `OrganizationSuspendedError` (use `LockedError`),
+  `PayloadTooLargeError`, `RecoveryFailedError`, `RecoveryRestoreFailedError`,
+  `ReservedIpTargetUnsupportedError`, `ResizeBlockedError`, `ResourceNotFoundError`,
+  `RouteNotAvailableError`, `ScopePermissionError`, `ScopeValidationError`,
+  `SecretValueNotFoundError`, `StoreArchivedError`, `StoreDeletingError`,
+  `StoreNotActiveError`, `WorkspaceNotAllowedError`. Branch on `status_code` and
+  `code` instead.
+- Methods on routes outside the contract: `vpcs.list/get/create/delete_vpc_virtual_ip(s)`,
+  `vpcs.replace_nat_gateway_public_ip`, `reserved_ips.convert_vm_public_ip_to_reserved_ip`,
+  `reserved_ips.attach_reserved_ip_to_virtual_ip`, `firewalls.list_firewall_group_summaries`,
+  `cdn.list_cdn_cache_policies`, `cdn.get_cdn_distribution_metrics`,
+  `cloud_vms/gpu_vms.delete_*_backup_run`, `cloud_vms/gpu_vms.list_all_*_backup_runs`,
+  `object_storage.delete_s3credential` (use `revoke_s3credential`).
+- Waiters and pagers: `wait_for_operation`, `wait_for_compute_operation`,
+  `wait_for_*_snapshot`, `wait_for_*_snapshot_restore`, `wait_for_*_backup_run`,
+  `wait_for_*_backup_restore`, `vpcs.wait_for_nat_gateway_absent`,
+  `block_storage.wait_for_volume_operation`, `cdn.wait_for_cdn_custom_domain`,
+  `iter_cloud_vms`, `iter_gpu_vms`, `iter_firewall_groups`,
+  `iter_firewall_group_summaries`, `iter_buckets`, `iter_block_volumes`,
+  `list_all_cloud_vms`, `list_all_gpu_vms`, `list_all_buckets`,
+  `list_all_block_volumes`, `secret_store.list_all_secret_stores`,
+  `secret_store.list_all_secrets`.
+- Composite and preflight methods: `billing.require_resource_eligibility`,
+  `block_storage.attach_block_volume_to_vm` and `detach_block_volume_from_vm` (use
+  `cloud_vms`/`gpu_vms.attach_*_volume` and `detach_*_volume`).
+- Parameters: `check_state` (every method), `preflight_billing`, `billing_preflight`,
+  `check_billing`, `skip_preflight` (`delete_bucket`), `if_exists`
+  (`create_secret_store`), `check_target`, `check_auth_method`, `check_store`,
+  `check_site`, `check_origin_public`, `raise_on_failure` (`purge_cdn_cache`),
+  `restorable_only`, `requested_by` and `firewall_group_ids` on VM create,
+  `search`/`sort_by`/`sort_direction` on VM lists, `plan_id` on resize precheck,
+  `target_billing_catalog`/`target_volume_names` and the network fields on restores,
+  `delete_on_termination`/`vm_type`/`resolve_site_name` on volume create, `limit`/
+  `offset`/`site_id`/`vm_type` on the volume list, `include_deleted`, `health_check`/
+  `policy`/`observability` on load balancers, `available_only` on networking sites,
+  `target_type`/`target_vm_ids` on port forwarding, `requested_private_ip` on VPC
+  node attach, `detach_from_service` on Reserved IP attach, `billing_catalog` on
+  `reserve_ip`, and `wait`/`wait_attempts`/`wait_interval` on VPC and NAT delete.
+- Percent-encoding of path ids (the generated path encoding is used as is).
+
+### Kept for now (held until the server resolves its own SKU and defaults)
+
+In `ibee/held.py`, working as in 0.4.2: VM create plan and image lookup and the
+billing-term merge into `billing_catalog` (HOURLY by default for cloud VMs, Windows
+licence and Reserved IP SKUs); VM delete `public_ip_action` default `release`;
+`billing_catalog` on attach-volume (read from the volume), resize and resize-plan
+(from `plan_id`), root-disk resize, backup policy update, VPC create
+(`nat_billing_catalog`), NAT create and NAT delete; every page for cloud VM, GPU VM and
+firewall group lists without `limit`/`offset`; the token environment check; header
+redaction in debug logs (generated).
+
+### Migration
+
+- Catch `ibee.core.api_error.ApiError` (or a status class from `ibee.errors`) and use
+  `status_code`, `code`, `billing_reason`, `message` and `request_id`; show the server's
+  values rather than matching message text.
+- Drop `check_state=`, `preflight_billing=` and the other removed arguments; the server
+  answers what the client used to check, typically with 400, 409 or 422.
+- Pass `region` to `create_bucket` and values such as backup `schedule` explicitly
+  when you relied on a client default.
+- Poll `cloud_vms.get_compute_operation(operation_id)` (or the snapshot, backup and
+  restore `get_*` methods) instead of the removed waiters.
+- Set `IBEE_WORKSPACE_ID` or `Ibee(workspace_id=...)` once instead of passing
+  `workspace_id` on every call (passing it still works).
+
 ## 0.4.2
 
 - Product mutations no longer run any client-side billing preflight or veto.

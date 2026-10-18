@@ -14,8 +14,10 @@ from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
+from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
 from ..errors.payment_required_error import PaymentRequiredError
+from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.error import Error
 from ..types.load_balancer import LoadBalancer
@@ -44,7 +46,7 @@ class RawLoadBalancersClient:
     def list_load_balancers(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         status: typing.Optional[LoadBalancerStatus] = None,
         layer: typing.Optional[ListLoadBalancersRequestLayer] = None,
         protocol: typing.Optional[LoadBalancerProtocol] = None,
@@ -53,10 +55,12 @@ class RawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[LoadBalancer]]:
         """
+        Lists the L4 and L7 load balancers in a workspace. Requires scope: load-balancer.read.
+
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         status : typing.Optional[LoadBalancerStatus]
 
@@ -121,6 +125,17 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -133,25 +148,27 @@ class RawLoadBalancersClient:
     def create_l4load_balancer(
         self,
         *,
-        workspace_id: str,
         name: str,
         protocol: CreateL4LoadBalancerRequestProtocol,
         backends: typing.Sequence[LoadBalancerBackend],
+        workspace_id: typing.Optional[str] = None,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancer]:
         """
+        Creates a layer 4 (TCP/UDP) load balancer that spreads connections across backend VMs, with optional TLS. Requires scope: load-balancer.write.
+
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
 
         protocol : CreateL4LoadBalancerRequestProtocol
 
         backends : typing.Sequence[LoadBalancerBackend]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         routing : typing.Optional[LoadBalancerRouting]
 
@@ -255,6 +272,28 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -267,10 +306,10 @@ class RawLoadBalancersClient:
     def create_l7load_balancer(
         self,
         *,
-        workspace_id: str,
         name: str,
         protocol: CreateL7LoadBalancerRequestProtocol,
         backends: typing.Sequence[LoadBalancerBackend],
+        workspace_id: typing.Optional[str] = None,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         custom_domain: typing.Optional[CreateL7LoadBalancerRequestCustomDomain] = OMIT,
@@ -278,16 +317,18 @@ class RawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancer]:
         """
+        Creates a layer 7 (HTTP/HTTPS) load balancer with routing rules, optional TLS, and an optional custom domain. Requires scope: load-balancer.write.
+
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
 
         protocol : CreateL7LoadBalancerRequestProtocol
 
         backends : typing.Sequence[LoadBalancerBackend]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         routing : typing.Optional[LoadBalancerRouting]
 
@@ -403,6 +444,28 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -413,16 +476,22 @@ class RawLoadBalancersClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_load_balancer(
-        self, load_balancer_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancer]:
         """
+        Returns a load balancer's configuration, including its backends, routing, and TLS settings. Requires scope: load-balancer.read.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -483,6 +552,17 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -493,16 +573,22 @@ class RawLoadBalancersClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete_load_balancer(
-        self, load_balancer_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[None]:
         """
+        Deletes a load balancer. The backend VMs are not deleted. Requires scope: load-balancer.write.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -555,6 +641,28 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -568,7 +676,7 @@ class RawLoadBalancersClient:
         self,
         load_balancer_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
@@ -576,13 +684,15 @@ class RawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancer]:
         """
+        Changes an L4 load balancer's backends, routing, or TLS settings. Requires scope: load-balancer.write.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -689,6 +799,28 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -702,7 +834,7 @@ class RawLoadBalancersClient:
         self,
         load_balancer_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
@@ -712,13 +844,15 @@ class RawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancer]:
         """
+        Changes an L7 load balancer's backends, routing rules, TLS settings, or custom domain. Requires scope: load-balancer.write.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -837,6 +971,28 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -847,16 +1003,22 @@ class RawLoadBalancersClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_load_balancer_status(
-        self, load_balancer_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancerStatusResponse]:
         """
+        Returns a load balancer's provisioning status, endpoint URL, and any error conditions. Requires scope: load-balancer.read.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -917,6 +1079,17 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -934,7 +1107,7 @@ class AsyncRawLoadBalancersClient:
     async def list_load_balancers(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         status: typing.Optional[LoadBalancerStatus] = None,
         layer: typing.Optional[ListLoadBalancersRequestLayer] = None,
         protocol: typing.Optional[LoadBalancerProtocol] = None,
@@ -943,10 +1116,12 @@ class AsyncRawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[LoadBalancer]]:
         """
+        Lists the L4 and L7 load balancers in a workspace. Requires scope: load-balancer.read.
+
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         status : typing.Optional[LoadBalancerStatus]
 
@@ -1011,6 +1186,17 @@ class AsyncRawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1023,25 +1209,27 @@ class AsyncRawLoadBalancersClient:
     async def create_l4load_balancer(
         self,
         *,
-        workspace_id: str,
         name: str,
         protocol: CreateL4LoadBalancerRequestProtocol,
         backends: typing.Sequence[LoadBalancerBackend],
+        workspace_id: typing.Optional[str] = None,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancer]:
         """
+        Creates a layer 4 (TCP/UDP) load balancer that spreads connections across backend VMs, with optional TLS. Requires scope: load-balancer.write.
+
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
 
         protocol : CreateL4LoadBalancerRequestProtocol
 
         backends : typing.Sequence[LoadBalancerBackend]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         routing : typing.Optional[LoadBalancerRouting]
 
@@ -1145,6 +1333,28 @@ class AsyncRawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1157,10 +1367,10 @@ class AsyncRawLoadBalancersClient:
     async def create_l7load_balancer(
         self,
         *,
-        workspace_id: str,
         name: str,
         protocol: CreateL7LoadBalancerRequestProtocol,
         backends: typing.Sequence[LoadBalancerBackend],
+        workspace_id: typing.Optional[str] = None,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         custom_domain: typing.Optional[CreateL7LoadBalancerRequestCustomDomain] = OMIT,
@@ -1168,16 +1378,18 @@ class AsyncRawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancer]:
         """
+        Creates a layer 7 (HTTP/HTTPS) load balancer with routing rules, optional TLS, and an optional custom domain. Requires scope: load-balancer.write.
+
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
 
         protocol : CreateL7LoadBalancerRequestProtocol
 
         backends : typing.Sequence[LoadBalancerBackend]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         routing : typing.Optional[LoadBalancerRouting]
 
@@ -1293,6 +1505,28 @@ class AsyncRawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1303,16 +1537,22 @@ class AsyncRawLoadBalancersClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_load_balancer(
-        self, load_balancer_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancer]:
         """
+        Returns a load balancer's configuration, including its backends, routing, and TLS settings. Requires scope: load-balancer.read.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1373,6 +1613,17 @@ class AsyncRawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1383,16 +1634,22 @@ class AsyncRawLoadBalancersClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete_load_balancer(
-        self, load_balancer_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[None]:
         """
+        Deletes a load balancer. The backend VMs are not deleted. Requires scope: load-balancer.write.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1445,6 +1702,28 @@ class AsyncRawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1458,7 +1737,7 @@ class AsyncRawLoadBalancersClient:
         self,
         load_balancer_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
@@ -1466,13 +1745,15 @@ class AsyncRawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancer]:
         """
+        Changes an L4 load balancer's backends, routing, or TLS settings. Requires scope: load-balancer.write.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -1579,6 +1860,28 @@ class AsyncRawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1592,7 +1895,7 @@ class AsyncRawLoadBalancersClient:
         self,
         load_balancer_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
@@ -1602,13 +1905,15 @@ class AsyncRawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancer]:
         """
+        Changes an L7 load balancer's backends, routing rules, TLS settings, or custom domain. Requires scope: load-balancer.write.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -1727,6 +2032,28 @@ class AsyncRawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1737,16 +2064,22 @@ class AsyncRawLoadBalancersClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_load_balancer_status(
-        self, load_balancer_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancerStatusResponse]:
         """
+        Returns a load balancer's provisioning status, endpoint URL, and any error conditions. Requires scope: load-balancer.read.
+
         Parameters
         ----------
         load_balancer_id : str
             Load balancer ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1798,6 +2131,17 @@ class AsyncRawLoadBalancersClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .backup_policy_schedule import BackupPolicySchedule
+from .billing_catalog_selection import BillingCatalogSelection
 
 
 class BackupPolicyEnableRequest(UniversalBaseModel):
@@ -12,6 +13,11 @@ class BackupPolicyEnableRequest(UniversalBaseModel):
     retention_days: typing.Optional[int] = None
     full_backup_interval_days: typing.Optional[int] = None
     incremental_enabled: typing.Optional[bool] = None
+    billing_catalog: BillingCatalogSelection = pydantic.Field()
+    """
+    Required. The backup storage SKU from the Billing catalog that the VM engine records for this policy's backups. No public operation lists it yet.
+    """
+
     requested_by: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:

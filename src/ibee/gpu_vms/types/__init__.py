@@ -6,10 +6,14 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .create_gpu_vm_request_network_connectivity import CreateGpuVmRequestNetworkConnectivity
     from .create_gpu_vm_request_os_type import CreateGpuVmRequestOsType
+    from .create_gpu_vm_request_vpc_attachment_mode import CreateGpuVmRequestVpcAttachmentMode
     from .get_gpu_vm_metrics_timeseries_request_range import GetGpuVmMetricsTimeseriesRequestRange
 _dynamic_imports: typing.Dict[str, str] = {
+    "CreateGpuVmRequestNetworkConnectivity": ".create_gpu_vm_request_network_connectivity",
     "CreateGpuVmRequestOsType": ".create_gpu_vm_request_os_type",
+    "CreateGpuVmRequestVpcAttachmentMode": ".create_gpu_vm_request_vpc_attachment_mode",
     "GetGpuVmMetricsTimeseriesRequestRange": ".get_gpu_vm_metrics_timeseries_request_range",
 }
 
@@ -35,4 +39,9 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["CreateGpuVmRequestOsType", "GetGpuVmMetricsTimeseriesRequestRange"]
+__all__ = [
+    "CreateGpuVmRequestNetworkConnectivity",
+    "CreateGpuVmRequestOsType",
+    "CreateGpuVmRequestVpcAttachmentMode",
+    "GetGpuVmMetricsTimeseriesRequestRange",
+]
