@@ -15,8 +15,8 @@ work as in 0.4.x and go away one by one once the server owns them:
 3. ``billing_catalog`` on attach-volume (read from the volume when you pass none), on
    resize and resize-plan with ``plan_id``/``billing_term``/``billing_catalog`` (from
    the plan, default HOURLY), and, passed through as given, on root-disk resize,
-   backup policy update, VPC create (``nat_billing_catalog``), NAT gateway create and
-   NAT gateway delete (with ``public_ip_action``).
+   backup policy update, Reserved IP reserve, VPC create (``nat_billing_catalog``),
+   NAT gateway create and NAT gateway delete (with ``public_ip_action``).
 4. Cloud VM, GPU VM and firewall group lists return every page when neither ``limit``
    nor ``offset`` is given.
 5. Token environment check: a development token is not sent to production or a
@@ -453,6 +453,11 @@ class Vpcs(VpcsClient):
         return super().delete_nat_gateway(vpc_id, nat_gateway_id, **kw)
 
 
+
+class ReservedIps(ReservedIpsClient):
+    def reserve_ip(self, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
+        return super().reserve_ip(**_with_body(kw, billing_catalog=billing_catalog))
+
 class AsyncCloudVms(_Async, AsyncCloudVmsClient):
     async def list_cloud_vms(self, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
         return await self._all(super().list_cloud_vms, kw)
@@ -528,11 +533,17 @@ class AsyncVpcs(AsyncVpcsClient):
         return await super().delete_nat_gateway(vpc_id, nat_gateway_id, **kw)
 
 
+
+class AsyncReservedIps(AsyncReservedIpsClient):
+    async def reserve_ip(self, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
+        return await super().reserve_ip(**_with_body(kw, billing_catalog=billing_catalog))
+
 _CLIENTS = {
     "_cloud_vms": (CloudVms, AsyncCloudVms),
     "_gpu_vms": (GpuVms, AsyncGpuVms),
     "_firewalls": (Firewalls, AsyncFirewalls),
     "_vpcs": (Vpcs, AsyncVpcs),
+    "_reserved_ips": (ReservedIps, AsyncReservedIps),
 }
 
 

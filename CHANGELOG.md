@@ -106,8 +106,8 @@ server's answer comes back unchanged: the client-side rule layers are gone.
   `offset`/`site_id`/`vm_type` on the volume list, `include_deleted`, `health_check`/
   `policy`/`observability` on load balancers, `available_only` on networking sites,
   `target_type`/`target_vm_ids` on port forwarding, `requested_private_ip` on VPC
-  node attach, `detach_from_service` on Reserved IP attach, `billing_catalog` on
-  `reserve_ip`, and `wait`/`wait_attempts`/`wait_interval` on VPC and NAT delete.
+  node attach, `detach_from_service` on Reserved IP attach, and `wait`/
+  `wait_attempts`/`wait_interval` on VPC and NAT delete.
 - Percent-encoding of path ids (the generated path encoding is used as is).
 
 ### Kept for now (held until the server resolves its own SKU and defaults)
@@ -116,8 +116,8 @@ In `ibee/held.py`, working as in 0.4.2: VM create plan and image lookup and the
 billing-term merge into `billing_catalog` (HOURLY by default for cloud VMs, Windows
 licence and Reserved IP SKUs); VM delete `public_ip_action` default `release`;
 `billing_catalog` on attach-volume (read from the volume), resize and resize-plan
-(from `plan_id`), root-disk resize, backup policy update, VPC create
-(`nat_billing_catalog`), NAT create and NAT delete; every page for cloud VM, GPU VM and
+(from `plan_id`), root-disk resize, backup policy update, Reserved IP reserve, VPC
+create (`nat_billing_catalog`), NAT create and NAT delete; every page for cloud VM, GPU VM and
 firewall group lists without `limit`/`offset`; the token environment check; header
 redaction in debug logs (generated).
 

@@ -57,6 +57,8 @@ class FakeApi:
             self.reads.append(path)
             return httpx.Response(200, json=self.read(path, query))
         self.sent.append({"method": request.method, "path": path, "body": json.loads(request.content) if request.content else None})
+        if path == "networking/reserved-ips":
+            return httpx.Response(201, json=self.read("networking/reserved-ips/rip-1", {}))
         if "nat-gateways" in path:
             return httpx.Response(201, json={"nat_gateway_id": "n", "vpc_id": "v", "site_id": "s1", "name": "n",
                                              "public_ip_id": "p", "public_ip": "203.0.113.7", "status": "creating"})
@@ -234,8 +236,10 @@ def test_nat_catalogs_are_passed_through() -> None:
     vpcs = client(api, workspace_id=WS).vpcs
     vpcs.create_nat_gateway("vpc-1", name="n", billing_catalog=sku)
     vpcs.delete_nat_gateway("vpc-1", "nat-1", public_ip_action="reserve", billing_catalog=sku)
+    client(api, workspace_id=WS).reserved_ips.reserve_ip(site_id="s1", billing_catalog={"sku_id": 41, "sku_code": "RESERVED-IP"})
     assert api.sent[0]["body"] == {"name": "n", "billing_catalog": sku}
     assert api.sent[1]["body"] == {"public_ip_action": "reserve", "billing_catalog": sku}
+    assert api.sent[2]["body"] == {"site_id": "s1", "billing_catalog": {"sku_id": 41, "sku_code": "RESERVED-IP"}}
 
 
 # 4. all pages -------------------------------------------------------------------
