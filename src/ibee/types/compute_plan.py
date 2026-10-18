@@ -31,6 +31,10 @@ class ComputePlan(UniversalBaseModel):
     hourly_price_minor: typing.Optional[int] = None
     monthly_price_minor: typing.Optional[int] = None
     site_id: typing.Optional[str] = None
+    billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Canonical billing SKU reference for this plan. Pass this object unmodified as `billing_catalog` when creating a VM with this plan — the same flow the portal uses. Treat it as opaque; its fields may grow over time. Billing charges are always computed server-side from `plan_id`, not from this echoed copy.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

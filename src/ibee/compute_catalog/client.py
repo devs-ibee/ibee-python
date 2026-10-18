@@ -28,15 +28,15 @@ class ComputeCatalogClient:
         return self._raw_client
 
     def list_compute_sites(
-        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> ComputeSiteList:
         """
         Lists sites where cloud and GPU VMs can be placed. Requires scope: vm.read.
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -54,7 +54,7 @@ class ComputeCatalogClient:
             token="YOUR_TOKEN",
         )
         client.compute_catalog.list_compute_sites(
-            workspace_id="workspace_id",
+            workspace_id="710995",
         )
         """
         _response = self._raw_client.list_compute_sites(workspace_id=workspace_id, request_options=request_options)
@@ -63,8 +63,8 @@ class ComputeCatalogClient:
     def list_compute_plans(
         self,
         *,
-        workspace_id: str,
         vm_type: VmType,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[BillingInterval] = None,
@@ -75,10 +75,10 @@ class ComputeCatalogClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_type : VmType
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
@@ -103,13 +103,13 @@ class ComputeCatalogClient:
             token="YOUR_TOKEN",
         )
         client.compute_catalog.list_compute_plans(
-            workspace_id="workspace_id",
+            workspace_id="710995",
             vm_type="cloud",
         )
         """
         _response = self._raw_client.list_compute_plans(
-            workspace_id=workspace_id,
             vm_type=vm_type,
+            workspace_id=workspace_id,
             site_id=site_id,
             currency=currency,
             billing_interval=billing_interval,
@@ -120,8 +120,8 @@ class ComputeCatalogClient:
     def list_compute_images(
         self,
         *,
-        workspace_id: str,
         vm_type: VmType,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComputeImageList:
@@ -130,10 +130,10 @@ class ComputeCatalogClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_type : VmType
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
@@ -154,12 +154,12 @@ class ComputeCatalogClient:
             token="YOUR_TOKEN",
         )
         client.compute_catalog.list_compute_images(
-            workspace_id="workspace_id",
+            workspace_id="710995",
             vm_type="cloud",
         )
         """
         _response = self._raw_client.list_compute_images(
-            workspace_id=workspace_id, vm_type=vm_type, site_id=site_id, request_options=request_options
+            vm_type=vm_type, workspace_id=workspace_id, site_id=site_id, request_options=request_options
         )
         return _response.data
 
@@ -180,15 +180,15 @@ class AsyncComputeCatalogClient:
         return self._raw_client
 
     async def list_compute_sites(
-        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> ComputeSiteList:
         """
         Lists sites where cloud and GPU VMs can be placed. Requires scope: vm.read.
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -211,7 +211,7 @@ class AsyncComputeCatalogClient:
 
         async def main() -> None:
             await client.compute_catalog.list_compute_sites(
-                workspace_id="workspace_id",
+                workspace_id="710995",
             )
 
 
@@ -225,8 +225,8 @@ class AsyncComputeCatalogClient:
     async def list_compute_plans(
         self,
         *,
-        workspace_id: str,
         vm_type: VmType,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[BillingInterval] = None,
@@ -237,10 +237,10 @@ class AsyncComputeCatalogClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_type : VmType
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
@@ -270,7 +270,7 @@ class AsyncComputeCatalogClient:
 
         async def main() -> None:
             await client.compute_catalog.list_compute_plans(
-                workspace_id="workspace_id",
+                workspace_id="710995",
                 vm_type="cloud",
             )
 
@@ -278,8 +278,8 @@ class AsyncComputeCatalogClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.list_compute_plans(
-            workspace_id=workspace_id,
             vm_type=vm_type,
+            workspace_id=workspace_id,
             site_id=site_id,
             currency=currency,
             billing_interval=billing_interval,
@@ -290,8 +290,8 @@ class AsyncComputeCatalogClient:
     async def list_compute_images(
         self,
         *,
-        workspace_id: str,
         vm_type: VmType,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComputeImageList:
@@ -300,10 +300,10 @@ class AsyncComputeCatalogClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_type : VmType
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
@@ -329,7 +329,7 @@ class AsyncComputeCatalogClient:
 
         async def main() -> None:
             await client.compute_catalog.list_compute_images(
-                workspace_id="workspace_id",
+                workspace_id="710995",
                 vm_type="cloud",
             )
 
@@ -337,6 +337,6 @@ class AsyncComputeCatalogClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.list_compute_images(
-            workspace_id=workspace_id, vm_type=vm_type, site_id=site_id, request_options=request_options
+            vm_type=vm_type, workspace_id=workspace_id, site_id=site_id, request_options=request_options
         )
         return _response.data

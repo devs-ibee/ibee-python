@@ -12,6 +12,7 @@ from ..core.request_options import RequestOptions
 from ..errors.bad_request_error import BadRequestError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.not_found_error import NotFoundError
+from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.billing_interval import BillingInterval
 from ..types.compute_image_list import ComputeImageList
@@ -27,15 +28,15 @@ class RawComputeCatalogClient:
         self._client_wrapper = client_wrapper
 
     def list_compute_sites(
-        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[ComputeSiteList]:
         """
         Lists sites where cloud and GPU VMs can be placed. Requires scope: vm.read.
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -85,6 +86,17 @@ class RawComputeCatalogClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -97,8 +109,8 @@ class RawComputeCatalogClient:
     def list_compute_plans(
         self,
         *,
-        workspace_id: str,
         vm_type: VmType,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[BillingInterval] = None,
@@ -109,10 +121,10 @@ class RawComputeCatalogClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_type : VmType
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
@@ -195,6 +207,17 @@ class RawComputeCatalogClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -207,8 +230,8 @@ class RawComputeCatalogClient:
     def list_compute_images(
         self,
         *,
-        workspace_id: str,
         vm_type: VmType,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ComputeImageList]:
@@ -217,10 +240,10 @@ class RawComputeCatalogClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_type : VmType
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
@@ -297,6 +320,17 @@ class RawComputeCatalogClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -312,15 +346,15 @@ class AsyncRawComputeCatalogClient:
         self._client_wrapper = client_wrapper
 
     async def list_compute_sites(
-        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[ComputeSiteList]:
         """
         Lists sites where cloud and GPU VMs can be placed. Requires scope: vm.read.
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -370,6 +404,17 @@ class AsyncRawComputeCatalogClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -382,8 +427,8 @@ class AsyncRawComputeCatalogClient:
     async def list_compute_plans(
         self,
         *,
-        workspace_id: str,
         vm_type: VmType,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[BillingInterval] = None,
@@ -394,10 +439,10 @@ class AsyncRawComputeCatalogClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_type : VmType
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
@@ -480,6 +525,17 @@ class AsyncRawComputeCatalogClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -492,8 +548,8 @@ class AsyncRawComputeCatalogClient:
     async def list_compute_images(
         self,
         *,
-        workspace_id: str,
         vm_type: VmType,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ComputeImageList]:
@@ -502,10 +558,10 @@ class AsyncRawComputeCatalogClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_type : VmType
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
@@ -573,6 +629,17 @@ class AsyncRawComputeCatalogClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

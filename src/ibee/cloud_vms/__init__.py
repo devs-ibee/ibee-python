@@ -6,9 +6,16 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .types import CreateCloudVmRequestOsType, GetCloudVmMetricsTimeseriesRequestRange
+    from .types import (
+        CreateCloudVmRequestNetworkConnectivity,
+        CreateCloudVmRequestOsType,
+        CreateCloudVmRequestVpcAttachmentMode,
+        GetCloudVmMetricsTimeseriesRequestRange,
+    )
 _dynamic_imports: typing.Dict[str, str] = {
+    "CreateCloudVmRequestNetworkConnectivity": ".types",
     "CreateCloudVmRequestOsType": ".types",
+    "CreateCloudVmRequestVpcAttachmentMode": ".types",
     "GetCloudVmMetricsTimeseriesRequestRange": ".types",
 }
 
@@ -34,4 +41,9 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["CreateCloudVmRequestOsType", "GetCloudVmMetricsTimeseriesRequestRange"]
+__all__ = [
+    "CreateCloudVmRequestNetworkConnectivity",
+    "CreateCloudVmRequestOsType",
+    "CreateCloudVmRequestVpcAttachmentMode",
+    "GetCloudVmMetricsTimeseriesRequestRange",
+]

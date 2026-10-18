@@ -13,7 +13,10 @@ from ..core.request_options import RequestOptions
 from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
+from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
+from ..errors.service_unavailable_error import ServiceUnavailableError
+from ..errors.too_many_requests_error import TooManyRequestsError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.error import Error
 from ..types.vm_console_close import VmConsoleClose
@@ -34,8 +37,8 @@ class RawVmConsoleClient:
     def create_vm_console_session(
         self,
         *,
-        workspace_id: str,
         vm_id: str,
+        workspace_id: typing.Optional[str] = None,
         vm_type: typing.Optional[VmType] = OMIT,
         console_type: typing.Optional[VmConsoleSessionCreateRequestConsoleType] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
@@ -47,10 +50,10 @@ class RawVmConsoleClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vm_type : typing.Optional[VmType]
 
@@ -152,6 +155,39 @@ class RawVmConsoleClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -162,7 +198,11 @@ class RawVmConsoleClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_vm_console_session(
-        self, session_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        session_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[VmConsoleSessionStatus]:
         """
         Returns the status of a workspace-owned console session. Requires scope: vm.read.
@@ -172,8 +212,8 @@ class RawVmConsoleClient:
         session_id : str
             VM console session ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -234,6 +274,17 @@ class RawVmConsoleClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -247,7 +298,7 @@ class RawVmConsoleClient:
         self,
         session_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         reason: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[VmConsoleClose]:
@@ -259,8 +310,8 @@ class RawVmConsoleClient:
         session_id : str
             VM console session ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         reason : typing.Optional[str]
 
@@ -324,6 +375,28 @@ class RawVmConsoleClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -341,8 +414,8 @@ class AsyncRawVmConsoleClient:
     async def create_vm_console_session(
         self,
         *,
-        workspace_id: str,
         vm_id: str,
+        workspace_id: typing.Optional[str] = None,
         vm_type: typing.Optional[VmType] = OMIT,
         console_type: typing.Optional[VmConsoleSessionCreateRequestConsoleType] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
@@ -354,10 +427,10 @@ class AsyncRawVmConsoleClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vm_type : typing.Optional[VmType]
 
@@ -459,6 +532,39 @@ class AsyncRawVmConsoleClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -469,7 +575,11 @@ class AsyncRawVmConsoleClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_vm_console_session(
-        self, session_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        session_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[VmConsoleSessionStatus]:
         """
         Returns the status of a workspace-owned console session. Requires scope: vm.read.
@@ -479,8 +589,8 @@ class AsyncRawVmConsoleClient:
         session_id : str
             VM console session ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -541,6 +651,17 @@ class AsyncRawVmConsoleClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -554,7 +675,7 @@ class AsyncRawVmConsoleClient:
         self,
         session_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         reason: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[VmConsoleClose]:
@@ -566,8 +687,8 @@ class AsyncRawVmConsoleClient:
         session_id : str
             VM console session ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         reason : typing.Optional[str]
 
@@ -622,6 +743,28 @@ class AsyncRawVmConsoleClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

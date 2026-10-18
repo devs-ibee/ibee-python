@@ -2,4 +2,4 @@
 
 import typing
 
-ErrorDetail = typing.Union[str, typing.Dict[str, typing.Any]]
+ErrorDetail = typing.Union[str, typing.Dict[str, typing.Any], typing.List[typing.Any]]

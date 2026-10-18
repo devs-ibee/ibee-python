@@ -13,8 +13,10 @@ from ..core.request_options import RequestOptions
 from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
+from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
 from ..errors.payment_required_error import PaymentRequiredError
+from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
 from ..types.error import Error
@@ -39,15 +41,15 @@ class RawVpcsClient:
         self._client_wrapper = client_wrapper
 
     def list_networking_sites(
-        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[typing.List[NetworkingSite]]:
         """
         Lists the site IDs accepted by VPC and Reserved IP creation. Use only entries where `available` is `true`. Requires scope: network.read.
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -97,6 +99,17 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -109,7 +122,7 @@ class RawVpcsClient:
     def list_vpcs(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[VpcSummary]]:
@@ -118,8 +131,8 @@ class RawVpcsClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
@@ -173,6 +186,17 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -185,9 +209,9 @@ class RawVpcsClient:
     def create_vpc(
         self,
         *,
-        workspace_id: str,
         name: str,
         site_id: str,
+        workspace_id: typing.Optional[str] = None,
         description: typing.Optional[str] = OMIT,
         region: typing.Optional[str] = OMIT,
         cidr: typing.Optional[str] = OMIT,
@@ -203,13 +227,13 @@ class RawVpcsClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
 
         site_id : str
             Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
 
@@ -227,6 +251,7 @@ class RawVpcsClient:
         is_default : typing.Optional[bool]
 
         connectivity_type : typing.Optional[CreateVpcRequestConnectivityType]
+            The VPC's internet model; the server uses `public` when this is omitted. `public` keeps dedicated public IPs available to its VMs. `private` has no shared public edge, but a VM can still be given a Reserved IP. `nat_gateway` is a private VPC with managed outbound NAT and refuses dedicated public IPs.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -314,6 +339,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -324,7 +371,11 @@ class RawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_vpc(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[VpcDetail]:
         """
         Returns a VPC and its subnets, NAT gateways, and attached nodes. Requires scope: network.read.
@@ -334,8 +385,8 @@ class RawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -396,6 +447,17 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -406,7 +468,11 @@ class RawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete_vpc(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[None]:
         """
         Deletes an empty VPC. Requires scope: network.write.
@@ -416,8 +482,8 @@ class RawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -481,6 +547,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -494,7 +582,7 @@ class RawVpcsClient:
         self,
         vpc_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -507,8 +595,8 @@ class RawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -603,6 +691,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -613,7 +723,11 @@ class RawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def list_vpc_subnets(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[Subnet]]:
         """
         Lists subnets in a VPC. Requires scope: network.read.
@@ -623,8 +737,8 @@ class RawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -685,6 +799,17 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -698,8 +823,8 @@ class RawVpcsClient:
         self,
         vpc_id: str,
         *,
-        workspace_id: str,
         name: str,
+        workspace_id: typing.Optional[str] = None,
         cidr: typing.Optional[str] = OMIT,
         auto_cidr: typing.Optional[bool] = OMIT,
         prefix_length: typing.Optional[int] = OMIT,
@@ -714,10 +839,10 @@ class RawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         cidr : typing.Optional[str]
 
@@ -819,6 +944,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -829,9 +976,16 @@ class RawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_vpc_subnet(
-        self, vpc_id: str, subnet_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        subnet_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Subnet]:
         """
+        Returns one subnet in a VPC, including its CIDR range, gateway, and DNS settings. Requires scope: network.read.
+
         Parameters
         ----------
         vpc_id : str
@@ -840,8 +994,8 @@ class RawVpcsClient:
         subnet_id : str
             Subnet ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -902,6 +1056,17 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -912,9 +1077,16 @@ class RawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete_vpc_subnet(
-        self, vpc_id: str, subnet_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        subnet_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[None]:
         """
+        Deletes a subnet from a VPC. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -923,8 +1095,8 @@ class RawVpcsClient:
         subnet_id : str
             Subnet ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -988,6 +1160,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1002,12 +1196,14 @@ class RawVpcsClient:
         vpc_id: str,
         subnet_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         dns: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Subnet]:
         """
+        Renames a VPC subnet or changes its DNS settings. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -1016,8 +1212,8 @@ class RawVpcsClient:
         subnet_id : str
             Subnet ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -1101,6 +1297,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1111,16 +1329,22 @@ class RawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def list_vpc_nodes(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[NetworkAllocation]]:
         """
+        Lists the VMs attached to a VPC. Requires scope: network.read.
+
         Parameters
         ----------
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1170,6 +1394,17 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1183,25 +1418,27 @@ class RawVpcsClient:
         self,
         vpc_id: str,
         *,
-        workspace_id: str,
         vm_id: str,
         subnet_id: str,
+        workspace_id: typing.Optional[str] = None,
         connectivity: typing.Optional[AttachVpcNodeRequestConnectivity] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[NetworkAllocation]:
         """
+        Attaches a VM to a VPC subnet so it can reach other VMs on the private network, optionally with a reserved public IP. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_id : str
 
         subnet_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         connectivity : typing.Optional[AttachVpcNodeRequestConnectivity]
 
@@ -1298,6 +1535,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1308,9 +1567,16 @@ class RawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def detach_vpc_node(
-        self, vpc_id: str, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        vm_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[None]:
         """
+        Detaches a VM from a VPC. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -1319,8 +1585,8 @@ class RawVpcsClient:
         vm_id : str
             Virtual machine ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1373,6 +1639,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1383,16 +1671,22 @@ class RawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def list_nat_gateways(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[NatGateway]]:
         """
+        Lists the managed NAT gateways in a VPC. Requires scope: network.read.
+
         Parameters
         ----------
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1442,6 +1736,17 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1455,20 +1760,22 @@ class RawVpcsClient:
         self,
         vpc_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         subnet_id: typing.Optional[str] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         name: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[NatGateway]:
         """
+        Creates a managed NAT gateway that gives VMs in a VPC outbound internet access without public IPs of their own. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         subnet_id : typing.Optional[str]
 
@@ -1577,6 +1884,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1591,10 +1920,12 @@ class RawVpcsClient:
         vpc_id: str,
         nat_gateway_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[None]:
         """
+        Deletes a NAT gateway from a VPC. VMs that relied on it lose outbound internet access. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -1603,8 +1934,8 @@ class RawVpcsClient:
         nat_gateway_id : str
             NAT gateway ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1668,6 +1999,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1682,10 +2035,12 @@ class RawVpcsClient:
         vpc_id: str,
         nat_gateway_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[NatPortForwardingRule]]:
         """
+        Lists the port-forwarding rules on a NAT gateway. Requires scope: network.read.
+
         Parameters
         ----------
         vpc_id : str
@@ -1694,8 +2049,8 @@ class RawVpcsClient:
         nat_gateway_id : str
             NAT gateway ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1756,6 +2111,17 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1770,17 +2136,19 @@ class RawVpcsClient:
         vpc_id: str,
         nat_gateway_id: str,
         *,
-        workspace_id: str,
         name: str,
         external_port: int,
         internal_ip: str,
         internal_port: int,
+        workspace_id: typing.Optional[str] = None,
         protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[NatPortForwardingRule]:
         """
+        Adds a port-forwarding rule that sends traffic arriving on a NAT gateway port to a private IP and port inside the VPC. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -1789,9 +2157,6 @@ class RawVpcsClient:
         nat_gateway_id : str
             NAT gateway ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
 
         external_port : int
@@ -1799,6 +2164,9 @@ class RawVpcsClient:
         internal_ip : str
 
         internal_port : int
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         protocol : typing.Optional[CreateNatPortForwardingRuleRequestProtocol]
 
@@ -1900,6 +2268,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1915,10 +2305,12 @@ class RawVpcsClient:
         nat_gateway_id: str,
         port_forwarding_rule_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[None]:
         """
+        Removes a port-forwarding rule from a NAT gateway. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -1930,8 +2322,8 @@ class RawVpcsClient:
         port_forwarding_rule_id : str
             NAT port-forwarding rule ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1984,6 +2376,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1999,7 +2413,7 @@ class RawVpcsClient:
         nat_gateway_id: str,
         port_forwarding_rule_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         protocol: typing.Optional[UpdateNatPortForwardingRuleRequestProtocol] = OMIT,
         external_port: typing.Optional[int] = OMIT,
@@ -2010,6 +2424,8 @@ class RawVpcsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[NatPortForwardingRule]:
         """
+        Changes a NAT port-forwarding rule's ports, target, protocol, or enabled state. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -2021,8 +2437,8 @@ class RawVpcsClient:
         port_forwarding_rule_id : str
             NAT port-forwarding rule ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -2132,6 +2548,28 @@ class RawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2147,15 +2585,15 @@ class AsyncRawVpcsClient:
         self._client_wrapper = client_wrapper
 
     async def list_networking_sites(
-        self, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[typing.List[NetworkingSite]]:
         """
         Lists the site IDs accepted by VPC and Reserved IP creation. Use only entries where `available` is `true`. Requires scope: network.read.
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2205,6 +2643,17 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2217,7 +2666,7 @@ class AsyncRawVpcsClient:
     async def list_vpcs(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[VpcSummary]]:
@@ -2226,8 +2675,8 @@ class AsyncRawVpcsClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
@@ -2281,6 +2730,17 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2293,9 +2753,9 @@ class AsyncRawVpcsClient:
     async def create_vpc(
         self,
         *,
-        workspace_id: str,
         name: str,
         site_id: str,
+        workspace_id: typing.Optional[str] = None,
         description: typing.Optional[str] = OMIT,
         region: typing.Optional[str] = OMIT,
         cidr: typing.Optional[str] = OMIT,
@@ -2311,13 +2771,13 @@ class AsyncRawVpcsClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
 
         site_id : str
             Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
 
@@ -2335,6 +2795,7 @@ class AsyncRawVpcsClient:
         is_default : typing.Optional[bool]
 
         connectivity_type : typing.Optional[CreateVpcRequestConnectivityType]
+            The VPC's internet model; the server uses `public` when this is omitted. `public` keeps dedicated public IPs available to its VMs. `private` has no shared public edge, but a VM can still be given a Reserved IP. `nat_gateway` is a private VPC with managed outbound NAT and refuses dedicated public IPs.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2422,6 +2883,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2432,7 +2915,11 @@ class AsyncRawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_vpc(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[VpcDetail]:
         """
         Returns a VPC and its subnets, NAT gateways, and attached nodes. Requires scope: network.read.
@@ -2442,8 +2929,8 @@ class AsyncRawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2504,6 +2991,17 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2514,7 +3012,11 @@ class AsyncRawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete_vpc(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[None]:
         """
         Deletes an empty VPC. Requires scope: network.write.
@@ -2524,8 +3026,8 @@ class AsyncRawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2589,6 +3091,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2602,7 +3126,7 @@ class AsyncRawVpcsClient:
         self,
         vpc_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -2615,8 +3139,8 @@ class AsyncRawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -2711,6 +3235,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2721,7 +3267,11 @@ class AsyncRawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def list_vpc_subnets(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[Subnet]]:
         """
         Lists subnets in a VPC. Requires scope: network.read.
@@ -2731,8 +3281,8 @@ class AsyncRawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2793,6 +3343,17 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2806,8 +3367,8 @@ class AsyncRawVpcsClient:
         self,
         vpc_id: str,
         *,
-        workspace_id: str,
         name: str,
+        workspace_id: typing.Optional[str] = None,
         cidr: typing.Optional[str] = OMIT,
         auto_cidr: typing.Optional[bool] = OMIT,
         prefix_length: typing.Optional[int] = OMIT,
@@ -2822,10 +3383,10 @@ class AsyncRawVpcsClient:
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         cidr : typing.Optional[str]
 
@@ -2927,6 +3488,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2937,9 +3520,16 @@ class AsyncRawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_vpc_subnet(
-        self, vpc_id: str, subnet_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        subnet_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Subnet]:
         """
+        Returns one subnet in a VPC, including its CIDR range, gateway, and DNS settings. Requires scope: network.read.
+
         Parameters
         ----------
         vpc_id : str
@@ -2948,8 +3538,8 @@ class AsyncRawVpcsClient:
         subnet_id : str
             Subnet ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3010,6 +3600,17 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3020,9 +3621,16 @@ class AsyncRawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete_vpc_subnet(
-        self, vpc_id: str, subnet_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        subnet_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[None]:
         """
+        Deletes a subnet from a VPC. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -3031,8 +3639,8 @@ class AsyncRawVpcsClient:
         subnet_id : str
             Subnet ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3096,6 +3704,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3110,12 +3740,14 @@ class AsyncRawVpcsClient:
         vpc_id: str,
         subnet_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         dns: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Subnet]:
         """
+        Renames a VPC subnet or changes its DNS settings. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -3124,8 +3756,8 @@ class AsyncRawVpcsClient:
         subnet_id : str
             Subnet ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -3209,6 +3841,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3219,16 +3873,22 @@ class AsyncRawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def list_vpc_nodes(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[NetworkAllocation]]:
         """
+        Lists the VMs attached to a VPC. Requires scope: network.read.
+
         Parameters
         ----------
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3278,6 +3938,17 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3291,25 +3962,27 @@ class AsyncRawVpcsClient:
         self,
         vpc_id: str,
         *,
-        workspace_id: str,
         vm_id: str,
         subnet_id: str,
+        workspace_id: typing.Optional[str] = None,
         connectivity: typing.Optional[AttachVpcNodeRequestConnectivity] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[NetworkAllocation]:
         """
+        Attaches a VM to a VPC subnet so it can reach other VMs on the private network, optionally with a reserved public IP. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_id : str
 
         subnet_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         connectivity : typing.Optional[AttachVpcNodeRequestConnectivity]
 
@@ -3406,6 +4079,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3416,9 +4111,16 @@ class AsyncRawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def detach_vpc_node(
-        self, vpc_id: str, vm_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        vm_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[None]:
         """
+        Detaches a VM from a VPC. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -3427,8 +4129,8 @@ class AsyncRawVpcsClient:
         vm_id : str
             Virtual machine ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3481,6 +4183,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3491,16 +4215,22 @@ class AsyncRawVpcsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def list_nat_gateways(
-        self, vpc_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        vpc_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[NatGateway]]:
         """
+        Lists the managed NAT gateways in a VPC. Requires scope: network.read.
+
         Parameters
         ----------
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3550,6 +4280,17 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3563,20 +4304,22 @@ class AsyncRawVpcsClient:
         self,
         vpc_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         subnet_id: typing.Optional[str] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         name: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[NatGateway]:
         """
+        Creates a managed NAT gateway that gives VMs in a VPC outbound internet access without public IPs of their own. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
             VPC ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         subnet_id : typing.Optional[str]
 
@@ -3685,6 +4428,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3699,10 +4464,12 @@ class AsyncRawVpcsClient:
         vpc_id: str,
         nat_gateway_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[None]:
         """
+        Deletes a NAT gateway from a VPC. VMs that relied on it lose outbound internet access. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -3711,8 +4478,8 @@ class AsyncRawVpcsClient:
         nat_gateway_id : str
             NAT gateway ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3776,6 +4543,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3790,10 +4579,12 @@ class AsyncRawVpcsClient:
         vpc_id: str,
         nat_gateway_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[NatPortForwardingRule]]:
         """
+        Lists the port-forwarding rules on a NAT gateway. Requires scope: network.read.
+
         Parameters
         ----------
         vpc_id : str
@@ -3802,8 +4593,8 @@ class AsyncRawVpcsClient:
         nat_gateway_id : str
             NAT gateway ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3864,6 +4655,17 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3878,17 +4680,19 @@ class AsyncRawVpcsClient:
         vpc_id: str,
         nat_gateway_id: str,
         *,
-        workspace_id: str,
         name: str,
         external_port: int,
         internal_ip: str,
         internal_port: int,
+        workspace_id: typing.Optional[str] = None,
         protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[NatPortForwardingRule]:
         """
+        Adds a port-forwarding rule that sends traffic arriving on a NAT gateway port to a private IP and port inside the VPC. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -3897,9 +4701,6 @@ class AsyncRawVpcsClient:
         nat_gateway_id : str
             NAT gateway ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
 
         external_port : int
@@ -3907,6 +4708,9 @@ class AsyncRawVpcsClient:
         internal_ip : str
 
         internal_port : int
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         protocol : typing.Optional[CreateNatPortForwardingRuleRequestProtocol]
 
@@ -4008,6 +4812,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4023,10 +4849,12 @@ class AsyncRawVpcsClient:
         nat_gateway_id: str,
         port_forwarding_rule_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[None]:
         """
+        Removes a port-forwarding rule from a NAT gateway. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -4038,8 +4866,8 @@ class AsyncRawVpcsClient:
         port_forwarding_rule_id : str
             NAT port-forwarding rule ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4092,6 +4920,28 @@ class AsyncRawVpcsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4107,7 +4957,7 @@ class AsyncRawVpcsClient:
         nat_gateway_id: str,
         port_forwarding_rule_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         protocol: typing.Optional[UpdateNatPortForwardingRuleRequestProtocol] = OMIT,
         external_port: typing.Optional[int] = OMIT,
@@ -4118,6 +4968,8 @@ class AsyncRawVpcsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[NatPortForwardingRule]:
         """
+        Changes a NAT port-forwarding rule's ports, target, protocol, or enabled state. Requires scope: network.write.
+
         Parameters
         ----------
         vpc_id : str
@@ -4129,8 +4981,8 @@ class AsyncRawVpcsClient:
         port_forwarding_rule_id : str
             NAT port-forwarding rule ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -4231,6 +5083,28 @@ class AsyncRawVpcsClient:
                 )
             if _response.status_code == 409:
                 raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

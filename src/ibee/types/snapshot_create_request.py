@@ -4,6 +4,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .billing_catalog_selection import BillingCatalogSelection
 from .snapshot_create_request_mode import SnapshotCreateRequestMode
 
 
@@ -12,6 +13,11 @@ class SnapshotCreateRequest(UniversalBaseModel):
     description: typing.Optional[str] = None
     mode: typing.Optional[SnapshotCreateRequestMode] = None
     selected_data_volume_ids: typing.Optional[typing.List[str]] = None
+    billing_catalog: BillingCatalogSelection = pydantic.Field()
+    """
+    Required. The snapshot storage SKU from the Billing catalog that the VM engine records for this snapshot. No public operation lists it yet.
+    """
+
     requested_by: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:

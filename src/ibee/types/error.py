@@ -8,7 +8,44 @@ from .error_detail import ErrorDetail
 
 
 class Error(UniversalBaseModel):
-    detail: typing.Optional[ErrorDetail] = None
+    """
+    Error body. A refusal from the gateway's authorization step (auth-service ext-authz) carries `error` and the other fields below except `detail`; each of them is present, null when it does not apply. A refusal from the product service behind the gateway carries `detail` instead.
+    """
+
+    error: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Machine-readable code from the gateway's authorization step, for example `invalid_api_key`, `insufficient_scope`, `organization_restricted`, `organization_suspended`, `verification_required` or `billing_denied`. The response descriptions list the codes for each status.
+    """
+
+    required_scope: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The scope the token lacks, with `insufficient_scope`.
+    """
+
+    billing_reason: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Billing's reason with `billing_denied`, passed through unchanged: for example `insufficient_balance`, `credit_limit_exceeded`, `initial_topup_required`, `resource_limit_reached` or `resource_usage_unavailable`.
+    """
+
+    billing_sku_code: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The SKU the billing admission checked, when there was one.
+    """
+
+    billing_evaluated_at: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    When Billing made the decision, as Billing returned it.
+    """
+
+    admission_context_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Billing admission context for this request, derived from the token, workspace, route and `X-Idempotency-Key`, so a retry with the same key gets the same id.
+    """
+
+    detail: typing.Optional[ErrorDetail] = pydantic.Field(default=None)
+    """
+    Error detail from the product service.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

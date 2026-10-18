@@ -14,8 +14,10 @@ from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
+from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
 from ..errors.payment_required_error import PaymentRequiredError
+from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.batch_create_secret_item import BatchCreateSecretItem
 from ..types.batch_create_secrets_response import BatchCreateSecretsResponse
@@ -52,7 +54,7 @@ class RawSecretStoreClient:
     def list_secret_stores(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         page: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         include_archived: typing.Optional[bool] = None,
@@ -63,8 +65,8 @@ class RawSecretStoreClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         page : typing.Optional[int]
             Page number.
@@ -126,6 +128,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -138,8 +151,8 @@ class RawSecretStoreClient:
     def create_secret_store(
         self,
         *,
-        workspace_id: str,
         name: str,
+        workspace_id: typing.Optional[str] = None,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretStore]:
@@ -148,10 +161,10 @@ class RawSecretStoreClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
 
@@ -233,6 +246,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -243,7 +278,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_secret_store(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretStore]:
         """
         Gets one secret store. Requires scope: secret-store.read.
@@ -253,8 +292,8 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -315,6 +354,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -328,7 +378,7 @@ class RawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -341,8 +391,8 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -426,6 +476,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -436,7 +508,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def archive_secret_store(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretStore]:
         """
         Archives a secret store. Requires scope: secret-store.write.
@@ -446,8 +522,8 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -508,6 +584,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -518,7 +616,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def unarchive_secret_store(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretStore]:
         """
         Reactivates an archived secret store. Requires scope: secret-store.write.
@@ -528,8 +630,8 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -590,6 +692,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -600,7 +724,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def permanently_delete_secret_store(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretLifecycleStatus]:
         """
         Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
@@ -610,8 +738,8 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -672,6 +800,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -685,7 +835,7 @@ class RawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         q: typing.Optional[str] = None,
         page: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
@@ -699,8 +849,8 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         q : typing.Optional[str]
             Optional search query.
@@ -773,6 +923,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -786,9 +947,9 @@ class RawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
         secret_name: str,
         value: typing.Dict[str, typing.Any],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Secret]:
         """
@@ -799,14 +960,14 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         secret_name : str
             Unique name for the secret within the store. Lowercase alphanumeric and hyphens only.
 
         value : typing.Dict[str, typing.Any]
             Key-value pairs containing the secret data.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -897,6 +1058,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -910,8 +1093,8 @@ class RawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
         secrets: typing.Sequence[BatchCreateSecretItem],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BatchCreateSecretsResponse]:
         """
@@ -922,10 +1105,10 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         secrets : typing.Sequence[BatchCreateSecretItem]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1006,6 +1189,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1016,7 +1221,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_secret(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Secret]:
         """
         Gets one secret metadata record. Secret value is not returned. Requires scope: secret-store.read.
@@ -1026,8 +1235,8 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1088,6 +1297,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1098,7 +1318,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete_secret(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Secret]:
         """
         Soft-deletes a secret. Requires scope: secret-store.write.
@@ -1108,8 +1332,8 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1170,6 +1394,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1180,7 +1426,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_secret_value(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretValue]:
         """
         Gets the latest value for a secret. Requires scope: secret-store.read.
@@ -1190,8 +1440,8 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1252,6 +1502,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1265,8 +1526,8 @@ class RawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         value: typing.Dict[str, typing.Any],
+        workspace_id: typing.Optional[str] = None,
         cas: typing.Optional[int] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretValue]:
@@ -1278,11 +1539,11 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         value : typing.Dict[str, typing.Any]
             Key-value pairs containing the new secret data. Creates a new version.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         cas : typing.Optional[int]
             Check-and-set: only update if the current version matches this number. Prevents overwriting concurrent changes.
@@ -1365,6 +1626,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1378,8 +1661,8 @@ class RawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         value: typing.Dict[str, typing.Any],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretValue]:
         """
@@ -1390,11 +1673,11 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         value : typing.Dict[str, typing.Any]
             Key-value pairs to merge into the current value. Creates a new version.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1473,6 +1756,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1486,8 +1791,8 @@ class RawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         versions: typing.Sequence[int],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Secret]:
         """
@@ -1498,11 +1803,11 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         versions : typing.Sequence[int]
             Secret versions to restore or irreversibly destroy.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1581,6 +1886,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1594,8 +1921,8 @@ class RawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         versions: typing.Sequence[int],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretLifecycleStatus]:
         """
@@ -1606,11 +1933,11 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         versions : typing.Sequence[int]
             Secret versions to restore or irreversibly destroy.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1689,6 +2016,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1699,7 +2048,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def permanently_delete_secret(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretLifecycleStatus]:
         """
         Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
@@ -1709,8 +2062,8 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1771,6 +2124,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1781,7 +2156,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def list_secret_versions(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretVersions]:
         """
         Returns version metadata without secret values. Requires scope: secret-store.read.
@@ -1791,8 +2170,8 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1853,6 +2232,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1867,7 +2257,7 @@ class RawSecretStoreClient:
         secret_id: str,
         version: int,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretVersion]:
         """
@@ -1881,8 +2271,8 @@ class RawSecretStoreClient:
         version : int
             Positive secret version number.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1943,6 +2333,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1956,8 +2357,8 @@ class RawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         version: int,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretValue]:
         """
@@ -1968,11 +2369,11 @@ class RawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         version : int
             Previous version to copy into a new current version.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2051,6 +2452,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2061,7 +2484,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def list_secret_identities(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentityList]:
         """
         Lists AppRole and Kubernetes identities bound to a store. Requires scope: secret-store.read.
@@ -2071,8 +2498,8 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2133,6 +2560,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2146,9 +2584,9 @@ class RawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
         auth_method: CreateSecretIdentityRequestAuthMethod,
         name: str,
+        workspace_id: typing.Optional[str] = None,
         token_policy_mode: typing.Optional[CreateSecretIdentityRequestTokenPolicyMode] = OMIT,
         k8s_namespace: typing.Optional[str] = OMIT,
         k8s_service_account: typing.Optional[str] = OMIT,
@@ -2162,13 +2600,13 @@ class RawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         auth_method : CreateSecretIdentityRequestAuthMethod
             Authentication method used by the application.
 
         name : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         token_policy_mode : typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]
 
@@ -2270,6 +2708,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2280,7 +2740,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_secret_identity(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentity]:
         """
         Gets one application identity without credentials. Requires scope: secret-store.read.
@@ -2290,8 +2754,8 @@ class RawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2352,6 +2816,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2362,7 +2837,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete_secret_identity(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentityActionStatus]:
         """
         Permanently removes the identity, its scopes, role, policy, and sessions. Requires scope: secret-store.write.
@@ -2372,8 +2851,8 @@ class RawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2434,6 +2913,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2447,7 +2948,7 @@ class RawSecretStoreClient:
         self,
         identity_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         token_policy_mode: typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentity]:
@@ -2459,8 +2960,8 @@ class RawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         token_policy_mode : typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode]
             Updating the mode also aligns every existing scope and revokes active sessions.
@@ -2542,6 +3043,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2552,7 +3075,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def disable_secret_identity(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentity]:
         """
         Disables an identity and revokes its active sessions. Requires scope: secret-store.write.
@@ -2562,8 +3089,8 @@ class RawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2624,6 +3151,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2634,7 +3183,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def enable_secret_identity(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentity]:
         """
         Re-enables a disabled identity. Requires scope: secret-store.write.
@@ -2644,8 +3197,8 @@ class RawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2706,6 +3259,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2716,18 +3291,22 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_secret_identity_access(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentityAccess]:
         """
-        Returns Kubernetes binding details or generates fresh AppRole credentials. Treat secret_id as sensitive. Requires scope: secret-store.read.
+        Returns Kubernetes binding details or generates fresh AppRole credentials. Treat secret_id as sensitive. Each call for an AppRole identity mints a new credential, so the gateway treats this GET as a write. Requires scope: secret-store.write.
 
         Parameters
         ----------
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2788,6 +3367,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2798,7 +3399,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def rotate_secret_identity_secret_id(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentityAccess]:
         """
         Generates fresh AppRole credentials. Available only for AppRole identities. Requires scope: secret-store.write.
@@ -2808,8 +3413,8 @@ class RawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2870,6 +3475,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2880,7 +3507,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def revoke_secret_identity_sessions(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentityActionStatus]:
         """
         Revokes active sessions without deleting or disabling the identity. Requires scope: secret-store.write.
@@ -2890,8 +3521,8 @@ class RawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2952,6 +3583,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -2962,7 +3615,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def list_secret_identity_scopes(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentityScopeList]:
         """
         Lists the stores and permissions available to an identity. Requires scope: secret-store.read.
@@ -2972,8 +3629,8 @@ class RawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3034,6 +3691,17 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3047,8 +3715,8 @@ class RawSecretStoreClient:
         self,
         identity_id: str,
         *,
-        workspace_id: str,
         store_id: str,
+        workspace_id: typing.Optional[str] = None,
         access_mode: typing.Optional[CreateSecretIdentityScopeRequestAccessMode] = OMIT,
         allow_version_read: typing.Optional[bool] = OMIT,
         allow_rollback: typing.Optional[bool] = OMIT,
@@ -3063,10 +3731,10 @@ class RawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         store_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         access_mode : typing.Optional[CreateSecretIdentityScopeRequestAccessMode]
 
@@ -3168,6 +3836,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3178,7 +3868,11 @@ class RawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete_secret_identity_scope(
-        self, scope_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        scope_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretIdentityActionStatus]:
         """
         Removes a store permission from an identity. Requires scope: secret-store.write.
@@ -3188,8 +3882,8 @@ class RawSecretStoreClient:
         scope_id : str
             Secret Store identity scope ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3250,6 +3944,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3263,7 +3979,7 @@ class RawSecretStoreClient:
         self,
         scope_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         access_mode: typing.Optional[UpdateSecretIdentityScopeRequestAccessMode] = OMIT,
         allow_version_read: typing.Optional[bool] = OMIT,
         allow_rollback: typing.Optional[bool] = OMIT,
@@ -3278,8 +3994,8 @@ class RawSecretStoreClient:
         scope_id : str
             Secret Store identity scope ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         access_mode : typing.Optional[UpdateSecretIdentityScopeRequestAccessMode]
 
@@ -3369,6 +4085,28 @@ class RawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3386,7 +4124,7 @@ class AsyncRawSecretStoreClient:
     async def list_secret_stores(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         page: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         include_archived: typing.Optional[bool] = None,
@@ -3397,8 +4135,8 @@ class AsyncRawSecretStoreClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         page : typing.Optional[int]
             Page number.
@@ -3460,6 +4198,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3472,8 +4221,8 @@ class AsyncRawSecretStoreClient:
     async def create_secret_store(
         self,
         *,
-        workspace_id: str,
         name: str,
+        workspace_id: typing.Optional[str] = None,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretStore]:
@@ -3482,10 +4231,10 @@ class AsyncRawSecretStoreClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         name : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
 
@@ -3567,6 +4316,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3577,7 +4348,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_secret_store(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretStore]:
         """
         Gets one secret store. Requires scope: secret-store.read.
@@ -3587,8 +4362,8 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3649,6 +4424,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3662,7 +4448,7 @@ class AsyncRawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -3675,8 +4461,8 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
 
@@ -3760,6 +4546,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3770,7 +4578,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def archive_secret_store(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretStore]:
         """
         Archives a secret store. Requires scope: secret-store.write.
@@ -3780,8 +4592,8 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3842,6 +4654,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3852,7 +4686,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def unarchive_secret_store(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretStore]:
         """
         Reactivates an archived secret store. Requires scope: secret-store.write.
@@ -3862,8 +4700,8 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3924,6 +4762,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -3934,7 +4794,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def permanently_delete_secret_store(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretLifecycleStatus]:
         """
         Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
@@ -3944,8 +4808,8 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4006,6 +4870,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4019,7 +4905,7 @@ class AsyncRawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         q: typing.Optional[str] = None,
         page: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
@@ -4033,8 +4919,8 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         q : typing.Optional[str]
             Optional search query.
@@ -4107,6 +4993,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4120,9 +5017,9 @@ class AsyncRawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
         secret_name: str,
         value: typing.Dict[str, typing.Any],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Secret]:
         """
@@ -4133,14 +5030,14 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         secret_name : str
             Unique name for the secret within the store. Lowercase alphanumeric and hyphens only.
 
         value : typing.Dict[str, typing.Any]
             Key-value pairs containing the secret data.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4231,6 +5128,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4244,8 +5163,8 @@ class AsyncRawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
         secrets: typing.Sequence[BatchCreateSecretItem],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BatchCreateSecretsResponse]:
         """
@@ -4256,10 +5175,10 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         secrets : typing.Sequence[BatchCreateSecretItem]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4340,6 +5259,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4350,7 +5291,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_secret(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Secret]:
         """
         Gets one secret metadata record. Secret value is not returned. Requires scope: secret-store.read.
@@ -4360,8 +5305,8 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4422,6 +5367,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4432,7 +5388,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete_secret(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Secret]:
         """
         Soft-deletes a secret. Requires scope: secret-store.write.
@@ -4442,8 +5402,8 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4504,6 +5464,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4514,7 +5496,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_secret_value(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretValue]:
         """
         Gets the latest value for a secret. Requires scope: secret-store.read.
@@ -4524,8 +5510,8 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4586,6 +5572,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4599,8 +5596,8 @@ class AsyncRawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         value: typing.Dict[str, typing.Any],
+        workspace_id: typing.Optional[str] = None,
         cas: typing.Optional[int] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretValue]:
@@ -4612,11 +5609,11 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         value : typing.Dict[str, typing.Any]
             Key-value pairs containing the new secret data. Creates a new version.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         cas : typing.Optional[int]
             Check-and-set: only update if the current version matches this number. Prevents overwriting concurrent changes.
@@ -4699,6 +5696,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4712,8 +5731,8 @@ class AsyncRawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         value: typing.Dict[str, typing.Any],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretValue]:
         """
@@ -4724,11 +5743,11 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         value : typing.Dict[str, typing.Any]
             Key-value pairs to merge into the current value. Creates a new version.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4807,6 +5826,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4820,8 +5861,8 @@ class AsyncRawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         versions: typing.Sequence[int],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Secret]:
         """
@@ -4832,11 +5873,11 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         versions : typing.Sequence[int]
             Secret versions to restore or irreversibly destroy.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4915,6 +5956,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -4928,8 +5991,8 @@ class AsyncRawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         versions: typing.Sequence[int],
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretLifecycleStatus]:
         """
@@ -4940,11 +6003,11 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         versions : typing.Sequence[int]
             Secret versions to restore or irreversibly destroy.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5023,6 +6086,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5033,7 +6118,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def permanently_delete_secret(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretLifecycleStatus]:
         """
         Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
@@ -5043,8 +6132,8 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5105,6 +6194,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5115,7 +6226,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def list_secret_versions(
-        self, secret_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        secret_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretVersions]:
         """
         Returns version metadata without secret values. Requires scope: secret-store.read.
@@ -5125,8 +6240,8 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5187,6 +6302,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5201,7 +6327,7 @@ class AsyncRawSecretStoreClient:
         secret_id: str,
         version: int,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretVersion]:
         """
@@ -5215,8 +6341,8 @@ class AsyncRawSecretStoreClient:
         version : int
             Positive secret version number.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5277,6 +6403,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5290,8 +6427,8 @@ class AsyncRawSecretStoreClient:
         self,
         secret_id: str,
         *,
-        workspace_id: str,
         version: int,
+        workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretValue]:
         """
@@ -5302,11 +6439,11 @@ class AsyncRawSecretStoreClient:
         secret_id : str
             Secret ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         version : int
             Previous version to copy into a new current version.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5385,6 +6522,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5395,7 +6554,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def list_secret_identities(
-        self, store_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        store_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentityList]:
         """
         Lists AppRole and Kubernetes identities bound to a store. Requires scope: secret-store.read.
@@ -5405,8 +6568,8 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5467,6 +6630,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5480,9 +6654,9 @@ class AsyncRawSecretStoreClient:
         self,
         store_id: str,
         *,
-        workspace_id: str,
         auth_method: CreateSecretIdentityRequestAuthMethod,
         name: str,
+        workspace_id: typing.Optional[str] = None,
         token_policy_mode: typing.Optional[CreateSecretIdentityRequestTokenPolicyMode] = OMIT,
         k8s_namespace: typing.Optional[str] = OMIT,
         k8s_service_account: typing.Optional[str] = OMIT,
@@ -5496,13 +6670,13 @@ class AsyncRawSecretStoreClient:
         store_id : str
             Secret store ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         auth_method : CreateSecretIdentityRequestAuthMethod
             Authentication method used by the application.
 
         name : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         token_policy_mode : typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]
 
@@ -5604,6 +6778,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5614,7 +6810,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_secret_identity(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentity]:
         """
         Gets one application identity without credentials. Requires scope: secret-store.read.
@@ -5624,8 +6824,8 @@ class AsyncRawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5686,6 +6886,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5696,7 +6907,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete_secret_identity(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentityActionStatus]:
         """
         Permanently removes the identity, its scopes, role, policy, and sessions. Requires scope: secret-store.write.
@@ -5706,8 +6921,8 @@ class AsyncRawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5768,6 +6983,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5781,7 +7018,7 @@ class AsyncRawSecretStoreClient:
         self,
         identity_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         token_policy_mode: typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentity]:
@@ -5793,8 +7030,8 @@ class AsyncRawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         token_policy_mode : typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode]
             Updating the mode also aligns every existing scope and revokes active sessions.
@@ -5876,6 +7113,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5886,7 +7145,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def disable_secret_identity(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentity]:
         """
         Disables an identity and revokes its active sessions. Requires scope: secret-store.write.
@@ -5896,8 +7159,8 @@ class AsyncRawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5958,6 +7221,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -5968,7 +7253,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def enable_secret_identity(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentity]:
         """
         Re-enables a disabled identity. Requires scope: secret-store.write.
@@ -5978,8 +7267,8 @@ class AsyncRawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -6040,6 +7329,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -6050,18 +7361,22 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_secret_identity_access(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentityAccess]:
         """
-        Returns Kubernetes binding details or generates fresh AppRole credentials. Treat secret_id as sensitive. Requires scope: secret-store.read.
+        Returns Kubernetes binding details or generates fresh AppRole credentials. Treat secret_id as sensitive. Each call for an AppRole identity mints a new credential, so the gateway treats this GET as a write. Requires scope: secret-store.write.
 
         Parameters
         ----------
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -6122,6 +7437,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -6132,7 +7469,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def rotate_secret_identity_secret_id(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentityAccess]:
         """
         Generates fresh AppRole credentials. Available only for AppRole identities. Requires scope: secret-store.write.
@@ -6142,8 +7483,8 @@ class AsyncRawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -6204,6 +7545,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -6214,7 +7577,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def revoke_secret_identity_sessions(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentityActionStatus]:
         """
         Revokes active sessions without deleting or disabling the identity. Requires scope: secret-store.write.
@@ -6224,8 +7591,8 @@ class AsyncRawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -6286,6 +7653,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -6296,7 +7685,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def list_secret_identity_scopes(
-        self, identity_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        identity_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentityScopeList]:
         """
         Lists the stores and permissions available to an identity. Requires scope: secret-store.read.
@@ -6306,8 +7699,8 @@ class AsyncRawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -6368,6 +7761,17 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -6381,8 +7785,8 @@ class AsyncRawSecretStoreClient:
         self,
         identity_id: str,
         *,
-        workspace_id: str,
         store_id: str,
+        workspace_id: typing.Optional[str] = None,
         access_mode: typing.Optional[CreateSecretIdentityScopeRequestAccessMode] = OMIT,
         allow_version_read: typing.Optional[bool] = OMIT,
         allow_rollback: typing.Optional[bool] = OMIT,
@@ -6397,10 +7801,10 @@ class AsyncRawSecretStoreClient:
         identity_id : str
             Secret Store application identity ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         store_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         access_mode : typing.Optional[CreateSecretIdentityScopeRequestAccessMode]
 
@@ -6502,6 +7906,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -6512,7 +7938,11 @@ class AsyncRawSecretStoreClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete_secret_identity_scope(
-        self, scope_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        scope_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretIdentityActionStatus]:
         """
         Removes a store permission from an identity. Requires scope: secret-store.write.
@@ -6522,8 +7952,8 @@ class AsyncRawSecretStoreClient:
         scope_id : str
             Secret Store identity scope ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -6584,6 +8014,28 @@ class AsyncRawSecretStoreClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -6597,7 +8049,7 @@ class AsyncRawSecretStoreClient:
         self,
         scope_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         access_mode: typing.Optional[UpdateSecretIdentityScopeRequestAccessMode] = OMIT,
         allow_version_read: typing.Optional[bool] = OMIT,
         allow_rollback: typing.Optional[bool] = OMIT,
@@ -6612,8 +8064,8 @@ class AsyncRawSecretStoreClient:
         scope_id : str
             Secret Store identity scope ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         access_mode : typing.Optional[UpdateSecretIdentityScopeRequestAccessMode]
 
@@ -6694,6 +8146,28 @@ class AsyncRawSecretStoreClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

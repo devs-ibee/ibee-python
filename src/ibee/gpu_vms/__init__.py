@@ -6,9 +6,16 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .types import CreateGpuVmRequestOsType, GetGpuVmMetricsTimeseriesRequestRange
+    from .types import (
+        CreateGpuVmRequestNetworkConnectivity,
+        CreateGpuVmRequestOsType,
+        CreateGpuVmRequestVpcAttachmentMode,
+        GetGpuVmMetricsTimeseriesRequestRange,
+    )
 _dynamic_imports: typing.Dict[str, str] = {
+    "CreateGpuVmRequestNetworkConnectivity": ".types",
     "CreateGpuVmRequestOsType": ".types",
+    "CreateGpuVmRequestVpcAttachmentMode": ".types",
     "GetGpuVmMetricsTimeseriesRequestRange": ".types",
 }
 
@@ -34,4 +41,9 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["CreateGpuVmRequestOsType", "GetGpuVmMetricsTimeseriesRequestRange"]
+__all__ = [
+    "CreateGpuVmRequestNetworkConnectivity",
+    "CreateGpuVmRequestOsType",
+    "CreateGpuVmRequestVpcAttachmentMode",
+    "GetGpuVmMetricsTimeseriesRequestRange",
+]

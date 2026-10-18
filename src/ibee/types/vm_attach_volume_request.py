@@ -4,12 +4,18 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .billing_catalog_selection import BillingCatalogSelection
 from .vm_attach_volume_request_mode import VmAttachVolumeRequestMode
 
 
 class VmAttachVolumeRequest(UniversalBaseModel):
     volume_id: str
     mode: typing.Optional[VmAttachVolumeRequestMode] = None
+    billing_catalog: BillingCatalogSelection = pydantic.Field()
+    """
+    Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. No public operation lists it yet.
+    """
+
     requested_by: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:

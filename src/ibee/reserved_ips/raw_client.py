@@ -13,8 +13,10 @@ from ..core.request_options import RequestOptions
 from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
+from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
 from ..errors.payment_required_error import PaymentRequiredError
+from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.error import Error
 from ..types.reserved_ip import ReservedIp
@@ -31,7 +33,7 @@ class RawReservedIpsClient:
     def list_reserved_ips(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[ReservedIp]]:
@@ -40,8 +42,8 @@ class RawReservedIpsClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
@@ -95,6 +97,17 @@ class RawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -107,8 +120,8 @@ class RawReservedIpsClient:
     def reserve_ip(
         self,
         *,
-        workspace_id: str,
         site_id: str,
+        workspace_id: typing.Optional[str] = None,
         label: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ReservedIp]:
@@ -117,11 +130,11 @@ class RawReservedIpsClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         site_id : str
             Site whose public IP pool allocates the address. Copy an available `site_id` from `GET /networking/sites`; use the target VM or VPC's site when the address will be attached.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         label : typing.Optional[str]
 
@@ -214,6 +227,28 @@ class RawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -224,16 +259,22 @@ class RawReservedIpsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_reserved_ip(
-        self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ReservedIp]:
         """
+        Returns a reserved public IPv4 address, including its label, reverse DNS, and the VM it is attached to. Requires scope: network.read.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -294,6 +335,17 @@ class RawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -304,16 +356,22 @@ class RawReservedIpsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def release_reserved_ip(
-        self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[None]:
         """
+        Releases a reserved public IPv4 address from your workspace. Requires scope: network.write.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -377,6 +435,28 @@ class RawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -390,19 +470,21 @@ class RawReservedIpsClient:
         self,
         reserved_ip_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         label: typing.Optional[str] = OMIT,
         reverse_dns: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ReservedIp]:
         """
+        Changes a reserved IP's label or reverse DNS (PTR) record. Requires scope: network.write.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         label : typing.Optional[str]
 
@@ -486,6 +568,28 @@ class RawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -499,22 +603,24 @@ class RawReservedIpsClient:
         self,
         reserved_ip_id: str,
         *,
-        workspace_id: str,
         vm_id: str,
+        workspace_id: typing.Optional[str] = None,
         vpc_id: typing.Optional[str] = OMIT,
         subnet_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ReservedIp]:
         """
+        Attaches a reserved public IP to a VM, optionally through a VPC subnet. Requires scope: network.write.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vpc_id : typing.Optional[str]
 
@@ -610,6 +716,28 @@ class RawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -620,16 +748,22 @@ class RawReservedIpsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def detach_reserved_ip(
-        self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ReservedIp]:
         """
+        Detaches a reserved public IP from its VM. The address stays reserved in your workspace. Requires scope: network.write.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -690,6 +824,28 @@ class RawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -703,8 +859,8 @@ class RawReservedIpsClient:
         self,
         reserved_ip_id: str,
         *,
-        workspace_id: str,
         vm_id: str,
+        workspace_id: typing.Optional[str] = None,
         vpc_id: typing.Optional[str] = OMIT,
         subnet_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -717,10 +873,10 @@ class RawReservedIpsClient:
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vpc_id : typing.Optional[str]
 
@@ -816,6 +972,28 @@ class RawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -833,7 +1011,7 @@ class AsyncRawReservedIpsClient:
     async def list_reserved_ips(
         self,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         site_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[ReservedIp]]:
@@ -842,8 +1020,8 @@ class AsyncRawReservedIpsClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_id : typing.Optional[str]
             Optional exact site filter. Copy `site_id` from `GET /networking/sites`.
@@ -897,6 +1075,17 @@ class AsyncRawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -909,8 +1098,8 @@ class AsyncRawReservedIpsClient:
     async def reserve_ip(
         self,
         *,
-        workspace_id: str,
         site_id: str,
+        workspace_id: typing.Optional[str] = None,
         label: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ReservedIp]:
@@ -919,11 +1108,11 @@ class AsyncRawReservedIpsClient:
 
         Parameters
         ----------
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         site_id : str
             Site whose public IP pool allocates the address. Copy an available `site_id` from `GET /networking/sites`; use the target VM or VPC's site when the address will be attached.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         label : typing.Optional[str]
 
@@ -1016,6 +1205,28 @@ class AsyncRawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1026,16 +1237,22 @@ class AsyncRawReservedIpsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_reserved_ip(
-        self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ReservedIp]:
         """
+        Returns a reserved public IPv4 address, including its label, reverse DNS, and the VM it is attached to. Requires scope: network.read.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1096,6 +1313,17 @@ class AsyncRawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1106,16 +1334,22 @@ class AsyncRawReservedIpsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def release_reserved_ip(
-        self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[None]:
         """
+        Releases a reserved public IPv4 address from your workspace. Requires scope: network.write.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1179,6 +1413,28 @@ class AsyncRawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1192,19 +1448,21 @@ class AsyncRawReservedIpsClient:
         self,
         reserved_ip_id: str,
         *,
-        workspace_id: str,
+        workspace_id: typing.Optional[str] = None,
         label: typing.Optional[str] = OMIT,
         reverse_dns: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ReservedIp]:
         """
+        Changes a reserved IP's label or reverse DNS (PTR) record. Requires scope: network.write.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         label : typing.Optional[str]
 
@@ -1288,6 +1546,28 @@ class AsyncRawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1301,22 +1581,24 @@ class AsyncRawReservedIpsClient:
         self,
         reserved_ip_id: str,
         *,
-        workspace_id: str,
         vm_id: str,
+        workspace_id: typing.Optional[str] = None,
         vpc_id: typing.Optional[str] = OMIT,
         subnet_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ReservedIp]:
         """
+        Attaches a reserved public IP to a VM, optionally through a VPC subnet. Requires scope: network.write.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vpc_id : typing.Optional[str]
 
@@ -1412,6 +1694,28 @@ class AsyncRawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1422,16 +1726,22 @@ class AsyncRawReservedIpsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def detach_reserved_ip(
-        self, reserved_ip_id: str, *, workspace_id: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        reserved_ip_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ReservedIp]:
         """
+        Detaches a reserved public IP from its VM. The address stays reserved in your workspace. Requires scope: network.write.
+
         Parameters
         ----------
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1492,6 +1802,28 @@ class AsyncRawReservedIpsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -1505,8 +1837,8 @@ class AsyncRawReservedIpsClient:
         self,
         reserved_ip_id: str,
         *,
-        workspace_id: str,
         vm_id: str,
+        workspace_id: typing.Optional[str] = None,
         vpc_id: typing.Optional[str] = OMIT,
         subnet_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -1519,10 +1851,10 @@ class AsyncRawReservedIpsClient:
         reserved_ip_id : str
             Reserved IP ID.
 
-        workspace_id : str
-            The workspace ID to scope this request to.
-
         vm_id : str
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vpc_id : typing.Optional[str]
 
@@ -1609,6 +1941,28 @@ class AsyncRawReservedIpsClient:
                 )
             if _response.status_code == 409:
                 raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
