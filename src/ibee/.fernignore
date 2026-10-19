@@ -1,0 +1,7 @@
+# Hand-written files: `fern generate` keeps them. Everything else under src/ibee is
+# generated from contract/ibee-cloud.yaml with the settings in fern/generators.yml.
+.fernignore
+client.py
+core/api_error.py
+transport.py
+held.py

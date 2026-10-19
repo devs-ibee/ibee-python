@@ -50,6 +50,7 @@ class FakeApi:
         self.vm_count = vm_count
         self.sent: typing.List[dict] = []
         self.reads: typing.List[str] = []
+        self.raw: typing.List[bytes] = []
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         path, query = request.url.path.replace("/v1/", "", 1), dict(request.url.params)
@@ -57,6 +58,7 @@ class FakeApi:
             self.reads.append(path)
             return httpx.Response(200, json=self.read(path, query))
         self.sent.append({"method": request.method, "path": path, "body": json.loads(request.content) if request.content else None})
+        self.raw.append(request.content)
         if path == "networking/reserved-ips":
             return httpx.Response(201, json=self.read("networking/reserved-ips/rip-1", {}))
         if "nat-gateways" in path:
@@ -78,7 +80,11 @@ class FakeApi:
         if path == f"block-storage/volumes/{VOLUME}":
             return {"id": VOLUME, "name": "d", "size_gb": 20, "state": "available", "volume_class": "standard", "replica_count": 1,
                     "attachments": [], "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z",
-                    "billing_catalog": {"sku_id": 31, "sku_code": "BLOCK-STD"}}
+                    "metadata": {"billing_catalog": {"sku_id": 31, "sku_code": "BLOCK-STD"}}}
+        if path == "block-storage/volumes/vol-no-sku":
+            return {"id": "vol-no-sku", "name": "d", "size_gb": 20, "state": "available", "volume_class": "standard",
+                    "replica_count": 1, "attachments": [], "created_at": "2026-01-01T00:00:00Z",
+                    "updated_at": "2026-01-01T00:00:00Z"}
         if path.startswith("networking/reserved-ips/"):
             return {"public_ip_id": "rip-1", "address": "203.0.113.9", "site_id": "s1", "status": "reserved",
                     "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z",
@@ -139,7 +145,7 @@ def test_gpu_create_keeps_the_plan_catalog_without_a_term() -> None:
 def test_explicit_create_makes_no_lookups() -> None:
     api = FakeApi()
     client(api, workspace_id=WS).cloud_vms.create_cloud_vm(
-        name="e", plan_id="p1", template_id="t-ubuntu", cpu=2, ram_mb=2048, disk_gb=40, os_type="linux", os_distro="ubuntu",
+        name="e", plan_id="p1", template_id="t-ubuntu", site_id="s1", cpu=2, ram_mb=2048, disk_gb=40, os_type="linux", os_distro="ubuntu",
         billing_catalog={"sku_id": 11, "sku_code": "VM-2C", "billing_options": OPTIONS}, billing_term="HOURLY",
     )
     assert api.reads == []
@@ -157,7 +163,7 @@ def test_reserved_ip_without_a_vpc_is_sent_with_its_sku() -> None:
 
 def test_unknown_plan_is_left_to_the_server() -> None:
     api = FakeApi()
-    client(api, workspace_id=WS).cloud_vms.create_cloud_vm(name="a", plan_id="nope", template_id="t-ubuntu")
+    client(api, workspace_id=WS).cloud_vms.create_cloud_vm(name="a", plan_id="nope", template_id="t-ubuntu", site_id="s1")
     assert api.body["plan_id"] == "nope" and api.body["cpu"] is None and api.body["billing_catalog"] is None
 
 
@@ -192,10 +198,25 @@ def test_delete_with_an_explicit_release_makes_no_lookup() -> None:
 # 3. billing_catalog on attach, resize and NAT ------------------------------------
 
 
-def test_attach_reads_the_sku_from_the_volume() -> None:
+def test_attach_reads_the_sku_from_the_volume_metadata() -> None:
     api = FakeApi()
     client(api, workspace_id=WS).cloud_vms.attach_cloud_vm_volume(VM, volume_id=VOLUME)
+    assert api.reads == [f"block-storage/volumes/{VOLUME}"]
     assert api.body == {"volume_id": VOLUME, "billing_catalog": {"sku_id": 31, "sku_code": "BLOCK-STD"}}
+    assert b'"sku_id":31,' in api.raw[0]  # as the volume sent it, not 31.0
+
+
+def test_attach_leaves_billing_catalog_out_when_the_volume_has_none() -> None:
+    api = FakeApi()
+    client(api, workspace_id=WS).gpu_vms.attach_gpu_vm_volume(VM, volume_id="vol-no-sku")
+    assert api.body == {"volume_id": "vol-no-sku"}  # not null: the server answers the missing SKU
+
+
+def test_attach_with_a_given_sku_makes_no_lookup() -> None:
+    api = FakeApi()
+    sku = {"sku_id": 32, "sku_code": "BLOCK-FAST"}
+    client(api, workspace_id=WS).cloud_vms.attach_cloud_vm_volume(VM, volume_id=VOLUME, billing_catalog=sku)
+    assert api.reads == [] and api.body == {"volume_id": VOLUME, "billing_catalog": sku}
 
 
 def test_resize_with_a_plan_sends_its_shape_and_sku() -> None:
@@ -209,6 +230,14 @@ def test_resize_plan_with_a_term() -> None:
     api = FakeApi()
     client(api, workspace_id=WS).cloud_vms.resize_cloud_vm_plan(VM, plan_id="p2", billing_term="MONTHLY")
     assert api.body == {"billing_catalog": MONTHLY, "cpu": 4, "ram_mb": 8192}
+
+
+def test_resize_plan_passes_a_given_catalog_through() -> None:
+    api = FakeApi()
+    sku = {"sku_id": 12, "sku_code": "VM-4C"}
+    client(api, workspace_id=WS).gpu_vms.resize_gpu_vm_plan(VM, cpu=4, ram_mb=8192, billing_catalog=sku)
+    assert api.reads == []
+    assert api.body == {"cpu": 4, "ram_mb": 8192, "billing_catalog": {**sku, "attached_skus": {}}}
 
 
 def test_plain_resize_is_sent_as_given() -> None:

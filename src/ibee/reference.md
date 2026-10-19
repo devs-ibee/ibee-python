@@ -9009,6 +9009,7 @@ client = Ibee(
 client.cloud_vms.create_cloud_vm(
     workspace_id="710995",
     name="web-server-01",
+    site_id="site_id",
     os_distro="ubuntu",
     os_type="linux",
     template_id="tmpl_ubuntu_2204",
@@ -9035,6 +9036,14 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **name:** `str` — Display name for the virtual machine.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**site_id:** `str` — Placement site ID from `GET /compute/sites`. Required: the API refuses a create without it (400 `invalid_site_id`). Use the same value when filtering plans and images.
     
 </dd>
 </dl>
@@ -9107,14 +9116,6 @@ client.cloud_vms.create_cloud_vm(
 <dd>
 
 **idempotency_key:** `typing.Optional[str]` — Unique key used to safely retry write operations.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**site_id:** `typing.Optional[str]` — Optional placement site ID. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites` and use the same value when filtering plans and images.
     
 </dd>
 </dl>
@@ -12471,6 +12472,7 @@ client = Ibee(
 client.gpu_vms.create_gpu_vm(
     workspace_id="710995",
     name="ml-training-01",
+    site_id="site_id",
     os_distro="ubuntu",
     os_type="linux",
     template_id="tmpl_ubuntu_2204_cuda",
@@ -12499,6 +12501,14 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **name:** `str` — Display name for the virtual machine.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**site_id:** `str` — Placement site ID from `GET /compute/sites`. Required: the API refuses a create without it (400 `invalid_site_id`). Use the same value when filtering plans and images.
     
 </dd>
 </dl>
@@ -12587,14 +12597,6 @@ client.gpu_vms.create_gpu_vm(
 <dd>
 
 **idempotency_key:** `typing.Optional[str]` — Unique key used to safely retry write operations.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**site_id:** `typing.Optional[str]` — Optional placement site ID. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites` and use the same value when filtering plans and images.
     
 </dd>
 </dl>

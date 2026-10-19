@@ -122,7 +122,7 @@ def test_vm_create_is_never_retried(family: str, failure: object) -> None:
     if family == "gpu":
         shape.update(gpu_count=1, gpu_model="L4")
     with pytest.raises((ApiError, httpx.ConnectError)):
-        getattr(vms, f"create_{family}_vm")(name="a", plan_id="p", template_id="t", **shape)
+        getattr(vms, f"create_{family}_vm")(name="a", plan_id="p", template_id="t", site_id="s1", **shape)
     assert len(rec.requests) == 1
     assert rec.requests[0].headers["x-idempotency-key"]
 

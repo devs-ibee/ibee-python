@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.5.2
+
+Generated from the public API contract 0.4.1, now vendored at
+`contract/ibee-cloud.yaml` with the Fern settings in `fern/`, so `src/ibee` can be
+regenerated from this repository alone (`scripts/regenerate.sh`).
+
+### Added
+
+- `billing_catalog` (optional) on `resize_cloud_vm_plan`/`resize_gpu_vm_plan` and
+  `resize_cloud_vm_root_disk`/`resize_gpu_vm_root_disk`, typed by the contract.
+- `BlockVolume.metadata` (`BlockVolumeMetadata`) with the volume's `billing_catalog`.
+- CI: the generated code must match what `contract/ibee-cloud.yaml` generates, and the
+  hand-written files may call only contract operations and paths. A pull request that
+  changes `contract/**` gets the regenerated code pushed to its branch.
+
+### Changed
+
+- `site_id` is required on `create_cloud_vm` and `create_gpu_vm` (the API refuses a
+  create without it).
+- Attach-volume without `billing_catalog` takes the volume's
+  `metadata.billing_catalog`. When the volume has none, the field is left out and the
+  server answers (0.5.0 sent `null`).
+- Root-disk resize is the generated method: `billing_catalog` is a contract field
+  instead of an extra body field. Resize-plan sends the held `billing_catalog` as the
+  contract field too.
+- `.fernignore` moved to `src/ibee/.fernignore` (paths relative to `src/ibee`).
+
 ## 0.5.0
 
 The SDK is now generated from the public API contract 0.4.0 (Fern), with a small

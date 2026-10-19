@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://schema.buildwithfern.dev/generators-yml.json
+#
+# Generates src/ibee from the vendored API contract (contract/ibee-cloud.yaml, an exact
+# copy of IBEE/platform-docs fern/openapi/ibee-cloud.yaml). Same generator settings as
+# platform-docs fern/apis/ibee-cloud/generators.yml (group python-sdk).
+#
+#   scripts/regenerate.sh        # = cd fern && fern generate --local --group python-sdk --force --version <pyproject version>
+#
+# Files listed in src/ibee/.fernignore are hand-written and kept.
+api:
+  specs:
+    - openapi: ../contract/ibee-cloud.yaml
+      overrides: ./overrides.yml
+
+groups:
+  python-sdk:
+    generators:
+      - name: fernapi/fern-python-sdk
+        version: 5.15.2
+        output:
+          location: local-file-system
+          path: ../src/ibee
+        config:
+          client:
+            class_name: BaseIbee
+            filename: base_client.py
+            exported_class_name: Ibee
+            exported_filename: client.py
+          package_name: ibee

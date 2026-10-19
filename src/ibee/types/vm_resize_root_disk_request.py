@@ -4,11 +4,17 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .billing_catalog_selection import BillingCatalogSelection
 
 
 class VmResizeRootDiskRequest(UniversalBaseModel):
     new_size_gb: int
     allow_online: typing.Optional[bool] = None
+    billing_catalog: typing.Optional[BillingCatalogSelection] = pydantic.Field(default=None)
+    """
+    Optional. A Billing catalog selection that the VM engine records with the resize.
+    """
+
     requested_by: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
