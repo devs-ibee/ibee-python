@@ -39,6 +39,7 @@ if typing.TYPE_CHECKING:
     from .block_volume_attachment_mode import BlockVolumeAttachmentMode
     from .block_volume_delete import BlockVolumeDelete
     from .block_volume_delete_status import BlockVolumeDeleteStatus
+    from .block_volume_metadata import BlockVolumeMetadata
     from .block_volume_operation import BlockVolumeOperation
     from .block_volume_operation_operation import BlockVolumeOperationOperation
     from .block_volume_operation_status import BlockVolumeOperationStatus
@@ -237,6 +238,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "BlockVolumeAttachmentMode": ".block_volume_attachment_mode",
     "BlockVolumeDelete": ".block_volume_delete",
     "BlockVolumeDeleteStatus": ".block_volume_delete_status",
+    "BlockVolumeMetadata": ".block_volume_metadata",
     "BlockVolumeOperation": ".block_volume_operation",
     "BlockVolumeOperationOperation": ".block_volume_operation_operation",
     "BlockVolumeOperationStatus": ".block_volume_operation_status",
@@ -459,6 +461,7 @@ __all__ = [
     "BlockVolumeAttachmentMode",
     "BlockVolumeDelete",
     "BlockVolumeDeleteStatus",
+    "BlockVolumeMetadata",
     "BlockVolumeOperation",
     "BlockVolumeOperationOperation",
     "BlockVolumeOperationStatus",

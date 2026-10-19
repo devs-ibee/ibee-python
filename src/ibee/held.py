@@ -1,7 +1,7 @@
 # IBEE hand layer (listed in .fernignore).
 """Temporary client behaviours, kept until the server resolves its own SKU and defaults.
 
-Each item is a decision that the server or the 0.4.0 contract does not make yet. They
+Each item is a decision that the server or the 0.4.1 contract does not make yet. They
 work as in 0.4.x and go away one by one once the server owns them:
 
 1. VM create (cloud and GPU): the plan and the image are looked up to fill ``cpu``,
@@ -12,11 +12,13 @@ work as in 0.4.x and go away one by one once the server owns them:
    Reserved IP's SKU are added under ``attached_skus``.
 2. VM delete: ``public_ip_action`` defaults to ``release`` for a VM with an
    auto-assigned public IP; ``reserve`` labels the address with the VM name.
-3. ``billing_catalog`` on attach-volume (read from the volume when you pass none), on
-   resize and resize-plan with ``plan_id``/``billing_term``/``billing_catalog`` (from
-   the plan, default HOURLY), and, passed through as given, on root-disk resize,
-   backup policy update, Reserved IP reserve, VPC create (``nat_billing_catalog``),
-   NAT gateway create and NAT gateway delete (with ``public_ip_action``).
+3. ``billing_catalog`` on attach-volume (the volume's ``metadata.billing_catalog`` when
+   you pass none; left out when the volume has none, so the server answers), on resize
+   and resize-plan with ``plan_id``/``billing_term``/``billing_catalog`` (from the plan,
+   default HOURLY), and, passed through as given, on backup policy update, Reserved IP
+   reserve, VPC create (``nat_billing_catalog``), NAT gateway create and NAT gateway
+   delete (with ``public_ip_action``). Root-disk resize takes ``billing_catalog`` from
+   the contract (0.4.1).
 4. Cloud VM, GPU VM and firewall group lists return every page when neither ``limit``
    nor ``offset`` is given.
 5. Token environment check: a development token is not sent to production or a
@@ -32,7 +34,7 @@ import typing
 from urllib.parse import urlsplit
 
 from .block_storage.client import AsyncBlockStorageClient, BlockStorageClient
-from .cloud_vms.client import AsyncCloudVmsClient, CloudVmsClient
+from .cloud_vms.client import OMIT, AsyncCloudVmsClient, CloudVmsClient
 from .compute_catalog.client import AsyncComputeCatalogClient, ComputeCatalogClient
 from .firewalls.client import AsyncFirewallsClient, FirewallsClient
 from .gpu_vms.client import AsyncGpuVmsClient, GpuVmsClient
@@ -222,7 +224,7 @@ def delete_kwargs(vm: typing.Any, kw: _Kw) -> _Kw:
 
 
 def _with_body(kw: _Kw, **extra: typing.Any) -> _Kw:
-    """Send fields the 0.4.0 contract does not declare yet (``additional_body_parameters``)."""
+    """Send fields the 0.4.1 contract does not declare yet (``additional_body_parameters``)."""
     extra = {key: value for key, value in extra.items() if value is not None}
     if extra:
         options = dict(kw.get("request_options") or {})
@@ -231,7 +233,10 @@ def _with_body(kw: _Kw, **extra: typing.Any) -> _Kw:
     return kw
 
 
-def resize_kwargs(keys: typing.Tuple[str, ...], kw: _Kw, plan: typing.Any, vm: typing.Any, held: _Kw) -> _Kw:
+def resize_kwargs(
+    keys: typing.Tuple[str, ...], kw: _Kw, plan: typing.Any, vm: typing.Any, held: _Kw, typed: bool = False
+) -> _Kw:
+    """``typed``: the operation declares ``billing_catalog`` (resize-plan); otherwise it is sent as an extra body field."""
     kw = dict(kw)
     for key in keys:
         if kw.get(key) is None and _get(plan, key) is not None:
@@ -248,7 +253,19 @@ def resize_kwargs(keys: typing.Tuple[str, ...], kw: _Kw, plan: typing.Any, vm: t
             _get(plan, "billing_catalog"), term=held.get("billing_term") or "HOURLY", cpu=kw.get("cpu") or _get(vm, "cpu"),
             windows_license=license_sku if windows else None,
         )
+    if typed:
+        return {**kw, "billing_catalog": catalog} if catalog is not None else kw
     return _with_body(kw, billing_catalog=catalog)
+
+
+def volume_catalog(volume: typing.Any) -> typing.Any:
+    """The volume's ``metadata.billing_catalog`` as sent, or ``OMIT`` (the field is left out) when it has none."""
+    catalog = _get(_get(volume, "metadata"), "billing_catalog")
+    if catalog is None:
+        return OMIT
+    sent = catalog.dict() if hasattr(catalog, "dict") else dict(catalog)  # the fields the server sent
+    # The generated model reads a numeric sku_id/product_id as a float: send 31, not 31.0.
+    return {key: int(value) if isinstance(value, float) and value.is_integer() else value for key, value in sent.items()}
 
 
 def _held_resize(kw: _Kw) -> typing.Tuple[_Kw, _Kw]:
@@ -318,10 +335,10 @@ class _Sync:
     def _attach(self, kw: _Kw) -> _Kw:
         if kw.get("billing_catalog") is None and kw.get("volume_id"):
             volume = BlockStorageClient(client_wrapper=self._wrapper).get_block_volume(kw["volume_id"], workspace_id=kw.get("workspace_id"))
-            kw = {**kw, "billing_catalog": _get(volume, "billing_catalog") or _get(_get(volume, "metadata"), "billing_catalog")}
+            kw = {**kw, "billing_catalog": volume_catalog(volume)}
         return kw
 
-    def _resize(self, family: str, keys: typing.Tuple[str, ...], get_vm: typing.Any, vm_id: str, kw: _Kw) -> _Kw:
+    def _resize(self, family: str, keys: typing.Tuple[str, ...], get_vm: typing.Any, vm_id: str, kw: _Kw, typed: bool = False) -> _Kw:
         kw, held = _held_resize(dict(kw))
         vm = plan = None
         if held.get("plan_id") is not None:
@@ -330,7 +347,7 @@ class _Sync:
                 workspace_id=kw.get("workspace_id"), vm_type=family, site_id=_get(vm, "site_id")
             ).plans
             plan = _find(plans, "plan_id", held["plan_id"])
-        return resize_kwargs(keys, kw, plan, vm, held)
+        return resize_kwargs(keys, kw, plan, vm, held, typed)
 
 
 class _Async(_Sync):
@@ -362,10 +379,10 @@ class _Async(_Sync):
     async def _attach(self, kw: _Kw) -> _Kw:  # type: ignore[override]
         if kw.get("billing_catalog") is None and kw.get("volume_id"):
             volume = await AsyncBlockStorageClient(client_wrapper=self._wrapper).get_block_volume(kw["volume_id"], workspace_id=kw.get("workspace_id"))
-            kw = {**kw, "billing_catalog": _get(volume, "billing_catalog") or _get(_get(volume, "metadata"), "billing_catalog")}
+            kw = {**kw, "billing_catalog": volume_catalog(volume)}
         return kw
 
-    async def _resize(self, family: str, keys: typing.Tuple[str, ...], get_vm: typing.Any, vm_id: str, kw: _Kw) -> _Kw:  # type: ignore[override]
+    async def _resize(self, family: str, keys: typing.Tuple[str, ...], get_vm: typing.Any, vm_id: str, kw: _Kw, typed: bool = False) -> _Kw:  # type: ignore[override]
         kw, held = _held_resize(dict(kw))
         vm = plan = None
         if held.get("plan_id") is not None:
@@ -374,7 +391,7 @@ class _Async(_Sync):
                 workspace_id=kw.get("workspace_id"), vm_type=family, site_id=_get(vm, "site_id")
             )).plans
             plan = _find(plans, "plan_id", held["plan_id"])
-        return resize_kwargs(keys, kw, plan, vm, held)
+        return resize_kwargs(keys, kw, plan, vm, held, typed)
 
 
 # --- the resource clients that carry held behaviour ----------------------------------
@@ -397,11 +414,9 @@ class CloudVms(_Sync, CloudVmsClient):
         return super().resize_cloud_vm(vm_id, **self._resize("cloud", ("cpu", "ram_mb", "disk_gb"), self.get_cloud_vm, vm_id, kw))
 
     def resize_cloud_vm_plan(self, vm_id: str, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
-        kw = self._resize("cloud", ("cpu", "ram_mb"), self.get_cloud_vm, vm_id, kw)
+        kw = self._resize("cloud", ("cpu", "ram_mb"), self.get_cloud_vm, vm_id, kw, typed=True)
         return super().resize_cloud_vm_plan(vm_id, **{"cpu": None, "ram_mb": None, **kw})
 
-    def resize_cloud_vm_root_disk(self, vm_id: str, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
-        return super().resize_cloud_vm_root_disk(vm_id, **_with_body(kw, billing_catalog=billing_catalog))
 
     def update_cloud_vm_backup_policy(self, vm_id: str, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
         return super().update_cloud_vm_backup_policy(vm_id, **_with_body(kw, billing_catalog=billing_catalog))
@@ -424,11 +439,9 @@ class GpuVms(_Sync, GpuVmsClient):
         return super().resize_gpu_vm(vm_id, **self._resize("gpu", ("cpu", "ram_mb", "disk_gb"), self.get_gpu_vm, vm_id, kw))
 
     def resize_gpu_vm_plan(self, vm_id: str, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
-        kw = self._resize("gpu", ("cpu", "ram_mb"), self.get_gpu_vm, vm_id, kw)
+        kw = self._resize("gpu", ("cpu", "ram_mb"), self.get_gpu_vm, vm_id, kw, typed=True)
         return super().resize_gpu_vm_plan(vm_id, **{"cpu": None, "ram_mb": None, **kw})
 
-    def resize_gpu_vm_root_disk(self, vm_id: str, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
-        return super().resize_gpu_vm_root_disk(vm_id, **_with_body(kw, billing_catalog=billing_catalog))
 
     def update_gpu_vm_backup_policy(self, vm_id: str, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
         return super().update_gpu_vm_backup_policy(vm_id, **_with_body(kw, billing_catalog=billing_catalog))
@@ -476,11 +489,9 @@ class AsyncCloudVms(_Async, AsyncCloudVmsClient):
         return await super().resize_cloud_vm(vm_id, **kw)
 
     async def resize_cloud_vm_plan(self, vm_id: str, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
-        kw = await self._resize("cloud", ("cpu", "ram_mb"), self.get_cloud_vm, vm_id, kw)
+        kw = await self._resize("cloud", ("cpu", "ram_mb"), self.get_cloud_vm, vm_id, kw, typed=True)
         return await super().resize_cloud_vm_plan(vm_id, **{"cpu": None, "ram_mb": None, **kw})
 
-    async def resize_cloud_vm_root_disk(self, vm_id: str, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
-        return await super().resize_cloud_vm_root_disk(vm_id, **_with_body(kw, billing_catalog=billing_catalog))
 
     async def update_cloud_vm_backup_policy(self, vm_id: str, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
         return await super().update_cloud_vm_backup_policy(vm_id, **_with_body(kw, billing_catalog=billing_catalog))
@@ -504,11 +515,9 @@ class AsyncGpuVms(_Async, AsyncGpuVmsClient):
         return await super().resize_gpu_vm(vm_id, **kw)
 
     async def resize_gpu_vm_plan(self, vm_id: str, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
-        kw = await self._resize("gpu", ("cpu", "ram_mb"), self.get_gpu_vm, vm_id, kw)
+        kw = await self._resize("gpu", ("cpu", "ram_mb"), self.get_gpu_vm, vm_id, kw, typed=True)
         return await super().resize_gpu_vm_plan(vm_id, **{"cpu": None, "ram_mb": None, **kw})
 
-    async def resize_gpu_vm_root_disk(self, vm_id: str, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
-        return await super().resize_gpu_vm_root_disk(vm_id, **_with_body(kw, billing_catalog=billing_catalog))
 
     async def update_gpu_vm_backup_policy(self, vm_id: str, *, billing_catalog: typing.Any = None, **kw: typing.Any) -> typing.Any:  # type: ignore[override]
         return await super().update_gpu_vm_backup_policy(vm_id, **_with_body(kw, billing_catalog=billing_catalog))

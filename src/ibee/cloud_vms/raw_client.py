@@ -157,6 +157,7 @@ class RawCloudVmsClient:
         self,
         *,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
         template_id: str,
@@ -166,7 +167,6 @@ class RawCloudVmsClient:
         billing_catalog: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
-        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         ssh_keys: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -185,6 +185,9 @@ class RawCloudVmsClient:
         ----------
         name : str
             Display name for the virtual machine.
+
+        site_id : str
+            Placement site ID from `GET /compute/sites`. Required: the API refuses a create without it (400 `invalid_site_id`). Use the same value when filtering plans and images.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
@@ -212,9 +215,6 @@ class RawCloudVmsClient:
 
         idempotency_key : typing.Optional[str]
             Unique key used to safely retry write operations.
-
-        site_id : typing.Optional[str]
-            Optional placement site ID. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites` and use the same value when filtering plans and images.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -1629,6 +1629,7 @@ class RawCloudVmsClient:
         idempotency_key: typing.Optional[str] = None,
         allow_online: typing.Optional[bool] = OMIT,
         confirm_downgrade: typing.Optional[bool] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
@@ -1654,6 +1655,9 @@ class RawCloudVmsClient:
 
         confirm_downgrade : typing.Optional[bool]
 
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional. The target plan's `billing_catalog` from `GET /compute/plans`. The VM engine records it with the resize.
+
         requested_by : typing.Optional[str]
 
         request_options : typing.Optional[RequestOptions]
@@ -1675,6 +1679,9 @@ class RawCloudVmsClient:
                 "ram_mb": ram_mb,
                 "allow_online": allow_online,
                 "confirm_downgrade": confirm_downgrade,
+                "billing_catalog": convert_and_respect_annotation_metadata(
+                    object_=billing_catalog, annotation=BillingCatalogSelection, direction="write"
+                ),
                 "requested_by": requested_by,
             },
             headers={
@@ -1788,6 +1795,7 @@ class RawCloudVmsClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         allow_online: typing.Optional[bool] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
@@ -1809,6 +1817,9 @@ class RawCloudVmsClient:
 
         allow_online : typing.Optional[bool]
 
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional. A Billing catalog selection that the VM engine records with the resize.
+
         requested_by : typing.Optional[str]
 
         request_options : typing.Optional[RequestOptions]
@@ -1828,6 +1839,9 @@ class RawCloudVmsClient:
             json={
                 "new_size_gb": new_size_gb,
                 "allow_online": allow_online,
+                "billing_catalog": convert_and_respect_annotation_metadata(
+                    object_=billing_catalog, annotation=BillingCatalogSelection, direction="write"
+                ),
                 "requested_by": requested_by,
             },
             headers={
@@ -1956,7 +1970,7 @@ class RawCloudVmsClient:
         volume_id : str
 
         billing_catalog : BillingCatalogSelection
-            Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. No public operation lists it yet.
+            Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. Copy it from the volume's `metadata.billing_catalog` (`GET /block-storage/volumes/{volume_id}`).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -5122,6 +5136,7 @@ class AsyncRawCloudVmsClient:
         self,
         *,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateCloudVmRequestOsType,
         template_id: str,
@@ -5131,7 +5146,6 @@ class AsyncRawCloudVmsClient:
         billing_catalog: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
-        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         ssh_keys: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -5150,6 +5164,9 @@ class AsyncRawCloudVmsClient:
         ----------
         name : str
             Display name for the virtual machine.
+
+        site_id : str
+            Placement site ID from `GET /compute/sites`. Required: the API refuses a create without it (400 `invalid_site_id`). Use the same value when filtering plans and images.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky, windows).
@@ -5177,9 +5194,6 @@ class AsyncRawCloudVmsClient:
 
         idempotency_key : typing.Optional[str]
             Unique key used to safely retry write operations.
-
-        site_id : typing.Optional[str]
-            Optional placement site ID. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites` and use the same value when filtering plans and images.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -6594,6 +6608,7 @@ class AsyncRawCloudVmsClient:
         idempotency_key: typing.Optional[str] = None,
         allow_online: typing.Optional[bool] = OMIT,
         confirm_downgrade: typing.Optional[bool] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
@@ -6619,6 +6634,9 @@ class AsyncRawCloudVmsClient:
 
         confirm_downgrade : typing.Optional[bool]
 
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional. The target plan's `billing_catalog` from `GET /compute/plans`. The VM engine records it with the resize.
+
         requested_by : typing.Optional[str]
 
         request_options : typing.Optional[RequestOptions]
@@ -6640,6 +6658,9 @@ class AsyncRawCloudVmsClient:
                 "ram_mb": ram_mb,
                 "allow_online": allow_online,
                 "confirm_downgrade": confirm_downgrade,
+                "billing_catalog": convert_and_respect_annotation_metadata(
+                    object_=billing_catalog, annotation=BillingCatalogSelection, direction="write"
+                ),
                 "requested_by": requested_by,
             },
             headers={
@@ -6753,6 +6774,7 @@ class AsyncRawCloudVmsClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         allow_online: typing.Optional[bool] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
@@ -6774,6 +6796,9 @@ class AsyncRawCloudVmsClient:
 
         allow_online : typing.Optional[bool]
 
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional. A Billing catalog selection that the VM engine records with the resize.
+
         requested_by : typing.Optional[str]
 
         request_options : typing.Optional[RequestOptions]
@@ -6793,6 +6818,9 @@ class AsyncRawCloudVmsClient:
             json={
                 "new_size_gb": new_size_gb,
                 "allow_online": allow_online,
+                "billing_catalog": convert_and_respect_annotation_metadata(
+                    object_=billing_catalog, annotation=BillingCatalogSelection, direction="write"
+                ),
                 "requested_by": requested_by,
             },
             headers={
@@ -6921,7 +6949,7 @@ class AsyncRawCloudVmsClient:
         volume_id : str
 
         billing_catalog : BillingCatalogSelection
-            Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. No public operation lists it yet.
+            Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. Copy it from the volume's `metadata.billing_catalog` (`GET /block-storage/volumes/{volume_id}`).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.

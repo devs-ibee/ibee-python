@@ -105,6 +105,7 @@ class GpuVmsClient:
         self,
         *,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
         template_id: str,
@@ -116,7 +117,6 @@ class GpuVmsClient:
         billing_catalog: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
-        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         ssh_keys: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -135,6 +135,9 @@ class GpuVmsClient:
         ----------
         name : str
             Display name for the virtual machine.
+
+        site_id : str
+            Placement site ID from `GET /compute/sites`. Required: the API refuses a create without it (400 `invalid_site_id`). Use the same value when filtering plans and images.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
@@ -168,9 +171,6 @@ class GpuVmsClient:
 
         idempotency_key : typing.Optional[str]
             Unique key used to safely retry write operations.
-
-        site_id : typing.Optional[str]
-            Optional placement site ID. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites` and use the same value when filtering plans and images.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -217,6 +217,7 @@ class GpuVmsClient:
         client.gpu_vms.create_gpu_vm(
             workspace_id="710995",
             name="ml-training-01",
+            site_id="site_id",
             os_distro="ubuntu",
             os_type="linux",
             template_id="tmpl_ubuntu_2204_cuda",
@@ -230,6 +231,7 @@ class GpuVmsClient:
         """
         _response = self._raw_client.create_gpu_vm(
             name=name,
+            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
             template_id=template_id,
@@ -241,7 +243,6 @@ class GpuVmsClient:
             billing_catalog=billing_catalog,
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
-            site_id=site_id,
             disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             ssh_keys=ssh_keys,
@@ -796,6 +797,7 @@ class GpuVmsClient:
         idempotency_key: typing.Optional[str] = None,
         allow_online: typing.Optional[bool] = OMIT,
         confirm_downgrade: typing.Optional[bool] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
@@ -820,6 +822,9 @@ class GpuVmsClient:
         allow_online : typing.Optional[bool]
 
         confirm_downgrade : typing.Optional[bool]
+
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional. The target plan's `billing_catalog` from `GET /compute/plans`. The VM engine records it with the resize.
 
         requested_by : typing.Optional[str]
 
@@ -853,6 +858,7 @@ class GpuVmsClient:
             idempotency_key=idempotency_key,
             allow_online=allow_online,
             confirm_downgrade=confirm_downgrade,
+            billing_catalog=billing_catalog,
             requested_by=requested_by,
             request_options=request_options,
         )
@@ -866,6 +872,7 @@ class GpuVmsClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         allow_online: typing.Optional[bool] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
@@ -886,6 +893,9 @@ class GpuVmsClient:
             Unique key used to safely retry write operations.
 
         allow_online : typing.Optional[bool]
+
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional. A Billing catalog selection that the VM engine records with the resize.
 
         requested_by : typing.Optional[str]
 
@@ -916,6 +926,7 @@ class GpuVmsClient:
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             allow_online=allow_online,
+            billing_catalog=billing_catalog,
             requested_by=requested_by,
             request_options=request_options,
         )
@@ -944,7 +955,7 @@ class GpuVmsClient:
         volume_id : str
 
         billing_catalog : BillingCatalogSelection
-            Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. No public operation lists it yet.
+            Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. Copy it from the volume's `metadata.billing_catalog` (`GET /block-storage/volumes/{volume_id}`).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -2373,6 +2384,7 @@ class AsyncGpuVmsClient:
         self,
         *,
         name: str,
+        site_id: str,
         os_distro: str,
         os_type: CreateGpuVmRequestOsType,
         template_id: str,
@@ -2384,7 +2396,6 @@ class AsyncGpuVmsClient:
         billing_catalog: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
-        site_id: typing.Optional[str] = OMIT,
         disk_gb: typing.Optional[int] = OMIT,
         ssh_key_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         ssh_keys: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -2403,6 +2414,9 @@ class AsyncGpuVmsClient:
         ----------
         name : str
             Display name for the virtual machine.
+
+        site_id : str
+            Placement site ID from `GET /compute/sites`. Required: the API refuses a create without it (400 `invalid_site_id`). Use the same value when filtering plans and images.
 
         os_distro : str
             Operating system distribution (e.g. ubuntu, centos, debian, rocky).
@@ -2436,9 +2450,6 @@ class AsyncGpuVmsClient:
 
         idempotency_key : typing.Optional[str]
             Unique key used to safely retry write operations.
-
-        site_id : typing.Optional[str]
-            Optional placement site ID. Omit for automatic placement. To pin the VM, copy `site_id` from `GET /compute/sites` and use the same value when filtering plans and images.
 
         disk_gb : typing.Optional[int]
             Root disk size in gigabytes.
@@ -2490,6 +2501,7 @@ class AsyncGpuVmsClient:
             await client.gpu_vms.create_gpu_vm(
                 workspace_id="710995",
                 name="ml-training-01",
+                site_id="site_id",
                 os_distro="ubuntu",
                 os_type="linux",
                 template_id="tmpl_ubuntu_2204_cuda",
@@ -2506,6 +2518,7 @@ class AsyncGpuVmsClient:
         """
         _response = await self._raw_client.create_gpu_vm(
             name=name,
+            site_id=site_id,
             os_distro=os_distro,
             os_type=os_type,
             template_id=template_id,
@@ -2517,7 +2530,6 @@ class AsyncGpuVmsClient:
             billing_catalog=billing_catalog,
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
-            site_id=site_id,
             disk_gb=disk_gb,
             ssh_key_ids=ssh_key_ids,
             ssh_keys=ssh_keys,
@@ -3144,6 +3156,7 @@ class AsyncGpuVmsClient:
         idempotency_key: typing.Optional[str] = None,
         allow_online: typing.Optional[bool] = OMIT,
         confirm_downgrade: typing.Optional[bool] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
@@ -3168,6 +3181,9 @@ class AsyncGpuVmsClient:
         allow_online : typing.Optional[bool]
 
         confirm_downgrade : typing.Optional[bool]
+
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional. The target plan's `billing_catalog` from `GET /compute/plans`. The VM engine records it with the resize.
 
         requested_by : typing.Optional[str]
 
@@ -3209,6 +3225,7 @@ class AsyncGpuVmsClient:
             idempotency_key=idempotency_key,
             allow_online=allow_online,
             confirm_downgrade=confirm_downgrade,
+            billing_catalog=billing_catalog,
             requested_by=requested_by,
             request_options=request_options,
         )
@@ -3222,6 +3239,7 @@ class AsyncGpuVmsClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         allow_online: typing.Optional[bool] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
         requested_by: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
@@ -3242,6 +3260,9 @@ class AsyncGpuVmsClient:
             Unique key used to safely retry write operations.
 
         allow_online : typing.Optional[bool]
+
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional. A Billing catalog selection that the VM engine records with the resize.
 
         requested_by : typing.Optional[str]
 
@@ -3280,6 +3301,7 @@ class AsyncGpuVmsClient:
             workspace_id=workspace_id,
             idempotency_key=idempotency_key,
             allow_online=allow_online,
+            billing_catalog=billing_catalog,
             requested_by=requested_by,
             request_options=request_options,
         )
@@ -3308,7 +3330,7 @@ class AsyncGpuVmsClient:
         volume_id : str
 
         billing_catalog : BillingCatalogSelection
-            Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. No public operation lists it yet.
+            Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. Copy it from the volume's `metadata.billing_catalog` (`GET /block-storage/volumes/{volume_id}`).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.

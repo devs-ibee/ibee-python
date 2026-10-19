@@ -15,3 +15,6 @@ env/
 .tox/
 *.so
 .DS_Store
+# Written by `fern generate` next to the package, not shipped.
+src/ibee/.fern/
+src/ibee/README.md

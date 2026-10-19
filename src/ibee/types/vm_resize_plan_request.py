@@ -4,6 +4,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .billing_catalog_selection import BillingCatalogSelection
 
 
 class VmResizePlanRequest(UniversalBaseModel):
@@ -11,6 +12,11 @@ class VmResizePlanRequest(UniversalBaseModel):
     ram_mb: int
     allow_online: typing.Optional[bool] = None
     confirm_downgrade: typing.Optional[bool] = None
+    billing_catalog: typing.Optional[BillingCatalogSelection] = pydantic.Field(default=None)
+    """
+    Optional. The target plan's `billing_catalog` from `GET /compute/plans`. The VM engine records it with the resize.
+    """
+
     requested_by: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
