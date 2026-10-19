@@ -26,7 +26,7 @@ class ApiError(Exception):
         self.headers = headers
         self.status_code = status_code
         self.body = body
-        #: The ``X-Idempotency-Key`` sent with the failed request, when there was one.
+        #: The idempotency key (``X-Idempotency-Key`` or ``Idempotency-Key``) sent with the failed request, when there was one.
         self.idempotency_key: Optional[str] = None
 
     @property

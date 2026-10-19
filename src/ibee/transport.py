@@ -3,7 +3,8 @@
 
 * ``workspace_id``: when a call leaves it empty, the client's default is sent
   (``Ibee(workspace_id=...)`` or ``IBEE_WORKSPACE_ID``).
-* ``X-Idempotency-Key``: where the contract has the header and the caller passed
+* ``X-Idempotency-Key`` (and ``Idempotency-Key``, which Container Registry's plan
+  upgrade reads instead): where the contract has the header and the caller passed
   none, a random UUID is sent, and the same key is reused on every retry.
 * Safe retries, at most ``max_retries`` (default 2): GET/HEAD/OPTIONS on 429, 502,
   503 and 504, and writes that carry an idempotency key (the header, or Block
@@ -30,6 +31,8 @@ from .core.api_error import ApiError
 from .core.http_client import AsyncHttpClient, HttpClient, _retry_timeout, _retry_timeout_from_retries
 
 IDEMPOTENCY_HEADER = "X-Idempotency-Key"
+#: Every idempotency header in the contract (Container Registry upgrade uses ``Idempotency-Key``).
+IDEMPOTENCY_HEADERS = (IDEMPOTENCY_HEADER, "Idempotency-Key")
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 #: Substrings of gateway codes that come from billing admission or the catalog quote.
 BILLING_MARKERS = ("billing", "admission", "catalog", "quote")
@@ -39,9 +42,10 @@ _sleep = time.sleep
 _async_sleep = asyncio.sleep
 
 
-def _key(headers: typing.Mapping[str, typing.Any]) -> typing.Optional[str]:
+def _key(headers: typing.Mapping[str, typing.Any], names: typing.Iterable[str] = IDEMPOTENCY_HEADERS) -> typing.Optional[str]:
+    wanted = {n.lower() for n in names}
     for name, value in headers.items():
-        if name.lower() == IDEMPOTENCY_HEADER.lower() and value:
+        if name.lower() in wanted and value:
             return str(value)
     return None
 
@@ -64,8 +68,9 @@ def prepare(
         params["workspace_id"] = workspace_id
     headers = dict(headers or {})
     extra = dict((request_options or {}).get("additional_headers") or {})
-    if IDEMPOTENCY_HEADER in headers and headers[IDEMPOTENCY_HEADER] is None and _key(extra) is None:
-        headers[IDEMPOTENCY_HEADER] = str(uuid.uuid4())
+    for name in IDEMPOTENCY_HEADERS:
+        if name in headers and headers[name] is None and _key(extra, (name,)) is None:
+            headers[name] = str(uuid.uuid4())
     return params, headers, _key(extra) or _key(headers)
 
 

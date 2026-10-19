@@ -18418,3 +18418,2699 @@ client.cdn.purge_cdn_cache(
 </dl>
 </details>
 
+## ContainerRegistry
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">check_container_registry_name_availability</a>(...) -> ContainerRegistryNameAvailability</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.check_container_registry_name_availability(
+    registry_name="registry_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_name:** `str` — Registry name to check.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">list_container_registries</a>(...) -> ContainerRegistryList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.list_container_registries(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page:** `typing.Optional[int]` — Page number.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page_size:** `typing.Optional[int]` — Number of records per page.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">create_container_registry</a>(...) -> ContainerRegistry</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Creates a registry with a storage plan (`billing_catalog.sku_code`).
+The registry service asks Billing whether the workspace may buy that
+plan and refuses with 403 `billing_resource_not_eligible` (and a
+`reason`) when it may not. Returns 201 when the registry is active, or
+202 while provisioning finishes in the background; poll the registry
+until `observed_state` is `ACTIVE`. Requires scope:
+container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee, ContainerRegistrySecuritySettings, ContainerRegistryBillingCatalog
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.create_container_registry(
+    workspace_id="710995",
+    registry_name="acme-apps",
+    confirm_registry_name="acme-apps",
+    visibility="PRIVATE",
+    security=ContainerRegistrySecuritySettings(
+        vulnerability_pull_policy="ALLOW",
+    ),
+    billing_catalog=ContainerRegistryBillingCatalog(
+        sku_code="REGISTRY-STORAGE-250GB",
+    ),
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_name:** `str` — Globally unique name; it cannot be changed or reused.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**confirm_registry_name:** `str` — Must equal `registry_name`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**billing_catalog:** `ContainerRegistryBillingCatalog` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**visibility:** `typing.Optional[ContainerRegistryVisibility]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**acknowledge_public_egress_charges:** `typing.Optional[bool]` — Required to be `true` when `visibility` is `PUBLIC`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**security:** `typing.Optional[ContainerRegistrySecuritySettings]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">get_container_registry</a>(...) -> ContainerRegistry</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.get_container_registry(
+    registry_id="registry_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">delete_container_registry</a>(...) -> ContainerRegistry</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.delete_container_registry(
+    registry_id="registry_id",
+    workspace_id="710995",
+    confirm_registry_name="confirm_registry_name",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**confirm_registry_name:** `str` — The registry's name, repeated to confirm a destructive call.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">update_container_registry_visibility</a>(...) -> ContainerRegistry</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.update_container_registry_visibility(
+    registry_id="registry_id",
+    workspace_id="710995",
+    visibility="PUBLIC",
+    acknowledge_public_egress_charges=True,
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**visibility:** `ContainerRegistryVisibility` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**acknowledge_public_egress_charges:** `typing.Optional[bool]` — Required to be `true` when `visibility` is `PUBLIC`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">retry_container_registry_provisioning</a>(...) -> ContainerRegistryReconcile</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.retry_container_registry_provisioning(
+    registry_id="registry_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">empty_container_registry</a>(...) -> ContainerRegistryEmptyResult</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Permanently deletes every repository and image in a registry, so it can be deleted. A bounded run can stop early with 409 `detail.code: registry_empty_incomplete` (`retryable: true`); pause pushes and call again. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.empty_container_registry(
+    registry_id="registry_id",
+    workspace_id="710995",
+    confirm_registry_name="confirm_registry_name",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**confirm_registry_name:** `str` — The registry's name, repeated to confirm a destructive call.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">get_container_registry_package</a>(...) -> ContainerRegistryPackage</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.get_container_registry_package(
+    registry_id="registry_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">upgrade_container_registry_package</a>(...) -> ContainerRegistryPackageOperation</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Moves an active registry to a larger storage plan. Only larger quotas
+are accepted and only one change can be pending (409 otherwise). The
+registry service asks Billing first and refuses with 403
+`billing_resource_not_eligible` when the plan is not allowed. Send an
+`Idempotency-Key` header: a retry with the same key and plan returns
+the original operation (202 while pending, 200 once applied); the same
+key with a different plan returns 409. Requires scope:
+container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee, ContainerRegistryBillingCatalog
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.upgrade_container_registry_package(
+    registry_id="registry_id",
+    workspace_id="710995",
+    billing_catalog=ContainerRegistryBillingCatalog(
+        sku_code="REGISTRY-STORAGE-500GB",
+    ),
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**billing_catalog:** `ContainerRegistryBillingCatalog` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — Unique key for this upgrade. The registry service reads this header (not `X-Idempotency-Key`); a retry with the same key and plan returns the original operation.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">list_container_registry_access_tokens</a>(...) -> typing.List[ContainerRegistryAccessToken]</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.list_container_registry_access_tokens(
+    registry_id="registry_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**include_revoked:** `typing.Optional[bool]` — Include revoked tokens.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">create_container_registry_access_token</a>(...) -> ContainerRegistryAccessTokenSecret</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Creates a Docker login credential for the registry. The `username`
+and `secret` are returned once and cannot be read again. The registry
+must be active, and the registry service asks Billing whether the
+workspace may create credentials. Requires scope:
+container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.create_container_registry_access_token(
+    registry_id="registry_id",
+    workspace_id="710995",
+    token_name="production-k8s",
+    permission="PULL",
+    expires_in_days=90,
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**token_name:** `str` — Unique among the organization's active tokens.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**permission:** `typing.Optional[ContainerRegistryAccessTokenPermission]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**expires_in_days:** `typing.Optional[int]` — 1 to 365, or -1 for a token that does not expire.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**description:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**registry_ids:** `typing.Optional[typing.List[str]]` — Other registries in the same workspace the token may also use. The registry in the path is always included.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">rotate_container_registry_access_token</a>(...) -> ContainerRegistryAccessTokenSecret</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.rotate_container_registry_access_token(
+    registry_id="registry_id",
+    token_id="token_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**token_id:** `str` — Registry access token ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">revoke_container_registry_access_token</a>(...) -> ContainerRegistryMessage</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.revoke_container_registry_access_token(
+    registry_id="registry_id",
+    token_id="token_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**token_id:** `str` — Registry access token ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">list_container_registry_repositories</a>(...) -> ContainerRegistryRepositoryList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.list_container_registry_repositories(
+    registry_id="registry_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**search:** `typing.Optional[str]` — Fuzzy match on the repository name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**sort:** `typing.Optional[ListContainerRegistryRepositoriesRequestSort]` — Column to sort by; prefix with `-` for descending.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page:** `typing.Optional[int]` — Page number.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page_size:** `typing.Optional[int]` — Number of records per page.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">delete_container_registry_repository</a>(...) -> ContainerRegistryMessage</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Permanently deletes a repository and all of its images. Requires `confirm=true`. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.delete_container_registry_repository(
+    registry_id="registry_id",
+    repository_name="repository_name",
+    workspace_id="710995",
+    confirm=True,
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**repository_name:** `str` — Repository name inside the registry, for example `api`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**confirm:** `bool` — Must be `true` to confirm permanent deletion.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">list_container_registry_artifacts</a>(...) -> ContainerRegistryArtifactList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.list_container_registry_artifacts(
+    registry_id="registry_id",
+    workspace_id="710995",
+    repository_name="repository_name",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**repository_name:** `str` — Repository name inside the registry, for example `api` or `team/api`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page:** `typing.Optional[int]` — Page number.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page_size:** `typing.Optional[int]` — Number of records per page.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">delete_container_registry_artifact</a>(...) -> ContainerRegistryMessage</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.delete_container_registry_artifact(
+    registry_id="registry_id",
+    reference="reference",
+    workspace_id="710995",
+    repository_name="repository_name",
+    confirm=True,
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**reference:** `str` — Image digest (`sha256:...`) or tag.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**repository_name:** `str` — Repository name inside the registry, for example `api` or `team/api`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**confirm:** `bool` — Must be `true` to confirm permanent deletion.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">scan_container_registry_artifact</a>(...) -> ContainerRegistryMessage</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.scan_container_registry_artifact(
+    registry_id="registry_id",
+    reference="reference",
+    workspace_id="710995",
+    repository_name="repository_name",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**reference:** `str` — Image digest (`sha256:...`) or tag.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**repository_name:** `str` — Repository name inside the registry, for example `api` or `team/api`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">get_container_registry_security_settings</a>(...) -> ContainerRegistrySecuritySettingsStatus</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.get_container_registry_security_settings(
+    registry_id="registry_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">update_container_registry_security_settings</a>(...) -> ContainerRegistrySecuritySettingsStatus</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.update_container_registry_security_settings(
+    registry_id="registry_id",
+    workspace_id="710995",
+    vulnerability_pull_policy="BLOCK_CRITICAL",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**vulnerability_pull_policy:** `ContainerRegistryPullPolicy` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">get_container_registry_vulnerability_summary</a>(...) -> ContainerRegistryVulnerabilitySummary</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.get_container_registry_vulnerability_summary(
+    registry_id="registry_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">list_container_registry_vulnerabilities</a>(...) -> ContainerRegistryVulnerabilityList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.list_container_registry_vulnerabilities(
+    registry_id="registry_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**severity:** `typing.Optional[ListContainerRegistryVulnerabilitiesRequestSeverity]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**cve_id:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**repository_name:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**digest:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**tag:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**package:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page:** `typing.Optional[int]` — Page number.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page_size:** `typing.Optional[int]` — Number of records per page.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">list_container_registry_sboms</a>(...) -> ContainerRegistrySbomList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.list_container_registry_sboms(
+    registry_id="registry_id",
+    workspace_id="710995",
+    repository_name="repository_name",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**repository_name:** `str` — Repository name inside the registry, for example `api` or `team/api`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page:** `typing.Optional[int]` — Page number.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page_size:** `typing.Optional[int]` — Number of records per page.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">get_container_registry_sbom</a>(...) -> ContainerRegistrySbom</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.get_container_registry_sbom(
+    registry_id="registry_id",
+    artifact_digest="artifact_digest",
+    workspace_id="710995",
+    repository_name="repository_name",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**artifact_digest:** `str` — Image digest, for example `sha256:4f3c...`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**repository_name:** `str` — Repository name inside the registry, for example `api` or `team/api`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**q:** `typing.Optional[str]` — Component search text.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page:** `typing.Optional[int]` — Page number.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page_size:** `typing.Optional[int]` — Number of records per page.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">download_container_registry_sbom</a>(...) -> typing.Iterator[bytes]</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.download_container_registry_sbom(
+    registry_id="registry_id",
+    artifact_digest="artifact_digest",
+    repository_name="x",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**artifact_digest:** `str` — Image digest, for example `sha256:4f3c...`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**repository_name:** `str` — Repository name inside the registry, for example `api` or `team/api`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">get_container_registry_metrics</a>(...) -> ContainerRegistryMetrics</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.container_registry.get_container_registry_metrics(
+    registry_id="registry_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**registry_id:** `str` — Registry ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**range:** `typing.Optional[GetContainerRegistryMetricsRequestRange]` — Time window.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+

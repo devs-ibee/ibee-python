@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.6.0
+
+Generated from the public API contract 0.5.0 (`contract/ibee-cloud.yaml`), which adds
+Container Registry.
+
+### Added
+
+- `client.container_registry`: the 27 Container Registry operations of contract 0.5.0,
+  sync and async, with their typed models. Registries (name check, list, create, get,
+  delete, visibility, empty, retry provisioning), storage plan (get, upgrade), access
+  tokens (list, create, rotate, revoke), repositories (list, delete), artifacts (list,
+  delete, rescan), security settings (get, update), vulnerabilities (summary, list),
+  SBOMs (list, get, download) and metrics. Paging is `page`/`page_size` (at most 100),
+  as the contract has it. Requests are sent as given and the registry service's answer
+  (including Billing refusals such as 403 `billing_resource_not_eligible`) comes back
+  unchanged.
+- `upgrade_container_registry_package` sends a random `Idempotency-Key` header when you
+  pass no `idempotency_key`, and reuses it on retries, the same as `X-Idempotency-Key`
+  elsewhere (`fern/overrides.yml` makes the header optional; `transport.py` fills it).
+
+### Notes
+
+- An access token's `secret` is returned only by create and rotate. The SDK does not
+  log request or response bodies.
+
 ## 0.5.2
 
 Generated from the public API contract 0.4.1, now vendored at

@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
     from .cdn.client import AsyncCdnClient, CdnClient
     from .cloud_vms.client import AsyncCloudVmsClient, CloudVmsClient
     from .compute_catalog.client import AsyncComputeCatalogClient, ComputeCatalogClient
+    from .container_registry.client import AsyncContainerRegistryClient, ContainerRegistryClient
     from .firewalls.client import AsyncFirewallsClient, FirewallsClient
     from .gpu_vms.client import AsyncGpuVmsClient, GpuVmsClient
     from .load_balancers.client import AsyncLoadBalancersClient, LoadBalancersClient
@@ -122,6 +123,7 @@ class BaseIbee:
         self._billing: typing.Optional[BillingClient] = None
         self._block_storage: typing.Optional[BlockStorageClient] = None
         self._cdn: typing.Optional[CdnClient] = None
+        self._container_registry: typing.Optional[ContainerRegistryClient] = None
 
     @property
     def secret_store(self):
@@ -226,6 +228,14 @@ class BaseIbee:
 
             self._cdn = CdnClient(client_wrapper=self._client_wrapper)
         return self._cdn
+
+    @property
+    def container_registry(self):
+        if self._container_registry is None:
+            from .container_registry.client import ContainerRegistryClient  # noqa: E402
+
+            self._container_registry = ContainerRegistryClient(client_wrapper=self._client_wrapper)
+        return self._container_registry
 
 
 def _make_default_async_client(
@@ -346,6 +356,7 @@ class AsyncBaseIbee:
         self._billing: typing.Optional[AsyncBillingClient] = None
         self._block_storage: typing.Optional[AsyncBlockStorageClient] = None
         self._cdn: typing.Optional[AsyncCdnClient] = None
+        self._container_registry: typing.Optional[AsyncContainerRegistryClient] = None
 
     @property
     def secret_store(self):
@@ -450,6 +461,14 @@ class AsyncBaseIbee:
 
             self._cdn = AsyncCdnClient(client_wrapper=self._client_wrapper)
         return self._cdn
+
+    @property
+    def container_registry(self):
+        if self._container_registry is None:
+            from .container_registry.client import AsyncContainerRegistryClient  # noqa: E402
+
+            self._container_registry = AsyncContainerRegistryClient(client_wrapper=self._client_wrapper)
+        return self._container_registry
 
 
 def _get_base_url(*, base_url: typing.Optional[str] = None, environment: IbeeEnvironment) -> str:
