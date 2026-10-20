@@ -41,6 +41,7 @@ jobs:
           for ns in (
               "cloud_vms", "gpu_vms", "object_storage", "secret_store",
               "vpcs", "reserved_ips", "firewalls", "load_balancers",
+              "container_registry",
           ):
               assert hasattr(client, ns), f"missing namespace: {ns}"
           assert IbeeEnvironment.PRODUCTION.value == "https://api.ibee.ai/v1"

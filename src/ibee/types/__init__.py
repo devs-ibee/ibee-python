@@ -69,6 +69,57 @@ if typing.TYPE_CHECKING:
     from .compute_plan_pricing_status import ComputePlanPricingStatus
     from .compute_site import ComputeSite
     from .compute_site_list import ComputeSiteList
+    from .container_registry import ContainerRegistry
+    from .container_registry_access_token import ContainerRegistryAccessToken
+    from .container_registry_access_token_permission import ContainerRegistryAccessTokenPermission
+    from .container_registry_access_token_secret import ContainerRegistryAccessTokenSecret
+    from .container_registry_artifact import ContainerRegistryArtifact
+    from .container_registry_artifact_list import ContainerRegistryArtifactList
+    from .container_registry_artifact_platform import ContainerRegistryArtifactPlatform
+    from .container_registry_billing_catalog import ContainerRegistryBillingCatalog
+    from .container_registry_desired_state import ContainerRegistryDesiredState
+    from .container_registry_empty_result import ContainerRegistryEmptyResult
+    from .container_registry_job_status import ContainerRegistryJobStatus
+    from .container_registry_list import ContainerRegistryList
+    from .container_registry_message import ContainerRegistryMessage
+    from .container_registry_metrics import ContainerRegistryMetrics
+    from .container_registry_metrics_bandwidth import ContainerRegistryMetricsBandwidth
+    from .container_registry_metrics_bandwidth_points_item import ContainerRegistryMetricsBandwidthPointsItem
+    from .container_registry_metrics_coverage import ContainerRegistryMetricsCoverage
+    from .container_registry_metrics_coverage_status import ContainerRegistryMetricsCoverageStatus
+    from .container_registry_metrics_granularity import ContainerRegistryMetricsGranularity
+    from .container_registry_metrics_range import ContainerRegistryMetricsRange
+    from .container_registry_metrics_storage import ContainerRegistryMetricsStorage
+    from .container_registry_name_availability import ContainerRegistryNameAvailability
+    from .container_registry_observed_state import ContainerRegistryObservedState
+    from .container_registry_package import ContainerRegistryPackage
+    from .container_registry_package_assignment import ContainerRegistryPackageAssignment
+    from .container_registry_package_operation import ContainerRegistryPackageOperation
+    from .container_registry_package_operation_kind import ContainerRegistryPackageOperationKind
+    from .container_registry_package_operation_status import ContainerRegistryPackageOperationStatus
+    from .container_registry_pull_policy import ContainerRegistryPullPolicy
+    from .container_registry_reconcile import ContainerRegistryReconcile
+    from .container_registry_registry_kind import ContainerRegistryRegistryKind
+    from .container_registry_repository import ContainerRegistryRepository
+    from .container_registry_repository_list import ContainerRegistryRepositoryList
+    from .container_registry_sbom import ContainerRegistrySbom
+    from .container_registry_sbom_component import ContainerRegistrySbomComponent
+    from .container_registry_sbom_list import ContainerRegistrySbomList
+    from .container_registry_sbom_list_page_summary import ContainerRegistrySbomListPageSummary
+    from .container_registry_sbom_relationships_item import ContainerRegistrySbomRelationshipsItem
+    from .container_registry_sbom_summary import ContainerRegistrySbomSummary
+    from .container_registry_sbom_summary_artifact_kind import ContainerRegistrySbomSummaryArtifactKind
+    from .container_registry_sbom_summary_format import ContainerRegistrySbomSummaryFormat
+    from .container_registry_sbom_summary_status import ContainerRegistrySbomSummaryStatus
+    from .container_registry_scanner import ContainerRegistryScanner
+    from .container_registry_security_settings import ContainerRegistrySecuritySettings
+    from .container_registry_security_settings_status import ContainerRegistrySecuritySettingsStatus
+    from .container_registry_tag import ContainerRegistryTag
+    from .container_registry_visibility import ContainerRegistryVisibility
+    from .container_registry_vulnerability import ContainerRegistryVulnerability
+    from .container_registry_vulnerability_list import ContainerRegistryVulnerabilityList
+    from .container_registry_vulnerability_scan_status import ContainerRegistryVulnerabilityScanStatus
+    from .container_registry_vulnerability_summary import ContainerRegistryVulnerabilitySummary
     from .create_firewall_rule_request import CreateFirewallRuleRequest
     from .create_nat_port_forwarding_rule_request import CreateNatPortForwardingRuleRequest
     from .create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
@@ -268,6 +319,57 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ComputePlanPricingStatus": ".compute_plan_pricing_status",
     "ComputeSite": ".compute_site",
     "ComputeSiteList": ".compute_site_list",
+    "ContainerRegistry": ".container_registry",
+    "ContainerRegistryAccessToken": ".container_registry_access_token",
+    "ContainerRegistryAccessTokenPermission": ".container_registry_access_token_permission",
+    "ContainerRegistryAccessTokenSecret": ".container_registry_access_token_secret",
+    "ContainerRegistryArtifact": ".container_registry_artifact",
+    "ContainerRegistryArtifactList": ".container_registry_artifact_list",
+    "ContainerRegistryArtifactPlatform": ".container_registry_artifact_platform",
+    "ContainerRegistryBillingCatalog": ".container_registry_billing_catalog",
+    "ContainerRegistryDesiredState": ".container_registry_desired_state",
+    "ContainerRegistryEmptyResult": ".container_registry_empty_result",
+    "ContainerRegistryJobStatus": ".container_registry_job_status",
+    "ContainerRegistryList": ".container_registry_list",
+    "ContainerRegistryMessage": ".container_registry_message",
+    "ContainerRegistryMetrics": ".container_registry_metrics",
+    "ContainerRegistryMetricsBandwidth": ".container_registry_metrics_bandwidth",
+    "ContainerRegistryMetricsBandwidthPointsItem": ".container_registry_metrics_bandwidth_points_item",
+    "ContainerRegistryMetricsCoverage": ".container_registry_metrics_coverage",
+    "ContainerRegistryMetricsCoverageStatus": ".container_registry_metrics_coverage_status",
+    "ContainerRegistryMetricsGranularity": ".container_registry_metrics_granularity",
+    "ContainerRegistryMetricsRange": ".container_registry_metrics_range",
+    "ContainerRegistryMetricsStorage": ".container_registry_metrics_storage",
+    "ContainerRegistryNameAvailability": ".container_registry_name_availability",
+    "ContainerRegistryObservedState": ".container_registry_observed_state",
+    "ContainerRegistryPackage": ".container_registry_package",
+    "ContainerRegistryPackageAssignment": ".container_registry_package_assignment",
+    "ContainerRegistryPackageOperation": ".container_registry_package_operation",
+    "ContainerRegistryPackageOperationKind": ".container_registry_package_operation_kind",
+    "ContainerRegistryPackageOperationStatus": ".container_registry_package_operation_status",
+    "ContainerRegistryPullPolicy": ".container_registry_pull_policy",
+    "ContainerRegistryReconcile": ".container_registry_reconcile",
+    "ContainerRegistryRegistryKind": ".container_registry_registry_kind",
+    "ContainerRegistryRepository": ".container_registry_repository",
+    "ContainerRegistryRepositoryList": ".container_registry_repository_list",
+    "ContainerRegistrySbom": ".container_registry_sbom",
+    "ContainerRegistrySbomComponent": ".container_registry_sbom_component",
+    "ContainerRegistrySbomList": ".container_registry_sbom_list",
+    "ContainerRegistrySbomListPageSummary": ".container_registry_sbom_list_page_summary",
+    "ContainerRegistrySbomRelationshipsItem": ".container_registry_sbom_relationships_item",
+    "ContainerRegistrySbomSummary": ".container_registry_sbom_summary",
+    "ContainerRegistrySbomSummaryArtifactKind": ".container_registry_sbom_summary_artifact_kind",
+    "ContainerRegistrySbomSummaryFormat": ".container_registry_sbom_summary_format",
+    "ContainerRegistrySbomSummaryStatus": ".container_registry_sbom_summary_status",
+    "ContainerRegistryScanner": ".container_registry_scanner",
+    "ContainerRegistrySecuritySettings": ".container_registry_security_settings",
+    "ContainerRegistrySecuritySettingsStatus": ".container_registry_security_settings_status",
+    "ContainerRegistryTag": ".container_registry_tag",
+    "ContainerRegistryVisibility": ".container_registry_visibility",
+    "ContainerRegistryVulnerability": ".container_registry_vulnerability",
+    "ContainerRegistryVulnerabilityList": ".container_registry_vulnerability_list",
+    "ContainerRegistryVulnerabilityScanStatus": ".container_registry_vulnerability_scan_status",
+    "ContainerRegistryVulnerabilitySummary": ".container_registry_vulnerability_summary",
     "CreateFirewallRuleRequest": ".create_firewall_rule_request",
     "CreateNatPortForwardingRuleRequest": ".create_nat_port_forwarding_rule_request",
     "CreateNatPortForwardingRuleRequestProtocol": ".create_nat_port_forwarding_rule_request_protocol",
@@ -491,6 +593,57 @@ __all__ = [
     "ComputePlanPricingStatus",
     "ComputeSite",
     "ComputeSiteList",
+    "ContainerRegistry",
+    "ContainerRegistryAccessToken",
+    "ContainerRegistryAccessTokenPermission",
+    "ContainerRegistryAccessTokenSecret",
+    "ContainerRegistryArtifact",
+    "ContainerRegistryArtifactList",
+    "ContainerRegistryArtifactPlatform",
+    "ContainerRegistryBillingCatalog",
+    "ContainerRegistryDesiredState",
+    "ContainerRegistryEmptyResult",
+    "ContainerRegistryJobStatus",
+    "ContainerRegistryList",
+    "ContainerRegistryMessage",
+    "ContainerRegistryMetrics",
+    "ContainerRegistryMetricsBandwidth",
+    "ContainerRegistryMetricsBandwidthPointsItem",
+    "ContainerRegistryMetricsCoverage",
+    "ContainerRegistryMetricsCoverageStatus",
+    "ContainerRegistryMetricsGranularity",
+    "ContainerRegistryMetricsRange",
+    "ContainerRegistryMetricsStorage",
+    "ContainerRegistryNameAvailability",
+    "ContainerRegistryObservedState",
+    "ContainerRegistryPackage",
+    "ContainerRegistryPackageAssignment",
+    "ContainerRegistryPackageOperation",
+    "ContainerRegistryPackageOperationKind",
+    "ContainerRegistryPackageOperationStatus",
+    "ContainerRegistryPullPolicy",
+    "ContainerRegistryReconcile",
+    "ContainerRegistryRegistryKind",
+    "ContainerRegistryRepository",
+    "ContainerRegistryRepositoryList",
+    "ContainerRegistrySbom",
+    "ContainerRegistrySbomComponent",
+    "ContainerRegistrySbomList",
+    "ContainerRegistrySbomListPageSummary",
+    "ContainerRegistrySbomRelationshipsItem",
+    "ContainerRegistrySbomSummary",
+    "ContainerRegistrySbomSummaryArtifactKind",
+    "ContainerRegistrySbomSummaryFormat",
+    "ContainerRegistrySbomSummaryStatus",
+    "ContainerRegistryScanner",
+    "ContainerRegistrySecuritySettings",
+    "ContainerRegistrySecuritySettingsStatus",
+    "ContainerRegistryTag",
+    "ContainerRegistryVisibility",
+    "ContainerRegistryVulnerability",
+    "ContainerRegistryVulnerabilityList",
+    "ContainerRegistryVulnerabilityScanStatus",
+    "ContainerRegistryVulnerabilitySummary",
     "CreateFirewallRuleRequest",
     "CreateNatPortForwardingRuleRequest",
     "CreateNatPortForwardingRuleRequestProtocol",

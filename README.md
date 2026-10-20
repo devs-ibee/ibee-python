@@ -1,8 +1,8 @@
 # IBEE Solutions Python SDK
 
 Official Python SDK for the IBEE Solutions API: cloud and GPU VMs, VPC networking,
-Reserved IPs, firewalls, load balancers, object storage, Block Storage, CDN and
-Secret Store.
+Reserved IPs, firewalls, load balancers, object storage, Block Storage, CDN,
+Secret Store and Container Registry.
 
 The SDK is generated from the public API contract
 ([reference](https://ibee.ai/docs/api-reference)); every operation is one method,
@@ -68,6 +68,26 @@ up the plan and image to fill `cpu`, `ram_mb`, `disk_gb`, `os_type`, `os_distro`
 the plan's `billing_catalog` for `billing_term`. The other temporary behaviours are
 listed in [`src/ibee/held.py`](src/ibee/held.py) and the CHANGELOG.
 
+### Container Registry
+
+```python
+registry = client.container_registry.create_container_registry(
+    registry_name="acme-apps",
+    confirm_registry_name="acme-apps",
+    billing_catalog={"sku_code": "REGISTRY-STORAGE-250GB"},
+)
+# 202 while provisioning: poll get_container_registry until observed_state is ACTIVE.
+
+token = client.container_registry.create_container_registry_access_token(
+    registry.registry_id, token_name="ci-push", permission="PULL_PUSH", expires_in_days=30
+)
+# token.username and token.secret are returned once (docker login registry.ibee.ai).
+```
+
+The registry service asks Billing and answers; the SDK sends the request as given.
+`upgrade_container_registry_package` gets a random `Idempotency-Key` when you pass no
+`idempotency_key`, like the other keyed writes.
+
 The full method list is in [`src/ibee/reference.md`](src/ibee/reference.md).
 
 ## Errors
@@ -101,8 +121,9 @@ URL, a token for the other environment) raises `ibee.client.IbeeValidationError`
 
 ## Retries and idempotency
 
-- Where the contract has the `X-Idempotency-Key` header and you pass no
-  `idempotency_key`, the SDK sends a random one and reuses it on every retry.
+- Where the contract has the `X-Idempotency-Key` header (or `Idempotency-Key`, on
+  Container Registry plan upgrade) and you pass no `idempotency_key`, the SDK sends a
+  random one and reuses it on every retry.
 - Reads (GET, HEAD, OPTIONS) are retried on 429, 502, 503 and 504.
 - Writes are retried only when they carry an idempotency key, and only on 429 and
   503. VM creates (cloud and GPU) are never retried.
