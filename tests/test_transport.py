@@ -211,6 +211,48 @@ def test_transport_error_carries_the_key() -> None:
     assert getattr(info.value, "idempotency_key") == "k-1"
 
 
+IDENTITY = {"id": "id-1", "organization_id": "o", "workspace_id": WS, "name": "app", "auth_method": "approle",
+            "status": "active", "token_policy_mode": "read_only", "created_at": "2026-10-19T00:00:00Z", "updated_at": "2026-10-19T00:00:00Z"}
+
+
+@pytest.mark.parametrize("failure", [(429, {"detail": "slow down"}), (503, {"detail": "busy"}), httpx.ConnectError("refused")])
+def test_identity_access_read_is_never_retried(failure: object) -> None:
+    # Each GET of an identity's access mints a new AppRole credential.
+    rec = Recorder(failure, (200, {"identity_id": "id-1", "auth_method": "approle", "role_id": "r", "secret_id": "s"}))
+    with pytest.raises((ApiError, httpx.ConnectError)):
+        client(rec, workspace_id=WS).secret_store.get_secret_identity_access("id-1")
+    assert len(rec.requests) == 1
+    assert rec.requests[0].url.path.endswith("/secret-store/identities/id-1/access")
+
+
+def test_other_identity_reads_are_still_retried() -> None:
+    rec = Recorder((503, {"detail": "busy"}), (200, IDENTITY))
+    try:
+        client(rec, workspace_id=WS).secret_store.get_secret_identity("id-1")
+    except Exception:
+        pass  # only the request count matters
+    assert len(rec.requests) == 2
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "never"),
+    [
+        ("GET", "secret-store/identities/id-1/access", True),
+        ("GET", "/v1/secret-store/identities/id-1/access", True),
+        ("GET", "v2/secret-store/identities/id-1/access/", True),
+        ("HEAD", "secret-store/identities/id-1/access", True),
+        ("GET", "secret-store/identities/id-1", False),
+        ("GET", "secret-store/identities/id-1/access/other", False),
+        ("POST", "compute/cloud-vms", True),
+        ("POST", "compute/cloud-vms/vm-1/actions/start", False),
+    ],
+)
+def test_never_retried_routes(method: str, path: str, never: bool) -> None:
+    from ibee.transport import _never_retried
+
+    assert _never_retried(method, path) is never
+
+
 def test_max_retries_zero_disables_retries() -> None:
     rec = Recorder((503, {}), (200, []))
     with pytest.raises(ServiceUnavailableError):

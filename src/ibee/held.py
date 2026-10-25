@@ -10,8 +10,10 @@ work as in 0.4.x and go away one by one once the server owns them:
    one you pass) with the ``billing_term`` option merged in; cloud VMs default to
    HOURLY when the plan offers it. A ``windows_license`` SKU (per vCPU) and the
    Reserved IP's SKU are added under ``attached_skus``.
-2. VM delete: ``public_ip_action`` defaults to ``release`` for a VM with an
-   auto-assigned public IP; ``reserve`` labels the address with the VM name.
+2. VM delete: ``public_ip_action="reserve"`` without a ``reserved_ip_label`` labels
+   the address with the VM name. There is no default action: the request is sent as
+   given, and the server answers 400 for a VM with an automatically assigned public
+   IP until you choose ``release`` or ``reserve``.
 3. ``billing_catalog`` on attach-volume (the volume's ``metadata.billing_catalog`` when
    you pass none; left out when the volume has none, so the server answers), on resize
    and resize-plan with ``plan_id``/``billing_term``/``billing_catalog`` (from the plan,
@@ -215,9 +217,6 @@ def create_kwargs(family: str, kw: _Kw, plan: typing.Any, image: typing.Any, res
 
 def delete_kwargs(vm: typing.Any, kw: _Kw) -> _Kw:
     kw = dict(kw)
-    auto_ip = _get(vm, "public_ip") and not (_get(vm, "reserved_public_ip_id") or _get(vm, "retained_reserved_public_ip_id"))
-    if kw.get("public_ip_action") is None and auto_ip:
-        kw["public_ip_action"] = "release"
     if kw.get("public_ip_action") == "reserve" and kw.get("reserved_ip_label") is None and _get(vm, "name"):
         kw["reserved_ip_label"] = str(_get(vm, "name"))[:120]
     return kw
@@ -327,8 +326,8 @@ class _Sync:
         return create_kwargs(family, kw, plan, image, reserved)
 
     def _delete(self, get_vm: typing.Callable[..., typing.Any], vm_id: str, kw: _Kw) -> _Kw:
-        action = kw.get("public_ip_action")
-        if action is None or (action == "reserve" and kw.get("reserved_ip_label") is None):
+        # The VM is read only to label a reserved address; public_ip_action has no default.
+        if kw.get("public_ip_action") == "reserve" and kw.get("reserved_ip_label") is None:
             return delete_kwargs(get_vm(vm_id, workspace_id=kw.get("workspace_id")), kw)
         return kw
 
@@ -371,8 +370,7 @@ class _Async(_Sync):
         return create_kwargs(family, kw, plan, image, reserved)
 
     async def _delete(self, get_vm: typing.Any, vm_id: str, kw: _Kw) -> _Kw:  # type: ignore[override]
-        action = kw.get("public_ip_action")
-        if action is None or (action == "reserve" and kw.get("reserved_ip_label") is None):
+        if kw.get("public_ip_action") == "reserve" and kw.get("reserved_ip_label") is None:
             return delete_kwargs(await get_vm(vm_id, workspace_id=kw.get("workspace_id")), kw)
         return kw
 

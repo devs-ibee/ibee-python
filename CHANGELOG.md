@@ -20,6 +20,20 @@ Container Registry.
   pass no `idempotency_key`, and reuses it on retries, the same as `X-Idempotency-Key`
   elsewhere (`fern/overrides.yml` makes the header optional; `transport.py` fills it).
 
+### Changed
+
+- `delete_cloud_vm` / `delete_gpu_vm`: `public_ip_action` no longer defaults to
+  `release`, and the VM is no longer read to decide it. The request is sent as given;
+  for a VM with an automatically assigned public IP the server answers 400 until you
+  pass `release` or `reserve`. `reserve` without `reserved_ip_label` still labels the
+  address with the VM name (one VM read).
+
+### Fixed
+
+- `get_secret_identity_access` (`GET /secret-store/identities/{id}/access`) is never
+  retried, on any status or connection error: every call mints a new AppRole secret
+  ID. Other reads retry as before.
+
 ### Notes
 
 - An access token's `secret` is returned only by create and rotate. The SDK does not

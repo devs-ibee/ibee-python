@@ -13,7 +13,8 @@
   the same rule, and any request whose connection never opened is retried.
   VM creates (cloud and GPU) are never retried: whether the server de-duplicates a
   replayed create with the same key is unverified, so a replay could create a
-  second VM.
+  second VM. ``GET /secret-store/identities/{id}/access`` is never retried either:
+  every call mints a new AppRole credential.
   Errors carry ``idempotency_key``, so a caller can retry with the same key.
 * Errors: every status >= 400 raises the status-named error class from
   ``ibee.errors`` (``ApiError`` for other statuses) with the body and headers
@@ -21,6 +22,7 @@
 """
 
 import asyncio
+import re
 import time
 import typing
 import uuid
@@ -128,10 +130,15 @@ def raise_for_status(response: httpx.Response, idempotency_key: typing.Optional[
 
 #: VM creates (POST to these collections) are never retried.
 NEVER_RETRIED_CREATES = frozenset({"compute/cloud-vms", "compute/gpu-vms"})
+#: The identity access read, under any version prefix: each call mints a new AppRole credential.
+NEVER_RETRIED_READ = re.compile(r"(^|/)secret-store/identities/[^/]+/access$")
 
 
 def _never_retried(method: str, path: typing.Optional[str]) -> bool:
-    return method.upper() == "POST" and (path or "").strip("/") in NEVER_RETRIED_CREATES
+    method, path = method.upper(), (path or "").strip("/")
+    if method == "POST":
+        return path in NEVER_RETRIED_CREATES
+    return method in SAFE_METHODS and NEVER_RETRIED_READ.search(path) is not None
 
 
 def _retry_transport_error(exc: httpx.TransportError, retry_safe: bool) -> bool:

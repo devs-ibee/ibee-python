@@ -6,7 +6,9 @@ import typing
 
 import httpx
 import pytest
-from mockapi import ACCEPTED, VM, WS, async_client, client
+from mockapi import ACCEPTED, VM, WS, Recorder, async_client, client
+
+from ibee.errors import BadRequestError
 
 OPTIONS = [
     {"billing_interval": "HOURLY", "unit_price_minor": 100, "price_unit": "hour"},
@@ -170,16 +172,20 @@ def test_unknown_plan_is_left_to_the_server() -> None:
 # 2. VM delete -------------------------------------------------------------------
 
 
-def test_delete_releases_an_auto_assigned_public_ip_by_default() -> None:
-    api = FakeApi()
-    client(api, workspace_id=WS).cloud_vms.delete_cloud_vm(VM)
-    assert api.body == {"public_ip_action": "release"}
-
-
-def test_delete_without_a_public_ip_sends_no_choice() -> None:
-    api = FakeApi(vm={"id": VM, "name": "web-1", "public_ip": None})
-    client(api, workspace_id=WS).cloud_vms.delete_cloud_vm(VM)
+@pytest.mark.parametrize("family", ["cloud", "gpu"])
+def test_delete_has_no_public_ip_action_default_and_makes_no_lookup(family: str) -> None:
+    api = FakeApi()  # the VM has an automatically assigned public IP
+    getattr(getattr(client(api, workspace_id=WS), f"{family}_vms"), f"delete_{family}_vm")(VM)
+    assert api.reads == []
     assert "public_ip_action" not in (api.body or {})
+
+
+def test_delete_without_a_choice_relays_the_servers_400() -> None:
+    rec = Recorder((400, {"error": "public_ip_action_required"}, {"x-request-id": "req-9"}))
+    with pytest.raises(BadRequestError) as info:
+        client(rec, workspace_id=WS).cloud_vms.delete_cloud_vm(VM)
+    assert [r.method for r in rec.requests] == ["DELETE"]
+    assert (info.value.code, info.value.request_id) == ("public_ip_action_required", "req-9")
 
 
 def test_delete_reserve_labels_the_address_with_the_vm_name() -> None:
@@ -299,5 +305,5 @@ def test_async_create_delete_and_list(family: str) -> None:
 
     assert asyncio.run(run()) == 120
     assert api.sent[0]["body"]["billing_catalog"]["sku_code"] in ("VM-2C", "GPU-L4")
-    assert api.sent[1]["body"] == {"public_ip_action": "release"}
+    assert api.sent[1]["method"] == "DELETE" and "public_ip_action" not in (api.sent[1]["body"] or {})
     assert api.sent[2]["body"]["billing_catalog"] == {"sku_id": 31, "sku_code": "BLOCK-STD"}
