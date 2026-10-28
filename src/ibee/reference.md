@@ -13140,7 +13140,7 @@ client.cloud_vms.disable_cloud_vm_backups(
 <dl>
 <dd>
 
-**request:** `typing.Dict[str, typing.Any]` 
+**request:** `typing.Dict[str, typing.Any]` — Send an empty object, `{}`.
     
 </dd>
 </dl>
@@ -16479,7 +16479,7 @@ client.gpu_vms.disable_gpu_vm_backups(
 <dl>
 <dd>
 
-**request:** `typing.Dict[str, typing.Any]` 
+**request:** `typing.Dict[str, typing.Any]` — Send an empty object, `{}`.
     
 </dd>
 </dl>
