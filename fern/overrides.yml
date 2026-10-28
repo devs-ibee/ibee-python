@@ -9,32 +9,3 @@ components:
       required: false
     ContainerRegistryIdempotencyKey:
       required: false
-
-# Backups disable: the service needs a JSON body and answers 422 without one, but contract
-# 0.6.2 declares none (platform-docs gap G3). With this body the generated method takes
-# `request`; pass `request={}`. Remove once the contract declares the body.
-paths:
-  /compute/cloud-vms/{vm_id}/backups/disable:
-    post:
-      requestBody:
-        required: true
-        description: Send an empty object, `{}`.
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              description: Send an empty object, `{}`.
-              example: {}
-  /compute/gpu-vms/{vm_id}/backups/disable:
-    post:
-      requestBody:
-        required: true
-        description: Send an empty object, `{}`.
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              description: Send an empty object, `{}`.
-              example: {}
