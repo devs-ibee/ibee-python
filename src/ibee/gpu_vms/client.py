@@ -1719,6 +1719,7 @@ class GpuVmsClient:
         self,
         vm_id: str,
         *,
+        request: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
@@ -1729,6 +1730,8 @@ class GpuVmsClient:
         ----------
         vm_id : str
             Virtual machine ID.
+
+        request : typing.Dict[str, typing.Any]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -1751,10 +1754,11 @@ class GpuVmsClient:
         client.gpu_vms.disable_gpu_vm_backups(
             vm_id="vm_id",
             workspace_id="710995",
+            request={"key": "value"},
         )
         """
         _response = self._raw_client.disable_gpu_vm_backups(
-            vm_id, workspace_id=workspace_id, request_options=request_options
+            vm_id, request=request, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -4006,6 +4010,7 @@ class AsyncGpuVmsClient:
         self,
         vm_id: str,
         *,
+        request: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
@@ -4016,6 +4021,8 @@ class AsyncGpuVmsClient:
         ----------
         vm_id : str
             Virtual machine ID.
+
+        request : typing.Dict[str, typing.Any]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -4043,13 +4050,14 @@ class AsyncGpuVmsClient:
             await client.gpu_vms.disable_gpu_vm_backups(
                 vm_id="vm_id",
                 workspace_id="710995",
+                request={"key": "value"},
             )
 
 
         asyncio.run(main())
         """
         _response = await self._raw_client.disable_gpu_vm_backups(
-            vm_id, workspace_id=workspace_id, request_options=request_options
+            vm_id, request=request, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 

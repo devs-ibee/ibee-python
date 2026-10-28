@@ -13113,6 +13113,9 @@ client = Ibee(
 client.cloud_vms.disable_cloud_vm_backups(
     vm_id="vm_id",
     workspace_id="710995",
+    request={
+        "key": "value"
+    },
 )
 
 ```
@@ -13130,6 +13133,14 @@ client.cloud_vms.disable_cloud_vm_backups(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `typing.Dict[str, typing.Any]` 
     
 </dd>
 </dl>
@@ -16441,6 +16452,9 @@ client = Ibee(
 client.gpu_vms.disable_gpu_vm_backups(
     vm_id="vm_id",
     workspace_id="710995",
+    request={
+        "key": "value"
+    },
 )
 
 ```
@@ -16458,6 +16472,14 @@ client.gpu_vms.disable_gpu_vm_backups(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `typing.Dict[str, typing.Any]` 
     
 </dd>
 </dl>
