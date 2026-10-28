@@ -12,8 +12,15 @@ class BlockStoragePlanUsage(UniversalBaseModel):
     allowed_sizes_gb: typing.Optional[typing.List[int]] = None
     price_per_gb_month: typing.Optional[float] = None
     price_per_gb_month_minor: typing.Optional[int] = None
-    iops: typing.Optional[int] = None
-    throughput_mibps: typing.Optional[int] = None
+    iops: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display text from the catalog, for example `Up to 10K`.
+    """
+
+    throughput: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display text from the catalog, for example `Up to 400 MiB/s`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

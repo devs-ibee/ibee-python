@@ -4709,7 +4709,12 @@ client.object_storage.create_s3credential(
 <dl>
 <dd>
 
-**permission_type:** `typing.Optional[str]` — Permission level: `admin_rw`, `admin_ro`, `object_rw` or `object_ro`. Default `admin_rw`.
+**permission_type:** `typing.Optional[CreateS3CredentialRequestPermissionType]` 
+
+- `admin_rw`: manage buckets and read/write objects (default).
+- `admin_ro`: read buckets and objects.
+- `object_rw`: read and write objects only.
+- `object_ro`: read objects only.
     
 </dd>
 </dl>
@@ -13113,9 +13118,6 @@ client = Ibee(
 client.cloud_vms.disable_cloud_vm_backups(
     vm_id="vm_id",
     workspace_id="710995",
-    request={
-        "key": "value"
-    },
 )
 
 ```
@@ -13133,14 +13135,6 @@ client.cloud_vms.disable_cloud_vm_backups(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `typing.Dict[str, typing.Any]` — Send an empty object, `{}`.
     
 </dd>
 </dl>
@@ -16452,9 +16446,6 @@ client = Ibee(
 client.gpu_vms.disable_gpu_vm_backups(
     vm_id="vm_id",
     workspace_id="710995",
-    request={
-        "key": "value"
-    },
 )
 
 ```
@@ -16472,14 +16463,6 @@ client.gpu_vms.disable_gpu_vm_backups(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `typing.Dict[str, typing.Any]` — Send an empty object, `{}`.
     
 </dd>
 </dl>

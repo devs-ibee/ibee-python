@@ -360,7 +360,11 @@ if typing.TYPE_CHECKING:
         ListLoadBalancersRequestLayer,
         UpdateL7LoadBalancerRequestCustomDomain,
     )
-    from .object_storage import CreateS3CredentialRequestBucketScope, GetBucketMetricsRequestRange
+    from .object_storage import (
+        CreateS3CredentialRequestBucketScope,
+        CreateS3CredentialRequestPermissionType,
+        GetBucketMetricsRequestRange,
+    )
     from .secret_store import (
         CreateSecretIdentityRequestAuthMethod,
         CreateSecretIdentityRequestTokenPolicyMode,
@@ -537,6 +541,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "CreateNatPortForwardingRuleRequestProtocol": ".types",
     "CreateNatPortForwardingRuleRequestTargetType": ".types",
     "CreateS3CredentialRequestBucketScope": ".object_storage",
+    "CreateS3CredentialRequestPermissionType": ".object_storage",
     "CreateSecretIdentityRequestAuthMethod": ".secret_store",
     "CreateSecretIdentityRequestTokenPolicyMode": ".secret_store",
     "CreateSecretIdentityScopeRequestAccessMode": ".secret_store",
@@ -908,6 +913,7 @@ __all__ = [
     "CreateNatPortForwardingRuleRequestProtocol",
     "CreateNatPortForwardingRuleRequestTargetType",
     "CreateS3CredentialRequestBucketScope",
+    "CreateS3CredentialRequestPermissionType",
     "CreateSecretIdentityRequestAuthMethod",
     "CreateSecretIdentityRequestTokenPolicyMode",
     "CreateSecretIdentityScopeRequestAccessMode",

@@ -3624,7 +3624,6 @@ class RawCloudVmsClient:
         self,
         vm_id: str,
         *,
-        request: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BackupPolicy]:
@@ -3635,8 +3634,6 @@ class RawCloudVmsClient:
         ----------
         vm_id : str
             Virtual machine ID.
-
-        request : typing.Dict[str, typing.Any]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -3655,12 +3652,7 @@ class RawCloudVmsClient:
             params={
                 "workspace_id": workspace_id,
             },
-            json=request,
-            headers={
-                "content-type": "application/json",
-            },
             request_options=request_options,
-            omit=OMIT,
         )
         try:
             if 200 <= _response.status_code < 300:
@@ -8138,7 +8130,6 @@ class AsyncRawCloudVmsClient:
         self,
         vm_id: str,
         *,
-        request: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BackupPolicy]:
@@ -8149,8 +8140,6 @@ class AsyncRawCloudVmsClient:
         ----------
         vm_id : str
             Virtual machine ID.
-
-        request : typing.Dict[str, typing.Any]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -8169,12 +8158,7 @@ class AsyncRawCloudVmsClient:
             params={
                 "workspace_id": workspace_id,
             },
-            json=request,
-            headers={
-                "content-type": "application/json",
-            },
             request_options=request_options,
-            omit=OMIT,
         )
         try:
             if 200 <= _response.status_code < 300:

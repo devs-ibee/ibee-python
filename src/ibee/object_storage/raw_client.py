@@ -40,6 +40,7 @@ from ..types.s3credential_created import S3CredentialCreated
 from ..types.s3credential_list import S3CredentialList
 from ..types.s3credential_revoked import S3CredentialRevoked
 from .types.create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
+from .types.create_s3credential_request_permission_type import CreateS3CredentialRequestPermissionType
 from .types.get_bucket_metrics_request_range import GetBucketMetricsRequestRange
 from pydantic import ValidationError
 
@@ -2381,7 +2382,7 @@ class RawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
-        permission_type: typing.Optional[str] = OMIT,
+        permission_type: typing.Optional[CreateS3CredentialRequestPermissionType] = OMIT,
         bucket_scope: typing.Optional[CreateS3CredentialRequestBucketScope] = OMIT,
         allowed_buckets: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -2397,8 +2398,11 @@ class RawObjectStorageClient:
         name : typing.Optional[str]
             Display name of the key pair. Default `Default Key`.
 
-        permission_type : typing.Optional[str]
-            Permission level: `admin_rw`, `admin_ro`, `object_rw` or `object_ro`. Default `admin_rw`.
+        permission_type : typing.Optional[CreateS3CredentialRequestPermissionType]
+            - `admin_rw`: manage buckets and read/write objects (default).
+            - `admin_ro`: read buckets and objects.
+            - `object_rw`: read and write objects only.
+            - `object_ro`: read objects only.
 
         bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
             - `all`: the key may use every bucket in the workspace (default).
@@ -5166,7 +5170,7 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         name: typing.Optional[str] = OMIT,
-        permission_type: typing.Optional[str] = OMIT,
+        permission_type: typing.Optional[CreateS3CredentialRequestPermissionType] = OMIT,
         bucket_scope: typing.Optional[CreateS3CredentialRequestBucketScope] = OMIT,
         allowed_buckets: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -5182,8 +5186,11 @@ class AsyncRawObjectStorageClient:
         name : typing.Optional[str]
             Display name of the key pair. Default `Default Key`.
 
-        permission_type : typing.Optional[str]
-            Permission level: `admin_rw`, `admin_ro`, `object_rw` or `object_ro`. Default `admin_rw`.
+        permission_type : typing.Optional[CreateS3CredentialRequestPermissionType]
+            - `admin_rw`: manage buckets and read/write objects (default).
+            - `admin_ro`: read buckets and objects.
+            - `object_rw`: read and write objects only.
+            - `object_ro`: read objects only.
 
         bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
             - `all`: the key may use every bucket in the workspace (default).
