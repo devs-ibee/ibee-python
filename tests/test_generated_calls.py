@@ -1,4 +1,4 @@
-"""Contract 0.6.2: every method is the generated call; the request goes out as given and the answer comes back unchanged."""
+"""Contract 0.6.3: every method is the generated call; the request goes out as given and the answer comes back unchanged."""
 
 import asyncio
 import json
@@ -98,14 +98,14 @@ def test_resize_sends_the_shape_only() -> None:
 
 
 @pytest.mark.parametrize("family", ["cloud", "gpu"])
-def test_backups_disable_sends_an_empty_object(family: str) -> None:
+def test_backups_disable_sends_no_body(family: str) -> None:
     rec = Recorder((200, {}))
     try:
-        getattr(getattr(client(rec, workspace_id=WS), f"{family}_vms"), f"disable_{family}_vm_backups")(VM, request={})
+        getattr(getattr(client(rec, workspace_id=WS), f"{family}_vms"), f"disable_{family}_vm_backups")(VM)
     except ParsingError:
         pass  # the mock answer is not a BackupPolicy; only the request matters
     assert _calls(rec) == [("POST", f"compute/{family}-vms/{VM}/backups/disable")]
-    assert rec.requests[0].content == b"{}"
+    assert rec.requests[0].content == b""
 
 
 def test_recovery_storage_plans() -> None:
@@ -119,6 +119,26 @@ def test_recovery_storage_plans() -> None:
 
 
 # object storage -----------------------------------------------------------------
+
+
+@pytest.mark.parametrize("permission", ["admin_rw", "admin_ro", "object_rw", "object_ro"])
+def test_s3_credential_permission_types_are_sent_as_given(permission: str) -> None:
+    rec = Recorder((201, {}))
+    try:
+        client(rec, workspace_id=WS).object_storage.create_s3credential(name="ci", permission_type=permission)
+    except ParsingError:
+        pass  # the mock answer is not a credential; only the request matters
+    assert _calls(rec) == [("POST", "object-storage/credentials")]
+    assert rec.body() == {"name": "ci", "permission_type": permission}
+
+
+def test_block_storage_plan_usage_is_display_text() -> None:
+    usage = {"min_size_gb": 10, "iops": "Up to 10K", "throughput": "Up to 400 MiB/s"}
+    rec = Recorder((200, {"items": [{"sku_code": "BLOCKSTO-NVME", "name": "NVMe", "included_usage": usage}]}))
+    plans = client(rec, workspace_id=WS).block_storage.list_block_storage_plans()
+    assert _calls(rec) == [("GET", "block-storage/plans")]
+    included = plans.items[0].included_usage
+    assert (included.iops, included.throughput) == ("Up to 10K", "Up to 400 MiB/s")
 
 
 def test_s3_credential_revoke_and_delete() -> None:
@@ -175,7 +195,7 @@ def test_reserved_ip_convert_and_attach_direct() -> None:
     assert _calls(rec) == [("POST", "networking/reserved-ips/convert"), ("POST", "networking/reserved-ips/r1/attach-direct")]
 
 
-# removed in 0.6.2 ---------------------------------------------------------------
+# removed in 0.6 -----------------------------------------------------------------
 
 REMOVED = {
     "cloud_vms": ["resize_cloud_vm_plan", "resize_cloud_vm_root_disk", "create_cloud_vm_backup_run",

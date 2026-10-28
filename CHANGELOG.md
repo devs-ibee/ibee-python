@@ -2,7 +2,7 @@
 
 ## 0.6.0
 
-Generated from the public API contract 0.6.2 (`contract/ibee-cloud.yaml`, 225
+Generated from the public API contract 0.6.3 (`contract/ibee-cloud.yaml`, 225
 operations; 0.5.2 was generated from 0.4.1). The public API now runs through
 portal-client-api, which applies the portal's own checks, so the SDK is the generated
 client alone: the hand layer of temporary behaviours (`ibee.held`) is removed, and
@@ -33,7 +33,7 @@ idempotency keys, safe retries, status-named errors) and the error fields
     server sends instead of every page.
   - The token environment check (a development token sent to production or the
     reverse, a token with a line break) is gone: the server answers.
-- Methods of the 23 operations contract 0.6.2 removes:
+- Methods of the 23 operations contract 0.6 removes:
   `cloud_vms.resize_cloud_vm_plan`, `cloud_vms.resize_cloud_vm_root_disk`,
   `gpu_vms.resize_gpu_vm_plan`, `gpu_vms.resize_gpu_vm_root_disk` (use
   `resize_cloud_vm` / `resize_gpu_vm` with `cpu`, `ram_mb`, `disk_gb`);
@@ -52,7 +52,7 @@ idempotency keys, safe retries, status-named errors) and the error fields
   `billing.check_resource_eligibility`.
 - Namespaces `client.billing` and `client.vm_console`.
 - Error classes `TooManyRequestsError`, `BadGatewayError` and `GatewayTimeoutError`:
-  contract 0.6.2 declares no 429, 502 or 504 answer, so those statuses raise
+  contract 0.6.3 declares no 429, 502 or 504 answer, so those statuses raise
   `ApiError` (check `status_code`). Retries on them are unchanged.
 - The types only those operations used (`VmResizePlanRequest`,
   `VmResizeRootDiskRequest`, `VmConsoleSession`, `BillingEligibility`,
@@ -65,7 +65,7 @@ idempotency keys, safe retries, status-named errors) and the error fields
 
 ### Added
 
-- The 29 operations contract 0.6.2 adds:
+- The 29 operations contract 0.6 adds:
   - Object storage settings: `object_storage.get_bucket_lifecycle`,
     `set_bucket_lifecycle`, `delete_bucket_lifecycle`, `get_bucket_cors`,
     `set_bucket_cors`, `delete_bucket_cors`, `get_bucket_object_lock`,
@@ -83,7 +83,9 @@ idempotency keys, safe retries, status-named errors) and the error fields
     `gpu_vms.delete_gpu_vm_backup_run`.
   - Catalogs: `compute_catalog.list_snapshot_storage_plans` and
     `compute_catalog.list_backup_storage_plans` (the SKUs snapshot create and backup
-    enable take as `billing_catalog`), `block_storage.list_block_storage_plans`.
+    enable take as `billing_catalog`), `block_storage.list_block_storage_plans`
+    (`included_usage.iops` and `included_usage.throughput` are the catalog's display
+    text, such as `Up to 10K`).
   - Networking: `reserved_ips.convert_reserved_ip`,
     `reserved_ips.attach_reserved_ip_direct`, `vpcs.update_nat_gateway_public_ip`.
   - `cdn.get_cdn_distribution_metrics`.
@@ -114,11 +116,11 @@ idempotency keys, safe retries, status-named errors) and the error fields
   one-month commitment: delete and resize answer 409 `VM_COMMITTED`); `YEARLY` is gone.
 - `revoke_s3credential` is `POST /object-storage/credentials/{id}/revoke`: the key
   stops working and the record stays, listed as revoked (it was `DELETE`).
-  `permission_type` takes `admin_rw` (the default), `admin_ro`, `object_rw`,
-  `object_ro`.
-- `disable_cloud_vm_backups` / `disable_gpu_vm_backups` take `request`: pass
-  `request={}`. The service answers 422 without a JSON body, and contract 0.6.2
-  declares none, so `fern/overrides.yml` declares it.
+- `create_s3credential`: `permission_type` is typed
+  (`CreateS3CredentialRequestPermissionType`): `admin_rw` (the server's default),
+  `admin_ro`, `object_rw` or `object_ro`.
+- `disable_cloud_vm_backups` / `disable_gpu_vm_backups` send no body, as the contract
+  has it (the server accepts that).
 - `X-Idempotency-Key` is declared on 18 VM write operations; the SDK sends a random one
   where it is declared and you pass none, as before. VM creates are never retried.
 - `delete_cloud_vm` / `delete_gpu_vm`: `public_ip_action` has no default. For a VM with
