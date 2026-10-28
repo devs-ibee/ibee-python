@@ -8,11 +8,34 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistryTag(UniversalBaseModel):
-    id: typing.Optional[int] = None
-    name: str
-    push_time: typing.Optional[dt.datetime] = None
-    pull_time: typing.Optional[dt.datetime] = None
-    immutable: typing.Optional[bool] = None
+    """
+    A tag on an artifact.
+    """
+
+    id: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Tag ID in the registry backend.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Tag name, for example `latest`.
+    """
+
+    push_time: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the tag was last pushed (ISO 8601).
+    """
+
+    pull_time: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the tag was last pulled (ISO 8601).
+    """
+
+    immutable: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True when the tag is protected from being overwritten.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

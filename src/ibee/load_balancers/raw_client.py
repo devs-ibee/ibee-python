@@ -22,6 +22,9 @@ from ..errors.unauthorized_error import UnauthorizedError
 from ..types.error import Error
 from ..types.load_balancer import LoadBalancer
 from ..types.load_balancer_backend import LoadBalancerBackend
+from ..types.load_balancer_health_check import LoadBalancerHealthCheck
+from ..types.load_balancer_observability import LoadBalancerObservability
+from ..types.load_balancer_policy import LoadBalancerPolicy
 from ..types.load_balancer_protocol import LoadBalancerProtocol
 from ..types.load_balancer_routing import LoadBalancerRouting
 from ..types.load_balancer_rule import LoadBalancerRule
@@ -63,14 +66,21 @@ class RawLoadBalancersClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         status : typing.Optional[LoadBalancerStatus]
+            Return only load balancers in this status.
 
         layer : typing.Optional[ListLoadBalancersRequestLayer]
+            Return only load balancers of this layer.
+            - `l4`
+            - `l7`
 
         protocol : typing.Optional[LoadBalancerProtocol]
+            Return only load balancers that accept this protocol.
 
         limit : typing.Optional[int]
+            Maximum number of items to return (1-500). Default 100.
 
         skip : typing.Optional[int]
+            Number of items to skip before the first returned item. Default 0.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -153,6 +163,9 @@ class RawLoadBalancersClient:
         backends: typing.Sequence[LoadBalancerBackend],
         workspace_id: typing.Optional[str] = None,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
+        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
+        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
+        observability: typing.Optional[LoadBalancerObservability] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancer]:
@@ -162,15 +175,25 @@ class RawLoadBalancersClient:
         Parameters
         ----------
         name : str
+            Display name of the load balancer.
 
         protocol : CreateL4LoadBalancerRequestProtocol
+            - `tcp`
+            - `tls_passthrough`
 
         backends : typing.Sequence[LoadBalancerBackend]
+            Backends to send traffic to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         routing : typing.Optional[LoadBalancerRouting]
+
+        health_check : typing.Optional[LoadBalancerHealthCheck]
+
+        policy : typing.Optional[LoadBalancerPolicy]
+
+        observability : typing.Optional[LoadBalancerObservability]
 
         tls : typing.Optional[LoadBalancerTls]
 
@@ -196,6 +219,15 @@ class RawLoadBalancersClient:
                 ),
                 "routing": convert_and_respect_annotation_metadata(
                     object_=routing, annotation=LoadBalancerRouting, direction="write"
+                ),
+                "health_check": convert_and_respect_annotation_metadata(
+                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
+                ),
+                "policy": convert_and_respect_annotation_metadata(
+                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
+                ),
+                "observability": convert_and_respect_annotation_metadata(
+                    object_=observability, annotation=LoadBalancerObservability, direction="write"
                 ),
                 "tls": convert_and_respect_annotation_metadata(
                     object_=tls, annotation=LoadBalancerTls, direction="write"
@@ -311,6 +343,9 @@ class RawLoadBalancersClient:
         backends: typing.Sequence[LoadBalancerBackend],
         workspace_id: typing.Optional[str] = None,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
+        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
+        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
+        observability: typing.Optional[LoadBalancerObservability] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         custom_domain: typing.Optional[CreateL7LoadBalancerRequestCustomDomain] = OMIT,
         rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
@@ -322,21 +357,33 @@ class RawLoadBalancersClient:
         Parameters
         ----------
         name : str
+            Display name of the load balancer.
 
         protocol : CreateL7LoadBalancerRequestProtocol
+            - `http`
+            - `https`
 
         backends : typing.Sequence[LoadBalancerBackend]
+            Default backends for requests no rule matches.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         routing : typing.Optional[LoadBalancerRouting]
 
+        health_check : typing.Optional[LoadBalancerHealthCheck]
+
+        policy : typing.Optional[LoadBalancerPolicy]
+
+        observability : typing.Optional[LoadBalancerObservability]
+
         tls : typing.Optional[LoadBalancerTls]
 
         custom_domain : typing.Optional[CreateL7LoadBalancerRequestCustomDomain]
+            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
 
         rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
+            Path- and header-based routing rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -360,6 +407,15 @@ class RawLoadBalancersClient:
                 ),
                 "routing": convert_and_respect_annotation_metadata(
                     object_=routing, annotation=LoadBalancerRouting, direction="write"
+                ),
+                "health_check": convert_and_respect_annotation_metadata(
+                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
+                ),
+                "policy": convert_and_respect_annotation_metadata(
+                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
+                ),
+                "observability": convert_and_respect_annotation_metadata(
+                    object_=observability, annotation=LoadBalancerObservability, direction="write"
                 ),
                 "tls": convert_and_respect_annotation_metadata(
                     object_=tls, annotation=LoadBalancerTls, direction="write"
@@ -680,6 +736,9 @@ class RawLoadBalancersClient:
         name: typing.Optional[str] = OMIT,
         backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
+        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
+        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
+        observability: typing.Optional[LoadBalancerObservability] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancer]:
@@ -695,10 +754,18 @@ class RawLoadBalancersClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
+            Replacement backend list.
 
         routing : typing.Optional[LoadBalancerRouting]
+
+        health_check : typing.Optional[LoadBalancerHealthCheck]
+
+        policy : typing.Optional[LoadBalancerPolicy]
+
+        observability : typing.Optional[LoadBalancerObservability]
 
         tls : typing.Optional[LoadBalancerTls]
 
@@ -723,6 +790,15 @@ class RawLoadBalancersClient:
                 ),
                 "routing": convert_and_respect_annotation_metadata(
                     object_=routing, annotation=LoadBalancerRouting, direction="write"
+                ),
+                "health_check": convert_and_respect_annotation_metadata(
+                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
+                ),
+                "policy": convert_and_respect_annotation_metadata(
+                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
+                ),
+                "observability": convert_and_respect_annotation_metadata(
+                    object_=observability, annotation=LoadBalancerObservability, direction="write"
                 ),
                 "tls": convert_and_respect_annotation_metadata(
                     object_=tls, annotation=LoadBalancerTls, direction="write"
@@ -838,6 +914,9 @@ class RawLoadBalancersClient:
         name: typing.Optional[str] = OMIT,
         backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
+        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
+        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
+        observability: typing.Optional[LoadBalancerObservability] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         custom_domain: typing.Optional[UpdateL7LoadBalancerRequestCustomDomain] = OMIT,
         rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
@@ -855,16 +934,26 @@ class RawLoadBalancersClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
+            Replacement default backend list.
 
         routing : typing.Optional[LoadBalancerRouting]
+
+        health_check : typing.Optional[LoadBalancerHealthCheck]
+
+        policy : typing.Optional[LoadBalancerPolicy]
+
+        observability : typing.Optional[LoadBalancerObservability]
 
         tls : typing.Optional[LoadBalancerTls]
 
         custom_domain : typing.Optional[UpdateL7LoadBalancerRequestCustomDomain]
+            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
 
         rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
+            Replacement routing rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -887,6 +976,15 @@ class RawLoadBalancersClient:
                 ),
                 "routing": convert_and_respect_annotation_metadata(
                     object_=routing, annotation=LoadBalancerRouting, direction="write"
+                ),
+                "health_check": convert_and_respect_annotation_metadata(
+                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
+                ),
+                "policy": convert_and_respect_annotation_metadata(
+                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
+                ),
+                "observability": convert_and_respect_annotation_metadata(
+                    object_=observability, annotation=LoadBalancerObservability, direction="write"
                 ),
                 "tls": convert_and_respect_annotation_metadata(
                     object_=tls, annotation=LoadBalancerTls, direction="write"
@@ -1124,14 +1222,21 @@ class AsyncRawLoadBalancersClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         status : typing.Optional[LoadBalancerStatus]
+            Return only load balancers in this status.
 
         layer : typing.Optional[ListLoadBalancersRequestLayer]
+            Return only load balancers of this layer.
+            - `l4`
+            - `l7`
 
         protocol : typing.Optional[LoadBalancerProtocol]
+            Return only load balancers that accept this protocol.
 
         limit : typing.Optional[int]
+            Maximum number of items to return (1-500). Default 100.
 
         skip : typing.Optional[int]
+            Number of items to skip before the first returned item. Default 0.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1214,6 +1319,9 @@ class AsyncRawLoadBalancersClient:
         backends: typing.Sequence[LoadBalancerBackend],
         workspace_id: typing.Optional[str] = None,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
+        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
+        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
+        observability: typing.Optional[LoadBalancerObservability] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancer]:
@@ -1223,15 +1331,25 @@ class AsyncRawLoadBalancersClient:
         Parameters
         ----------
         name : str
+            Display name of the load balancer.
 
         protocol : CreateL4LoadBalancerRequestProtocol
+            - `tcp`
+            - `tls_passthrough`
 
         backends : typing.Sequence[LoadBalancerBackend]
+            Backends to send traffic to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         routing : typing.Optional[LoadBalancerRouting]
+
+        health_check : typing.Optional[LoadBalancerHealthCheck]
+
+        policy : typing.Optional[LoadBalancerPolicy]
+
+        observability : typing.Optional[LoadBalancerObservability]
 
         tls : typing.Optional[LoadBalancerTls]
 
@@ -1257,6 +1375,15 @@ class AsyncRawLoadBalancersClient:
                 ),
                 "routing": convert_and_respect_annotation_metadata(
                     object_=routing, annotation=LoadBalancerRouting, direction="write"
+                ),
+                "health_check": convert_and_respect_annotation_metadata(
+                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
+                ),
+                "policy": convert_and_respect_annotation_metadata(
+                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
+                ),
+                "observability": convert_and_respect_annotation_metadata(
+                    object_=observability, annotation=LoadBalancerObservability, direction="write"
                 ),
                 "tls": convert_and_respect_annotation_metadata(
                     object_=tls, annotation=LoadBalancerTls, direction="write"
@@ -1372,6 +1499,9 @@ class AsyncRawLoadBalancersClient:
         backends: typing.Sequence[LoadBalancerBackend],
         workspace_id: typing.Optional[str] = None,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
+        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
+        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
+        observability: typing.Optional[LoadBalancerObservability] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         custom_domain: typing.Optional[CreateL7LoadBalancerRequestCustomDomain] = OMIT,
         rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
@@ -1383,21 +1513,33 @@ class AsyncRawLoadBalancersClient:
         Parameters
         ----------
         name : str
+            Display name of the load balancer.
 
         protocol : CreateL7LoadBalancerRequestProtocol
+            - `http`
+            - `https`
 
         backends : typing.Sequence[LoadBalancerBackend]
+            Default backends for requests no rule matches.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         routing : typing.Optional[LoadBalancerRouting]
 
+        health_check : typing.Optional[LoadBalancerHealthCheck]
+
+        policy : typing.Optional[LoadBalancerPolicy]
+
+        observability : typing.Optional[LoadBalancerObservability]
+
         tls : typing.Optional[LoadBalancerTls]
 
         custom_domain : typing.Optional[CreateL7LoadBalancerRequestCustomDomain]
+            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
 
         rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
+            Path- and header-based routing rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1421,6 +1563,15 @@ class AsyncRawLoadBalancersClient:
                 ),
                 "routing": convert_and_respect_annotation_metadata(
                     object_=routing, annotation=LoadBalancerRouting, direction="write"
+                ),
+                "health_check": convert_and_respect_annotation_metadata(
+                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
+                ),
+                "policy": convert_and_respect_annotation_metadata(
+                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
+                ),
+                "observability": convert_and_respect_annotation_metadata(
+                    object_=observability, annotation=LoadBalancerObservability, direction="write"
                 ),
                 "tls": convert_and_respect_annotation_metadata(
                     object_=tls, annotation=LoadBalancerTls, direction="write"
@@ -1741,6 +1892,9 @@ class AsyncRawLoadBalancersClient:
         name: typing.Optional[str] = OMIT,
         backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
+        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
+        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
+        observability: typing.Optional[LoadBalancerObservability] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancer]:
@@ -1756,10 +1910,18 @@ class AsyncRawLoadBalancersClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
+            Replacement backend list.
 
         routing : typing.Optional[LoadBalancerRouting]
+
+        health_check : typing.Optional[LoadBalancerHealthCheck]
+
+        policy : typing.Optional[LoadBalancerPolicy]
+
+        observability : typing.Optional[LoadBalancerObservability]
 
         tls : typing.Optional[LoadBalancerTls]
 
@@ -1784,6 +1946,15 @@ class AsyncRawLoadBalancersClient:
                 ),
                 "routing": convert_and_respect_annotation_metadata(
                     object_=routing, annotation=LoadBalancerRouting, direction="write"
+                ),
+                "health_check": convert_and_respect_annotation_metadata(
+                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
+                ),
+                "policy": convert_and_respect_annotation_metadata(
+                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
+                ),
+                "observability": convert_and_respect_annotation_metadata(
+                    object_=observability, annotation=LoadBalancerObservability, direction="write"
                 ),
                 "tls": convert_and_respect_annotation_metadata(
                     object_=tls, annotation=LoadBalancerTls, direction="write"
@@ -1899,6 +2070,9 @@ class AsyncRawLoadBalancersClient:
         name: typing.Optional[str] = OMIT,
         backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
         routing: typing.Optional[LoadBalancerRouting] = OMIT,
+        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
+        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
+        observability: typing.Optional[LoadBalancerObservability] = OMIT,
         tls: typing.Optional[LoadBalancerTls] = OMIT,
         custom_domain: typing.Optional[UpdateL7LoadBalancerRequestCustomDomain] = OMIT,
         rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
@@ -1916,16 +2090,26 @@ class AsyncRawLoadBalancersClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
+            Replacement default backend list.
 
         routing : typing.Optional[LoadBalancerRouting]
+
+        health_check : typing.Optional[LoadBalancerHealthCheck]
+
+        policy : typing.Optional[LoadBalancerPolicy]
+
+        observability : typing.Optional[LoadBalancerObservability]
 
         tls : typing.Optional[LoadBalancerTls]
 
         custom_domain : typing.Optional[UpdateL7LoadBalancerRequestCustomDomain]
+            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
 
         rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
+            Replacement routing rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1948,6 +2132,15 @@ class AsyncRawLoadBalancersClient:
                 ),
                 "routing": convert_and_respect_annotation_metadata(
                     object_=routing, annotation=LoadBalancerRouting, direction="write"
+                ),
+                "health_check": convert_and_respect_annotation_metadata(
+                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
+                ),
+                "policy": convert_and_respect_annotation_metadata(
+                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
+                ),
+                "observability": convert_and_respect_annotation_metadata(
+                    object_=observability, annotation=LoadBalancerObservability, direction="write"
                 ),
                 "tls": convert_and_respect_annotation_metadata(
                     object_=tls, annotation=LoadBalancerTls, direction="write"

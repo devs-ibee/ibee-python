@@ -7,10 +7,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class RecoveryPointSummary(UniversalBaseModel):
-    root_only: typing.Optional[bool] = None
-    root_volume_name: typing.Optional[str] = None
-    data_volume_names: typing.Optional[typing.List[str]] = None
-    summary_text: typing.Optional[str] = None
+    """
+    Short description of the volumes a recovery point contains.
+    """
+
+    root_only: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True when only the root disk was captured.
+    """
+
+    root_volume_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the captured root disk.
+    """
+
+    data_volume_names: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Display names of the captured data volumes.
+    """
+
+    summary_text: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Ready-to-display summary of the captured volumes; `Root` when only the root disk was captured.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

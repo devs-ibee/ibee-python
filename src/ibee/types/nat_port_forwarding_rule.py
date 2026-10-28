@@ -10,16 +10,55 @@ from .networking_resource_status import NetworkingResourceStatus
 
 
 class NatPortForwardingRule(CreateNatPortForwardingRuleRequest):
-    port_forward_rule_id: str
-    vpc_id: str
-    nat_gateway_id: str
-    organization_id: typing.Optional[str] = None
-    workspace_id: typing.Optional[str] = None
-    site_id: typing.Optional[str] = None
+    """
+    A port-forwarding rule on a NAT gateway.
+    """
+
+    port_forward_rule_id: str = pydantic.Field()
+    """
+    Unique ID of the rule.
+    """
+
+    vpc_id: str = pydantic.Field()
+    """
+    VPC the rule belongs to.
+    """
+
+    nat_gateway_id: str = pydantic.Field()
+    """
+    NAT gateway the rule is configured on.
+    """
+
+    organization_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning workspace.
+    """
+
+    site_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Site the gateway lives at.
+    """
+
     status: NetworkingResourceStatus
-    error_message: typing.Optional[str] = None
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    error_message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error detail when `status` is `error`.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the rule was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the rule was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

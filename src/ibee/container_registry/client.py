@@ -10,7 +10,6 @@ from ..types.container_registry_access_token_permission import ContainerRegistry
 from ..types.container_registry_access_token_secret import ContainerRegistryAccessTokenSecret
 from ..types.container_registry_artifact_list import ContainerRegistryArtifactList
 from ..types.container_registry_billing_catalog import ContainerRegistryBillingCatalog
-from ..types.container_registry_empty_result import ContainerRegistryEmptyResult
 from ..types.container_registry_list import ContainerRegistryList
 from ..types.container_registry_message import ContainerRegistryMessage
 from ..types.container_registry_metrics import ContainerRegistryMetrics
@@ -177,6 +176,8 @@ class ContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         visibility : typing.Optional[ContainerRegistryVisibility]
+            - `PRIVATE`: pulls need an access token (default).
+            - `PUBLIC`: anonymous pulls are allowed; egress is charged.
 
         acknowledge_public_egress_charges : typing.Optional[bool]
             Required to be `true` when `visibility` is `PUBLIC`.
@@ -420,57 +421,6 @@ class ContainerRegistryClient:
         )
         return _response.data
 
-    def empty_container_registry(
-        self,
-        registry_id: str,
-        *,
-        confirm_registry_name: str,
-        workspace_id: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistryEmptyResult:
-        """
-        Permanently deletes every repository and image in a registry, so it can be deleted. A bounded run can stop early with 409 `detail.code: registry_empty_incomplete` (`retryable: true`); pause pushes and call again. Requires scope: container-registry.write.
-
-        Parameters
-        ----------
-        registry_id : str
-            Registry ID.
-
-        confirm_registry_name : str
-            The registry's name, repeated to confirm a destructive call.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        ContainerRegistryEmptyResult
-            Registry emptied.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.container_registry.empty_container_registry(
-            registry_id="registry_id",
-            workspace_id="710995",
-            confirm_registry_name="confirm_registry_name",
-        )
-        """
-        _response = self._raw_client.empty_container_registry(
-            registry_id,
-            confirm_registry_name=confirm_registry_name,
-            workspace_id=workspace_id,
-            request_options=request_options,
-        )
-        return _response.data
-
     def get_container_registry_package(
         self,
         registry_id: str,
@@ -656,11 +606,14 @@ class ContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         permission : typing.Optional[ContainerRegistryAccessTokenPermission]
+            - `PULL`: pull only (default).
+            - `PULL_PUSH`: pull and push.
 
         expires_in_days : typing.Optional[int]
             1 to 365, or -1 for a token that does not expire.
 
         description : typing.Optional[str]
+            Optional description (up to 255 characters).
 
         registry_ids : typing.Optional[typing.Sequence[str]]
             Other registries in the same workspace the token may also use. The registry in the path is always included.
@@ -1258,16 +1211,28 @@ class ContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         severity : typing.Optional[ListContainerRegistryVulnerabilitiesRequestSeverity]
+            Return only findings of this severity.
+            - `Critical`
+            - `High`
+            - `Medium`
+            - `Low`
+            - `Unknown`
+            - `None`
 
         cve_id : typing.Optional[str]
+            Return only findings for this CVE or advisory ID.
 
         repository_name : typing.Optional[str]
+            Return only findings on artifacts in this repository.
 
         digest : typing.Optional[str]
+            Return only findings on the artifact with this digest.
 
         tag : typing.Optional[str]
+            Return only findings on artifacts carrying this tag.
 
         package : typing.Optional[str]
+            Return only findings in this package.
 
         page : typing.Optional[int]
             Page number.
@@ -1702,6 +1667,8 @@ class AsyncContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         visibility : typing.Optional[ContainerRegistryVisibility]
+            - `PRIVATE`: pulls need an access token (default).
+            - `PUBLIC`: anonymous pulls are allowed; egress is charged.
 
         acknowledge_public_egress_charges : typing.Optional[bool]
             Required to be `true` when `visibility` is `PUBLIC`.
@@ -1985,65 +1952,6 @@ class AsyncContainerRegistryClient:
         )
         return _response.data
 
-    async def empty_container_registry(
-        self,
-        registry_id: str,
-        *,
-        confirm_registry_name: str,
-        workspace_id: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistryEmptyResult:
-        """
-        Permanently deletes every repository and image in a registry, so it can be deleted. A bounded run can stop early with 409 `detail.code: registry_empty_incomplete` (`retryable: true`); pause pushes and call again. Requires scope: container-registry.write.
-
-        Parameters
-        ----------
-        registry_id : str
-            Registry ID.
-
-        confirm_registry_name : str
-            The registry's name, repeated to confirm a destructive call.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        ContainerRegistryEmptyResult
-            Registry emptied.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.container_registry.empty_container_registry(
-                registry_id="registry_id",
-                workspace_id="710995",
-                confirm_registry_name="confirm_registry_name",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.empty_container_registry(
-            registry_id,
-            confirm_registry_name=confirm_registry_name,
-            workspace_id=workspace_id,
-            request_options=request_options,
-        )
-        return _response.data
-
     async def get_container_registry_package(
         self,
         registry_id: str,
@@ -2253,11 +2161,14 @@ class AsyncContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         permission : typing.Optional[ContainerRegistryAccessTokenPermission]
+            - `PULL`: pull only (default).
+            - `PULL_PUSH`: pull and push.
 
         expires_in_days : typing.Optional[int]
             1 to 365, or -1 for a token that does not expire.
 
         description : typing.Optional[str]
+            Optional description (up to 255 characters).
 
         registry_ids : typing.Optional[typing.Sequence[str]]
             Other registries in the same workspace the token may also use. The registry in the path is always included.
@@ -2943,16 +2854,28 @@ class AsyncContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         severity : typing.Optional[ListContainerRegistryVulnerabilitiesRequestSeverity]
+            Return only findings of this severity.
+            - `Critical`
+            - `High`
+            - `Medium`
+            - `Low`
+            - `Unknown`
+            - `None`
 
         cve_id : typing.Optional[str]
+            Return only findings for this CVE or advisory ID.
 
         repository_name : typing.Optional[str]
+            Return only findings on artifacts in this repository.
 
         digest : typing.Optional[str]
+            Return only findings on the artifact with this digest.
 
         tag : typing.Optional[str]
+            Return only findings on artifacts carrying this tag.
 
         package : typing.Optional[str]
+            Return only findings in this package.
 
         page : typing.Optional[int]
             Page number.

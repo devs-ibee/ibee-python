@@ -8,16 +8,59 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class VmEvent(UniversalBaseModel):
-    organization_id: str
-    organization_name: typing.Optional[str] = None
-    workspace_id: str
-    workspace_name: typing.Optional[str] = None
-    vm_id: str
-    operation_id: typing.Optional[str] = None
-    event_type: str
-    message: str
-    payload: typing.Dict[str, typing.Any]
-    created_at: dt.datetime
+    """
+    One entry in a VM's event timeline.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the organization that owns the VM.
+    """
+
+    organization_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the owning organization, when the service has it.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the workspace the VM belongs to.
+    """
+
+    workspace_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the workspace, when the service has it.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the VM.
+    """
+
+    operation_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Operation that produced the event, when it belongs to one.
+    """
+
+    event_type: str = pydantic.Field()
+    """
+    Dotted event name, for example `operation.accepted`, `vm.reboot.succeeded` or `snapshot.restore.failed`.
+    """
+
+    message: str = pydantic.Field()
+    """
+    Human-readable description of the event.
+    """
+
+    payload: typing.Dict[str, typing.Any] = pydantic.Field()
+    """
+    Event-specific key-value details.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the event was recorded (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

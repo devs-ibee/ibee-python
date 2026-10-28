@@ -7,8 +7,19 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class LoadBalancerEndpoint(UniversalBaseModel):
-    host: str
-    port: int
+    """
+    Where clients connect to the load balancer.
+    """
+
+    host: str = pydantic.Field()
+    """
+    Public hostname.
+    """
+
+    port: int = pydantic.Field()
+    """
+    Listener port.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

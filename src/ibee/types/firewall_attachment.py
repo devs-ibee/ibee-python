@@ -7,8 +7,19 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class FirewallAttachment(UniversalBaseModel):
-    network_id: str
-    vm_id: str
+    """
+    A VM the firewall group is applied to.
+    """
+
+    network_id: str = pydantic.Field()
+    """
+    ID of the VM network record the group is attached to.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the VM.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

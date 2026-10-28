@@ -7,6 +7,10 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistryBillingCatalog(UniversalBaseModel):
+    """
+    The storage plan to bill the registry against, identified by SKU.
+    """
+
     sku_code: str = pydantic.Field()
     """
     Storage plan SKU, for example `REGISTRY-STORAGE-250GB`. The service trims and upper-cases it, then requires `^[A-Z0-9][A-Z0-9_.-]*$`. Capacity and price come from Billing.

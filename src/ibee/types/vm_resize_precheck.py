@@ -10,17 +10,67 @@ from .vm_resize_shape import VmResizeShape
 
 
 class VmResizePrecheck(UniversalBaseModel):
-    decision: VmResizePrecheckDecision
-    mode: typing.Optional[VmResizePrecheckMode] = None
-    reasons: typing.List[str]
-    warnings: typing.List[str]
-    migration_checklist: typing.List[str]
-    migration_steps: typing.List[str]
-    requires_stop: bool
-    downtime_expected: bool
-    no_changes: bool
-    current_state: str
-    live_state: typing.Optional[str] = None
+    """
+    Result of a resize precheck: whether the requested shape can be applied in place, needs a migration, or is blocked.
+    """
+
+    decision: VmResizePrecheckDecision = pydantic.Field()
+    """
+    - `in_place`: the change can be applied on the current host.
+    - `migration_required`: the VM must move to another host first.
+    - `blocked`: the change cannot be made; see `reasons`.
+    """
+
+    mode: typing.Optional[VmResizePrecheckMode] = pydantic.Field(default=None)
+    """
+    Same values as `decision`; present when the engine reports the mode separately.
+    """
+
+    reasons: typing.List[str] = pydantic.Field()
+    """
+    Why the decision was reached.
+    """
+
+    warnings: typing.List[str] = pydantic.Field()
+    """
+    Non-blocking warnings about the change.
+    """
+
+    migration_checklist: typing.List[str] = pydantic.Field()
+    """
+    Items to confirm before a migration.
+    """
+
+    migration_steps: typing.List[str] = pydantic.Field()
+    """
+    Steps a migration would perform.
+    """
+
+    requires_stop: bool = pydantic.Field()
+    """
+    Whether the VM must be stopped for the change.
+    """
+
+    downtime_expected: bool = pydantic.Field()
+    """
+    Whether the change interrupts the VM.
+    """
+
+    no_changes: bool = pydantic.Field()
+    """
+    True when the target shape equals the current one.
+    """
+
+    current_state: str = pydantic.Field()
+    """
+    VM lifecycle status recorded by the engine.
+    """
+
+    live_state: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Power state observed on the host, when available.
+    """
+
     current: VmResizeShape
     target: VmResizeShape
 

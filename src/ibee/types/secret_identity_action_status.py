@@ -8,7 +8,15 @@ from .secret_identity_action_status_status import SecretIdentityActionStatusStat
 
 
 class SecretIdentityActionStatus(UniversalBaseModel):
-    status: SecretIdentityActionStatusStatus
+    """
+    Result of deleting an identity or revoking its credentials.
+    """
+
+    status: SecretIdentityActionStatusStatus = pydantic.Field()
+    """
+    - `deleted`: the identity was removed.
+    - `revoked`: its active credentials were revoked.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -8,11 +8,25 @@ from .backup_policy_schedule import BackupPolicySchedule
 
 
 class BackupPolicyUpdateRequest(UniversalBaseModel):
+    """
+    Body for changing a backup policy. Only the fields sent are changed.
+    """
+
     schedule: typing.Optional[BackupPolicySchedule] = None
-    retention_days: typing.Optional[int] = None
-    full_backup_interval_days: typing.Optional[int] = None
-    incremental_enabled: typing.Optional[bool] = None
-    requested_by: typing.Optional[str] = None
+    retention_days: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Days a backup run is kept before it is expired (1-365).
+    """
+
+    full_backup_interval_days: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Days between full backups (1-30).
+    """
+
+    incremental_enabled: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether runs between full backups capture only changes.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

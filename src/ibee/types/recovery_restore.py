@@ -11,22 +11,88 @@ from .recovery_restore_target_mode import RecoveryRestoreTargetMode
 
 
 class RecoveryRestore(UniversalBaseModel):
-    organization_id: str
-    organization_name: typing.Optional[str] = None
-    workspace_id: str
-    workspace_name: typing.Optional[str] = None
-    restore_id: str
-    source_vm_id: str
-    target_mode: RecoveryRestoreTargetMode
-    target_vm_id: typing.Optional[str] = None
-    target_vm_name: typing.Optional[str] = None
-    recovery_point_id: str
-    recovery_point_type: typing.Optional[RecoveryRestoreRecoveryPointType] = None
+    """
+    A restore job started from a backup run or a snapshot set.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the organization that owns the VM.
+    """
+
+    organization_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the owning organization, when the service has it.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the workspace the VM belongs to.
+    """
+
+    workspace_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the workspace, when the service has it.
+    """
+
+    restore_id: str = pydantic.Field()
+    """
+    Unique ID of the restore job.
+    """
+
+    source_vm_id: str = pydantic.Field()
+    """
+    VM the recovery point was taken from.
+    """
+
+    target_mode: RecoveryRestoreTargetMode = pydantic.Field()
+    """
+    - `replace`: restored onto the source VM.
+    - `new_vm`: restored into a new VM.
+    - `volume_only`: a single volume was restored.
+    """
+
+    target_vm_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    VM that received the restore: the source VM for `replace`, the new VM for `new_vm`.
+    """
+
+    target_vm_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the target VM.
+    """
+
+    recovery_point_id: str = pydantic.Field()
+    """
+    Recovery point that was restored.
+    """
+
+    recovery_point_type: typing.Optional[RecoveryRestoreRecoveryPointType] = pydantic.Field(default=None)
+    """
+    - `backup`: the recovery point is a backup run.
+    - `snapshot`: the recovery point is a snapshot set.
+    """
+
     status: BackupStatus
-    started_at: typing.Optional[dt.datetime] = None
-    completed_at: typing.Optional[dt.datetime] = None
-    error_message: typing.Optional[str] = None
-    metadata: typing.Optional[typing.Dict[str, typing.Any]] = None
+    started_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the restore started (ISO 8601); null while queued.
+    """
+
+    completed_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the restore finished (ISO 8601); null until it does.
+    """
+
+    error_message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error detail when `status` is `failed`.
+    """
+
+    metadata: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Additional service-specific key-value data.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

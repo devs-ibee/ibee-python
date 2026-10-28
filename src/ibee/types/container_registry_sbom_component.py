@@ -7,13 +7,44 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistrySbomComponent(UniversalBaseModel):
-    component_id: str
-    name: str
-    version: str
-    component_type: str
-    licenses: typing.List[str]
-    supplier: str
-    purl: typing.Optional[str] = None
+    """
+    One component listed in an SBOM.
+    """
+
+    component_id: str = pydantic.Field()
+    """
+    Component identifier inside the SBOM document.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Component name.
+    """
+
+    version: str = pydantic.Field()
+    """
+    Component version; empty when unknown.
+    """
+
+    component_type: str = pydantic.Field()
+    """
+    Component type as recorded in the SBOM, for example `library`.
+    """
+
+    licenses: typing.List[str] = pydantic.Field()
+    """
+    License identifiers recorded for the component.
+    """
+
+    supplier: str = pydantic.Field()
+    """
+    Supplier recorded for the component; empty when unknown.
+    """
+
+    purl: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Package URL (purl) of the component, when recorded.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

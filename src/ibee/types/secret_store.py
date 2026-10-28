@@ -9,19 +9,56 @@ from .secret_store_status import SecretStoreStatus
 
 
 class SecretStore(UniversalBaseModel):
-    id: typing.Optional[str] = None
-    organization_id: typing.Optional[str] = None
-    workspace_id: typing.Optional[str] = None
-    name: typing.Optional[str] = None
+    """
+    A secret store: a named container for secrets inside a workspace.
+    """
+
+    id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Unique ID of the store.
+    """
+
+    organization_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning workspace.
+    """
+
+    name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the store.
+    """
+
     store_key: typing.Optional[str] = pydantic.Field(default=None)
     """
     URL-safe slug derived from the store name.
     """
 
-    description: typing.Optional[str] = None
-    status: typing.Optional[SecretStoreStatus] = None
-    created_at: typing.Optional[dt.datetime] = None
-    updated_at: typing.Optional[dt.datetime] = None
+    description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Description of the store.
+    """
+
+    status: typing.Optional[SecretStoreStatus] = pydantic.Field(default=None)
+    """
+    - `active`: in use.
+    - `archived`: archived; can be unarchived.
+    - `deleting`: permanent deletion in progress.
+    """
+
+    created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the record was created (ISO 8601).
+    """
+
+    updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the record was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

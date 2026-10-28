@@ -9,16 +9,30 @@ from .billing_catalog_selection import BillingCatalogSelection
 
 
 class BackupPolicyEnableRequest(UniversalBaseModel):
+    """
+    Body for enabling scheduled backups on a VM.
+    """
+
     schedule: typing.Optional[BackupPolicySchedule] = None
-    retention_days: typing.Optional[int] = None
-    full_backup_interval_days: typing.Optional[int] = None
-    incremental_enabled: typing.Optional[bool] = None
+    retention_days: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Days a backup run is kept before it is expired (1-365). Default 7.
+    """
+
+    full_backup_interval_days: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Days between full backups (1-30); when `incremental_enabled` is true the runs in between are incremental. Default 7.
+    """
+
+    incremental_enabled: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether runs between full backups capture only changes. Default true.
+    """
+
     billing_catalog: BillingCatalogSelection = pydantic.Field()
     """
     Required. The backup storage SKU from the Billing catalog that the VM engine records for this policy's backups. No public operation lists it yet.
     """
-
-    requested_by: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

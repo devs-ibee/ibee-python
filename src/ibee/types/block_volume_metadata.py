@@ -8,6 +8,10 @@ from .billing_catalog_selection import BillingCatalogSelection
 
 
 class BlockVolumeMetadata(UniversalBaseModel):
+    """
+    Additional key-value data, including the `billing_catalog` the volume was created with.
+    """
+
     billing_catalog: typing.Optional[BillingCatalogSelection] = pydantic.Field(default=None)
     """
     The Block Storage SKU this volume is billed under. Pass it as `billing_catalog` when attaching the volume to a VM.

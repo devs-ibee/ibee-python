@@ -9,11 +9,34 @@ from .firewall_rule_fields import FirewallRuleFields
 
 
 class FirewallRule(FirewallRuleFields):
-    rule_id: str
-    enabled: bool
-    system_managed: bool
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    """
+    A rule in a firewall group.
+    """
+
+    rule_id: str = pydantic.Field()
+    """
+    Unique ID of the rule.
+    """
+
+    enabled: bool = pydantic.Field()
+    """
+    Whether the rule is applied.
+    """
+
+    system_managed: bool = pydantic.Field()
+    """
+    True for rules the platform manages.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the rule was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the rule was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

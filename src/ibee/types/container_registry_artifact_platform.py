@@ -7,10 +7,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistryArtifactPlatform(UniversalBaseModel):
-    digest: str
-    architecture: typing.Optional[str] = None
-    os: typing.Optional[str] = None
-    variant: typing.Optional[str] = None
+    """
+    One platform of a multi-platform image.
+    """
+
+    digest: str = pydantic.Field()
+    """
+    Digest of the platform-specific manifest.
+    """
+
+    architecture: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    CPU architecture, for example `amd64`.
+    """
+
+    os: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Operating system, for example `linux`.
+    """
+
+    variant: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Architecture variant, for example `v8`, when present.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

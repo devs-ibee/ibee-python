@@ -10,19 +10,57 @@ from .container_registry_package_operation_status import ContainerRegistryPackag
 
 
 class ContainerRegistryPackageOperation(UniversalBaseModel):
-    operation_id: str
-    registry_id: str
-    kind: ContainerRegistryPackageOperationKind
-    status: ContainerRegistryPackageOperationStatus
-    sku_code: str
-    quota_bytes: int
+    """
+    A plan change requested for the registry.
+    """
+
+    operation_id: str = pydantic.Field()
+    """
+    Unique ID of the operation.
+    """
+
+    registry_id: str = pydantic.Field()
+    """
+    ID of the registry.
+    """
+
+    kind: ContainerRegistryPackageOperationKind = pydantic.Field()
+    """
+    - `CREATE`: the plan chosen at registry creation.
+    - `UPGRADE`: a move to a larger plan.
+    """
+
+    status: ContainerRegistryPackageOperationStatus = pydantic.Field()
+    """
+    - `PENDING`: not applied yet.
+    - `APPLIED`: in effect.
+    - `CANCELLED`: withdrawn before it was applied.
+    """
+
+    sku_code: str = pydantic.Field()
+    """
+    Storage plan SKU code.
+    """
+
+    quota_bytes: int = pydantic.Field()
+    """
+    Storage quota of the plan in bytes (decimal GB).
+    """
+
     quota_gb: float = pydantic.Field()
     """
     Decimal GB (1 GB = 1,000,000,000 bytes).
     """
 
-    created_at: dt.datetime
-    effective_at: typing.Optional[dt.datetime] = None
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the operation was requested (ISO 8601).
+    """
+
+    effective_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the operation took or will take effect (ISO 8601); null when not yet scheduled.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

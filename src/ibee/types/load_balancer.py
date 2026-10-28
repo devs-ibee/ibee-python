@@ -14,22 +14,78 @@ from .load_balancer_status import LoadBalancerStatus
 
 
 class LoadBalancer(UniversalBaseModel):
-    lb_id: str
-    organization_id: str
-    workspace_id: str
-    workspace_name: typing.Optional[str] = None
-    name: str
-    layer: LoadBalancerLayer
+    """
+    A load balancer.
+    """
+
+    lb_id: str = pydantic.Field()
+    """
+    Unique ID of the load balancer.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the owning workspace.
+    """
+
+    workspace_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the workspace.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the load balancer.
+    """
+
+    layer: LoadBalancerLayer = pydantic.Field()
+    """
+    - `l4`: TCP or TLS pass-through.
+    - `l7`: HTTP or HTTPS.
+    """
+
     protocol: LoadBalancerProtocol
     status: LoadBalancerStatus
     endpoint: LoadBalancerEndpoint
-    url: str
-    endpoint_url: str
-    namespace: typing.Optional[str] = None
-    backends: typing.List[LoadBalancerBackend]
-    rules: typing.Optional[typing.List[LoadBalancerRule]] = None
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    url: str = pydantic.Field()
+    """
+    Public hostname of the load balancer.
+    """
+
+    endpoint_url: str = pydantic.Field()
+    """
+    URL with scheme and, for L4, port: for example `https://host` or `tcp://host:443`.
+    """
+
+    namespace: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Kubernetes namespace the load balancer runs in.
+    """
+
+    backends: typing.List[LoadBalancerBackend] = pydantic.Field()
+    """
+    Backends the load balancer sends traffic to.
+    """
+
+    rules: typing.Optional[typing.List[LoadBalancerRule]] = pydantic.Field(default=None)
+    """
+    L7 routing rules; null for L4 load balancers.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -8,13 +8,44 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistryRepository(UniversalBaseModel):
-    id: int
-    name: str
-    description: typing.Optional[str] = None
-    artifact_count: typing.Optional[int] = None
-    pull_count: typing.Optional[int] = None
-    creation_time: typing.Optional[dt.datetime] = None
-    update_time: typing.Optional[dt.datetime] = None
+    """
+    A repository (image name) inside a registry.
+    """
+
+    id: int = pydantic.Field()
+    """
+    Repository ID in the registry backend.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Repository name, for example `web/api`.
+    """
+
+    description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Description of the repository; empty when none.
+    """
+
+    artifact_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of artifacts (image manifests and indexes) in the repository.
+    """
+
+    pull_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of pulls recorded for the repository.
+    """
+
+    creation_time: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the repository was created (ISO 8601).
+    """
+
+    update_time: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the repository last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

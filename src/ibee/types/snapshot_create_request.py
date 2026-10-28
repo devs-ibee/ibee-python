@@ -9,16 +9,37 @@ from .snapshot_create_request_mode import SnapshotCreateRequestMode
 
 
 class SnapshotCreateRequest(UniversalBaseModel):
-    name: str
-    description: typing.Optional[str] = None
-    mode: typing.Optional[SnapshotCreateRequestMode] = None
-    selected_data_volume_ids: typing.Optional[typing.List[str]] = None
+    """
+    Body for creating a snapshot set of a VM.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name for the snapshot set.
+    """
+
+    description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Optional description (up to 1024 characters).
+    """
+
+    mode: typing.Optional[SnapshotCreateRequestMode] = pydantic.Field(default=None)
+    """
+    Which volumes to capture.
+    - `root_only`: the root disk only.
+    - `all_attached`: the root disk and every attached data volume (default).
+    - `selective`: the root disk and the volumes in `selected_data_volume_ids`.
+    """
+
+    selected_data_volume_ids: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Data volume IDs to include when `mode` is `selective`.
+    """
+
     billing_catalog: BillingCatalogSelection = pydantic.Field()
     """
     Required. The snapshot storage SKU from the Billing catalog that the VM engine records for this snapshot. No public operation lists it yet.
     """
-
-    requested_by: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

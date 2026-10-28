@@ -7,14 +7,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class NetworkingSite(UniversalBaseModel):
+    """
+    A site where VPCs and Reserved IPs can be created.
+    """
+
     site_id: str = pydantic.Field()
     """
     Canonical opaque site identifier accepted by VPC and Reserved IP creation. Copy it exactly; do not substitute a region or site name.
     """
 
-    site_name: str
-    available: bool
-    message: typing.Optional[str] = None
+    site_name: str = pydantic.Field()
+    """
+    Display name of the site.
+    """
+
+    available: bool = pydantic.Field()
+    """
+    Whether the site currently accepts new VPCs and reservations.
+    """
+
+    message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Why the site is unavailable, when it is.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

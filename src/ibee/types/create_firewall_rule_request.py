@@ -3,3 +3,6 @@
 from .firewall_rule_fields import FirewallRuleFields
 
 CreateFirewallRuleRequest = FirewallRuleFields
+"""
+Body for adding a rule to a firewall group.
+"""

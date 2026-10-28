@@ -9,12 +9,40 @@ from .s3credential_status import S3CredentialStatus
 
 
 class S3Credential(UniversalBaseModel):
-    access_key_id: str
-    project_id: typing.Optional[str] = None
-    name: str
-    status: S3CredentialStatus
-    created_at: dt.datetime
-    last_used_at: typing.Optional[dt.datetime] = None
+    """
+    An S3 access key pair. The secret key is returned only when the pair is created.
+    """
+
+    access_key_id: str = pydantic.Field()
+    """
+    S3 access key ID.
+    """
+
+    project_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Legacy identifier of the owning project.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the key pair.
+    """
+
+    status: S3CredentialStatus = pydantic.Field()
+    """
+    - `active`: usable.
+    - `revoked`: no longer accepted.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the key pair was created (ISO 8601).
+    """
+
+    last_used_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the key was last used to sign a request (ISO 8601); null if never.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

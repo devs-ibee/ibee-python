@@ -9,8 +9,20 @@ from .container_registry_access_token_permission import ContainerRegistryAccessT
 
 
 class ContainerRegistryAccessTokenSecret(UniversalBaseModel):
-    token_id: str
-    token_name: str
+    """
+    A newly created or rotated access token, including the Docker login secret. The secret is not retrievable later.
+    """
+
+    token_id: str = pydantic.Field()
+    """
+    Unique ID of the token.
+    """
+
+    token_name: str = pydantic.Field()
+    """
+    Name of the token.
+    """
+
     username: str = pydantic.Field()
     """
     Docker login username. It contains `$`, so quote it in shells.
@@ -22,9 +34,20 @@ class ContainerRegistryAccessTokenSecret(UniversalBaseModel):
     """
 
     permission: ContainerRegistryAccessTokenPermission
-    registry_ids: typing.List[str]
-    expires_at: typing.Optional[dt.datetime] = None
-    created_at: dt.datetime
+    registry_ids: typing.List[str] = pydantic.Field()
+    """
+    Registries the token may use.
+    """
+
+    expires_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the token expires (ISO 8601); null for a token that does not expire.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the token was created (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

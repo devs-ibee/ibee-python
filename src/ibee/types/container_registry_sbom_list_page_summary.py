@@ -11,11 +11,30 @@ class ContainerRegistrySbomListPageSummary(UniversalBaseModel):
     SBOM status counts for the items on this page.
     """
 
-    generated: typing.Optional[int] = None
-    processing: typing.Optional[int] = None
-    failed: typing.Optional[int] = None
-    not_generated: typing.Optional[int] = None
-    unknown: typing.Optional[int] = None
+    generated: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Items with status `GENERATED`.
+    """
+
+    processing: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Items with status `PROCESSING`.
+    """
+
+    failed: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Items with status `FAILED`.
+    """
+
+    not_generated: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Items with status `NOT_GENERATED`.
+    """
+
+    unknown: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Items with status `UNKNOWN`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

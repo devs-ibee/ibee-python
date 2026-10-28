@@ -8,9 +8,24 @@ from .bucket import Bucket
 
 
 class BucketList(UniversalBaseModel):
-    buckets: typing.Optional[typing.List[Bucket]] = None
-    is_truncated: typing.Optional[bool] = None
-    next_continuation_token: typing.Optional[str] = None
+    """
+    A page of buckets.
+    """
+
+    buckets: typing.Optional[typing.List[Bucket]] = pydantic.Field(default=None)
+    """
+    Buckets on this page.
+    """
+
+    is_truncated: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True when more buckets exist beyond this page.
+    """
+
+    next_continuation_token: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Token to pass as `continuation_token` to fetch the next page; null on the last page.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

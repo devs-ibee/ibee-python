@@ -8,10 +8,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class VmBandwidthSummary(UniversalBaseModel):
-    month: str
-    rx_bytes: int
-    tx_bytes: int
-    last_updated_at: typing.Optional[dt.datetime] = None
+    """
+    Received and transmitted bytes for one calendar month.
+    """
+
+    month: str = pydantic.Field()
+    """
+    Month in `YYYY-MM` form.
+    """
+
+    rx_bytes: int = pydantic.Field()
+    """
+    Bytes received in the month.
+    """
+
+    tx_bytes: int = pydantic.Field()
+    """
+    Bytes transmitted in the month.
+    """
+
+    last_updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the counters were last updated (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

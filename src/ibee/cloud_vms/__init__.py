@@ -11,12 +11,18 @@ if typing.TYPE_CHECKING:
         CreateCloudVmRequestOsType,
         CreateCloudVmRequestVpcAttachmentMode,
         GetCloudVmMetricsTimeseriesRequestRange,
+        ListCloudVmsRequestSortBy,
+        ListCloudVmsRequestSortDirection,
+        ListCloudVmsRequestStatus,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateCloudVmRequestNetworkConnectivity": ".types",
     "CreateCloudVmRequestOsType": ".types",
     "CreateCloudVmRequestVpcAttachmentMode": ".types",
     "GetCloudVmMetricsTimeseriesRequestRange": ".types",
+    "ListCloudVmsRequestSortBy": ".types",
+    "ListCloudVmsRequestSortDirection": ".types",
+    "ListCloudVmsRequestStatus": ".types",
 }
 
 
@@ -46,4 +52,7 @@ __all__ = [
     "CreateCloudVmRequestOsType",
     "CreateCloudVmRequestVpcAttachmentMode",
     "GetCloudVmMetricsTimeseriesRequestRange",
+    "ListCloudVmsRequestSortBy",
+    "ListCloudVmsRequestSortDirection",
+    "ListCloudVmsRequestStatus",
 ]

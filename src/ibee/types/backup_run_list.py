@@ -8,8 +8,19 @@ from .backup_run import BackupRun
 
 
 class BackupRunList(UniversalBaseModel):
-    runs: typing.List[BackupRun]
-    total: int
+    """
+    Backup runs of a VM, newest first.
+    """
+
+    runs: typing.List[BackupRun] = pydantic.Field()
+    """
+    Backup runs on this page.
+    """
+
+    total: int = pydantic.Field()
+    """
+    Total number of runs matching the request.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

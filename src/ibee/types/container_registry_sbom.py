@@ -11,20 +11,59 @@ from .container_registry_scanner import ContainerRegistryScanner
 
 
 class ContainerRegistrySbom(UniversalBaseModel):
-    repository_name: str
-    artifact_digest: str
-    generated_at: typing.Optional[dt.datetime] = None
-    media_type: str
-    scanner: typing.Optional[ContainerRegistryScanner] = None
-    components: typing.List[ContainerRegistrySbomComponent]
+    """
+    An artifact's SBOM, paged by component.
+    """
+
+    repository_name: str = pydantic.Field()
+    """
+    Repository the artifact is in.
+    """
+
+    artifact_digest: str = pydantic.Field()
+    """
+    Digest of the artifact.
+    """
+
+    generated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the SBOM was generated (ISO 8601).
+    """
+
+    media_type: str = pydantic.Field()
+    """
+    Media type of the SBOM document, which identifies its format.
+    """
+
+    scanner: typing.Optional[ContainerRegistryScanner] = pydantic.Field(default=None)
+    """
+    Scanner that generated the SBOM.
+    """
+
+    components: typing.List[ContainerRegistrySbomComponent] = pydantic.Field()
+    """
+    Components on this page.
+    """
+
     relationships: typing.List[ContainerRegistrySbomRelationshipsItem] = pydantic.Field()
     """
     Relationships that touch a component on this page.
     """
 
-    total_components: int
-    page: int
-    page_size: int
+    total_components: int = pydantic.Field()
+    """
+    Total number of components in the SBOM.
+    """
+
+    page: int = pydantic.Field()
+    """
+    Page number returned (1-based).
+    """
+
+    page_size: int = pydantic.Field()
+    """
+    Page size that was applied.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -8,9 +8,24 @@ from .block_volume_delete_status import BlockVolumeDeleteStatus
 
 
 class BlockVolumeDelete(UniversalBaseModel):
-    status: BlockVolumeDeleteStatus
-    id: str
-    operation_id: str
+    """
+    Confirmation that a volume delete was started.
+    """
+
+    status: BlockVolumeDeleteStatus = pydantic.Field()
+    """
+    Always `deleted`.
+    """
+
+    id: str = pydantic.Field()
+    """
+    ID of the deleted volume.
+    """
+
+    operation_id: str = pydantic.Field()
+    """
+    ID of the delete operation.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

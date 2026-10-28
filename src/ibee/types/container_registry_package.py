@@ -10,7 +10,15 @@ from .container_registry_package_operation import ContainerRegistryPackageOperat
 
 
 class ContainerRegistryPackage(UniversalBaseModel):
-    registry_id: str
+    """
+    The registry's storage plan: the plan in effect and any pending change.
+    """
+
+    registry_id: str = pydantic.Field()
+    """
+    ID of the registry.
+    """
+
     current: typing.Optional[ContainerRegistryPackageAssignment] = pydantic.Field(default=None)
     """
     The plan in effect.
@@ -21,7 +29,10 @@ class ContainerRegistryPackage(UniversalBaseModel):
     A plan change that has not been applied yet.
     """
 
-    reconciliation_status: typing.Optional[ContainerRegistryJobStatus] = None
+    reconciliation_status: typing.Optional[ContainerRegistryJobStatus] = pydantic.Field(default=None)
+    """
+    Status of the job applying the pending change, when one is running.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -9,22 +9,102 @@ from .gpu_vm_status import GpuVmStatus
 
 
 class GpuVm(UniversalBaseModel):
-    id: typing.Optional[str] = None
-    name: typing.Optional[str] = None
-    status: typing.Optional[GpuVmStatus] = None
-    cpu: typing.Optional[int] = None
-    ram_mb: typing.Optional[int] = None
-    disk_gb: typing.Optional[int] = None
-    os_type: typing.Optional[str] = None
-    os_distro: typing.Optional[str] = None
-    gpu_count: typing.Optional[int] = None
-    gpu_model: typing.Optional[str] = None
-    plan_name: typing.Optional[str] = None
-    public_ip: typing.Optional[str] = None
-    private_ip: typing.Optional[str] = None
-    tags: typing.Optional[typing.List[str]] = None
-    created_at: typing.Optional[dt.datetime] = None
-    updated_at: typing.Optional[dt.datetime] = None
+    """
+    A customer-facing GPU VM. Internal host, storage and OVN metadata are omitted. The VM identifier is returned as `id`.
+    """
+
+    id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Unique VM ID.
+    """
+
+    name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the VM.
+    """
+
+    status: typing.Optional[GpuVmStatus] = pydantic.Field(default=None)
+    """
+    Lifecycle status of the VM.
+    - `pending`: create accepted, not started yet.
+    - `creating`, `provisioning`: compute, disk and network resources are being allocated.
+    - `configuring`: the guest is being configured (keys, network, cloud-init).
+    - `running`: powered on.
+    - `starting`: a start is in progress.
+    - `stopping`: a stop is in progress.
+    - `stopped`: powered off.
+    - `rebooting`: a reboot is in progress.
+    - `resizing`, `resizing_plan`, `resizing_disk`: a CPU/memory or root-disk change is being applied.
+    - `attaching_volume`, `detaching_volume`: a block volume is being attached or detached.
+    - `deleting`: a delete is in progress.
+    - `deleted`: the VM no longer exists.
+    - `error`: the last operation failed; see the operation or events for detail.
+    """
+
+    cpu: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    vCPUs.
+    """
+
+    ram_mb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Memory in MB.
+    """
+
+    disk_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Root disk size in GB.
+    """
+
+    os_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    OS family: `linux` or `windows`.
+    """
+
+    os_distro: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    OS distribution, for example `ubuntu`.
+    """
+
+    gpu_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of attached GPUs.
+    """
+
+    gpu_model: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    GPU model, for example `A100`.
+    """
+
+    plan_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Name of the compute plan the VM runs on.
+    """
+
+    public_ip: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Public IPv4 address; null when the VM has none.
+    """
+
+    private_ip: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Private IPv4 address; null when none is assigned.
+    """
+
+    tags: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Tags given at creation.
+    """
+
+    created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the VM was created (ISO 8601).
+    """
+
+    updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the VM record was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

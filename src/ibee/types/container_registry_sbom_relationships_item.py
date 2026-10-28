@@ -7,9 +7,20 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistrySbomRelationshipsItem(UniversalBaseModel):
-    source: str
-    target: str
-    relationship: str
+    source: str = pydantic.Field()
+    """
+    Component ID the relationship starts from.
+    """
+
+    target: str = pydantic.Field()
+    """
+    Component ID the relationship points to.
+    """
+
+    relationship: str = pydantic.Field()
+    """
+    Relationship type as recorded in the SBOM, for example `DEPENDS_ON`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

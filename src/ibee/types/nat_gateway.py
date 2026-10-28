@@ -9,18 +9,61 @@ from .networking_resource_status import NetworkingResourceStatus
 
 
 class NatGateway(UniversalBaseModel):
-    nat_gateway_id: str
-    vpc_id: str
-    subnet_id: typing.Optional[str] = None
-    organization_id: typing.Optional[str] = None
-    workspace_id: typing.Optional[str] = None
-    site_id: str
-    name: str
-    public_ip_id: str
-    public_ip: str
+    """
+    A managed NAT gateway that gives a VPC's VMs outbound internet access through one public address.
+    """
+
+    nat_gateway_id: str = pydantic.Field()
+    """
+    Unique ID of the gateway.
+    """
+
+    vpc_id: str = pydantic.Field()
+    """
+    VPC the gateway serves.
+    """
+
+    subnet_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Subnet the gateway is placed in.
+    """
+
+    organization_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning workspace.
+    """
+
+    site_id: str = pydantic.Field()
+    """
+    Site the gateway lives at.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the gateway.
+    """
+
+    public_ip_id: str = pydantic.Field()
+    """
+    ID of the public IP the gateway uses.
+    """
+
+    public_ip: str = pydantic.Field()
+    """
+    Public IPv4 address of the gateway.
+    """
+
     status: NetworkingResourceStatus
     pricing: typing.Optional[NatPricing] = None
-    error_message: typing.Optional[str] = None
+    error_message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error detail when `status` is `error`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

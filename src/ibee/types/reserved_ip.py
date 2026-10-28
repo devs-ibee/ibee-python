@@ -9,21 +9,86 @@ from .reserved_ip_reservation_type import ReservedIpReservationType
 
 
 class ReservedIp(UniversalBaseModel):
-    public_ip_id: str
-    address: str
-    organization_id: typing.Optional[str] = None
-    workspace_id: typing.Optional[str] = None
-    site_id: str
-    label: typing.Optional[str] = None
-    reverse_dns: typing.Optional[str] = None
-    status: str
-    reservation_type: typing.Optional[ReservedIpReservationType] = None
-    attached_resource_type: typing.Optional[str] = None
-    attached_resource_id: typing.Optional[str] = None
-    attached_vpc_id: typing.Optional[str] = None
-    attached_subnet_id: typing.Optional[str] = None
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    """
+    A portable public IPv4 address reserved by the workspace. It stays allocated until released and can be moved between VMs.
+    """
+
+    public_ip_id: str = pydantic.Field()
+    """
+    Unique ID of the Reserved IP.
+    """
+
+    address: str = pydantic.Field()
+    """
+    The IPv4 address.
+    """
+
+    organization_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning workspace.
+    """
+
+    site_id: str = pydantic.Field()
+    """
+    Site whose pool the address comes from.
+    """
+
+    label: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Label shown as the address's name in the portal.
+    """
+
+    reverse_dns: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Reverse DNS hostname set on the address; empty when none.
+    """
+
+    status: str = pydantic.Field()
+    """
+    `reserved` when not attached, `attached` when in use, `releasing` while being released.
+    """
+
+    reservation_type: typing.Optional[ReservedIpReservationType] = pydantic.Field(default=None)
+    """
+    - `user_reserved`: a Reserved IP created by the customer.
+    - `platform_assigned`: an address IBEE assigned to an instance or service.
+    Null on legacy records whose classification the service infers.
+    """
+
+    attached_resource_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Kind of resource the address is attached to, for example `vm` or `nat_gateway`; null when not attached.
+    """
+
+    attached_resource_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of that resource; null when not attached.
+    """
+
+    attached_vpc_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    VPC of the attachment, when the address is attached inside a VPC.
+    """
+
+    attached_subnet_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Subnet of the attachment, when the address is attached inside a VPC.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

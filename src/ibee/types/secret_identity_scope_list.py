@@ -8,8 +8,19 @@ from .secret_identity_scope import SecretIdentityScope
 
 
 class SecretIdentityScopeList(UniversalBaseModel):
-    scopes: typing.List[SecretIdentityScope]
-    total: int
+    """
+    Scopes of an identity.
+    """
+
+    scopes: typing.List[SecretIdentityScope] = pydantic.Field()
+    """
+    Scopes returned.
+    """
+
+    total: int = pydantic.Field()
+    """
+    Total number of scopes.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

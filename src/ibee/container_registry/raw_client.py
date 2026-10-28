@@ -25,7 +25,6 @@ from ..types.container_registry_access_token_permission import ContainerRegistry
 from ..types.container_registry_access_token_secret import ContainerRegistryAccessTokenSecret
 from ..types.container_registry_artifact_list import ContainerRegistryArtifactList
 from ..types.container_registry_billing_catalog import ContainerRegistryBillingCatalog
-from ..types.container_registry_empty_result import ContainerRegistryEmptyResult
 from ..types.container_registry_list import ContainerRegistryList
 from ..types.container_registry_message import ContainerRegistryMessage
 from ..types.container_registry_metrics import ContainerRegistryMetrics
@@ -293,6 +292,8 @@ class RawContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         visibility : typing.Optional[ContainerRegistryVisibility]
+            - `PRIVATE`: pulls need an access token (default).
+            - `PUBLIC`: anonymous pulls are allowed; egress is charged.
 
         acknowledge_public_egress_charges : typing.Optional[bool]
             Required to be `true` when `visibility` is `PUBLIC`.
@@ -912,141 +913,6 @@ class RawContainerRegistryClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def empty_container_registry(
-        self,
-        registry_id: str,
-        *,
-        confirm_registry_name: str,
-        workspace_id: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[ContainerRegistryEmptyResult]:
-        """
-        Permanently deletes every repository and image in a registry, so it can be deleted. A bounded run can stop early with 409 `detail.code: registry_empty_incomplete` (`retryable: true`); pause pushes and call again. Requires scope: container-registry.write.
-
-        Parameters
-        ----------
-        registry_id : str
-            Registry ID.
-
-        confirm_registry_name : str
-            The registry's name, repeated to confirm a destructive call.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[ContainerRegistryEmptyResult]
-            Registry emptied.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"container-registry/registries/{encode_path_param(registry_id)}/empty",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-                "confirm_registry_name": confirm_registry_name,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    ContainerRegistryEmptyResult,
-                    parse_obj_as(
-                        type_=ContainerRegistryEmptyResult,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     def get_container_registry_package(
         self,
         registry_id: str,
@@ -1442,11 +1308,14 @@ class RawContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         permission : typing.Optional[ContainerRegistryAccessTokenPermission]
+            - `PULL`: pull only (default).
+            - `PULL_PUSH`: pull and push.
 
         expires_in_days : typing.Optional[int]
             1 to 365, or -1 for a token that does not expire.
 
         description : typing.Optional[str]
+            Optional description (up to 255 characters).
 
         registry_ids : typing.Optional[typing.Sequence[str]]
             Other registries in the same workspace the token may also use. The registry in the path is always included.
@@ -2865,16 +2734,28 @@ class RawContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         severity : typing.Optional[ListContainerRegistryVulnerabilitiesRequestSeverity]
+            Return only findings of this severity.
+            - `Critical`
+            - `High`
+            - `Medium`
+            - `Low`
+            - `Unknown`
+            - `None`
 
         cve_id : typing.Optional[str]
+            Return only findings for this CVE or advisory ID.
 
         repository_name : typing.Optional[str]
+            Return only findings on artifacts in this repository.
 
         digest : typing.Optional[str]
+            Return only findings on the artifact with this digest.
 
         tag : typing.Optional[str]
+            Return only findings on artifacts carrying this tag.
 
         package : typing.Optional[str]
+            Return only findings in this package.
 
         page : typing.Optional[int]
             Page number.
@@ -3767,6 +3648,8 @@ class AsyncRawContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         visibility : typing.Optional[ContainerRegistryVisibility]
+            - `PRIVATE`: pulls need an access token (default).
+            - `PUBLIC`: anonymous pulls are allowed; egress is charged.
 
         acknowledge_public_egress_charges : typing.Optional[bool]
             Required to be `true` when `visibility` is `PUBLIC`.
@@ -4386,141 +4269,6 @@ class AsyncRawContainerRegistryClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def empty_container_registry(
-        self,
-        registry_id: str,
-        *,
-        confirm_registry_name: str,
-        workspace_id: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[ContainerRegistryEmptyResult]:
-        """
-        Permanently deletes every repository and image in a registry, so it can be deleted. A bounded run can stop early with 409 `detail.code: registry_empty_incomplete` (`retryable: true`); pause pushes and call again. Requires scope: container-registry.write.
-
-        Parameters
-        ----------
-        registry_id : str
-            Registry ID.
-
-        confirm_registry_name : str
-            The registry's name, repeated to confirm a destructive call.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[ContainerRegistryEmptyResult]
-            Registry emptied.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"container-registry/registries/{encode_path_param(registry_id)}/empty",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-                "confirm_registry_name": confirm_registry_name,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    ContainerRegistryEmptyResult,
-                    parse_obj_as(
-                        type_=ContainerRegistryEmptyResult,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     async def get_container_registry_package(
         self,
         registry_id: str,
@@ -4916,11 +4664,14 @@ class AsyncRawContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         permission : typing.Optional[ContainerRegistryAccessTokenPermission]
+            - `PULL`: pull only (default).
+            - `PULL_PUSH`: pull and push.
 
         expires_in_days : typing.Optional[int]
             1 to 365, or -1 for a token that does not expire.
 
         description : typing.Optional[str]
+            Optional description (up to 255 characters).
 
         registry_ids : typing.Optional[typing.Sequence[str]]
             Other registries in the same workspace the token may also use. The registry in the path is always included.
@@ -6339,16 +6090,28 @@ class AsyncRawContainerRegistryClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         severity : typing.Optional[ListContainerRegistryVulnerabilitiesRequestSeverity]
+            Return only findings of this severity.
+            - `Critical`
+            - `High`
+            - `Medium`
+            - `Low`
+            - `Unknown`
+            - `None`
 
         cve_id : typing.Optional[str]
+            Return only findings for this CVE or advisory ID.
 
         repository_name : typing.Optional[str]
+            Return only findings on artifacts in this repository.
 
         digest : typing.Optional[str]
+            Return only findings on the artifact with this digest.
 
         tag : typing.Optional[str]
+            Return only findings on artifacts carrying this tag.
 
         package : typing.Optional[str]
+            Return only findings in this package.
 
         page : typing.Optional[int]
             Page number.

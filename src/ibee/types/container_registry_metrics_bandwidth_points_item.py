@@ -8,8 +8,15 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistryMetricsBandwidthPointsItem(UniversalBaseModel):
-    timestamp: dt.datetime
-    used_bytes: int
+    timestamp: dt.datetime = pydantic.Field()
+    """
+    Start of the interval (ISO 8601).
+    """
+
+    used_bytes: int = pydantic.Field()
+    """
+    Outbound bytes in the interval.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

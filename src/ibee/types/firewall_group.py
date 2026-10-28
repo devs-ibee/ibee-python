@@ -9,18 +9,69 @@ from .firewall_rule import FirewallRule
 
 
 class FirewallGroup(UniversalBaseModel):
-    firewall_group_id: str
-    organization_id: str
-    workspace_id: str
-    workspace_name: typing.Optional[str] = None
-    name: str
-    description: typing.Optional[str] = None
-    is_default: bool
-    status: str
-    linked_instance_count: typing.Optional[int] = None
-    rules: typing.List[FirewallRule]
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    """
+    A stateful firewall group: a named set of rules applied to the VMs attached to it.
+    """
+
+    firewall_group_id: str = pydantic.Field()
+    """
+    Unique ID of the group.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the owning workspace.
+    """
+
+    workspace_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the workspace.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the group.
+    """
+
+    description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Description of the group.
+    """
+
+    is_default: bool = pydantic.Field()
+    """
+    Whether this is the workspace's default group.
+    """
+
+    status: str = pydantic.Field()
+    """
+    Status of the group; `active` when usable.
+    """
+
+    linked_instance_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of VMs the group is attached to.
+    """
+
+    rules: typing.List[FirewallRule] = pydantic.Field()
+    """
+    Rules in the group.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

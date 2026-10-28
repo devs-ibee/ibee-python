@@ -9,14 +9,50 @@ from .container_registry_tag import ContainerRegistryTag
 
 
 class ContainerRegistryArtifact(UniversalBaseModel):
-    id: int
-    type: typing.Optional[str] = None
-    media_type: typing.Optional[str] = None
-    digest: str
-    size: typing.Optional[int] = None
-    push_time: typing.Optional[dt.datetime] = None
-    pull_time: typing.Optional[dt.datetime] = None
-    tags: typing.Optional[typing.List[ContainerRegistryTag]] = None
+    """
+    An artifact (image manifest or manifest index) in a repository.
+    """
+
+    id: int = pydantic.Field()
+    """
+    Artifact ID in the registry backend.
+    """
+
+    type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Artifact type reported by the registry, for example `IMAGE`.
+    """
+
+    media_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    OCI or Docker media type of the manifest.
+    """
+
+    digest: str = pydantic.Field()
+    """
+    Content digest, for example `sha256:...`.
+    """
+
+    size: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Size of the artifact in bytes.
+    """
+
+    push_time: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the artifact was pushed (ISO 8601).
+    """
+
+    pull_time: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the artifact was last pulled (ISO 8601).
+    """
+
+    tags: typing.Optional[typing.List[ContainerRegistryTag]] = pydantic.Field(default=None)
+    """
+    Tags pointing at the artifact; null when untagged.
+    """
+
     scan_overview: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
     """
     Scanner summary keyed by report media type, as the scanner returns it.

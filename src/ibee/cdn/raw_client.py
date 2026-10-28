@@ -24,12 +24,12 @@ from ..types.cdn_custom_domain_list import CdnCustomDomainList
 from ..types.cdn_custom_domain_verification import CdnCustomDomainVerification
 from ..types.cdn_distribution import CdnDistribution
 from ..types.cdn_distribution_list import CdnDistributionList
+from ..types.cdn_distribution_metrics import CdnDistributionMetrics
 from ..types.cdn_website_config import CdnWebsiteConfig
 from ..types.error import Error
-from ..types.generated_cdn_url import GeneratedCdnUrl
 from .types.create_cdn_distribution_request_cache_policy import CreateCdnDistributionRequestCachePolicy
 from .types.create_cdn_distribution_request_origin_type import CreateCdnDistributionRequestOriginType
-from .types.generate_cdn_url_request_disposition import GenerateCdnUrlRequestDisposition
+from .types.get_cdn_distribution_metrics_request_range import GetCdnDistributionMetricsRequestRange
 from .types.purge_cdn_cache_request_mode import PurgeCdnCacheRequestMode
 from .types.update_cdn_distribution_request_cache_policy import UpdateCdnDistributionRequestCachePolicy
 from pydantic import ValidationError
@@ -41,132 +41,6 @@ OMIT = typing.cast(typing.Any, ...)
 class RawCdnClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
-
-    def generate_cdn_url(
-        self,
-        *,
-        bucket_name: str,
-        object_key: str,
-        workspace_id: typing.Optional[str] = None,
-        expires_in: typing.Optional[int] = OMIT,
-        disposition: typing.Optional[GenerateCdnUrlRequestDisposition] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[GeneratedCdnUrl]:
-        """
-        Generates a time-limited CDN URL for an object in an object storage bucket, with optional download disposition. Requires scope: cdn.write.
-
-        Parameters
-        ----------
-        bucket_name : str
-
-        object_key : str
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        expires_in : typing.Optional[int]
-
-        disposition : typing.Optional[GenerateCdnUrlRequestDisposition]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[GeneratedCdnUrl]
-            CDN URL generated successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "cdn/generate-url",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "bucket_name": bucket_name,
-                "object_key": object_key,
-                "expires_in": expires_in,
-                "disposition": disposition,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    GeneratedCdnUrl,
-                    parse_obj_as(
-                        type_=GeneratedCdnUrl,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def list_cdn_distributions(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
@@ -263,15 +137,24 @@ class RawCdnClient:
         Parameters
         ----------
         name : str
+            Display name of the distribution (1-128 characters).
 
         origin_id : str
+            Bucket name for `bucket` origins, or the custom origin's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         origin_type : typing.Optional[CreateCdnDistributionRequestOriginType]
+            - `bucket`: serve an Object Storage bucket (default).
+            - `custom`: serve a custom origin.
 
         cache_policy : typing.Optional[CreateCdnDistributionRequestCachePolicy]
+            Caching behaviour. Default `static-assets`.
+            - `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+            - `media`: medium-term caching for video and audio; 30 days at the CDN.
+            - `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+            - `no-cache`: no caching, for dynamic responses.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -614,10 +497,17 @@ class RawCdnClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         cache_policy : typing.Optional[UpdateCdnDistributionRequestCachePolicy]
+            New caching behaviour.
+            - `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+            - `media`: medium-term caching for video and audio; 30 days at the CDN.
+            - `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+            - `no-cache`: no caching, for dynamic responses.
 
         enabled : typing.Optional[bool]
+            Whether the distribution serves traffic.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -689,6 +579,108 @@ class RawCdnClient:
                 )
             if _response.status_code == 423:
                 raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_cdn_distribution_metrics(
+        self,
+        distribution_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        range: typing.Optional[GetCdnDistributionMetricsRequestRange] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[CdnDistributionMetrics]:
+        """
+        Returns traffic, cache and origin metrics of the distribution for the last 24 hours, 7 days or 30 days, as the portal's Metrics tab shows them. Requires scope: cdn.read.
+
+        Parameters
+        ----------
+        distribution_id : str
+            CDN distribution ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        range : typing.Optional[GetCdnDistributionMetricsRequestRange]
+            Time range. Default `24h`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[CdnDistributionMetrics]
+            Metrics returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"cdn/distributions/{encode_path_param(distribution_id)}/metrics",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "range": range,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    CdnDistributionMetrics,
+                    parse_obj_as(
+                        type_=CdnDistributionMetrics,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -835,6 +827,7 @@ class RawCdnClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         index_document : typing.Optional[str]
+            Object served for directory requests. Default `index.html`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1155,6 +1148,7 @@ class RawCdnClient:
             CDN distribution ID.
 
         domain : str
+            Fully qualified hostname to serve, for example `cdn.example.com`.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -1631,17 +1625,26 @@ class RawCdnClient:
             CDN distribution ID.
 
         mode : PurgeCdnCacheRequestMode
+            - `url`: purge the paths in `paths`.
+            - `hostname`: purge everything for the hostnames in `hostnames`.
+            - `tag`: purge content tagged with `tags`.
+            - `prefix`: purge paths starting with `prefixes`.
+            - `all`: purge the whole distribution.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         paths : typing.Optional[typing.Sequence[str]]
+            Paths to purge, for `url` mode.
 
         hostnames : typing.Optional[typing.Sequence[str]]
+            Hostnames to purge, for `hostname` mode.
 
         tags : typing.Optional[typing.Sequence[str]]
+            Cache tags to purge, for `tag` mode.
 
         prefixes : typing.Optional[typing.Sequence[str]]
+            Path prefixes to purge, for `prefix` mode.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1760,132 +1763,6 @@ class AsyncRawCdnClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def generate_cdn_url(
-        self,
-        *,
-        bucket_name: str,
-        object_key: str,
-        workspace_id: typing.Optional[str] = None,
-        expires_in: typing.Optional[int] = OMIT,
-        disposition: typing.Optional[GenerateCdnUrlRequestDisposition] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[GeneratedCdnUrl]:
-        """
-        Generates a time-limited CDN URL for an object in an object storage bucket, with optional download disposition. Requires scope: cdn.write.
-
-        Parameters
-        ----------
-        bucket_name : str
-
-        object_key : str
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        expires_in : typing.Optional[int]
-
-        disposition : typing.Optional[GenerateCdnUrlRequestDisposition]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[GeneratedCdnUrl]
-            CDN URL generated successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "cdn/generate-url",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "bucket_name": bucket_name,
-                "object_key": object_key,
-                "expires_in": expires_in,
-                "disposition": disposition,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    GeneratedCdnUrl,
-                    parse_obj_as(
-                        type_=GeneratedCdnUrl,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     async def list_cdn_distributions(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[CdnDistributionList]:
@@ -1981,15 +1858,24 @@ class AsyncRawCdnClient:
         Parameters
         ----------
         name : str
+            Display name of the distribution (1-128 characters).
 
         origin_id : str
+            Bucket name for `bucket` origins, or the custom origin's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         origin_type : typing.Optional[CreateCdnDistributionRequestOriginType]
+            - `bucket`: serve an Object Storage bucket (default).
+            - `custom`: serve a custom origin.
 
         cache_policy : typing.Optional[CreateCdnDistributionRequestCachePolicy]
+            Caching behaviour. Default `static-assets`.
+            - `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+            - `media`: medium-term caching for video and audio; 30 days at the CDN.
+            - `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+            - `no-cache`: no caching, for dynamic responses.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2332,10 +2218,17 @@ class AsyncRawCdnClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         cache_policy : typing.Optional[UpdateCdnDistributionRequestCachePolicy]
+            New caching behaviour.
+            - `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+            - `media`: medium-term caching for video and audio; 30 days at the CDN.
+            - `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+            - `no-cache`: no caching, for dynamic responses.
 
         enabled : typing.Optional[bool]
+            Whether the distribution serves traffic.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2407,6 +2300,108 @@ class AsyncRawCdnClient:
                 )
             if _response.status_code == 423:
                 raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_cdn_distribution_metrics(
+        self,
+        distribution_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        range: typing.Optional[GetCdnDistributionMetricsRequestRange] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[CdnDistributionMetrics]:
+        """
+        Returns traffic, cache and origin metrics of the distribution for the last 24 hours, 7 days or 30 days, as the portal's Metrics tab shows them. Requires scope: cdn.read.
+
+        Parameters
+        ----------
+        distribution_id : str
+            CDN distribution ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        range : typing.Optional[GetCdnDistributionMetricsRequestRange]
+            Time range. Default `24h`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[CdnDistributionMetrics]
+            Metrics returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"cdn/distributions/{encode_path_param(distribution_id)}/metrics",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "range": range,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    CdnDistributionMetrics,
+                    parse_obj_as(
+                        type_=CdnDistributionMetrics,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2553,6 +2548,7 @@ class AsyncRawCdnClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         index_document : typing.Optional[str]
+            Object served for directory requests. Default `index.html`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2873,6 +2869,7 @@ class AsyncRawCdnClient:
             CDN distribution ID.
 
         domain : str
+            Fully qualified hostname to serve, for example `cdn.example.com`.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -3349,17 +3346,26 @@ class AsyncRawCdnClient:
             CDN distribution ID.
 
         mode : PurgeCdnCacheRequestMode
+            - `url`: purge the paths in `paths`.
+            - `hostname`: purge everything for the hostnames in `hostnames`.
+            - `tag`: purge content tagged with `tags`.
+            - `prefix`: purge paths starting with `prefixes`.
+            - `all`: purge the whole distribution.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         paths : typing.Optional[typing.Sequence[str]]
+            Paths to purge, for `url` mode.
 
         hostnames : typing.Optional[typing.Sequence[str]]
+            Hostnames to purge, for `hostname` mode.
 
         tags : typing.Optional[typing.Sequence[str]]
+            Cache tags to purge, for `tag` mode.
 
         prefixes : typing.Optional[typing.Sequence[str]]
+            Path prefixes to purge, for `prefix` mode.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

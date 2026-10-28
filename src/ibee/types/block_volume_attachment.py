@@ -9,12 +9,40 @@ from .block_volume_attachment_mode import BlockVolumeAttachmentMode
 
 
 class BlockVolumeAttachment(UniversalBaseModel):
-    node_name: str
-    mode: BlockVolumeAttachmentMode
-    device_path: str
-    vm_id: typing.Optional[str] = None
-    vm_name: typing.Optional[str] = None
-    attached_at: dt.datetime
+    """
+    An active attachment of a volume to a compute node and, when known, the VM on it.
+    """
+
+    node_name: str = pydantic.Field()
+    """
+    Compute node the volume is attached to.
+    """
+
+    mode: BlockVolumeAttachmentMode = pydantic.Field()
+    """
+    - `single-writer`: only this node may write to the volume.
+    - `multi-writer`: the volume may be attached to several nodes.
+    """
+
+    device_path: str = pydantic.Field()
+    """
+    Device path on the node, for example `/dev/drbd1000`.
+    """
+
+    vm_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the VM the volume is attached to, when known.
+    """
+
+    vm_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of that VM.
+    """
+
+    attached_at: dt.datetime = pydantic.Field()
+    """
+    When the attachment was made (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

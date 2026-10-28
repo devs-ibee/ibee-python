@@ -9,14 +9,10 @@ if typing.TYPE_CHECKING:
     from .create_secret_identity_request_auth_method import CreateSecretIdentityRequestAuthMethod
     from .create_secret_identity_request_token_policy_mode import CreateSecretIdentityRequestTokenPolicyMode
     from .create_secret_identity_scope_request_access_mode import CreateSecretIdentityScopeRequestAccessMode
-    from .update_secret_identity_request_token_policy_mode import UpdateSecretIdentityRequestTokenPolicyMode
-    from .update_secret_identity_scope_request_access_mode import UpdateSecretIdentityScopeRequestAccessMode
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateSecretIdentityRequestAuthMethod": ".create_secret_identity_request_auth_method",
     "CreateSecretIdentityRequestTokenPolicyMode": ".create_secret_identity_request_token_policy_mode",
     "CreateSecretIdentityScopeRequestAccessMode": ".create_secret_identity_scope_request_access_mode",
-    "UpdateSecretIdentityRequestTokenPolicyMode": ".update_secret_identity_request_token_policy_mode",
-    "UpdateSecretIdentityScopeRequestAccessMode": ".update_secret_identity_scope_request_access_mode",
 }
 
 
@@ -45,6 +41,4 @@ __all__ = [
     "CreateSecretIdentityRequestAuthMethod",
     "CreateSecretIdentityRequestTokenPolicyMode",
     "CreateSecretIdentityScopeRequestAccessMode",
-    "UpdateSecretIdentityRequestTokenPolicyMode",
-    "UpdateSecretIdentityScopeRequestAccessMode",
 ]

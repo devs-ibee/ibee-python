@@ -12,6 +12,7 @@ from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
+from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
@@ -19,7 +20,18 @@ from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.bucket import Bucket
+from ..types.bucket_cors_configuration import BucketCorsConfiguration
+from ..types.bucket_cors_rule import BucketCorsRule
+from ..types.bucket_custom_domain import BucketCustomDomain
+from ..types.bucket_custom_domain_config import BucketCustomDomainConfig
+from ..types.bucket_custom_domain_removed import BucketCustomDomainRemoved
+from ..types.bucket_lifecycle_configuration import BucketLifecycleConfiguration
+from ..types.bucket_lifecycle_rule import BucketLifecycleRule
 from ..types.bucket_list import BucketList
+from ..types.bucket_metrics import BucketMetrics
+from ..types.bucket_notification_config import BucketNotificationConfig
+from ..types.bucket_notification_configuration import BucketNotificationConfiguration
+from ..types.bucket_object_lock_configuration import BucketObjectLockConfiguration
 from ..types.default_retention import DefaultRetention
 from ..types.delete_response import DeleteResponse
 from ..types.error import Error
@@ -28,6 +40,7 @@ from ..types.s3credential_created import S3CredentialCreated
 from ..types.s3credential_list import S3CredentialList
 from ..types.s3credential_revoked import S3CredentialRevoked
 from .types.create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
+from .types.get_bucket_metrics_request_range import GetBucketMetricsRequestRange
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -504,6 +517,7 @@ class RawObjectStorageClient:
             Logical bucket name.
 
         is_public : bool
+            Whether the bucket allows unauthenticated read access.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -587,6 +601,1673 @@ class RawObjectStorageClient:
                 )
             if _response.status_code == 423:
                 raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BucketLifecycleConfiguration]:
+        """
+        Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BucketLifecycleConfiguration]
+            Get bucket lifecycle rules succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/lifecycle",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketLifecycleConfiguration,
+                    parse_obj_as(
+                        type_=BucketLifecycleConfiguration,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def set_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        rules: typing.Sequence[BucketLifecycleRule],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[DeleteResponse]:
+        """
+        Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        rules : typing.Sequence[BucketLifecycleRule]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[DeleteResponse]
+            Set bucket lifecycle rules succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/lifecycle",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "rules": convert_and_respect_annotation_metadata(
+                    object_=rules, annotation=typing.Sequence[BucketLifecycleRule], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def delete_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[DeleteResponse]:
+        """
+        Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[DeleteResponse]
+            Delete bucket lifecycle rules succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/lifecycle",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BucketCorsConfiguration]:
+        """
+        Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BucketCorsConfiguration]
+            Get bucket CORS rules succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/cors",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketCorsConfiguration,
+                    parse_obj_as(
+                        type_=BucketCorsConfiguration,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def set_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        rules: typing.Sequence[BucketCorsRule],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[DeleteResponse]:
+        """
+        Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        rules : typing.Sequence[BucketCorsRule]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[DeleteResponse]
+            Set bucket CORS rules succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/cors",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "rules": convert_and_respect_annotation_metadata(
+                    object_=rules, annotation=typing.Sequence[BucketCorsRule], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def delete_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[DeleteResponse]:
+        """
+        Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[DeleteResponse]
+            Delete bucket CORS rules succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/cors",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_bucket_object_lock(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BucketObjectLockConfiguration]:
+        """
+        Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BucketObjectLockConfiguration]
+            Get bucket object lock configuration succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/object-lock",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketObjectLockConfiguration,
+                    parse_obj_as(
+                        type_=BucketObjectLockConfiguration,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def set_bucket_object_lock(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        rule: typing.Optional[DefaultRetention] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[DeleteResponse]:
+        """
+        Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        rule : typing.Optional[DefaultRetention]
+            New default retention, or null to remove it.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[DeleteResponse]
+            Set bucket default retention succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/object-lock",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "rule": convert_and_respect_annotation_metadata(
+                    object_=rule, annotation=typing.Optional[DefaultRetention], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BucketNotificationConfiguration]:
+        """
+        Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BucketNotificationConfiguration]
+            Get bucket event notifications succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/notifications",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketNotificationConfiguration,
+                    parse_obj_as(
+                        type_=BucketNotificationConfiguration,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def set_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        configs: typing.Sequence[BucketNotificationConfig],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[DeleteResponse]:
+        """
+        Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        configs : typing.Sequence[BucketNotificationConfig]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[DeleteResponse]
+            Set bucket event notifications succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/notifications",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "configs": convert_and_respect_annotation_metadata(
+                    object_=configs, annotation=typing.Sequence[BucketNotificationConfig], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def delete_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[DeleteResponse]:
+        """
+        Removes every notification rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[DeleteResponse]
+            Delete bucket event notifications succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/notifications",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_bucket_custom_domains(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BucketCustomDomainConfig]:
+        """
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BucketCustomDomainConfig]
+            Get bucket custom domains succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/custom-domains",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketCustomDomainConfig,
+                    parse_obj_as(
+                        type_=BucketCustomDomainConfig,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def add_bucket_custom_domain(
+        self,
+        bucket_name: str,
+        *,
+        domain: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BucketCustomDomain]:
+        """
+        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        domain : str
+            Hostname to serve the bucket from, for example `assets.example.com`.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BucketCustomDomain]
+            Add a bucket custom domain succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/custom-domains",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "domain": domain,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketCustomDomain,
+                    parse_obj_as(
+                        type_=BucketCustomDomain,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def remove_bucket_custom_domain(
+        self,
+        bucket_name: str,
+        domain: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BucketCustomDomainRemoved]:
+        """
+        Removes a custom hostname from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        domain : str
+            Hostname to remove.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BucketCustomDomainRemoved]
+            Remove a bucket custom domain succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/custom-domains/{encode_path_param(domain)}",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketCustomDomainRemoved,
+                    parse_obj_as(
+                        type_=BucketCustomDomainRemoved,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_bucket_metrics(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        range: typing.Optional[GetBucketMetricsRequestRange] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BucketMetrics]:
+        """
+        Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        range : typing.Optional[GetBucketMetricsRequestRange]
+            Time range. Default `24h`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BucketMetrics]
+            Get bucket metrics succeeded.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/metrics",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "range": range,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketMetrics,
+                    parse_obj_as(
+                        type_=BucketMetrics,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -714,12 +2395,17 @@ class RawObjectStorageClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            Display name of the key pair. Default `Default Key`.
 
         permission_type : typing.Optional[str]
+            Permission level: `admin_rw`, `admin_ro`, `object_rw` or `object_ro`. Default `admin_rw`.
 
         bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
+            - `all`: the key may use every bucket in the workspace (default).
+            - `specific`: only the buckets in `allowed_buckets`.
 
         allowed_buckets : typing.Optional[typing.Sequence[str]]
+            Bucket names the key may use when `bucket_scope` is `specific`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -929,7 +2615,7 @@ class RawObjectStorageClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def revoke_s3credential(
+    def delete_s3credential(
         self,
         access_key_id: str,
         *,
@@ -937,7 +2623,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[S3CredentialRevoked]:
         """
-        Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
+        Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -958,6 +2644,114 @@ class RawObjectStorageClient:
         _response = self._client_wrapper.httpx_client.request(
             f"object-storage/credentials/{encode_path_param(access_key_id)}",
             method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3CredentialRevoked,
+                    parse_obj_as(
+                        type_=S3CredentialRevoked,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def revoke_s3credential(
+        self,
+        access_key_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[S3CredentialRevoked]:
+        """
+        Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[S3CredentialRevoked]
+            Credential revoked successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/credentials/{encode_path_param(access_key_id)}/revoke",
+            method="POST",
             params={
                 "workspace_id": workspace_id,
             },
@@ -1508,6 +3302,7 @@ class AsyncRawObjectStorageClient:
             Logical bucket name.
 
         is_public : bool
+            Whether the bucket allows unauthenticated read access.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -1591,6 +3386,1673 @@ class AsyncRawObjectStorageClient:
                 )
             if _response.status_code == 423:
                 raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BucketLifecycleConfiguration]:
+        """
+        Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BucketLifecycleConfiguration]
+            Get bucket lifecycle rules succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/lifecycle",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketLifecycleConfiguration,
+                    parse_obj_as(
+                        type_=BucketLifecycleConfiguration,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def set_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        rules: typing.Sequence[BucketLifecycleRule],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[DeleteResponse]:
+        """
+        Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        rules : typing.Sequence[BucketLifecycleRule]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[DeleteResponse]
+            Set bucket lifecycle rules succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/lifecycle",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "rules": convert_and_respect_annotation_metadata(
+                    object_=rules, annotation=typing.Sequence[BucketLifecycleRule], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def delete_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[DeleteResponse]:
+        """
+        Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[DeleteResponse]
+            Delete bucket lifecycle rules succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/lifecycle",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BucketCorsConfiguration]:
+        """
+        Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BucketCorsConfiguration]
+            Get bucket CORS rules succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/cors",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketCorsConfiguration,
+                    parse_obj_as(
+                        type_=BucketCorsConfiguration,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def set_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        rules: typing.Sequence[BucketCorsRule],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[DeleteResponse]:
+        """
+        Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        rules : typing.Sequence[BucketCorsRule]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[DeleteResponse]
+            Set bucket CORS rules succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/cors",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "rules": convert_and_respect_annotation_metadata(
+                    object_=rules, annotation=typing.Sequence[BucketCorsRule], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def delete_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[DeleteResponse]:
+        """
+        Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[DeleteResponse]
+            Delete bucket CORS rules succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/cors",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_bucket_object_lock(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BucketObjectLockConfiguration]:
+        """
+        Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BucketObjectLockConfiguration]
+            Get bucket object lock configuration succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/object-lock",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketObjectLockConfiguration,
+                    parse_obj_as(
+                        type_=BucketObjectLockConfiguration,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def set_bucket_object_lock(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        rule: typing.Optional[DefaultRetention] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[DeleteResponse]:
+        """
+        Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        rule : typing.Optional[DefaultRetention]
+            New default retention, or null to remove it.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[DeleteResponse]
+            Set bucket default retention succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/object-lock",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "rule": convert_and_respect_annotation_metadata(
+                    object_=rule, annotation=typing.Optional[DefaultRetention], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BucketNotificationConfiguration]:
+        """
+        Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BucketNotificationConfiguration]
+            Get bucket event notifications succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/notifications",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketNotificationConfiguration,
+                    parse_obj_as(
+                        type_=BucketNotificationConfiguration,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def set_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        configs: typing.Sequence[BucketNotificationConfig],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[DeleteResponse]:
+        """
+        Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        configs : typing.Sequence[BucketNotificationConfig]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[DeleteResponse]
+            Set bucket event notifications succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/notifications",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "configs": convert_and_respect_annotation_metadata(
+                    object_=configs, annotation=typing.Sequence[BucketNotificationConfig], direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def delete_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[DeleteResponse]:
+        """
+        Removes every notification rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[DeleteResponse]
+            Delete bucket event notifications succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/notifications",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    DeleteResponse,
+                    parse_obj_as(
+                        type_=DeleteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_bucket_custom_domains(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BucketCustomDomainConfig]:
+        """
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BucketCustomDomainConfig]
+            Get bucket custom domains succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/custom-domains",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketCustomDomainConfig,
+                    parse_obj_as(
+                        type_=BucketCustomDomainConfig,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def add_bucket_custom_domain(
+        self,
+        bucket_name: str,
+        *,
+        domain: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BucketCustomDomain]:
+        """
+        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        domain : str
+            Hostname to serve the bucket from, for example `assets.example.com`.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BucketCustomDomain]
+            Add a bucket custom domain succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/custom-domains",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "domain": domain,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketCustomDomain,
+                    parse_obj_as(
+                        type_=BucketCustomDomain,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def remove_bucket_custom_domain(
+        self,
+        bucket_name: str,
+        domain: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BucketCustomDomainRemoved]:
+        """
+        Removes a custom hostname from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        domain : str
+            Hostname to remove.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BucketCustomDomainRemoved]
+            Remove a bucket custom domain succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/custom-domains/{encode_path_param(domain)}",
+            method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketCustomDomainRemoved,
+                    parse_obj_as(
+                        type_=BucketCustomDomainRemoved,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_bucket_metrics(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        range: typing.Optional[GetBucketMetricsRequestRange] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BucketMetrics]:
+        """
+        Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        range : typing.Optional[GetBucketMetricsRequestRange]
+            Time range. Default `24h`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BucketMetrics]
+            Get bucket metrics succeeded.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/metrics",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "range": range,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BucketMetrics,
+                    parse_obj_as(
+                        type_=BucketMetrics,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1718,12 +5180,17 @@ class AsyncRawObjectStorageClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            Display name of the key pair. Default `Default Key`.
 
         permission_type : typing.Optional[str]
+            Permission level: `admin_rw`, `admin_ro`, `object_rw` or `object_ro`. Default `admin_rw`.
 
         bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
+            - `all`: the key may use every bucket in the workspace (default).
+            - `specific`: only the buckets in `allowed_buckets`.
 
         allowed_buckets : typing.Optional[typing.Sequence[str]]
+            Bucket names the key may use when `bucket_scope` is `specific`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1933,7 +5400,7 @@ class AsyncRawObjectStorageClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def revoke_s3credential(
+    async def delete_s3credential(
         self,
         access_key_id: str,
         *,
@@ -1941,7 +5408,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[S3CredentialRevoked]:
         """
-        Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
+        Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1962,6 +5429,114 @@ class AsyncRawObjectStorageClient:
         _response = await self._client_wrapper.httpx_client.request(
             f"object-storage/credentials/{encode_path_param(access_key_id)}",
             method="DELETE",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    S3CredentialRevoked,
+                    parse_obj_as(
+                        type_=S3CredentialRevoked,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def revoke_s3credential(
+        self,
+        access_key_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[S3CredentialRevoked]:
+        """
+        Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[S3CredentialRevoked]
+            Credential revoked successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/credentials/{encode_path_param(access_key_id)}/revoke",
+            method="POST",
             params={
                 "workspace_id": workspace_id,
             },

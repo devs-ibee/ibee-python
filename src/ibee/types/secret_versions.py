@@ -8,11 +8,34 @@ from .secret_version_summary import SecretVersionSummary
 
 
 class SecretVersions(UniversalBaseModel):
-    secret_id: str
-    secret_name: str
-    current_version: int
-    oldest_version: int
-    versions: typing.Dict[str, SecretVersionSummary]
+    """
+    Version history of a secret.
+    """
+
+    secret_id: str = pydantic.Field()
+    """
+    Unique ID of the secret.
+    """
+
+    secret_name: str = pydantic.Field()
+    """
+    Name of the secret within the store.
+    """
+
+    current_version: int = pydantic.Field()
+    """
+    Version number of the current value.
+    """
+
+    oldest_version: int = pydantic.Field()
+    """
+    Lowest version number still retained.
+    """
+
+    versions: typing.Dict[str, SecretVersionSummary] = pydantic.Field()
+    """
+    Map of version number (as a string) to its summary.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

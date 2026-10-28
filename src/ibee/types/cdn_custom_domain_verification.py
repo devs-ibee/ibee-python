@@ -8,10 +8,32 @@ from .cdn_custom_domain_verification_status import CdnCustomDomainVerificationSt
 
 
 class CdnCustomDomainVerification(UniversalBaseModel):
-    domain: str
-    status: CdnCustomDomainVerificationStatus
-    tls_status: typing.Optional[str] = None
-    message: str
+    """
+    Result of re-checking a custom hostname.
+    """
+
+    domain: str = pydantic.Field()
+    """
+    The hostname.
+    """
+
+    status: CdnCustomDomainVerificationStatus = pydantic.Field()
+    """
+    - `pending_validation`: waiting for the DNS CNAME to be detected.
+    - `pending_tls`: validated; the certificate is being issued.
+    - `active`: certificate issued; the domain serves traffic.
+    - `failed`: validation or certificate issuance failed.
+    """
+
+    tls_status: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Certificate status reported by the edge provider, when available.
+    """
+
+    message: str = pydantic.Field()
+    """
+    Human-readable result.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

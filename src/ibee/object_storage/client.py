@@ -5,7 +5,18 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.bucket import Bucket
+from ..types.bucket_cors_configuration import BucketCorsConfiguration
+from ..types.bucket_cors_rule import BucketCorsRule
+from ..types.bucket_custom_domain import BucketCustomDomain
+from ..types.bucket_custom_domain_config import BucketCustomDomainConfig
+from ..types.bucket_custom_domain_removed import BucketCustomDomainRemoved
+from ..types.bucket_lifecycle_configuration import BucketLifecycleConfiguration
+from ..types.bucket_lifecycle_rule import BucketLifecycleRule
 from ..types.bucket_list import BucketList
+from ..types.bucket_metrics import BucketMetrics
+from ..types.bucket_notification_config import BucketNotificationConfig
+from ..types.bucket_notification_configuration import BucketNotificationConfiguration
+from ..types.bucket_object_lock_configuration import BucketObjectLockConfiguration
 from ..types.default_retention import DefaultRetention
 from ..types.delete_response import DeleteResponse
 from ..types.s3credential import S3Credential
@@ -14,6 +25,7 @@ from ..types.s3credential_list import S3CredentialList
 from ..types.s3credential_revoked import S3CredentialRevoked
 from .raw_client import AsyncRawObjectStorageClient, RawObjectStorageClient
 from .types.create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
+from .types.get_bucket_metrics_request_range import GetBucketMetricsRequestRange
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -255,6 +267,7 @@ class ObjectStorageClient:
             Logical bucket name.
 
         is_public : bool
+            Whether the bucket allows unauthenticated read access.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -282,6 +295,694 @@ class ObjectStorageClient:
         """
         _response = self._raw_client.update_bucket(
             bucket_name, is_public=is_public, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def get_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketLifecycleConfiguration:
+        """
+        Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketLifecycleConfiguration
+            Get bucket lifecycle rules succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.get_bucket_lifecycle(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.get_bucket_lifecycle(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def set_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        rules: typing.Sequence[BucketLifecycleRule],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        rules : typing.Sequence[BucketLifecycleRule]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Set bucket lifecycle rules succeeded.
+
+        Examples
+        --------
+        from ibee import BucketLifecycleRule, Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.set_bucket_lifecycle(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+            rules=[
+                BucketLifecycleRule(
+                    status="Enabled",
+                )
+            ],
+        )
+        """
+        _response = self._raw_client.set_bucket_lifecycle(
+            bucket_name, rules=rules, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def delete_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Delete bucket lifecycle rules succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.delete_bucket_lifecycle(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.delete_bucket_lifecycle(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def get_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketCorsConfiguration:
+        """
+        Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketCorsConfiguration
+            Get bucket CORS rules succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.get_bucket_cors(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.get_bucket_cors(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def set_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        rules: typing.Sequence[BucketCorsRule],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        rules : typing.Sequence[BucketCorsRule]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Set bucket CORS rules succeeded.
+
+        Examples
+        --------
+        from ibee import BucketCorsRule, Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.set_bucket_cors(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+            rules=[
+                BucketCorsRule(
+                    allowed_origins=["allowed_origins"],
+                    allowed_methods=["GET"],
+                )
+            ],
+        )
+        """
+        _response = self._raw_client.set_bucket_cors(
+            bucket_name, rules=rules, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def delete_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Delete bucket CORS rules succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.delete_bucket_cors(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.delete_bucket_cors(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def get_bucket_object_lock(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketObjectLockConfiguration:
+        """
+        Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketObjectLockConfiguration
+            Get bucket object lock configuration succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.get_bucket_object_lock(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.get_bucket_object_lock(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def set_bucket_object_lock(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        rule: typing.Optional[DefaultRetention] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        rule : typing.Optional[DefaultRetention]
+            New default retention, or null to remove it.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Set bucket default retention succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.set_bucket_object_lock(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.set_bucket_object_lock(
+            bucket_name, workspace_id=workspace_id, rule=rule, request_options=request_options
+        )
+        return _response.data
+
+    def get_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketNotificationConfiguration:
+        """
+        Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketNotificationConfiguration
+            Get bucket event notifications succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.get_bucket_notifications(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.get_bucket_notifications(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def set_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        configs: typing.Sequence[BucketNotificationConfig],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        configs : typing.Sequence[BucketNotificationConfig]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Set bucket event notifications succeeded.
+
+        Examples
+        --------
+        from ibee import BucketNotificationConfig, Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.set_bucket_notifications(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+            configs=[
+                BucketNotificationConfig(
+                    events=["upload"],
+                )
+            ],
+        )
+        """
+        _response = self._raw_client.set_bucket_notifications(
+            bucket_name, configs=configs, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def delete_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Removes every notification rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Delete bucket event notifications succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.delete_bucket_notifications(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.delete_bucket_notifications(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def get_bucket_custom_domains(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketCustomDomainConfig:
+        """
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketCustomDomainConfig
+            Get bucket custom domains succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.get_bucket_custom_domains(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.get_bucket_custom_domains(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def add_bucket_custom_domain(
+        self,
+        bucket_name: str,
+        *,
+        domain: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketCustomDomain:
+        """
+        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        domain : str
+            Hostname to serve the bucket from, for example `assets.example.com`.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketCustomDomain
+            Add a bucket custom domain succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.add_bucket_custom_domain(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+            domain="domain",
+        )
+        """
+        _response = self._raw_client.add_bucket_custom_domain(
+            bucket_name, domain=domain, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def remove_bucket_custom_domain(
+        self,
+        bucket_name: str,
+        domain: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketCustomDomainRemoved:
+        """
+        Removes a custom hostname from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        domain : str
+            Hostname to remove.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketCustomDomainRemoved
+            Remove a bucket custom domain succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.remove_bucket_custom_domain(
+            bucket_name="bucket_name",
+            domain="domain",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.remove_bucket_custom_domain(
+            bucket_name, domain, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def get_bucket_metrics(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        range: typing.Optional[GetBucketMetricsRequestRange] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketMetrics:
+        """
+        Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        range : typing.Optional[GetBucketMetricsRequestRange]
+            Time range. Default `24h`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketMetrics
+            Get bucket metrics succeeded.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.get_bucket_metrics(
+            bucket_name="bucket_name",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.get_bucket_metrics(
+            bucket_name, workspace_id=workspace_id, range=range, request_options=request_options
         )
         return _response.data
 
@@ -337,12 +1038,17 @@ class ObjectStorageClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            Display name of the key pair. Default `Default Key`.
 
         permission_type : typing.Optional[str]
+            Permission level: `admin_rw`, `admin_ro`, `object_rw` or `object_ro`. Default `admin_rw`.
 
         bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
+            - `all`: the key may use every bucket in the workspace (default).
+            - `specific`: only the buckets in `allowed_buckets`.
 
         allowed_buckets : typing.Optional[typing.Sequence[str]]
+            Bucket names the key may use when `bucket_scope` is `specific`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -416,6 +1122,49 @@ class ObjectStorageClient:
         )
         return _response.data
 
+    def delete_s3credential(
+        self,
+        access_key_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> S3CredentialRevoked:
+        """
+        Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3CredentialRevoked
+            Credential revoked successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.delete_s3credential(
+            access_key_id="access_key_id",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.delete_s3credential(
+            access_key_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
     def revoke_s3credential(
         self,
         access_key_id: str,
@@ -424,7 +1173,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3CredentialRevoked:
         """
-        Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
+        Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -730,6 +1479,7 @@ class AsyncObjectStorageClient:
             Logical bucket name.
 
         is_public : bool
+            Whether the bucket allows unauthenticated read access.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -765,6 +1515,814 @@ class AsyncObjectStorageClient:
         """
         _response = await self._raw_client.update_bucket(
             bucket_name, is_public=is_public, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def get_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketLifecycleConfiguration:
+        """
+        Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketLifecycleConfiguration
+            Get bucket lifecycle rules succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.get_bucket_lifecycle(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_bucket_lifecycle(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def set_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        rules: typing.Sequence[BucketLifecycleRule],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        rules : typing.Sequence[BucketLifecycleRule]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Set bucket lifecycle rules succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee, BucketLifecycleRule
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.set_bucket_lifecycle(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+                rules=[
+                    BucketLifecycleRule(
+                        status="Enabled",
+                    )
+                ],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.set_bucket_lifecycle(
+            bucket_name, rules=rules, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def delete_bucket_lifecycle(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Delete bucket lifecycle rules succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.delete_bucket_lifecycle(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.delete_bucket_lifecycle(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def get_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketCorsConfiguration:
+        """
+        Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketCorsConfiguration
+            Get bucket CORS rules succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.get_bucket_cors(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_bucket_cors(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def set_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        rules: typing.Sequence[BucketCorsRule],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        rules : typing.Sequence[BucketCorsRule]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Set bucket CORS rules succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee, BucketCorsRule
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.set_bucket_cors(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+                rules=[
+                    BucketCorsRule(
+                        allowed_origins=["allowed_origins"],
+                        allowed_methods=["GET"],
+                    )
+                ],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.set_bucket_cors(
+            bucket_name, rules=rules, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def delete_bucket_cors(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Delete bucket CORS rules succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.delete_bucket_cors(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.delete_bucket_cors(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def get_bucket_object_lock(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketObjectLockConfiguration:
+        """
+        Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketObjectLockConfiguration
+            Get bucket object lock configuration succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.get_bucket_object_lock(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_bucket_object_lock(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def set_bucket_object_lock(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        rule: typing.Optional[DefaultRetention] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        rule : typing.Optional[DefaultRetention]
+            New default retention, or null to remove it.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Set bucket default retention succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.set_bucket_object_lock(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.set_bucket_object_lock(
+            bucket_name, workspace_id=workspace_id, rule=rule, request_options=request_options
+        )
+        return _response.data
+
+    async def get_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketNotificationConfiguration:
+        """
+        Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketNotificationConfiguration
+            Get bucket event notifications succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.get_bucket_notifications(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_bucket_notifications(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def set_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        configs: typing.Sequence[BucketNotificationConfig],
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        configs : typing.Sequence[BucketNotificationConfig]
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Set bucket event notifications succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee, BucketNotificationConfig
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.set_bucket_notifications(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+                configs=[
+                    BucketNotificationConfig(
+                        events=["upload"],
+                    )
+                ],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.set_bucket_notifications(
+            bucket_name, configs=configs, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def delete_bucket_notifications(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> DeleteResponse:
+        """
+        Removes every notification rule from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        DeleteResponse
+            Delete bucket event notifications succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.delete_bucket_notifications(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.delete_bucket_notifications(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def get_bucket_custom_domains(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketCustomDomainConfig:
+        """
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketCustomDomainConfig
+            Get bucket custom domains succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.get_bucket_custom_domains(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_bucket_custom_domains(
+            bucket_name, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def add_bucket_custom_domain(
+        self,
+        bucket_name: str,
+        *,
+        domain: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketCustomDomain:
+        """
+        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        domain : str
+            Hostname to serve the bucket from, for example `assets.example.com`.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketCustomDomain
+            Add a bucket custom domain succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.add_bucket_custom_domain(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+                domain="domain",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.add_bucket_custom_domain(
+            bucket_name, domain=domain, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def remove_bucket_custom_domain(
+        self,
+        bucket_name: str,
+        domain: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketCustomDomainRemoved:
+        """
+        Removes a custom hostname from the bucket. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        domain : str
+            Hostname to remove.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketCustomDomainRemoved
+            Remove a bucket custom domain succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.remove_bucket_custom_domain(
+                bucket_name="bucket_name",
+                domain="domain",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.remove_bucket_custom_domain(
+            bucket_name, domain, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def get_bucket_metrics(
+        self,
+        bucket_name: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        range: typing.Optional[GetBucketMetricsRequestRange] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BucketMetrics:
+        """
+        Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        range : typing.Optional[GetBucketMetricsRequestRange]
+            Time range. Default `24h`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BucketMetrics
+            Get bucket metrics succeeded.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.get_bucket_metrics(
+                bucket_name="bucket_name",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_bucket_metrics(
+            bucket_name, workspace_id=workspace_id, range=range, request_options=request_options
         )
         return _response.data
 
@@ -830,12 +2388,17 @@ class AsyncObjectStorageClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            Display name of the key pair. Default `Default Key`.
 
         permission_type : typing.Optional[str]
+            Permission level: `admin_rw`, `admin_ro`, `object_rw` or `object_ro`. Default `admin_rw`.
 
         bucket_scope : typing.Optional[CreateS3CredentialRequestBucketScope]
+            - `all`: the key may use every bucket in the workspace (default).
+            - `specific`: only the buckets in `allowed_buckets`.
 
         allowed_buckets : typing.Optional[typing.Sequence[str]]
+            Bucket names the key may use when `bucket_scope` is `specific`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -925,6 +2488,57 @@ class AsyncObjectStorageClient:
         )
         return _response.data
 
+    async def delete_s3credential(
+        self,
+        access_key_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> S3CredentialRevoked:
+        """
+        Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        access_key_id : str
+            S3 access key ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        S3CredentialRevoked
+            Credential revoked successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.delete_s3credential(
+                access_key_id="access_key_id",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.delete_s3credential(
+            access_key_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
     async def revoke_s3credential(
         self,
         access_key_id: str,
@@ -933,7 +2547,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3CredentialRevoked:
         """
-        Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
+        Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
 
         Parameters
         ----------

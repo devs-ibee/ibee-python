@@ -4,37 +4,76 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .recovery_restore_request_target_bandwidth_tb import RecoveryRestoreRequestTargetBandwidthTb
 from .recovery_restore_request_target_mode import RecoveryRestoreRequestTargetMode
 
 
 class RecoveryRestoreRequest(UniversalBaseModel):
-    target_mode: typing.Optional[RecoveryRestoreRequestTargetMode] = None
-    target_vm_name: typing.Optional[str] = None
-    target_cpu: typing.Optional[int] = None
-    target_ram_mb: typing.Optional[int] = None
-    target_disk_gb: typing.Optional[int] = None
-    target_plan_id: typing.Optional[str] = None
-    target_plan_name: typing.Optional[str] = None
-    target_plan_code: typing.Optional[str] = None
-    target_plan_type: typing.Optional[str] = None
-    target_performance_category: typing.Optional[str] = None
-    target_plan_monthly_rate: typing.Optional[float] = None
-    target_plan_hourly_rate: typing.Optional[float] = None
-    target_bandwidth_tb: typing.Optional[RecoveryRestoreRequestTargetBandwidthTb] = None
-    target_bandwidth_display: typing.Optional[str] = None
-    target_network_bandwidth: typing.Optional[str] = None
-    target_compute_node_id: typing.Optional[str] = None
-    target_gpu_type: typing.Optional[str] = None
-    target_gpu_model: typing.Optional[str] = None
-    target_gpu_count: typing.Optional[int] = None
-    target_gpu_memory_gb: typing.Optional[float] = None
-    target_gpu_memory_display: typing.Optional[str] = None
-    target_site_id: typing.Optional[str] = None
-    target_site_name: typing.Optional[str] = None
-    selected_volume_id: typing.Optional[str] = None
-    requested_by: typing.Optional[str] = None
-    auto_start: typing.Optional[bool] = None
+    """
+    Restore options shared by backup and snapshot restores. With the default `replace` mode only `requested_by` and `auto_start` apply; the `target_*` fields describe the new VM for `new_vm` mode.
+    """
+
+    target_mode: typing.Optional[RecoveryRestoreRequestTargetMode] = pydantic.Field(default=None)
+    """
+    Where to restore.
+    - `replace`: onto the source VM, replacing its current disks (default).
+    - `new_vm`: into a new VM described by the `target_*` fields.
+    - `volume_only`: only the volume named in `selected_volume_id`.
+    """
+
+    target_vm_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Name for the new VM (`new_vm` mode).
+    """
+
+    target_cpu: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    vCPUs for the new VM (1-256).
+    """
+
+    target_ram_mb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    RAM for the new VM in MB (512-2097152).
+    """
+
+    target_disk_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Root disk for the new VM in GB (10-10000).
+    """
+
+    target_plan_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Compute plan for the new VM, from `GET /compute/plans`.
+    """
+
+    target_gpu_model: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    GPU model for a new GPU VM, for example `A100`.
+    """
+
+    target_gpu_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of GPUs for a new GPU VM (0-16).
+    """
+
+    target_site_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Site for the new VM, from `GET /compute/sites`.
+    """
+
+    target_volume_names: typing.Optional[typing.Dict[str, str]] = pydantic.Field(default=None)
+    """
+    Names for the restored volumes, keyed by the source volume id. Volumes not listed keep their source name.
+    """
+
+    selected_volume_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Volume to restore in `volume_only` mode.
+    """
+
+    auto_start: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Start the VM once the restore completes. Default true.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

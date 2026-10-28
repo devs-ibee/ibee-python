@@ -88,6 +88,7 @@ class ReservedIpsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         label : typing.Optional[str]
+            Optional label for the address (up to 120 characters), shown as its name in the portal.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -111,6 +112,58 @@ class ReservedIpsClient:
         """
         _response = self._raw_client.reserve_ip(
             site_id=site_id, workspace_id=workspace_id, label=label, request_options=request_options
+        )
+        return _response.data
+
+    def convert_reserved_ip(
+        self,
+        *,
+        vm_id: str,
+        site_id: str,
+        workspace_id: typing.Optional[str] = None,
+        label: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ReservedIp:
+        """
+        Turns the automatically assigned public IPv4 of a VM into a Reserved IP that survives the VM, as the portal's Convert Existing IP does. The address stays on the VM. Billing for the Reserved IP starts now. Requires scope: network.write.
+
+        Parameters
+        ----------
+        vm_id : str
+            VM whose current public IPv4 becomes a Reserved IP.
+
+        site_id : str
+            The VM's site, from `GET /networking/sites`.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        label : typing.Optional[str]
+            Optional label for the Reserved IP.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ReservedIp
+            Reserved IP created.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.reserved_ips.convert_reserved_ip(
+            workspace_id="710995",
+            vm_id="vm_id",
+            site_id="site_id",
+        )
+        """
+        _response = self._raw_client.convert_reserved_ip(
+            vm_id=vm_id, site_id=site_id, workspace_id=workspace_id, label=label, request_options=request_options
         )
         return _response.data
 
@@ -220,8 +273,10 @@ class ReservedIpsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         label : typing.Optional[str]
+            New label (the portal's **Name**).
 
         reverse_dns : typing.Optional[str]
+            Reverse DNS hostname for the address, as a fully qualified domain name.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -271,13 +326,16 @@ class ReservedIpsClient:
             Reserved IP ID.
 
         vm_id : str
+            ID of the VM to attach the address to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vpc_id : typing.Optional[str]
+            VPC of the VM when attaching inside a VPC. Send together with `subnet_id`.
 
         subnet_id : typing.Optional[str]
+            Subnet of the VM's VPC attachment. Send together with `vpc_id`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -306,6 +364,62 @@ class ReservedIpsClient:
             workspace_id=workspace_id,
             vpc_id=vpc_id,
             subnet_id=subnet_id,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def attach_reserved_ip_direct(
+        self,
+        reserved_ip_id: str,
+        *,
+        vm_id: str,
+        workspace_id: typing.Optional[str] = None,
+        network_id: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ReservedIp:
+        """
+        Attaches the Reserved IP to the VM's direct public interface, for VMs that are not in a VPC. Use `attach` for VMs with a VPC interface. Requires scope: network.write.
+
+        Parameters
+        ----------
+        reserved_ip_id : str
+            Reserved IP ID.
+
+        vm_id : str
+            VM to attach the address to, on its direct public interface.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        network_id : typing.Optional[str]
+            Provider network of the VM. Resolved automatically when the VM has one.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ReservedIp
+            Reserved IP attached.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.reserved_ips.attach_reserved_ip_direct(
+            reserved_ip_id="reserved_ip_id",
+            workspace_id="710995",
+            vm_id="vm_id",
+        )
+        """
+        _response = self._raw_client.attach_reserved_ip_direct(
+            reserved_ip_id,
+            vm_id=vm_id,
+            workspace_id=workspace_id,
+            network_id=network_id,
             request_options=request_options,
         )
         return _response.data
@@ -372,13 +486,16 @@ class ReservedIpsClient:
             Reserved IP ID.
 
         vm_id : str
+            ID of the VM to attach the address to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vpc_id : typing.Optional[str]
+            VPC of the VM when attaching inside a VPC. Send together with `subnet_id`.
 
         subnet_id : typing.Optional[str]
+            Subnet of the VM's VPC attachment. Send together with `vpc_id`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -497,6 +614,7 @@ class AsyncReservedIpsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         label : typing.Optional[str]
+            Optional label for the address (up to 120 characters), shown as its name in the portal.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -528,6 +646,66 @@ class AsyncReservedIpsClient:
         """
         _response = await self._raw_client.reserve_ip(
             site_id=site_id, workspace_id=workspace_id, label=label, request_options=request_options
+        )
+        return _response.data
+
+    async def convert_reserved_ip(
+        self,
+        *,
+        vm_id: str,
+        site_id: str,
+        workspace_id: typing.Optional[str] = None,
+        label: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ReservedIp:
+        """
+        Turns the automatically assigned public IPv4 of a VM into a Reserved IP that survives the VM, as the portal's Convert Existing IP does. The address stays on the VM. Billing for the Reserved IP starts now. Requires scope: network.write.
+
+        Parameters
+        ----------
+        vm_id : str
+            VM whose current public IPv4 becomes a Reserved IP.
+
+        site_id : str
+            The VM's site, from `GET /networking/sites`.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        label : typing.Optional[str]
+            Optional label for the Reserved IP.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ReservedIp
+            Reserved IP created.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.reserved_ips.convert_reserved_ip(
+                workspace_id="710995",
+                vm_id="vm_id",
+                site_id="site_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.convert_reserved_ip(
+            vm_id=vm_id, site_id=site_id, workspace_id=workspace_id, label=label, request_options=request_options
         )
         return _response.data
 
@@ -653,8 +831,10 @@ class AsyncReservedIpsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         label : typing.Optional[str]
+            New label (the portal's **Name**).
 
         reverse_dns : typing.Optional[str]
+            Reverse DNS hostname for the address, as a fully qualified domain name.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -712,13 +892,16 @@ class AsyncReservedIpsClient:
             Reserved IP ID.
 
         vm_id : str
+            ID of the VM to attach the address to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vpc_id : typing.Optional[str]
+            VPC of the VM when attaching inside a VPC. Send together with `subnet_id`.
 
         subnet_id : typing.Optional[str]
+            Subnet of the VM's VPC attachment. Send together with `vpc_id`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -755,6 +938,70 @@ class AsyncReservedIpsClient:
             workspace_id=workspace_id,
             vpc_id=vpc_id,
             subnet_id=subnet_id,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def attach_reserved_ip_direct(
+        self,
+        reserved_ip_id: str,
+        *,
+        vm_id: str,
+        workspace_id: typing.Optional[str] = None,
+        network_id: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ReservedIp:
+        """
+        Attaches the Reserved IP to the VM's direct public interface, for VMs that are not in a VPC. Use `attach` for VMs with a VPC interface. Requires scope: network.write.
+
+        Parameters
+        ----------
+        reserved_ip_id : str
+            Reserved IP ID.
+
+        vm_id : str
+            VM to attach the address to, on its direct public interface.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        network_id : typing.Optional[str]
+            Provider network of the VM. Resolved automatically when the VM has one.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ReservedIp
+            Reserved IP attached.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.reserved_ips.attach_reserved_ip_direct(
+                reserved_ip_id="reserved_ip_id",
+                workspace_id="710995",
+                vm_id="vm_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.attach_reserved_ip_direct(
+            reserved_ip_id,
+            vm_id=vm_id,
+            workspace_id=workspace_id,
+            network_id=network_id,
             request_options=request_options,
         )
         return _response.data
@@ -829,13 +1076,16 @@ class AsyncReservedIpsClient:
             Reserved IP ID.
 
         vm_id : str
+            ID of the VM to attach the address to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vpc_id : typing.Optional[str]
+            VPC of the VM when attaching inside a VPC. Send together with `subnet_id`.
 
         subnet_id : typing.Optional[str]
+            Subnet of the VM's VPC attachment. Send together with `vpc_id`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

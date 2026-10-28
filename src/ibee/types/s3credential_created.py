@@ -8,6 +8,10 @@ from .s3credential import S3Credential
 
 
 class S3CredentialCreated(S3Credential):
+    """
+    A newly created S3 access key pair, including its secret key.
+    """
+
     secret_access_key: str = pydantic.Field()
     """
     Returned once at creation time.

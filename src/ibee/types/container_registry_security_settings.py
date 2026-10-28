@@ -8,6 +8,10 @@ from .container_registry_pull_policy import ContainerRegistryPullPolicy
 
 
 class ContainerRegistrySecuritySettings(UniversalBaseModel):
+    """
+    Security settings of a registry.
+    """
+
     vulnerability_pull_policy: typing.Optional[ContainerRegistryPullPolicy] = None
 
     if IS_PYDANTIC_V2:

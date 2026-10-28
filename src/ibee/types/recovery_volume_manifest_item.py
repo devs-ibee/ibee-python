@@ -8,37 +8,165 @@ from .recovery_volume_manifest_item_role import RecoveryVolumeManifestItemRole
 
 
 class RecoveryVolumeManifestItem(UniversalBaseModel):
-    source_volume_id: str
-    source_volume_name: typing.Optional[str] = None
-    resource_name: typing.Optional[str] = None
-    role: typing.Optional[RecoveryVolumeManifestItemRole] = None
-    size_gb: typing.Optional[int] = None
-    display_size_gb: typing.Optional[int] = None
-    device_bus: typing.Optional[str] = None
-    device_slot: typing.Optional[str] = None
-    boot_index: typing.Optional[int] = None
-    attachment_mode: typing.Optional[str] = None
-    guest_device: typing.Optional[str] = None
-    device_path: typing.Optional[str] = None
-    filesystem_uuid: typing.Optional[str] = None
-    filesystem_type: typing.Optional[str] = None
-    mount_hint: typing.Optional[str] = None
-    mount_state_at_capture: typing.Optional[str] = None
-    mount_instructions: typing.Optional[str] = None
-    delete_on_termination: typing.Optional[bool] = None
-    source_attachment_present: typing.Optional[bool] = None
-    artifact_type: typing.Optional[str] = None
-    artifact_ref: typing.Optional[str] = None
-    artifact_chain_id: typing.Optional[str] = None
-    artifact_backup_type: typing.Optional[str] = None
-    artifact_bytes: typing.Optional[int] = None
-    billing_storage_bytes: typing.Optional[int] = None
-    storage_usage: typing.Optional[typing.Dict[str, typing.Any]] = None
-    restored_volume_id: typing.Optional[str] = None
-    restored_resource_name: typing.Optional[str] = None
-    restored_device_path: typing.Optional[str] = None
-    restored_target_vm_id: typing.Optional[str] = None
-    metadata: typing.Optional[typing.Dict[str, typing.Any]] = None
+    """
+    One volume captured in a recovery point (backup run or snapshot set): how it was attached at capture time, the stored artifact that holds its data, and where it was restored.
+    """
+
+    source_volume_id: str = pydantic.Field()
+    """
+    ID of the volume that was captured.
+    """
+
+    source_volume_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the source volume.
+    """
+
+    resource_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Backend storage resource name of the source volume.
+    """
+
+    role: typing.Optional[RecoveryVolumeManifestItemRole] = pydantic.Field(default=None)
+    """
+    - `root`: the VM's root disk.
+    - `data`: an attached data volume.
+    """
+
+    size_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Provisioned size of the volume in GiB.
+    """
+
+    display_size_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Size in GiB as shown in the portal.
+    """
+
+    device_bus: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Virtual disk bus the volume was attached on, for example `virtio`.
+    """
+
+    device_slot: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Guest device name of the attachment, for example `vda`.
+    """
+
+    boot_index: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Position in the boot order; 0 for the boot disk, null for volumes not in the boot order.
+    """
+
+    attachment_mode: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Attachment mode at capture time, for example `boot` for the root disk or `single-writer` for a data volume.
+    """
+
+    guest_device: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Device name as seen inside the guest OS.
+    """
+
+    device_path: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Device path inside the guest, for example `/dev/vdb`.
+    """
+
+    filesystem_uuid: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Filesystem UUID detected on the volume, when known.
+    """
+
+    filesystem_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Filesystem type detected on the volume, for example `ext4`, when known.
+    """
+
+    mount_hint: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Mount point the volume is expected to use, for example `/` for the root disk.
+    """
+
+    mount_state_at_capture: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Mount state recorded at capture time, for example `mounted`, `instructions_pending` or `instructions_acknowledged`.
+    """
+
+    mount_instructions: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Human-readable instructions for mounting the volume after a restore.
+    """
+
+    delete_on_termination: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether the source volume was set to be deleted together with its VM.
+    """
+
+    source_attachment_present: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether the source volume was still attached to the VM when the manifest was last refreshed.
+    """
+
+    artifact_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Kind of stored artifact that holds this volume's data in the recovery point.
+    """
+
+    artifact_ref: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Reference to that artifact in the backup store.
+    """
+
+    artifact_chain_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Backup chain the artifact belongs to.
+    """
+
+    artifact_backup_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    `full` or `incremental`, for the artifact.
+    """
+
+    artifact_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Size of the stored artifact in bytes.
+    """
+
+    billing_storage_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Bytes billed for storing this volume's artifact.
+    """
+
+    storage_usage: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Storage usage details reported by the backup store, as key-value data.
+    """
+
+    restored_volume_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the volume created by the most recent restore of this entry, when one was performed.
+    """
+
+    restored_resource_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Backend storage resource name of the restored volume.
+    """
+
+    restored_device_path: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Device path of the restored volume inside the target VM.
+    """
+
+    restored_target_vm_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    VM the restored volume was attached to.
+    """
+
+    metadata: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Additional service-specific key-value data.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -7,8 +7,10 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
+    from .get_bucket_metrics_request_range import GetBucketMetricsRequestRange
 _dynamic_imports: typing.Dict[str, str] = {
-    "CreateS3CredentialRequestBucketScope": ".create_s3credential_request_bucket_scope"
+    "CreateS3CredentialRequestBucketScope": ".create_s3credential_request_bucket_scope",
+    "GetBucketMetricsRequestRange": ".get_bucket_metrics_request_range",
 }
 
 
@@ -33,4 +35,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["CreateS3CredentialRequestBucketScope"]
+__all__ = ["CreateS3CredentialRequestBucketScope", "GetBucketMetricsRequestRange"]

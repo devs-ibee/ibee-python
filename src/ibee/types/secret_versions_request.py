@@ -7,6 +7,10 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class SecretVersionsRequest(UniversalBaseModel):
+    """
+    Body naming the secret versions to act on.
+    """
+
     versions: typing.List[int] = pydantic.Field()
     """
     Secret versions to restore or irreversibly destroy.

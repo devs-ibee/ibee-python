@@ -6,8 +6,11 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .types import CreateS3CredentialRequestBucketScope
-_dynamic_imports: typing.Dict[str, str] = {"CreateS3CredentialRequestBucketScope": ".types"}
+    from .types import CreateS3CredentialRequestBucketScope, GetBucketMetricsRequestRange
+_dynamic_imports: typing.Dict[str, str] = {
+    "CreateS3CredentialRequestBucketScope": ".types",
+    "GetBucketMetricsRequestRange": ".types",
+}
 
 
 def __getattr__(attr_name: str) -> typing.Any:
@@ -31,4 +34,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["CreateS3CredentialRequestBucketScope"]
+__all__ = ["CreateS3CredentialRequestBucketScope", "GetBucketMetricsRequestRange"]

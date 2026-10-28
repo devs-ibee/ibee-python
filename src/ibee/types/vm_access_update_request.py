@@ -4,7 +4,6 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .ssh_key_secret_ref import SshKeySecretRef
 from .vm_access_update_request_ssh_key_mode import VmAccessUpdateRequestSshKeyMode
 
 
@@ -13,13 +12,12 @@ class VmAccessUpdateRequest(UniversalBaseModel):
     At least one SSH-key, password, or password-authentication change is required.
     """
 
-    requested_by: typing.Optional[str] = None
-    admin_username: typing.Optional[str] = pydantic.Field(default=None)
+    ssh_key_mode: typing.Optional[VmAccessUpdateRequestSshKeyMode] = pydantic.Field(default=None)
     """
-    Linux account to update. Defaults to the VM admin user.
+    - `add`: install the given keys.
+    - `remove`: remove the given keys.
     """
 
-    ssh_key_mode: typing.Optional[VmAccessUpdateRequestSshKeyMode] = None
     ssh_keys: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
     Inline public SSH keys to add or remove.
@@ -30,10 +28,20 @@ class VmAccessUpdateRequest(UniversalBaseModel):
     Secret Store SSH key IDs to add or remove.
     """
 
-    ssh_key_secret_refs: typing.Optional[typing.List[SshKeySecretRef]] = None
-    new_password: typing.Optional[str] = None
-    password_auth_enabled: typing.Optional[bool] = None
-    confirm_remove_last_ssh_key: typing.Optional[bool] = None
+    new_password: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    New password for `admin_username`.
+    """
+
+    password_auth_enabled: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Enable (`true`) or disable (`false`) SSH password authentication.
+    """
+
+    confirm_remove_last_ssh_key: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Must be `true` to remove the VM's last remaining SSH key.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

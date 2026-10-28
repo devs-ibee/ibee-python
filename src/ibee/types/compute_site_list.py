@@ -8,8 +8,19 @@ from .compute_site import ComputeSite
 
 
 class ComputeSiteList(UniversalBaseModel):
-    sites: typing.List[ComputeSite]
-    count: int
+    """
+    Sites returned by `GET /compute/sites`.
+    """
+
+    sites: typing.List[ComputeSite] = pydantic.Field()
+    """
+    Available sites.
+    """
+
+    count: int = pydantic.Field()
+    """
+    Number of items in `sites`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

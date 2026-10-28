@@ -19,7 +19,11 @@ from ..types.compute_image_list import ComputeImageList
 from ..types.compute_plan_list import ComputePlanList
 from ..types.compute_site_list import ComputeSiteList
 from ..types.error import Error
+from ..types.recovery_storage_plan_list import RecoveryStoragePlanList
 from ..types.vm_type import VmType
+from .types.list_backup_storage_plans_request_billing_interval import ListBackupStoragePlansRequestBillingInterval
+from .types.list_compute_plans_request_os_type import ListComputePlansRequestOsType
+from .types.list_snapshot_storage_plans_request_billing_interval import ListSnapshotStoragePlansRequestBillingInterval
 from pydantic import ValidationError
 
 
@@ -114,6 +118,9 @@ class RawComputeCatalogClient:
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[BillingInterval] = None,
+        include_availability: typing.Optional[bool] = None,
+        os_type: typing.Optional[ListComputePlansRequestOsType] = None,
+        requires_public_ip: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ComputePlanList]:
         """
@@ -122,6 +129,9 @@ class RawComputeCatalogClient:
         Parameters
         ----------
         vm_type : VmType
+            Kind of VM the plans are for. Required.
+            - `cloud`
+            - `gpu`
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -130,8 +140,21 @@ class RawComputeCatalogClient:
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
 
         currency : typing.Optional[str]
+            ISO 4217 code of the currency to quote prices in. Default `INR`.
 
         billing_interval : typing.Optional[BillingInterval]
+            Billing period to quote prices for.
+            - `HOURLY`
+            - `MONTHLY` (default)
+
+        include_availability : typing.Optional[bool]
+            Include an advisory placement check. Requires site_id. This does not reserve stock.
+
+        os_type : typing.Optional[ListComputePlansRequestOsType]
+            OS pool to check when include_availability is true.
+
+        requires_public_ip : typing.Optional[bool]
+            Include public IPv4 capacity in the advisory placement check.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -150,6 +173,9 @@ class RawComputeCatalogClient:
                 "site_id": site_id,
                 "currency": currency,
                 "billing_interval": billing_interval,
+                "include_availability": include_availability,
+                "os_type": os_type,
+                "requires_public_ip": requires_public_ip,
             },
             request_options=request_options,
         )
@@ -241,6 +267,9 @@ class RawComputeCatalogClient:
         Parameters
         ----------
         vm_type : VmType
+            Kind of VM the images are for. Required.
+            - `cloud`
+            - `gpu`
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -311,6 +340,194 @@ class RawComputeCatalogClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def list_snapshot_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListSnapshotStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[RecoveryStoragePlanList]:
+        """
+        Select a priced item and send its billing_catalog unchanged when creating a snapshot. Discovery does not reserve capacity or create a resource.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+
+        currency : typing.Optional[str]
+
+        billing_interval : typing.Optional[ListSnapshotStoragePlansRequestBillingInterval]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[RecoveryStoragePlanList]
+            Canonical snapshot storage catalog.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "compute/plans/snapshot-storage",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "site_id": site_id,
+                "currency": currency,
+                "billing_interval": billing_interval,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    RecoveryStoragePlanList,
+                    parse_obj_as(
+                        type_=RecoveryStoragePlanList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def list_backup_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListBackupStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[RecoveryStoragePlanList]:
+        """
+        Select a priced item and send its billing_catalog unchanged when enabling backups or creating a manual backup run.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+
+        currency : typing.Optional[str]
+
+        billing_interval : typing.Optional[ListBackupStoragePlansRequestBillingInterval]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[RecoveryStoragePlanList]
+            Canonical backup storage catalog.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "compute/plans/backup-storage",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "site_id": site_id,
+                "currency": currency,
+                "billing_interval": billing_interval,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    RecoveryStoragePlanList,
+                    parse_obj_as(
+                        type_=RecoveryStoragePlanList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -432,6 +649,9 @@ class AsyncRawComputeCatalogClient:
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[BillingInterval] = None,
+        include_availability: typing.Optional[bool] = None,
+        os_type: typing.Optional[ListComputePlansRequestOsType] = None,
+        requires_public_ip: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ComputePlanList]:
         """
@@ -440,6 +660,9 @@ class AsyncRawComputeCatalogClient:
         Parameters
         ----------
         vm_type : VmType
+            Kind of VM the plans are for. Required.
+            - `cloud`
+            - `gpu`
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -448,8 +671,21 @@ class AsyncRawComputeCatalogClient:
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
 
         currency : typing.Optional[str]
+            ISO 4217 code of the currency to quote prices in. Default `INR`.
 
         billing_interval : typing.Optional[BillingInterval]
+            Billing period to quote prices for.
+            - `HOURLY`
+            - `MONTHLY` (default)
+
+        include_availability : typing.Optional[bool]
+            Include an advisory placement check. Requires site_id. This does not reserve stock.
+
+        os_type : typing.Optional[ListComputePlansRequestOsType]
+            OS pool to check when include_availability is true.
+
+        requires_public_ip : typing.Optional[bool]
+            Include public IPv4 capacity in the advisory placement check.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -468,6 +704,9 @@ class AsyncRawComputeCatalogClient:
                 "site_id": site_id,
                 "currency": currency,
                 "billing_interval": billing_interval,
+                "include_availability": include_availability,
+                "os_type": os_type,
+                "requires_public_ip": requires_public_ip,
             },
             request_options=request_options,
         )
@@ -559,6 +798,9 @@ class AsyncRawComputeCatalogClient:
         Parameters
         ----------
         vm_type : VmType
+            Kind of VM the images are for. Required.
+            - `cloud`
+            - `gpu`
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -629,6 +871,194 @@ class AsyncRawComputeCatalogClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def list_snapshot_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListSnapshotStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[RecoveryStoragePlanList]:
+        """
+        Select a priced item and send its billing_catalog unchanged when creating a snapshot. Discovery does not reserve capacity or create a resource.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+
+        currency : typing.Optional[str]
+
+        billing_interval : typing.Optional[ListSnapshotStoragePlansRequestBillingInterval]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[RecoveryStoragePlanList]
+            Canonical snapshot storage catalog.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "compute/plans/snapshot-storage",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "site_id": site_id,
+                "currency": currency,
+                "billing_interval": billing_interval,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    RecoveryStoragePlanList,
+                    parse_obj_as(
+                        type_=RecoveryStoragePlanList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def list_backup_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListBackupStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[RecoveryStoragePlanList]:
+        """
+        Select a priced item and send its billing_catalog unchanged when enabling backups or creating a manual backup run.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+
+        currency : typing.Optional[str]
+
+        billing_interval : typing.Optional[ListBackupStoragePlansRequestBillingInterval]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[RecoveryStoragePlanList]
+            Canonical backup storage catalog.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "compute/plans/backup-storage",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "site_id": site_id,
+                "currency": currency,
+                "billing_interval": billing_interval,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    RecoveryStoragePlanList,
+                    parse_obj_as(
+                        type_=RecoveryStoragePlanList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

@@ -7,10 +7,24 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class VmDetachVolumeRequest(UniversalBaseModel):
-    volume_id: str
-    force: typing.Optional[bool] = None
-    confirm_unmounted: typing.Optional[bool] = None
-    requested_by: typing.Optional[str] = None
+    """
+    Body for detaching a block storage volume from a VM.
+    """
+
+    volume_id: str = pydantic.Field()
+    """
+    ID of the block storage volume to detach.
+    """
+
+    force: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Detach even if the volume still appears to be in use. Default false.
+    """
+
+    confirm_unmounted: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Confirms the volume was unmounted inside the guest. Default false.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

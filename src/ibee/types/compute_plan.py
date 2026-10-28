@@ -5,35 +5,114 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .billing_interval import BillingInterval
+from .compute_plan_availability import ComputePlanAvailability
+from .compute_plan_availability_reason import ComputePlanAvailabilityReason
 from .compute_plan_pricing_status import ComputePlanPricingStatus
 from .vm_type import VmType
 
 
 class ComputePlan(UniversalBaseModel):
+    """
+    A billable compute plan: the vCPU, memory, root-disk and (for GPU plans) GPU shape, with its catalog price.
+    """
+
     plan_id: str = pydantic.Field()
     """
     Plan ID accepted by VM creation.
     """
 
     vm_type: VmType
-    name: str
-    code: str
-    cpu: int
-    ram_mb: int
-    disk_gb: int
-    gpu_count: int
-    gpu_model: typing.Optional[str] = None
-    gpu_memory_gb: typing.Optional[float] = None
-    selectable: bool
-    pricing_status: ComputePlanPricingStatus
-    currency: str
+    name: str = pydantic.Field()
+    """
+    Display name of the plan.
+    """
+
+    code: str = pydantic.Field()
+    """
+    Plan SKU code from the billing catalog.
+    """
+
+    cpu: int = pydantic.Field()
+    """
+    vCPUs included in the plan.
+    """
+
+    ram_mb: int = pydantic.Field()
+    """
+    Memory included in the plan, in MB.
+    """
+
+    disk_gb: int = pydantic.Field()
+    """
+    Root disk included in the plan, in GB.
+    """
+
+    gpu_count: int = pydantic.Field()
+    """
+    GPUs included in the plan; 0 for cloud plans.
+    """
+
+    gpu_model: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    GPU model for GPU plans, for example `A100`; null for cloud plans.
+    """
+
+    gpu_memory_gb: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    GPU memory in GB as listed in the catalog; null for cloud plans.
+    """
+
+    selectable: bool = pydantic.Field()
+    """
+    Whether the catalog has a usable price. This does not indicate available compute or GPU capacity; inspect availability separately.
+    """
+
+    availability: typing.Optional[ComputePlanAvailability] = pydantic.Field(default=None)
+    """
+    Advisory placement result when include_availability=true. Unknown when not requested, unavailable to query, or not verifiable. Creation can still lose a capacity race.
+    """
+
+    available: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether the requested OS, plan and public-IP requirements currently fit. Null when unknown.
+    """
+
+    max_creatable: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Advisory maximum under the requested placement conditions, capped by the engine's batch limit.
+    """
+
+    availability_reason: typing.Optional[ComputePlanAvailabilityReason] = None
+    pricing_status: ComputePlanPricingStatus = pydantic.Field()
+    """
+    - `priced`: the catalog has a price and the plan can be quoted.
+    - `unpriced`: no catalog price; the plan cannot be used to create a VM.
+    """
+
+    currency: str = pydantic.Field()
+    """
+    ISO 4217 code of the currency the price fields are in.
+    """
+
     billing_interval: BillingInterval
-    hourly_price_minor: typing.Optional[int] = None
-    monthly_price_minor: typing.Optional[int] = None
-    site_id: typing.Optional[str] = None
+    hourly_price_minor: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Hourly price in the currency's minor unit (for example paise for INR); null when not priced.
+    """
+
+    monthly_price_minor: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Monthly price in the currency's minor unit; null when not priced.
+    """
+
+    site_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Site the list was filtered by, when a `site_id` was given.
+    """
+
     billing_catalog: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
     """
-    Canonical billing SKU reference for this plan. Pass this object unmodified as `billing_catalog` when creating a VM with this plan — the same flow the portal uses. Treat it as opaque; its fields may grow over time. Billing charges are always computed server-side from `plan_id`, not from this echoed copy.
+    Canonical billing SKU reference and billing_options for this plan. Choose a supported HOURLY or MONTHLY billing_options entry and merge that complete entry into a copy of this object for VM create; its fields may grow over time. Billing charges are always computed server-side from `plan_id`, not from this echoed copy.
     """
 
     if IS_PYDANTIC_V2:

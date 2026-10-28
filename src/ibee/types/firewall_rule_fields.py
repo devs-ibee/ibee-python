@@ -10,14 +10,54 @@ from .firewall_rule_fields_protocol import FirewallRuleFieldsProtocol
 
 
 class FirewallRuleFields(UniversalBaseModel):
-    description: typing.Optional[str] = None
-    direction: typing.Optional[FirewallRuleFieldsDirection] = None
-    protocol: typing.Optional[FirewallRuleFieldsProtocol] = None
-    port_start: typing.Optional[int] = None
-    port_end: typing.Optional[int] = None
-    remote_targets: typing.Optional[typing.List[str]] = None
-    action: typing.Optional[FirewallRuleFieldsAction] = None
-    priority: typing.Optional[int] = None
+    """
+    Fields shared by firewall rule create and update bodies.
+    """
+
+    description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Optional description of the rule.
+    """
+
+    direction: typing.Optional[FirewallRuleFieldsDirection] = pydantic.Field(default=None)
+    """
+    - `ingress`: traffic into the VM (default).
+    - `egress`: traffic out of the VM.
+    """
+
+    protocol: typing.Optional[FirewallRuleFieldsProtocol] = pydantic.Field(default=None)
+    """
+    - `tcp` (default)
+    - `udp`
+    - `icmp`
+    - `any`: all protocols.
+    """
+
+    port_start: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    First port of the range (1-65535). Required for `tcp` and `udp`; ignored for other protocols.
+    """
+
+    port_end: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Last port of the range (1-65535). Defaults to `port_start`.
+    """
+
+    remote_targets: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Remote IPv4 addresses or CIDRs the rule matches, for example `0.0.0.0/0`.
+    """
+
+    action: typing.Optional[FirewallRuleFieldsAction] = pydantic.Field(default=None)
+    """
+    - `allow`: let matching traffic through (default).
+    - `drop`: discard matching traffic.
+    """
+
+    priority: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Evaluation priority of the rule.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

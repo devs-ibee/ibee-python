@@ -16,47 +16,212 @@ from .recovery_volume_manifest_item import RecoveryVolumeManifestItem
 
 
 class BackupRun(UniversalBaseModel):
-    organization_id: str
-    organization_name: typing.Optional[str] = None
-    workspace_id: str
-    workspace_name: typing.Optional[str] = None
-    run_id: str
-    source_run_id: typing.Optional[str] = None
-    vm_backup_id: typing.Optional[str] = None
-    vm_id: str
-    vm_type: typing.Optional[str] = None
-    vm_name: typing.Optional[str] = None
-    os_type: typing.Optional[str] = None
-    os_distro: typing.Optional[str] = None
-    template_id: typing.Optional[str] = None
-    policy_id: typing.Optional[str] = None
-    chain_id: typing.Optional[str] = None
-    recovery_point_id: typing.Optional[str] = None
-    trigger: BackupRunTrigger
-    backup_type: BackupRunBackupType
+    """
+    One backup run of a VM. A succeeded run is a recovery point that `POST .../backups/restore` accepts through `recovery_point_id`.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the organization that owns the VM.
+    """
+
+    organization_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the owning organization, when the service has it.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the workspace the VM belongs to.
+    """
+
+    workspace_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the workspace, when the service has it.
+    """
+
+    run_id: str = pydantic.Field()
+    """
+    Unique ID of the backup run.
+    """
+
+    source_run_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of an earlier run this run derives from, when the service records one.
+    """
+
+    vm_backup_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the backup record in the backup store, when the service records one.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the VM that was backed up.
+    """
+
+    vm_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    `cloud` or `gpu`. Default `cloud`.
+    """
+
+    vm_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the VM at run time.
+    """
+
+    os_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    OS family of the VM (`linux` or `windows`) at run time.
+    """
+
+    os_distro: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    OS distribution of the VM at run time.
+    """
+
+    template_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Template the VM was created from.
+    """
+
+    policy_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Backup policy the run belongs to, when a policy created it.
+    """
+
+    chain_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the backup chain (a full backup and the incremental runs that follow it) the run belongs to.
+    """
+
+    recovery_point_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Value to send as `recovery_point_id` when restoring from this run.
+    """
+
+    trigger: BackupRunTrigger = pydantic.Field()
+    """
+    What started the run.
+    - `scheduled`: the policy schedule.
+    - `manual`: an on-demand request from a user.
+    - `api`: an on-demand request through the API.
+    """
+
+    backup_type: BackupRunBackupType = pydantic.Field()
+    """
+    - `full`: a complete copy of the captured volumes.
+    - `incremental`: only the changes since the previous run in the chain.
+    """
+
     status: BackupStatus
-    storage_backend: typing.Optional[str] = None
-    started_at: typing.Optional[dt.datetime] = None
-    completed_at: typing.Optional[dt.datetime] = None
-    size_gb: typing.Optional[int] = None
-    source_disk_size_gb: typing.Optional[int] = None
-    bytes_transferred: typing.Optional[int] = None
-    backup_stored_size_bytes: typing.Optional[int] = None
-    backup_stored_size_gb: typing.Optional[float] = None
-    protected_storage_bytes: typing.Optional[int] = None
-    billing_storage_bytes: typing.Optional[int] = None
-    billing_storage_source: typing.Optional[str] = None
-    metering_status: typing.Optional[str] = None
-    captured_volume_count: typing.Optional[int] = None
-    root_only: typing.Optional[bool] = None
-    captured_topology_hash: typing.Optional[str] = None
-    capture_scope: typing.Optional[BackupRunCaptureScope] = None
-    recovery_point_type: typing.Optional[BackupRunRecoveryPointType] = None
-    volume_manifest: typing.Optional[typing.List[RecoveryVolumeManifestItem]] = None
+    storage_backend: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Identifier of the storage backend that holds the captured data.
+    """
+
+    started_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the run started (ISO 8601); null while queued.
+    """
+
+    completed_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the run finished (ISO 8601); null until it does.
+    """
+
+    size_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Size of the captured data in GiB.
+    """
+
+    source_disk_size_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Provisioned size of the source root disk in GiB at capture time.
+    """
+
+    bytes_transferred: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Bytes transferred to the backup store during the run.
+    """
+
+    backup_stored_size_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Bytes the backup occupies in the backup store.
+    """
+
+    backup_stored_size_gb: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    `backup_stored_size_bytes` expressed in GiB.
+    """
+
+    protected_storage_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Bytes of source data protected by this recovery point.
+    """
+
+    billing_storage_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Bytes billed for storing this recovery point.
+    """
+
+    billing_storage_source: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    How `billing_storage_bytes` was obtained.
+    - `metered`: measured in the backup store.
+    - `metered_from_manifest`: summed from the volume manifest.
+    - `unavailable`: not measured yet.
+    """
+
+    metering_status: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    `metered` once storage has been measured for billing; `unavailable` until then.
+    """
+
+    captured_volume_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of volumes in the recovery point.
+    """
+
+    root_only: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True when only the root disk was captured.
+    """
+
+    captured_topology_hash: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Hash of the VM's volume layout at capture time; a different hash on the live VM means the layout drifted.
+    """
+
+    capture_scope: typing.Optional[BackupRunCaptureScope] = pydantic.Field(default=None)
+    """
+    Which volumes the recovery point contains.
+    - `root_only`: the root disk only.
+    - `all_attached`: the root disk and every attached data volume.
+    - `selective`: the root disk and the data volumes that were selected.
+    """
+
+    recovery_point_type: typing.Optional[BackupRunRecoveryPointType] = pydantic.Field(default=None)
+    """
+    Always `backup` for a backup run.
+    """
+
+    volume_manifest: typing.Optional[typing.List[RecoveryVolumeManifestItem]] = pydantic.Field(default=None)
+    """
+    One entry per captured volume.
+    """
+
     volume_manifest_summary: typing.Optional[RecoveryPointSummary] = None
     live_drift_summary: typing.Optional[LiveDriftSummary] = None
-    error_message: typing.Optional[str] = None
-    metadata: typing.Optional[typing.Dict[str, typing.Any]] = None
+    error_message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error detail when `status` is `failed`.
+    """
+
+    metadata: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Additional service-specific key-value data.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -19,6 +19,7 @@ from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..types.create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
+from ..types.create_nat_port_forwarding_rule_request_target_type import CreateNatPortForwardingRuleRequestTargetType
 from ..types.error import Error
 from ..types.nat_gateway import NatGateway
 from ..types.nat_port_forwarding_rule import NatPortForwardingRule
@@ -29,7 +30,9 @@ from ..types.vpc_detail import VpcDetail
 from ..types.vpc_summary import VpcSummary
 from .types.attach_vpc_node_request_connectivity import AttachVpcNodeRequestConnectivity
 from .types.create_vpc_request_connectivity_type import CreateVpcRequestConnectivityType
+from .types.nat_gateway_delete_request_public_ip_action import NatGatewayDeleteRequestPublicIpAction
 from .types.update_nat_port_forwarding_rule_request_protocol import UpdateNatPortForwardingRuleRequestProtocol
+from .types.update_nat_port_forwarding_rule_request_target_type import UpdateNatPortForwardingRuleRequestTargetType
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -228,6 +231,7 @@ class RawVpcsClient:
         Parameters
         ----------
         name : str
+            Display name of the VPC.
 
         site_id : str
             Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
@@ -236,19 +240,25 @@ class RawVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description.
 
         region : typing.Optional[str]
+            Optional region label stored with the VPC.
 
         cidr : typing.Optional[str]
             RFC1918 IPv4 CIDR with a prefix between /22 and /28.
 
         auto_cidr : typing.Optional[bool]
+            Let the service choose a free CIDR when `cidr` is omitted. Default true.
 
         create_default_subnet : typing.Optional[bool]
+            Create a first subnet together with the VPC. Default true.
 
         default_subnet_cidr : typing.Optional[str]
+            CIDR for that first subnet; chosen automatically when omitted.
 
         is_default : typing.Optional[bool]
+            Mark the VPC as the workspace's default VPC. Default false.
 
         connectivity_type : typing.Optional[CreateVpcRequestConnectivityType]
             The VPC's internet model; the server uses `public` when this is omitted. `public` keeps dedicated public IPs available to its VMs. `private` has no shared public edge, but a VM can still be given a Reserved IP. `nat_gateway` is a private VPC with managed outbound NAT and refuses dedicated public IPs.
@@ -599,8 +609,10 @@ class RawVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         description : typing.Optional[str]
+            New description.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -840,17 +852,22 @@ class RawVpcsClient:
             VPC ID.
 
         name : str
+            Display name of the subnet.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         cidr : typing.Optional[str]
+            IPv4 CIDR inside the VPC range. Chosen automatically when omitted and `auto_cidr` is true.
 
         auto_cidr : typing.Optional[bool]
+            Let the service choose a free CIDR when `cidr` is omitted. Default true.
 
         prefix_length : typing.Optional[int]
+            Prefix length to use for an automatically chosen CIDR.
 
         dns : typing.Optional[typing.Sequence[str]]
+            DNS resolvers handed to instances in the subnet. Default `1.1.1.1` and `8.8.8.8`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1191,143 +1208,6 @@ class RawVpcsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def update_vpc_subnet(
-        self,
-        vpc_id: str,
-        subnet_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        dns: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[Subnet]:
-        """
-        Renames a VPC subnet or changes its DNS settings. Requires scope: network.write.
-
-        Parameters
-        ----------
-        vpc_id : str
-            VPC ID.
-
-        subnet_id : str
-            Subnet ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-
-        dns : typing.Optional[typing.Sequence[str]]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[Subnet]
-            Subnet updated successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"networking/vpcs/{encode_path_param(vpc_id)}/subnets/{encode_path_param(subnet_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "dns": dns,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    Subnet,
-                    parse_obj_as(
-                        type_=Subnet,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     def list_vpc_nodes(
         self,
         vpc_id: str,
@@ -1422,6 +1302,7 @@ class RawVpcsClient:
         subnet_id: str,
         workspace_id: typing.Optional[str] = None,
         connectivity: typing.Optional[AttachVpcNodeRequestConnectivity] = OMIT,
+        requested_private_ip: typing.Optional[str] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[NetworkAllocation]:
@@ -1434,15 +1315,27 @@ class RawVpcsClient:
             VPC ID.
 
         vm_id : str
+            ID of the VM to attach.
 
         subnet_id : str
+            Subnet of the VPC to attach the VM to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         connectivity : typing.Optional[AttachVpcNodeRequestConnectivity]
+            How the VM reaches the internet from this subnet.
+            - `private`: no internet path.
+            - `public_ip`: a Reserved IP is attached to the allocation.
+            - `nat`: outbound traffic goes through the VPC's NAT gateway.
+
+            Default `private`.
+
+        requested_private_ip : typing.Optional[str]
+            Private IPv4 address to give the VM in the subnet. Chosen automatically when omitted.
 
         reserved_public_ip_id : typing.Optional[str]
+            Reserved IP to attach to the VM. Only valid with `public_ip` connectivity.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1462,6 +1355,7 @@ class RawVpcsClient:
                 "vm_id": vm_id,
                 "subnet_id": subnet_id,
                 "connectivity": connectivity,
+                "requested_private_ip": requested_private_ip,
                 "reserved_public_ip_id": reserved_public_ip_id,
             },
             headers={
@@ -1778,10 +1672,13 @@ class RawVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         subnet_id : typing.Optional[str]
+            Subnet the gateway is placed in; chosen by the service when omitted.
 
         reserved_public_ip_id : typing.Optional[str]
+            Reserved IP to use as the gateway's public address; a platform-assigned address is used when omitted.
 
         name : typing.Optional[str]
+            Display name of the gateway. Default `NAT Gateway`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1921,6 +1818,7 @@ class RawVpcsClient:
         nat_gateway_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
+        public_ip_action: typing.Optional[NatGatewayDeleteRequestPublicIpAction] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[None]:
         """
@@ -1937,6 +1835,12 @@ class RawVpcsClient:
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
+        public_ip_action : typing.Optional[NatGatewayDeleteRequestPublicIpAction]
+            What to do with the gateway's public IP.
+            - `release`: give the address back.
+            - `reserve`: keep it as a Reserved IP in the workspace.
+            Omitted: platform-assigned addresses are released; customer Reserved IPs are detached and kept.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -1950,11 +1854,152 @@ class RawVpcsClient:
             params={
                 "workspace_id": workspace_id,
             },
+            json={
+                "public_ip_action": public_ip_action,
+            },
+            headers={
+                "content-type": "application/json",
+            },
             request_options=request_options,
+            omit=OMIT,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return HttpResponse(response=_response, data=None)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def update_nat_gateway_public_ip(
+        self,
+        vpc_id: str,
+        nat_gateway_id: str,
+        *,
+        reserved_public_ip_id: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[NatGateway]:
+        """
+        Replaces the NAT gateway's public IP with a Reserved IP, keeping the port-forwarding rules, as the portal's NAT card does. Requires scope: network.write.
+
+        Parameters
+        ----------
+        vpc_id : str
+            VPC ID.
+
+        nat_gateway_id : str
+            NAT gateway ID.
+
+        reserved_public_ip_id : str
+            Reserved IP to put on the gateway. Port-forwarding rules are preserved.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[NatGateway]
+            NAT gateway updated.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways/{encode_path_param(nat_gateway_id)}/public-ip",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "reserved_public_ip_id": reserved_public_ip_id,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    NatGateway,
+                    parse_obj_as(
+                        type_=NatGateway,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -2142,6 +2187,8 @@ class RawVpcsClient:
         internal_port: int,
         workspace_id: typing.Optional[str] = None,
         protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = OMIT,
+        target_type: typing.Optional[CreateNatPortForwardingRuleRequestTargetType] = OMIT,
+        target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -2158,21 +2205,35 @@ class RawVpcsClient:
             NAT gateway ID.
 
         name : str
+            Display name of the rule.
 
         external_port : int
+            Port on the gateway's public address (1-65535).
 
         internal_ip : str
+            Private IPv4 address of the VM inside the VPC that receives the traffic.
 
         internal_port : int
+            Port on the VM that receives the traffic (1-65535).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         protocol : typing.Optional[CreateNatPortForwardingRuleRequestProtocol]
+            - `tcp` (default)
+            - `udp`
+
+        target_type : typing.Optional[CreateNatPortForwardingRuleRequestTargetType]
+            `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
+
+        target_vm_ids : typing.Optional[typing.Sequence[str]]
+            VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
 
         note : typing.Optional[str]
+            Free-text note stored with the rule. Default empty.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied. Default true.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2194,6 +2255,8 @@ class RawVpcsClient:
                 "external_port": external_port,
                 "internal_ip": internal_ip,
                 "internal_port": internal_port,
+                "target_type": target_type,
+                "target_vm_ids": target_vm_ids,
                 "note": note,
                 "enabled": enabled,
             },
@@ -2419,6 +2482,8 @@ class RawVpcsClient:
         external_port: typing.Optional[int] = OMIT,
         internal_ip: typing.Optional[str] = OMIT,
         internal_port: typing.Optional[int] = OMIT,
+        target_type: typing.Optional[UpdateNatPortForwardingRuleRequestTargetType] = OMIT,
+        target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -2441,18 +2506,32 @@ class RawVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            Display name of the rule.
 
         protocol : typing.Optional[UpdateNatPortForwardingRuleRequestProtocol]
+            - `tcp`
+            - `udp`
 
         external_port : typing.Optional[int]
+            Port on the gateway's public address (1-65535).
 
         internal_ip : typing.Optional[str]
+            Private IPv4 address of the VM inside the VPC that receives the traffic.
 
         internal_port : typing.Optional[int]
+            Port on the VM that receives the traffic (1-65535).
+
+        target_type : typing.Optional[UpdateNatPortForwardingRuleRequestTargetType]
+            `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
+
+        target_vm_ids : typing.Optional[typing.Sequence[str]]
+            VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
 
         note : typing.Optional[str]
+            Free-text note stored with the rule.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2474,6 +2553,8 @@ class RawVpcsClient:
                 "external_port": external_port,
                 "internal_ip": internal_ip,
                 "internal_port": internal_port,
+                "target_type": target_type,
+                "target_vm_ids": target_vm_ids,
                 "note": note,
                 "enabled": enabled,
             },
@@ -2772,6 +2853,7 @@ class AsyncRawVpcsClient:
         Parameters
         ----------
         name : str
+            Display name of the VPC.
 
         site_id : str
             Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
@@ -2780,19 +2862,25 @@ class AsyncRawVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description.
 
         region : typing.Optional[str]
+            Optional region label stored with the VPC.
 
         cidr : typing.Optional[str]
             RFC1918 IPv4 CIDR with a prefix between /22 and /28.
 
         auto_cidr : typing.Optional[bool]
+            Let the service choose a free CIDR when `cidr` is omitted. Default true.
 
         create_default_subnet : typing.Optional[bool]
+            Create a first subnet together with the VPC. Default true.
 
         default_subnet_cidr : typing.Optional[str]
+            CIDR for that first subnet; chosen automatically when omitted.
 
         is_default : typing.Optional[bool]
+            Mark the VPC as the workspace's default VPC. Default false.
 
         connectivity_type : typing.Optional[CreateVpcRequestConnectivityType]
             The VPC's internet model; the server uses `public` when this is omitted. `public` keeps dedicated public IPs available to its VMs. `private` has no shared public edge, but a VM can still be given a Reserved IP. `nat_gateway` is a private VPC with managed outbound NAT and refuses dedicated public IPs.
@@ -3143,8 +3231,10 @@ class AsyncRawVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         description : typing.Optional[str]
+            New description.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3384,17 +3474,22 @@ class AsyncRawVpcsClient:
             VPC ID.
 
         name : str
+            Display name of the subnet.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         cidr : typing.Optional[str]
+            IPv4 CIDR inside the VPC range. Chosen automatically when omitted and `auto_cidr` is true.
 
         auto_cidr : typing.Optional[bool]
+            Let the service choose a free CIDR when `cidr` is omitted. Default true.
 
         prefix_length : typing.Optional[int]
+            Prefix length to use for an automatically chosen CIDR.
 
         dns : typing.Optional[typing.Sequence[str]]
+            DNS resolvers handed to instances in the subnet. Default `1.1.1.1` and `8.8.8.8`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3735,143 +3830,6 @@ class AsyncRawVpcsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def update_vpc_subnet(
-        self,
-        vpc_id: str,
-        subnet_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        dns: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[Subnet]:
-        """
-        Renames a VPC subnet or changes its DNS settings. Requires scope: network.write.
-
-        Parameters
-        ----------
-        vpc_id : str
-            VPC ID.
-
-        subnet_id : str
-            Subnet ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-
-        dns : typing.Optional[typing.Sequence[str]]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[Subnet]
-            Subnet updated successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"networking/vpcs/{encode_path_param(vpc_id)}/subnets/{encode_path_param(subnet_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "dns": dns,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    Subnet,
-                    parse_obj_as(
-                        type_=Subnet,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     async def list_vpc_nodes(
         self,
         vpc_id: str,
@@ -3966,6 +3924,7 @@ class AsyncRawVpcsClient:
         subnet_id: str,
         workspace_id: typing.Optional[str] = None,
         connectivity: typing.Optional[AttachVpcNodeRequestConnectivity] = OMIT,
+        requested_private_ip: typing.Optional[str] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[NetworkAllocation]:
@@ -3978,15 +3937,27 @@ class AsyncRawVpcsClient:
             VPC ID.
 
         vm_id : str
+            ID of the VM to attach.
 
         subnet_id : str
+            Subnet of the VPC to attach the VM to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         connectivity : typing.Optional[AttachVpcNodeRequestConnectivity]
+            How the VM reaches the internet from this subnet.
+            - `private`: no internet path.
+            - `public_ip`: a Reserved IP is attached to the allocation.
+            - `nat`: outbound traffic goes through the VPC's NAT gateway.
+
+            Default `private`.
+
+        requested_private_ip : typing.Optional[str]
+            Private IPv4 address to give the VM in the subnet. Chosen automatically when omitted.
 
         reserved_public_ip_id : typing.Optional[str]
+            Reserved IP to attach to the VM. Only valid with `public_ip` connectivity.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4006,6 +3977,7 @@ class AsyncRawVpcsClient:
                 "vm_id": vm_id,
                 "subnet_id": subnet_id,
                 "connectivity": connectivity,
+                "requested_private_ip": requested_private_ip,
                 "reserved_public_ip_id": reserved_public_ip_id,
             },
             headers={
@@ -4322,10 +4294,13 @@ class AsyncRawVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         subnet_id : typing.Optional[str]
+            Subnet the gateway is placed in; chosen by the service when omitted.
 
         reserved_public_ip_id : typing.Optional[str]
+            Reserved IP to use as the gateway's public address; a platform-assigned address is used when omitted.
 
         name : typing.Optional[str]
+            Display name of the gateway. Default `NAT Gateway`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4465,6 +4440,7 @@ class AsyncRawVpcsClient:
         nat_gateway_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
+        public_ip_action: typing.Optional[NatGatewayDeleteRequestPublicIpAction] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[None]:
         """
@@ -4481,6 +4457,12 @@ class AsyncRawVpcsClient:
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
+        public_ip_action : typing.Optional[NatGatewayDeleteRequestPublicIpAction]
+            What to do with the gateway's public IP.
+            - `release`: give the address back.
+            - `reserve`: keep it as a Reserved IP in the workspace.
+            Omitted: platform-assigned addresses are released; customer Reserved IPs are detached and kept.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -4494,11 +4476,152 @@ class AsyncRawVpcsClient:
             params={
                 "workspace_id": workspace_id,
             },
+            json={
+                "public_ip_action": public_ip_action,
+            },
+            headers={
+                "content-type": "application/json",
+            },
             request_options=request_options,
+            omit=OMIT,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return AsyncHttpResponse(response=_response, data=None)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def update_nat_gateway_public_ip(
+        self,
+        vpc_id: str,
+        nat_gateway_id: str,
+        *,
+        reserved_public_ip_id: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[NatGateway]:
+        """
+        Replaces the NAT gateway's public IP with a Reserved IP, keeping the port-forwarding rules, as the portal's NAT card does. Requires scope: network.write.
+
+        Parameters
+        ----------
+        vpc_id : str
+            VPC ID.
+
+        nat_gateway_id : str
+            NAT gateway ID.
+
+        reserved_public_ip_id : str
+            Reserved IP to put on the gateway. Port-forwarding rules are preserved.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[NatGateway]
+            NAT gateway updated.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways/{encode_path_param(nat_gateway_id)}/public-ip",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "reserved_public_ip_id": reserved_public_ip_id,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    NatGateway,
+                    parse_obj_as(
+                        type_=NatGateway,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -4686,6 +4809,8 @@ class AsyncRawVpcsClient:
         internal_port: int,
         workspace_id: typing.Optional[str] = None,
         protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = OMIT,
+        target_type: typing.Optional[CreateNatPortForwardingRuleRequestTargetType] = OMIT,
+        target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -4702,21 +4827,35 @@ class AsyncRawVpcsClient:
             NAT gateway ID.
 
         name : str
+            Display name of the rule.
 
         external_port : int
+            Port on the gateway's public address (1-65535).
 
         internal_ip : str
+            Private IPv4 address of the VM inside the VPC that receives the traffic.
 
         internal_port : int
+            Port on the VM that receives the traffic (1-65535).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         protocol : typing.Optional[CreateNatPortForwardingRuleRequestProtocol]
+            - `tcp` (default)
+            - `udp`
+
+        target_type : typing.Optional[CreateNatPortForwardingRuleRequestTargetType]
+            `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
+
+        target_vm_ids : typing.Optional[typing.Sequence[str]]
+            VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
 
         note : typing.Optional[str]
+            Free-text note stored with the rule. Default empty.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied. Default true.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4738,6 +4877,8 @@ class AsyncRawVpcsClient:
                 "external_port": external_port,
                 "internal_ip": internal_ip,
                 "internal_port": internal_port,
+                "target_type": target_type,
+                "target_vm_ids": target_vm_ids,
                 "note": note,
                 "enabled": enabled,
             },
@@ -4963,6 +5104,8 @@ class AsyncRawVpcsClient:
         external_port: typing.Optional[int] = OMIT,
         internal_ip: typing.Optional[str] = OMIT,
         internal_port: typing.Optional[int] = OMIT,
+        target_type: typing.Optional[UpdateNatPortForwardingRuleRequestTargetType] = OMIT,
+        target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -4985,18 +5128,32 @@ class AsyncRawVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            Display name of the rule.
 
         protocol : typing.Optional[UpdateNatPortForwardingRuleRequestProtocol]
+            - `tcp`
+            - `udp`
 
         external_port : typing.Optional[int]
+            Port on the gateway's public address (1-65535).
 
         internal_ip : typing.Optional[str]
+            Private IPv4 address of the VM inside the VPC that receives the traffic.
 
         internal_port : typing.Optional[int]
+            Port on the VM that receives the traffic (1-65535).
+
+        target_type : typing.Optional[UpdateNatPortForwardingRuleRequestTargetType]
+            `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
+
+        target_vm_ids : typing.Optional[typing.Sequence[str]]
+            VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
 
         note : typing.Optional[str]
+            Free-text note stored with the rule.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -5018,6 +5175,8 @@ class AsyncRawVpcsClient:
                 "external_port": external_port,
                 "internal_ip": internal_ip,
                 "internal_port": internal_port,
+                "target_type": target_type,
+                "target_vm_ids": target_vm_ids,
                 "note": note,
                 "enabled": enabled,
             },

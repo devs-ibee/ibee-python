@@ -140,13 +140,16 @@ class RawFirewallsClient:
         Parameters
         ----------
         name : str
+            Display name of the group.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description.
 
         is_default : typing.Optional[bool]
+            Mark the group as the workspace's default group. Default false.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -493,20 +496,33 @@ class RawFirewallsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description of the rule.
 
         direction : typing.Optional[FirewallRuleFieldsDirection]
+            - `ingress`: traffic into the VM (default).
+            - `egress`: traffic out of the VM.
 
         protocol : typing.Optional[FirewallRuleFieldsProtocol]
+            - `tcp` (default)
+            - `udp`
+            - `icmp`
+            - `any`: all protocols.
 
         port_start : typing.Optional[int]
+            First port of the range (1-65535). Required for `tcp` and `udp`; ignored for other protocols.
 
         port_end : typing.Optional[int]
+            Last port of the range (1-65535). Defaults to `port_start`.
 
         remote_targets : typing.Optional[typing.Sequence[str]]
+            Remote IPv4 addresses or CIDRs the rule matches, for example `0.0.0.0/0`.
 
         action : typing.Optional[FirewallRuleFieldsAction]
+            - `allow`: let matching traffic through (default).
+            - `drop`: discard matching traffic.
 
         priority : typing.Optional[int]
+            Evaluation priority of the rule.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -767,22 +783,36 @@ class RawFirewallsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied.
 
         description : typing.Optional[str]
+            Optional description of the rule.
 
         direction : typing.Optional[FirewallRuleFieldsDirection]
+            - `ingress`: traffic into the VM (default).
+            - `egress`: traffic out of the VM.
 
         protocol : typing.Optional[FirewallRuleFieldsProtocol]
+            - `tcp` (default)
+            - `udp`
+            - `icmp`
+            - `any`: all protocols.
 
         port_start : typing.Optional[int]
+            First port of the range (1-65535). Required for `tcp` and `udp`; ignored for other protocols.
 
         port_end : typing.Optional[int]
+            Last port of the range (1-65535). Defaults to `port_start`.
 
         remote_targets : typing.Optional[typing.Sequence[str]]
+            Remote IPv4 addresses or CIDRs the rule matches, for example `0.0.0.0/0`.
 
         action : typing.Optional[FirewallRuleFieldsAction]
+            - `allow`: let matching traffic through (default).
+            - `drop`: discard matching traffic.
 
         priority : typing.Optional[int]
+            Evaluation priority of the rule.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -924,6 +954,7 @@ class RawFirewallsClient:
             Maximum number of records to return.
 
         skip : typing.Optional[int]
+            Number of items to skip before the first returned item. Default 0.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1023,6 +1054,7 @@ class RawFirewallsClient:
             Firewall group ID.
 
         vm_id : str
+            ID of the VM.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -1359,13 +1391,16 @@ class AsyncRawFirewallsClient:
         Parameters
         ----------
         name : str
+            Display name of the group.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description.
 
         is_default : typing.Optional[bool]
+            Mark the group as the workspace's default group. Default false.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1712,20 +1747,33 @@ class AsyncRawFirewallsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description of the rule.
 
         direction : typing.Optional[FirewallRuleFieldsDirection]
+            - `ingress`: traffic into the VM (default).
+            - `egress`: traffic out of the VM.
 
         protocol : typing.Optional[FirewallRuleFieldsProtocol]
+            - `tcp` (default)
+            - `udp`
+            - `icmp`
+            - `any`: all protocols.
 
         port_start : typing.Optional[int]
+            First port of the range (1-65535). Required for `tcp` and `udp`; ignored for other protocols.
 
         port_end : typing.Optional[int]
+            Last port of the range (1-65535). Defaults to `port_start`.
 
         remote_targets : typing.Optional[typing.Sequence[str]]
+            Remote IPv4 addresses or CIDRs the rule matches, for example `0.0.0.0/0`.
 
         action : typing.Optional[FirewallRuleFieldsAction]
+            - `allow`: let matching traffic through (default).
+            - `drop`: discard matching traffic.
 
         priority : typing.Optional[int]
+            Evaluation priority of the rule.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1986,22 +2034,36 @@ class AsyncRawFirewallsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied.
 
         description : typing.Optional[str]
+            Optional description of the rule.
 
         direction : typing.Optional[FirewallRuleFieldsDirection]
+            - `ingress`: traffic into the VM (default).
+            - `egress`: traffic out of the VM.
 
         protocol : typing.Optional[FirewallRuleFieldsProtocol]
+            - `tcp` (default)
+            - `udp`
+            - `icmp`
+            - `any`: all protocols.
 
         port_start : typing.Optional[int]
+            First port of the range (1-65535). Required for `tcp` and `udp`; ignored for other protocols.
 
         port_end : typing.Optional[int]
+            Last port of the range (1-65535). Defaults to `port_start`.
 
         remote_targets : typing.Optional[typing.Sequence[str]]
+            Remote IPv4 addresses or CIDRs the rule matches, for example `0.0.0.0/0`.
 
         action : typing.Optional[FirewallRuleFieldsAction]
+            - `allow`: let matching traffic through (default).
+            - `drop`: discard matching traffic.
 
         priority : typing.Optional[int]
+            Evaluation priority of the rule.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2143,6 +2205,7 @@ class AsyncRawFirewallsClient:
             Maximum number of records to return.
 
         skip : typing.Optional[int]
+            Number of items to skip before the first returned item. Default 0.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2242,6 +2305,7 @@ class AsyncRawFirewallsClient:
             Firewall group ID.
 
         vm_id : str
+            ID of the VM.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.

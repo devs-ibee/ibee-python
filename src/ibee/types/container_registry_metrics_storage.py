@@ -8,19 +8,54 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistryMetricsStorage(UniversalBaseModel):
-    used_bytes: int
-    quota_bytes: int
-    remaining_bytes: int
-    utilization_percent: float
-    measured_at: dt.datetime
+    """
+    Storage use against the plan quota.
+    """
+
+    used_bytes: int = pydantic.Field()
+    """
+    Bytes stored.
+    """
+
+    quota_bytes: int = pydantic.Field()
+    """
+    Plan quota in bytes.
+    """
+
+    remaining_bytes: int = pydantic.Field()
+    """
+    Bytes left before the quota is reached.
+    """
+
+    utilization_percent: float = pydantic.Field()
+    """
+    `used_bytes` as a percentage of `quota_bytes`.
+    """
+
+    measured_at: dt.datetime = pydantic.Field()
+    """
+    When storage use was measured (ISO 8601).
+    """
+
     gb_definition_bytes: int = pydantic.Field()
     """
     Always 1000000000.
     """
 
-    used_gb: float
-    quota_gb: float
-    remaining_gb: float
+    used_gb: float = pydantic.Field()
+    """
+    `used_bytes` in decimal GB.
+    """
+
+    quota_gb: float = pydantic.Field()
+    """
+    `quota_bytes` in decimal GB.
+    """
+
+    remaining_gb: float = pydantic.Field()
+    """
+    `remaining_bytes` in decimal GB.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

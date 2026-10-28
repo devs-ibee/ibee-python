@@ -8,11 +8,34 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class CdnWebsiteConfig(UniversalBaseModel):
-    distribution_id: str
-    enabled: bool
-    index_document: str
-    created_at: typing.Optional[dt.datetime] = None
-    updated_at: typing.Optional[dt.datetime] = None
+    """
+    Static-website settings of a distribution.
+    """
+
+    distribution_id: str = pydantic.Field()
+    """
+    ID of the distribution.
+    """
+
+    enabled: bool = pydantic.Field()
+    """
+    Whether static-website serving is on.
+    """
+
+    index_document: str = pydantic.Field()
+    """
+    Object served for directory requests.
+    """
+
+    created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the settings were created (ISO 8601).
+    """
+
+    updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the settings were last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

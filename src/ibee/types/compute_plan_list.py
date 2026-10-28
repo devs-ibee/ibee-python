@@ -10,11 +10,31 @@ from .vm_type import VmType
 
 
 class ComputePlanList(UniversalBaseModel):
-    plans: typing.List[ComputePlan]
-    count: int
+    """
+    Plans returned by `GET /compute/plans`.
+    """
+
+    plans: typing.List[ComputePlan] = pydantic.Field()
+    """
+    Plans matching the request.
+    """
+
+    count: int = pydantic.Field()
+    """
+    Number of items in `plans`.
+    """
+
     vm_type: VmType
-    site_id: typing.Optional[str] = None
-    currency: str
+    site_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Site filter that was applied, when one was given.
+    """
+
+    currency: str = pydantic.Field()
+    """
+    ISO 4217 code of the currency the prices are quoted in.
+    """
+
     billing_interval: BillingInterval
 
     if IS_PYDANTIC_V2:

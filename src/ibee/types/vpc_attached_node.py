@@ -9,15 +9,57 @@ from .vpc_attached_node_connectivity import VpcAttachedNodeConnectivity
 
 
 class VpcAttachedNode(UniversalBaseModel):
-    allocation_id: typing.Optional[str] = None
-    vm_id: typing.Optional[str] = None
-    subnet_id: typing.Optional[str] = None
-    private_ip: typing.Optional[str] = None
-    connectivity: typing.Optional[VpcAttachedNodeConnectivity] = None
-    public_ip: typing.Optional[str] = None
-    nat_public_ip: typing.Optional[str] = None
-    status: typing.Optional[str] = None
-    attached_at: typing.Optional[dt.datetime] = None
+    """
+    Summary of a VM attached to a VPC.
+    """
+
+    allocation_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the attachment.
+    """
+
+    vm_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the attached VM.
+    """
+
+    subnet_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Subnet the VM is attached to.
+    """
+
+    private_ip: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Private IPv4 address assigned to the VM.
+    """
+
+    connectivity: typing.Optional[VpcAttachedNodeConnectivity] = pydantic.Field(default=None)
+    """
+    How the VM reaches the internet from this subnet.
+    - `private`: no internet path.
+    - `public_ip`: a Reserved IP is attached to the allocation.
+    - `nat`: outbound traffic goes through the VPC's NAT gateway.
+    """
+
+    public_ip: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Reserved IP address attached to the VM, when `connectivity` is `public_ip`.
+    """
+
+    nat_public_ip: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Public address of the NAT gateway used, when `connectivity` is `nat`.
+    """
+
+    status: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Attachment state: `reserved`, `attaching`, `attached`, `moving`, `detaching` or `releasing`.
+    """
+
+    attached_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the VM was attached (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

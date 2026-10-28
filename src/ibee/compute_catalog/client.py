@@ -8,8 +8,12 @@ from ..types.billing_interval import BillingInterval
 from ..types.compute_image_list import ComputeImageList
 from ..types.compute_plan_list import ComputePlanList
 from ..types.compute_site_list import ComputeSiteList
+from ..types.recovery_storage_plan_list import RecoveryStoragePlanList
 from ..types.vm_type import VmType
 from .raw_client import AsyncRawComputeCatalogClient, RawComputeCatalogClient
+from .types.list_backup_storage_plans_request_billing_interval import ListBackupStoragePlansRequestBillingInterval
+from .types.list_compute_plans_request_os_type import ListComputePlansRequestOsType
+from .types.list_snapshot_storage_plans_request_billing_interval import ListSnapshotStoragePlansRequestBillingInterval
 
 
 class ComputeCatalogClient:
@@ -68,6 +72,9 @@ class ComputeCatalogClient:
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[BillingInterval] = None,
+        include_availability: typing.Optional[bool] = None,
+        os_type: typing.Optional[ListComputePlansRequestOsType] = None,
+        requires_public_ip: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComputePlanList:
         """
@@ -76,6 +83,9 @@ class ComputeCatalogClient:
         Parameters
         ----------
         vm_type : VmType
+            Kind of VM the plans are for. Required.
+            - `cloud`
+            - `gpu`
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -84,8 +94,21 @@ class ComputeCatalogClient:
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
 
         currency : typing.Optional[str]
+            ISO 4217 code of the currency to quote prices in. Default `INR`.
 
         billing_interval : typing.Optional[BillingInterval]
+            Billing period to quote prices for.
+            - `HOURLY`
+            - `MONTHLY` (default)
+
+        include_availability : typing.Optional[bool]
+            Include an advisory placement check. Requires site_id. This does not reserve stock.
+
+        os_type : typing.Optional[ListComputePlansRequestOsType]
+            OS pool to check when include_availability is true.
+
+        requires_public_ip : typing.Optional[bool]
+            Include public IPv4 capacity in the advisory placement check.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -113,6 +136,9 @@ class ComputeCatalogClient:
             site_id=site_id,
             currency=currency,
             billing_interval=billing_interval,
+            include_availability=include_availability,
+            os_type=os_type,
+            requires_public_ip=requires_public_ip,
             request_options=request_options,
         )
         return _response.data
@@ -131,6 +157,9 @@ class ComputeCatalogClient:
         Parameters
         ----------
         vm_type : VmType
+            Kind of VM the images are for. Required.
+            - `cloud`
+            - `gpu`
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -160,6 +189,108 @@ class ComputeCatalogClient:
         """
         _response = self._raw_client.list_compute_images(
             vm_type=vm_type, workspace_id=workspace_id, site_id=site_id, request_options=request_options
+        )
+        return _response.data
+
+    def list_snapshot_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListSnapshotStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryStoragePlanList:
+        """
+        Select a priced item and send its billing_catalog unchanged when creating a snapshot. Discovery does not reserve capacity or create a resource.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+
+        currency : typing.Optional[str]
+
+        billing_interval : typing.Optional[ListSnapshotStoragePlansRequestBillingInterval]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryStoragePlanList
+            Canonical snapshot storage catalog.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.compute_catalog.list_snapshot_storage_plans(
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.list_snapshot_storage_plans(
+            workspace_id=workspace_id,
+            site_id=site_id,
+            currency=currency,
+            billing_interval=billing_interval,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def list_backup_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListBackupStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryStoragePlanList:
+        """
+        Select a priced item and send its billing_catalog unchanged when enabling backups or creating a manual backup run.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+
+        currency : typing.Optional[str]
+
+        billing_interval : typing.Optional[ListBackupStoragePlansRequestBillingInterval]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryStoragePlanList
+            Canonical backup storage catalog.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.compute_catalog.list_backup_storage_plans(
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.list_backup_storage_plans(
+            workspace_id=workspace_id,
+            site_id=site_id,
+            currency=currency,
+            billing_interval=billing_interval,
+            request_options=request_options,
         )
         return _response.data
 
@@ -230,6 +361,9 @@ class AsyncComputeCatalogClient:
         site_id: typing.Optional[str] = None,
         currency: typing.Optional[str] = None,
         billing_interval: typing.Optional[BillingInterval] = None,
+        include_availability: typing.Optional[bool] = None,
+        os_type: typing.Optional[ListComputePlansRequestOsType] = None,
+        requires_public_ip: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComputePlanList:
         """
@@ -238,6 +372,9 @@ class AsyncComputeCatalogClient:
         Parameters
         ----------
         vm_type : VmType
+            Kind of VM the plans are for. Required.
+            - `cloud`
+            - `gpu`
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -246,8 +383,21 @@ class AsyncComputeCatalogClient:
             Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
 
         currency : typing.Optional[str]
+            ISO 4217 code of the currency to quote prices in. Default `INR`.
 
         billing_interval : typing.Optional[BillingInterval]
+            Billing period to quote prices for.
+            - `HOURLY`
+            - `MONTHLY` (default)
+
+        include_availability : typing.Optional[bool]
+            Include an advisory placement check. Requires site_id. This does not reserve stock.
+
+        os_type : typing.Optional[ListComputePlansRequestOsType]
+            OS pool to check when include_availability is true.
+
+        requires_public_ip : typing.Optional[bool]
+            Include public IPv4 capacity in the advisory placement check.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -283,6 +433,9 @@ class AsyncComputeCatalogClient:
             site_id=site_id,
             currency=currency,
             billing_interval=billing_interval,
+            include_availability=include_availability,
+            os_type=os_type,
+            requires_public_ip=requires_public_ip,
             request_options=request_options,
         )
         return _response.data
@@ -301,6 +454,9 @@ class AsyncComputeCatalogClient:
         Parameters
         ----------
         vm_type : VmType
+            Kind of VM the images are for. Required.
+            - `cloud`
+            - `gpu`
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -338,5 +494,123 @@ class AsyncComputeCatalogClient:
         """
         _response = await self._raw_client.list_compute_images(
             vm_type=vm_type, workspace_id=workspace_id, site_id=site_id, request_options=request_options
+        )
+        return _response.data
+
+    async def list_snapshot_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListSnapshotStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryStoragePlanList:
+        """
+        Select a priced item and send its billing_catalog unchanged when creating a snapshot. Discovery does not reserve capacity or create a resource.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+
+        currency : typing.Optional[str]
+
+        billing_interval : typing.Optional[ListSnapshotStoragePlansRequestBillingInterval]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryStoragePlanList
+            Canonical snapshot storage catalog.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.compute_catalog.list_snapshot_storage_plans(
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.list_snapshot_storage_plans(
+            workspace_id=workspace_id,
+            site_id=site_id,
+            currency=currency,
+            billing_interval=billing_interval,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def list_backup_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListBackupStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryStoragePlanList:
+        """
+        Select a priced item and send its billing_catalog unchanged when enabling backups or creating a manual backup run.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+
+        currency : typing.Optional[str]
+
+        billing_interval : typing.Optional[ListBackupStoragePlansRequestBillingInterval]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryStoragePlanList
+            Canonical backup storage catalog.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.compute_catalog.list_backup_storage_plans(
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.list_backup_storage_plans(
+            workspace_id=workspace_id,
+            site_id=site_id,
+            currency=currency,
+            billing_interval=billing_interval,
+            request_options=request_options,
         )
         return _response.data

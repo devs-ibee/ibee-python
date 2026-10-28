@@ -10,26 +10,112 @@ from .vm_metrics_vm_type import VmMetricsVmType
 
 
 class VmMetrics(UniversalBaseModel):
-    vm_id: str
-    vm_type: VmMetricsVmType
-    power_state: str
-    monitoring_status: VmMetricsMonitoringStatus
-    last_collected_at: typing.Optional[dt.datetime] = None
-    cpu_percent: typing.Optional[float] = None
-    memory_used_bytes: typing.Optional[int] = None
-    memory_used_percent: typing.Optional[float] = None
-    storage_used_bytes: typing.Optional[int] = None
-    storage_total_bytes: typing.Optional[int] = None
-    storage_used_percent: typing.Optional[float] = None
-    storage_provisioned_bytes: typing.Optional[int] = None
-    disk_read_bps: typing.Optional[float] = None
-    disk_write_bps: typing.Optional[float] = None
-    disk_read_iops: typing.Optional[float] = None
-    disk_write_iops: typing.Optional[float] = None
-    net_rx_bps: typing.Optional[float] = None
-    net_tx_bps: typing.Optional[float] = None
-    month_rx_bytes: int
-    month_tx_bytes: int
+    """
+    Latest resource-usage sample for a VM plus month-to-date traffic. Usage fields are null when no sample is available.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the VM.
+    """
+
+    vm_type: VmMetricsVmType = pydantic.Field()
+    """
+    - `cloud`
+    - `gpu`
+    """
+
+    power_state: str = pydantic.Field()
+    """
+    Power state observed on the host when the sample was taken: `running`, `stopped`, `paused`, `suspended`, `blocked`, `crashed` or `unknown`.
+    """
+
+    monitoring_status: VmMetricsMonitoringStatus = pydantic.Field()
+    """
+    - `active`: a recent sample exists.
+    - `stale`: the last sample is older than the freshness threshold.
+    - `unavailable`: no sample has been collected.
+    """
+
+    last_collected_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the sample was collected (ISO 8601).
+    """
+
+    cpu_percent: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    CPU utilisation, 0-100.
+    """
+
+    memory_used_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Memory in use, in bytes.
+    """
+
+    memory_used_percent: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Memory in use as a percentage of the VM's memory, 0-100.
+    """
+
+    storage_used_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Disk space in use, in bytes.
+    """
+
+    storage_total_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Disk capacity visible to the guest, in bytes.
+    """
+
+    storage_used_percent: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Disk space in use as a percentage of `storage_total_bytes`, 0-100.
+    """
+
+    storage_provisioned_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Disk capacity provisioned for the VM, in bytes.
+    """
+
+    disk_read_bps: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Disk read throughput in bytes per second.
+    """
+
+    disk_write_bps: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Disk write throughput in bytes per second.
+    """
+
+    disk_read_iops: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Disk read operations per second.
+    """
+
+    disk_write_iops: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Disk write operations per second.
+    """
+
+    net_rx_bps: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Network receive rate in bytes per second.
+    """
+
+    net_tx_bps: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Network transmit rate in bytes per second.
+    """
+
+    month_rx_bytes: int = pydantic.Field()
+    """
+    Bytes received so far in the current calendar month.
+    """
+
+    month_tx_bytes: int = pydantic.Field()
+    """
+    Bytes transmitted so far in the current calendar month.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

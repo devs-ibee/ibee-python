@@ -18,17 +18,14 @@ from ..errors.not_found_error import NotFoundError
 from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.unauthorized_error import UnauthorizedError
+from ..types.block_storage_plan_list import BlockStoragePlanList
 from ..types.block_volume import BlockVolume
 from ..types.block_volume_action import BlockVolumeAction
 from ..types.block_volume_delete import BlockVolumeDelete
 from ..types.block_volume_operation import BlockVolumeOperation
 from ..types.error import Error
-from .types.attach_block_volume_request_mode import AttachBlockVolumeRequestMode
-from .types.attach_block_volume_request_vm_state import AttachBlockVolumeRequestVmState
-from .types.attach_block_volume_request_vm_type import AttachBlockVolumeRequestVmType
 from .types.create_block_volume_request_volume_class import CreateBlockVolumeRequestVolumeClass
-from .types.detach_block_volume_request_vm_state import DetachBlockVolumeRequestVmState
-from .types.detach_block_volume_request_vm_type import DetachBlockVolumeRequestVmType
+from .types.list_block_storage_plans_request_billing_interval import ListBlockStoragePlansRequestBillingInterval
 from .types.resize_block_volume_request_vm_state import ResizeBlockVolumeRequestVmState
 from pydantic import ValidationError
 
@@ -39,6 +36,103 @@ OMIT = typing.cast(typing.Any, ...)
 class RawBlockStorageClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
+
+    def list_block_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListBlockStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[BlockStoragePlanList]:
+        """
+        Returns the block storage plans with their sizes, performance and prices, as the portal's Create Volume page shows them. Pick a `sku_code` for createBlockVolume. Requires scope: block-storage.read.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+            Return only plans offered at this site.
+
+        currency : typing.Optional[str]
+            Price currency. Default `INR`.
+
+        billing_interval : typing.Optional[ListBlockStoragePlansRequestBillingInterval]
+            Billing interval of the listed prices. Default `MONTHLY`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[BlockStoragePlanList]
+            Plans returned successfully.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "block-storage/plans",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "site_id": site_id,
+                "currency": currency,
+                "billing_interval": billing_interval,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BlockStoragePlanList,
+                    parse_obj_as(
+                        type_=BlockStoragePlanList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def list_block_volumes(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
@@ -140,26 +234,38 @@ class RawBlockStorageClient:
         Parameters
         ----------
         name : str
+            Display name of the volume (1-255 characters).
 
         size_gb : int
+            Size in GB (1-10000).
 
         site_id : str
+            Site to create the volume at.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_name : typing.Optional[str]
+            Display name of that site, as shown in the portal.
 
         sku_code : typing.Optional[str]
             Optional public selector returned by the server-owned Block Storage catalog. The edge resolves all price and catalog metadata; callers cannot submit pricing.
 
         volume_class : typing.Optional[CreateBlockVolumeRequestVolumeClass]
+            Performance class of the volume.
+            - `capacity`: lowest cost per GB.
+            - `balanced`: general purpose.
+            - `performance`: highest throughput and IOPS.
+            Default `balanced`.
 
         replica_count : typing.Optional[int]
+            Number of synchronous replicas kept for the volume (1-5). Default 2.
 
         backup_enabled : typing.Optional[bool]
+            Whether volume backups are enabled. Default true.
 
         idempotency_key : typing.Optional[str]
+            Caller-chosen key that makes a retried request return the original operation instead of starting a new one.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -394,6 +500,7 @@ class RawBlockStorageClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         force : typing.Optional[bool]
+            Delete the volume even if it is still attached. Default false.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -594,316 +701,6 @@ class RawBlockStorageClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def attach_block_volume(
-        self,
-        volume_id: str,
-        *,
-        node_name: str,
-        workspace_id: typing.Optional[str] = None,
-        mode: typing.Optional[AttachBlockVolumeRequestMode] = OMIT,
-        vm_id: typing.Optional[str] = OMIT,
-        vm_name: typing.Optional[str] = OMIT,
-        vm_state: typing.Optional[AttachBlockVolumeRequestVmState] = OMIT,
-        vm_site_id: typing.Optional[str] = OMIT,
-        vm_type: typing.Optional[AttachBlockVolumeRequestVmType] = OMIT,
-        idempotency_key: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[BlockVolumeAction]:
-        """
-        Attaches a block storage volume to a VM so it can be mounted in the guest. Requires scope: block-storage.write.
-
-        Parameters
-        ----------
-        volume_id : str
-            Workspace-owned block-volume ID.
-
-        node_name : str
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        mode : typing.Optional[AttachBlockVolumeRequestMode]
-
-        vm_id : typing.Optional[str]
-
-        vm_name : typing.Optional[str]
-
-        vm_state : typing.Optional[AttachBlockVolumeRequestVmState]
-
-        vm_site_id : typing.Optional[str]
-
-        vm_type : typing.Optional[AttachBlockVolumeRequestVmType]
-
-        idempotency_key : typing.Optional[str]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[BlockVolumeAction]
-            Volume attached successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"block-storage/volumes/{encode_path_param(volume_id)}/attachments",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "node_name": node_name,
-                "mode": mode,
-                "vm_id": vm_id,
-                "vm_name": vm_name,
-                "vm_state": vm_state,
-                "vm_site_id": vm_site_id,
-                "vm_type": vm_type,
-                "idempotency_key": idempotency_key,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    BlockVolumeAction,
-                    parse_obj_as(
-                        type_=BlockVolumeAction,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def detach_block_volume(
-        self,
-        volume_id: str,
-        *,
-        node_name: str,
-        workspace_id: typing.Optional[str] = None,
-        force: typing.Optional[bool] = OMIT,
-        confirm_unmounted: typing.Optional[bool] = OMIT,
-        vm_state: typing.Optional[DetachBlockVolumeRequestVmState] = OMIT,
-        vm_type: typing.Optional[DetachBlockVolumeRequestVmType] = OMIT,
-        reason: typing.Optional[str] = OMIT,
-        idempotency_key: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[BlockVolumeAction]:
-        """
-        Detaches a block storage volume from its VM. Unmount it in the guest first. Requires scope: block-storage.write.
-
-        Parameters
-        ----------
-        volume_id : str
-            Workspace-owned block-volume ID.
-
-        node_name : str
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        force : typing.Optional[bool]
-
-        confirm_unmounted : typing.Optional[bool]
-
-        vm_state : typing.Optional[DetachBlockVolumeRequestVmState]
-
-        vm_type : typing.Optional[DetachBlockVolumeRequestVmType]
-
-        reason : typing.Optional[str]
-
-        idempotency_key : typing.Optional[str]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[BlockVolumeAction]
-            Volume detached successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"block-storage/volumes/{encode_path_param(volume_id)}/detach",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "node_name": node_name,
-                "force": force,
-                "confirm_unmounted": confirm_unmounted,
-                "vm_state": vm_state,
-                "vm_type": vm_type,
-                "reason": reason,
-                "idempotency_key": idempotency_key,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    BlockVolumeAction,
-                    parse_obj_as(
-                        type_=BlockVolumeAction,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     def resize_block_volume(
         self,
         volume_id: str,
@@ -924,15 +721,22 @@ class RawBlockStorageClient:
             Workspace-owned block-volume ID.
 
         new_size_gb : int
+            New size in GB.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vm_state : typing.Optional[ResizeBlockVolumeRequestVmState]
+            Current power state of the VM, when the caller knows it.
+            - `running`
+            - `stopped`
+            - `suspended`
 
         allow_online : typing.Optional[bool]
+            Permit the resize while the volume is attached to a running VM. Default false.
 
         idempotency_key : typing.Optional[str]
+            Caller-chosen key that makes a retried request return the original operation instead of starting a new one.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1050,6 +854,103 @@ class AsyncRawBlockStorageClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
+    async def list_block_storage_plans(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        site_id: typing.Optional[str] = None,
+        currency: typing.Optional[str] = None,
+        billing_interval: typing.Optional[ListBlockStoragePlansRequestBillingInterval] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[BlockStoragePlanList]:
+        """
+        Returns the block storage plans with their sizes, performance and prices, as the portal's Create Volume page shows them. Pick a `sku_code` for createBlockVolume. Requires scope: block-storage.read.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        site_id : typing.Optional[str]
+            Return only plans offered at this site.
+
+        currency : typing.Optional[str]
+            Price currency. Default `INR`.
+
+        billing_interval : typing.Optional[ListBlockStoragePlansRequestBillingInterval]
+            Billing interval of the listed prices. Default `MONTHLY`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[BlockStoragePlanList]
+            Plans returned successfully.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "block-storage/plans",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "site_id": site_id,
+                "currency": currency,
+                "billing_interval": billing_interval,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    BlockStoragePlanList,
+                    parse_obj_as(
+                        type_=BlockStoragePlanList,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
     async def list_block_volumes(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[typing.List[BlockVolume]]:
@@ -1150,26 +1051,38 @@ class AsyncRawBlockStorageClient:
         Parameters
         ----------
         name : str
+            Display name of the volume (1-255 characters).
 
         size_gb : int
+            Size in GB (1-10000).
 
         site_id : str
+            Site to create the volume at.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         site_name : typing.Optional[str]
+            Display name of that site, as shown in the portal.
 
         sku_code : typing.Optional[str]
             Optional public selector returned by the server-owned Block Storage catalog. The edge resolves all price and catalog metadata; callers cannot submit pricing.
 
         volume_class : typing.Optional[CreateBlockVolumeRequestVolumeClass]
+            Performance class of the volume.
+            - `capacity`: lowest cost per GB.
+            - `balanced`: general purpose.
+            - `performance`: highest throughput and IOPS.
+            Default `balanced`.
 
         replica_count : typing.Optional[int]
+            Number of synchronous replicas kept for the volume (1-5). Default 2.
 
         backup_enabled : typing.Optional[bool]
+            Whether volume backups are enabled. Default true.
 
         idempotency_key : typing.Optional[str]
+            Caller-chosen key that makes a retried request return the original operation instead of starting a new one.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1404,6 +1317,7 @@ class AsyncRawBlockStorageClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         force : typing.Optional[bool]
+            Delete the volume even if it is still attached. Default false.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1604,316 +1518,6 @@ class AsyncRawBlockStorageClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def attach_block_volume(
-        self,
-        volume_id: str,
-        *,
-        node_name: str,
-        workspace_id: typing.Optional[str] = None,
-        mode: typing.Optional[AttachBlockVolumeRequestMode] = OMIT,
-        vm_id: typing.Optional[str] = OMIT,
-        vm_name: typing.Optional[str] = OMIT,
-        vm_state: typing.Optional[AttachBlockVolumeRequestVmState] = OMIT,
-        vm_site_id: typing.Optional[str] = OMIT,
-        vm_type: typing.Optional[AttachBlockVolumeRequestVmType] = OMIT,
-        idempotency_key: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[BlockVolumeAction]:
-        """
-        Attaches a block storage volume to a VM so it can be mounted in the guest. Requires scope: block-storage.write.
-
-        Parameters
-        ----------
-        volume_id : str
-            Workspace-owned block-volume ID.
-
-        node_name : str
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        mode : typing.Optional[AttachBlockVolumeRequestMode]
-
-        vm_id : typing.Optional[str]
-
-        vm_name : typing.Optional[str]
-
-        vm_state : typing.Optional[AttachBlockVolumeRequestVmState]
-
-        vm_site_id : typing.Optional[str]
-
-        vm_type : typing.Optional[AttachBlockVolumeRequestVmType]
-
-        idempotency_key : typing.Optional[str]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[BlockVolumeAction]
-            Volume attached successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"block-storage/volumes/{encode_path_param(volume_id)}/attachments",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "node_name": node_name,
-                "mode": mode,
-                "vm_id": vm_id,
-                "vm_name": vm_name,
-                "vm_state": vm_state,
-                "vm_site_id": vm_site_id,
-                "vm_type": vm_type,
-                "idempotency_key": idempotency_key,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    BlockVolumeAction,
-                    parse_obj_as(
-                        type_=BlockVolumeAction,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def detach_block_volume(
-        self,
-        volume_id: str,
-        *,
-        node_name: str,
-        workspace_id: typing.Optional[str] = None,
-        force: typing.Optional[bool] = OMIT,
-        confirm_unmounted: typing.Optional[bool] = OMIT,
-        vm_state: typing.Optional[DetachBlockVolumeRequestVmState] = OMIT,
-        vm_type: typing.Optional[DetachBlockVolumeRequestVmType] = OMIT,
-        reason: typing.Optional[str] = OMIT,
-        idempotency_key: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[BlockVolumeAction]:
-        """
-        Detaches a block storage volume from its VM. Unmount it in the guest first. Requires scope: block-storage.write.
-
-        Parameters
-        ----------
-        volume_id : str
-            Workspace-owned block-volume ID.
-
-        node_name : str
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        force : typing.Optional[bool]
-
-        confirm_unmounted : typing.Optional[bool]
-
-        vm_state : typing.Optional[DetachBlockVolumeRequestVmState]
-
-        vm_type : typing.Optional[DetachBlockVolumeRequestVmType]
-
-        reason : typing.Optional[str]
-
-        idempotency_key : typing.Optional[str]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[BlockVolumeAction]
-            Volume detached successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"block-storage/volumes/{encode_path_param(volume_id)}/detach",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "node_name": node_name,
-                "force": force,
-                "confirm_unmounted": confirm_unmounted,
-                "vm_state": vm_state,
-                "vm_type": vm_type,
-                "reason": reason,
-                "idempotency_key": idempotency_key,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    BlockVolumeAction,
-                    parse_obj_as(
-                        type_=BlockVolumeAction,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     async def resize_block_volume(
         self,
         volume_id: str,
@@ -1934,15 +1538,22 @@ class AsyncRawBlockStorageClient:
             Workspace-owned block-volume ID.
 
         new_size_gb : int
+            New size in GB.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         vm_state : typing.Optional[ResizeBlockVolumeRequestVmState]
+            Current power state of the VM, when the caller knows it.
+            - `running`
+            - `stopped`
+            - `suspended`
 
         allow_online : typing.Optional[bool]
+            Permit the resize while the volume is attached to a running VM. Default false.
 
         idempotency_key : typing.Optional[str]
+            Caller-chosen key that makes a retried request return the original operation instead of starting a new one.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

@@ -8,8 +8,20 @@ from .container_registry_job_status import ContainerRegistryJobStatus
 
 
 class ContainerRegistryReconcile(UniversalBaseModel):
-    registry_id: str
-    generation: int
+    """
+    Acknowledgement that a reconcile of the registry's settings was queued.
+    """
+
+    registry_id: str = pydantic.Field()
+    """
+    ID of the registry.
+    """
+
+    generation: int = pydantic.Field()
+    """
+    Generation the reconcile will apply.
+    """
+
     status: ContainerRegistryJobStatus
 
     if IS_PYDANTIC_V2:

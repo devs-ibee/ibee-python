@@ -8,10 +8,30 @@ from .load_balancer_tls_mode import LoadBalancerTlsMode
 
 
 class LoadBalancerTls(UniversalBaseModel):
-    mode: LoadBalancerTlsMode
-    certificate_source: typing.Optional[str] = None
-    cert_pem: typing.Optional[str] = None
-    key_pem: typing.Optional[str] = None
+    """
+    TLS settings for the load balancer's listener.
+    """
+
+    mode: LoadBalancerTlsMode = pydantic.Field()
+    """
+    - `terminate`: TLS ends at the load balancer.
+    - `passthrough`: TLS is forwarded to the backend unchanged.
+    """
+
+    certificate_source: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    `managed` for a platform-issued certificate, or `custom` to supply `cert_pem` and `key_pem`. Default `managed`.
+    """
+
+    cert_pem: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    PEM-encoded certificate chain; required with `certificate_source: custom`.
+    """
+
+    key_pem: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    PEM-encoded private key; required with `certificate_source: custom`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

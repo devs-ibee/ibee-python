@@ -9,12 +9,31 @@ from .container_registry_pull_policy import ContainerRegistryPullPolicy
 
 
 class ContainerRegistrySecuritySettingsStatus(UniversalBaseModel):
+    """
+    Security settings of a registry and whether they have been applied.
+    """
+
     vulnerability_pull_policy: ContainerRegistryPullPolicy
-    scan_on_push: bool
-    sbom_generation_on_push: bool
+    scan_on_push: bool = pydantic.Field()
+    """
+    Whether pushed images are scanned for vulnerabilities automatically.
+    """
+
+    sbom_generation_on_push: bool = pydantic.Field()
+    """
+    Whether an SBOM is generated for pushed images automatically.
+    """
+
     observed_state: ContainerRegistryObservedState
-    generation: int
-    observed_generation: int
+    generation: int = pydantic.Field()
+    """
+    Incremented by every accepted settings change.
+    """
+
+    observed_generation: int = pydantic.Field()
+    """
+    The last generation applied; equal to `generation` when settled.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

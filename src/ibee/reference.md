@@ -152,7 +152,7 @@ client.secret_store.create_secret_store(
 <dl>
 <dd>
 
-**name:** `str` 
+**name:** `str` — Display name of the store (1-128 characters). Its URL-safe form becomes `store_key`.
     
 </dd>
 </dl>
@@ -168,7 +168,7 @@ client.secret_store.create_secret_store(
 <dl>
 <dd>
 
-**description:** `typing.Optional[str]` 
+**description:** `typing.Optional[str]` — Optional description.
     
 </dd>
 </dl>
@@ -251,104 +251,6 @@ client.secret_store.get_secret_store(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">update_secret_store</a>(...) -> SecretStore</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Updates store name or description. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.update_secret_store(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**store_id:** `str` — Secret store ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**name:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**description:** `typing.Optional[str]` 
     
 </dd>
 </dl>
@@ -898,7 +800,7 @@ client.secret_store.batch_create_secrets(
 <dl>
 <dd>
 
-**secrets:** `typing.List[BatchCreateSecretItem]` 
+**secrets:** `typing.List[BatchCreateSecretItem]` — Secrets to create (1-500).
     
 </dd>
 </dl>
@@ -1255,99 +1157,6 @@ client.secret_store.update_secret_value(
 <dd>
 
 **cas:** `typing.Optional[int]` — Check-and-set: only update if the current version matches this number. Prevents overwriting concurrent changes.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">patch_secret_value</a>(...) -> SecretValue</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Merges the supplied keys into the current value and creates a new version. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.patch_secret_value(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-    workspace_id="710995",
-    value={
-        "username": "rotated-user"
-    },
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**secret_id:** `str` — Secret ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**value:** `typing.Dict[str, typing.Any]` — Key-value pairs to merge into the current value. Creates a new version.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
     
 </dd>
 </dl>
@@ -2054,7 +1863,7 @@ client.secret_store.create_secret_identity(
 <dl>
 <dd>
 
-**name:** `str` 
+**name:** `str` — Display name of the identity (1-128 characters).
     
 </dd>
 </dl>
@@ -2071,6 +1880,10 @@ client.secret_store.create_secret_identity(
 <dd>
 
 **token_policy_mode:** `typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]` 
+
+Default access mode for the identity's tokens.
+- `read_only` (default)
+- `read_write`
     
 </dd>
 </dl>
@@ -2251,97 +2064,6 @@ client.secret_store.delete_secret_identity(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">update_secret_identity</a>(...) -> SecretIdentity</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Updates the token policy mode. Identity names cannot be changed after creation. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.update_secret_identity(
-    identity_id="identity_id",
-    workspace_id="710995",
-    token_policy_mode="read_write",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**token_policy_mode:** `typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode]` — Updating the mode also aligns every existing scope and revokes active sessions.
     
 </dd>
 </dl>
@@ -2920,7 +2642,7 @@ client.secret_store.create_secret_identity_scope(
 <dl>
 <dd>
 
-**store_id:** `str` 
+**store_id:** `str` — Store the identity gets access to.
     
 </dd>
 </dl>
@@ -2937,6 +2659,10 @@ client.secret_store.create_secret_identity_scope(
 <dd>
 
 **access_mode:** `typing.Optional[CreateSecretIdentityScopeRequestAccessMode]` 
+
+- `read_only`: the identity can read secrets in the store.
+- `read_write`: the identity can also create and update them.
+Default `read_only`.
     
 </dd>
 </dl>
@@ -2944,7 +2670,7 @@ client.secret_store.create_secret_identity_scope(
 <dl>
 <dd>
 
-**allow_version_read:** `typing.Optional[bool]` 
+**allow_version_read:** `typing.Optional[bool]` — Whether the identity may read non-current versions of a secret.
     
 </dd>
 </dl>
@@ -2952,7 +2678,7 @@ client.secret_store.create_secret_identity_scope(
 <dl>
 <dd>
 
-**allow_rollback:** `typing.Optional[bool]` 
+**allow_rollback:** `typing.Optional[bool]` — Whether the identity may roll a secret back to an earlier version.
     
 </dd>
 </dl>
@@ -2960,7 +2686,7 @@ client.secret_store.create_secret_identity_scope(
 <dl>
 <dd>
 
-**allow_destroy:** `typing.Optional[bool]` 
+**allow_destroy:** `typing.Optional[bool]` — Whether the identity may destroy secret versions.
     
 </dd>
 </dl>
@@ -3043,124 +2769,6 @@ client.secret_store.delete_secret_identity_scope(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">update_secret_identity_scope</a>(...) -> SecretIdentityScope</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Updates store access and version permissions for a scope. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.update_secret_identity_scope(
-    scope_id="scope_id",
-    workspace_id="710995",
-    access_mode="read_write",
-    allow_version_read=True,
-    allow_rollback=True,
-    allow_destroy=False,
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**scope_id:** `str` — Secret Store identity scope ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**access_mode:** `typing.Optional[UpdateSecretIdentityScopeRequestAccessMode]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**allow_version_read:** `typing.Optional[bool]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**allow_rollback:** `typing.Optional[bool]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**allow_destroy:** `typing.Optional[bool]` 
     
 </dd>
 </dl>
@@ -3621,7 +3229,7 @@ client.object_storage.update_bucket(
 <dl>
 <dd>
 
-**is_public:** `bool` 
+**is_public:** `bool` — Whether the bucket allows unauthenticated read access.
     
 </dd>
 </dl>
@@ -3630,6 +3238,1316 @@ client.object_storage.update_bucket(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">get_bucket_lifecycle</a>(...) -> BucketLifecycleConfiguration</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.get_bucket_lifecycle(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">set_bucket_lifecycle</a>(...) -> DeleteResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee, BucketLifecycleRule
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.set_bucket_lifecycle(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+    rules=[
+        BucketLifecycleRule(
+            status="Enabled",
+        )
+    ],
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `BucketLifecycleConfiguration` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket_lifecycle</a>(...) -> DeleteResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.delete_bucket_lifecycle(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">get_bucket_cors</a>(...) -> BucketCorsConfiguration</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.get_bucket_cors(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">set_bucket_cors</a>(...) -> DeleteResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee, BucketCorsRule
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.set_bucket_cors(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+    rules=[
+        BucketCorsRule(
+            allowed_origins=[
+                "allowed_origins"
+            ],
+            allowed_methods=[
+                "GET"
+            ],
+        )
+    ],
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `BucketCorsConfiguration` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket_cors</a>(...) -> DeleteResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.delete_bucket_cors(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">get_bucket_object_lock</a>(...) -> BucketObjectLockConfiguration</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.get_bucket_object_lock(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">set_bucket_object_lock</a>(...) -> DeleteResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.set_bucket_object_lock(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**rule:** `typing.Optional[DefaultRetention]` — New default retention, or null to remove it.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">get_bucket_notifications</a>(...) -> BucketNotificationConfiguration</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.get_bucket_notifications(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">set_bucket_notifications</a>(...) -> DeleteResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee, BucketNotificationConfig
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.set_bucket_notifications(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+    configs=[
+        BucketNotificationConfig(
+            events=[
+                "upload"
+            ],
+        )
+    ],
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `BucketNotificationConfiguration` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket_notifications</a>(...) -> DeleteResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Removes every notification rule from the bucket. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.delete_bucket_notifications(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">get_bucket_custom_domains</a>(...) -> BucketCustomDomainConfig</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Requires scope: object-storage.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.get_bucket_custom_domains(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">add_bucket_custom_domain</a>(...) -> BucketCustomDomain</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.add_bucket_custom_domain(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+    domain="domain",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**domain:** `str` — Hostname to serve the bucket from, for example `assets.example.com`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">remove_bucket_custom_domain</a>(...) -> BucketCustomDomainRemoved</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Removes a custom hostname from the bucket. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.remove_bucket_custom_domain(
+    bucket_name="bucket_name",
+    domain="domain",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**domain:** `str` — Hostname to remove.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">get_bucket_metrics</a>(...) -> BucketMetrics</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.get_bucket_metrics(
+    bucket_name="bucket_name",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**range:** `typing.Optional[GetBucketMetricsRequestRange]` — Time range. Default `24h`.
     
 </dd>
 </dl>
@@ -3783,7 +4701,7 @@ client.object_storage.create_s3credential(
 <dl>
 <dd>
 
-**name:** `typing.Optional[str]` 
+**name:** `typing.Optional[str]` — Display name of the key pair. Default `Default Key`.
     
 </dd>
 </dl>
@@ -3791,7 +4709,7 @@ client.object_storage.create_s3credential(
 <dl>
 <dd>
 
-**permission_type:** `typing.Optional[str]` 
+**permission_type:** `typing.Optional[str]` — Permission level: `admin_rw`, `admin_ro`, `object_rw` or `object_ro`. Default `admin_rw`.
     
 </dd>
 </dl>
@@ -3800,6 +4718,9 @@ client.object_storage.create_s3credential(
 <dd>
 
 **bucket_scope:** `typing.Optional[CreateS3CredentialRequestBucketScope]` 
+
+- `all`: the key may use every bucket in the workspace (default).
+- `specific`: only the buckets in `allowed_buckets`.
     
 </dd>
 </dl>
@@ -3807,7 +4728,7 @@ client.object_storage.create_s3credential(
 <dl>
 <dd>
 
-**allowed_buckets:** `typing.Optional[typing.List[str]]` 
+**allowed_buckets:** `typing.Optional[typing.List[str]]` — Bucket names the key may use when `bucket_scope` is `specific`.
     
 </dd>
 </dl>
@@ -3909,6 +4830,88 @@ client.object_storage.get_s3credential(
 </dl>
 </details>
 
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_s3credential</a>(...) -> S3CredentialRevoked</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.delete_s3credential(
+    access_key_id="access_key_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**access_key_id:** `str` — S3 access key ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 <details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">revoke_s3credential</a>(...) -> S3CredentialRevoked</code></summary>
 <dl>
 <dd>
@@ -3921,7 +4924,7 @@ client.object_storage.get_s3credential(
 <dl>
 <dd>
 
-Revokes a credential so it can no longer authenticate S3 requests. Requires scope: object-storage.write.
+Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4201,7 +5204,7 @@ client.vpcs.create_vpc(
 <dl>
 <dd>
 
-**name:** `str` 
+**name:** `str` — Display name of the VPC.
     
 </dd>
 </dl>
@@ -4225,7 +5228,7 @@ client.vpcs.create_vpc(
 <dl>
 <dd>
 
-**description:** `typing.Optional[str]` 
+**description:** `typing.Optional[str]` — Optional description.
     
 </dd>
 </dl>
@@ -4233,7 +5236,7 @@ client.vpcs.create_vpc(
 <dl>
 <dd>
 
-**region:** `typing.Optional[str]` 
+**region:** `typing.Optional[str]` — Optional region label stored with the VPC.
     
 </dd>
 </dl>
@@ -4249,7 +5252,7 @@ client.vpcs.create_vpc(
 <dl>
 <dd>
 
-**auto_cidr:** `typing.Optional[bool]` 
+**auto_cidr:** `typing.Optional[bool]` — Let the service choose a free CIDR when `cidr` is omitted. Default true.
     
 </dd>
 </dl>
@@ -4257,7 +5260,7 @@ client.vpcs.create_vpc(
 <dl>
 <dd>
 
-**create_default_subnet:** `typing.Optional[bool]` 
+**create_default_subnet:** `typing.Optional[bool]` — Create a first subnet together with the VPC. Default true.
     
 </dd>
 </dl>
@@ -4265,7 +5268,7 @@ client.vpcs.create_vpc(
 <dl>
 <dd>
 
-**default_subnet_cidr:** `typing.Optional[str]` 
+**default_subnet_cidr:** `typing.Optional[str]` — CIDR for that first subnet; chosen automatically when omitted.
     
 </dd>
 </dl>
@@ -4273,7 +5276,7 @@ client.vpcs.create_vpc(
 <dl>
 <dd>
 
-**is_default:** `typing.Optional[bool]` 
+**is_default:** `typing.Optional[bool]` — Mark the VPC as the workspace's default VPC. Default false.
     
 </dd>
 </dl>
@@ -4535,7 +5538,7 @@ client.vpcs.update_vpc(
 <dl>
 <dd>
 
-**name:** `typing.Optional[str]` 
+**name:** `typing.Optional[str]` — New display name.
     
 </dd>
 </dl>
@@ -4543,7 +5546,7 @@ client.vpcs.update_vpc(
 <dl>
 <dd>
 
-**description:** `typing.Optional[str]` 
+**description:** `typing.Optional[str]` — New description.
     
 </dd>
 </dl>
@@ -4708,7 +5711,7 @@ client.vpcs.create_vpc_subnet(
 <dl>
 <dd>
 
-**name:** `str` 
+**name:** `str` — Display name of the subnet.
     
 </dd>
 </dl>
@@ -4724,7 +5727,7 @@ client.vpcs.create_vpc_subnet(
 <dl>
 <dd>
 
-**cidr:** `typing.Optional[str]` 
+**cidr:** `typing.Optional[str]` — IPv4 CIDR inside the VPC range. Chosen automatically when omitted and `auto_cidr` is true.
     
 </dd>
 </dl>
@@ -4732,7 +5735,7 @@ client.vpcs.create_vpc_subnet(
 <dl>
 <dd>
 
-**auto_cidr:** `typing.Optional[bool]` 
+**auto_cidr:** `typing.Optional[bool]` — Let the service choose a free CIDR when `cidr` is omitted. Default true.
     
 </dd>
 </dl>
@@ -4740,7 +5743,7 @@ client.vpcs.create_vpc_subnet(
 <dl>
 <dd>
 
-**prefix_length:** `typing.Optional[int]` 
+**prefix_length:** `typing.Optional[int]` — Prefix length to use for an automatically chosen CIDR.
     
 </dd>
 </dl>
@@ -4748,7 +5751,7 @@ client.vpcs.create_vpc_subnet(
 <dl>
 <dd>
 
-**dns:** `typing.Optional[typing.List[str]]` 
+**dns:** `typing.Optional[typing.List[str]]` — DNS resolvers handed to instances in the subnet. Default `1.1.1.1` and `8.8.8.8`.
     
 </dd>
 </dl>
@@ -4950,113 +5953,6 @@ client.vpcs.delete_vpc_subnet(
 </dl>
 </details>
 
-<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">update_vpc_subnet</a>(...) -> Subnet</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Renames a VPC subnet or changes its DNS settings. Requires scope: network.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.vpcs.update_vpc_subnet(
-    vpc_id="vpc_id",
-    subnet_id="subnet_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vpc_id:** `str` — VPC ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**subnet_id:** `str` — Subnet ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**name:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**dns:** `typing.Optional[typing.List[str]]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 <details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">list_vpc_nodes</a>(...) -> typing.List[NetworkAllocation]</code></summary>
 <dl>
 <dd>
@@ -5203,7 +6099,7 @@ client.vpcs.attach_vpc_node(
 <dl>
 <dd>
 
-**vm_id:** `str` 
+**vm_id:** `str` — ID of the VM to attach.
     
 </dd>
 </dl>
@@ -5211,7 +6107,7 @@ client.vpcs.attach_vpc_node(
 <dl>
 <dd>
 
-**subnet_id:** `str` 
+**subnet_id:** `str` — Subnet of the VPC to attach the VM to.
     
 </dd>
 </dl>
@@ -5228,6 +6124,13 @@ client.vpcs.attach_vpc_node(
 <dd>
 
 **connectivity:** `typing.Optional[AttachVpcNodeRequestConnectivity]` 
+
+How the VM reaches the internet from this subnet.
+- `private`: no internet path.
+- `public_ip`: a Reserved IP is attached to the allocation.
+- `nat`: outbound traffic goes through the VPC's NAT gateway.
+
+Default `private`.
     
 </dd>
 </dl>
@@ -5235,7 +6138,15 @@ client.vpcs.attach_vpc_node(
 <dl>
 <dd>
 
-**reserved_public_ip_id:** `typing.Optional[str]` 
+**requested_private_ip:** `typing.Optional[str]` — Private IPv4 address to give the VM in the subnet. Chosen automatically when omitted.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**reserved_public_ip_id:** `typing.Optional[str]` — Reserved IP to attach to the VM. Only valid with `public_ip` connectivity.
     
 </dd>
 </dl>
@@ -5498,7 +6409,7 @@ client.vpcs.create_nat_gateway(
 <dl>
 <dd>
 
-**subnet_id:** `typing.Optional[str]` 
+**subnet_id:** `typing.Optional[str]` — Subnet the gateway is placed in; chosen by the service when omitted.
     
 </dd>
 </dl>
@@ -5506,7 +6417,7 @@ client.vpcs.create_nat_gateway(
 <dl>
 <dd>
 
-**reserved_public_ip_id:** `typing.Optional[str]` 
+**reserved_public_ip_id:** `typing.Optional[str]` — Reserved IP to use as the gateway's public address; a platform-assigned address is used when omitted.
     
 </dd>
 </dl>
@@ -5514,7 +6425,7 @@ client.vpcs.create_nat_gateway(
 <dl>
 <dd>
 
-**name:** `typing.Optional[str]` 
+**name:** `typing.Optional[str]` — Display name of the gateway. Default `NAT Gateway`.
     
 </dd>
 </dl>
@@ -5598,6 +6509,119 @@ client.vpcs.delete_nat_gateway(
 <dd>
 
 **nat_gateway_id:** `str` — NAT gateway ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**public_ip_action:** `typing.Optional[NatGatewayDeleteRequestPublicIpAction]` 
+
+What to do with the gateway's public IP.
+- `release`: give the address back.
+- `reserve`: keep it as a Reserved IP in the workspace.
+Omitted: platform-assigned addresses are released; customer Reserved IPs are detached and kept.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">update_nat_gateway_public_ip</a>(...) -> NatGateway</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Replaces the NAT gateway's public IP with a Reserved IP, keeping the port-forwarding rules, as the portal's NAT card does. Requires scope: network.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.vpcs.update_nat_gateway_public_ip(
+    vpc_id="vpc_id",
+    nat_gateway_id="nat_gateway_id",
+    workspace_id="710995",
+    reserved_public_ip_id="reserved_public_ip_id",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**vpc_id:** `str` — VPC ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**nat_gateway_id:** `str` — NAT gateway ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**reserved_public_ip_id:** `str` — Reserved IP to put on the gateway. Port-forwarding rules are preserved.
     
 </dd>
 </dl>
@@ -6007,7 +7031,7 @@ client.vpcs.update_nat_port_forwarding_rule(
 <dl>
 <dd>
 
-**name:** `typing.Optional[str]` 
+**name:** `typing.Optional[str]` — Display name of the rule.
     
 </dd>
 </dl>
@@ -6016,6 +7040,9 @@ client.vpcs.update_nat_port_forwarding_rule(
 <dd>
 
 **protocol:** `typing.Optional[UpdateNatPortForwardingRuleRequestProtocol]` 
+
+- `tcp`
+- `udp`
     
 </dd>
 </dl>
@@ -6023,7 +7050,7 @@ client.vpcs.update_nat_port_forwarding_rule(
 <dl>
 <dd>
 
-**external_port:** `typing.Optional[int]` 
+**external_port:** `typing.Optional[int]` — Port on the gateway's public address (1-65535).
     
 </dd>
 </dl>
@@ -6031,7 +7058,7 @@ client.vpcs.update_nat_port_forwarding_rule(
 <dl>
 <dd>
 
-**internal_ip:** `typing.Optional[str]` 
+**internal_ip:** `typing.Optional[str]` — Private IPv4 address of the VM inside the VPC that receives the traffic.
     
 </dd>
 </dl>
@@ -6039,7 +7066,7 @@ client.vpcs.update_nat_port_forwarding_rule(
 <dl>
 <dd>
 
-**internal_port:** `typing.Optional[int]` 
+**internal_port:** `typing.Optional[int]` — Port on the VM that receives the traffic (1-65535).
     
 </dd>
 </dl>
@@ -6047,7 +7074,7 @@ client.vpcs.update_nat_port_forwarding_rule(
 <dl>
 <dd>
 
-**note:** `typing.Optional[str]` 
+**target_type:** `typing.Optional[UpdateNatPortForwardingRuleRequestTargetType]` — `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
     
 </dd>
 </dl>
@@ -6055,7 +7082,23 @@ client.vpcs.update_nat_port_forwarding_rule(
 <dl>
 <dd>
 
-**enabled:** `typing.Optional[bool]` 
+**target_vm_ids:** `typing.Optional[typing.List[str]]` — VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**note:** `typing.Optional[str]` — Free-text note stored with the rule.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**enabled:** `typing.Optional[bool]` — Whether the rule is applied.
     
 </dd>
 </dl>
@@ -6227,7 +7270,106 @@ client.reserved_ips.reserve_ip(
 <dl>
 <dd>
 
-**label:** `typing.Optional[str]` 
+**label:** `typing.Optional[str]` — Optional label for the address (up to 120 characters), shown as its name in the portal.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.reserved_ips.<a href="src/ibee/reserved_ips/client.py">convert_reserved_ip</a>(...) -> ReservedIp</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Turns the automatically assigned public IPv4 of a VM into a Reserved IP that survives the VM, as the portal's Convert Existing IP does. The address stays on the VM. Billing for the Reserved IP starts now. Requires scope: network.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.reserved_ips.convert_reserved_ip(
+    workspace_id="710995",
+    vm_id="vm_id",
+    site_id="site_id",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**vm_id:** `str` — VM whose current public IPv4 becomes a Reserved IP.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**site_id:** `str` — The VM's site, from `GET /networking/sites`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**label:** `typing.Optional[str]` — Optional label for the Reserved IP.
     
 </dd>
 </dl>
@@ -6481,7 +7623,7 @@ client.reserved_ips.update_reserved_ip(
 <dl>
 <dd>
 
-**label:** `typing.Optional[str]` 
+**label:** `typing.Optional[str]` — New label (the portal's **Name**).
     
 </dd>
 </dl>
@@ -6489,7 +7631,7 @@ client.reserved_ips.update_reserved_ip(
 <dl>
 <dd>
 
-**reverse_dns:** `typing.Optional[str]` 
+**reverse_dns:** `typing.Optional[str]` — Reverse DNS hostname for the address, as a fully qualified domain name.
     
 </dd>
 </dl>
@@ -6581,6 +7723,105 @@ client.reserved_ips.attach_reserved_ip(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.reserved_ips.<a href="src/ibee/reserved_ips/client.py">attach_reserved_ip_direct</a>(...) -> ReservedIp</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Attaches the Reserved IP to the VM's direct public interface, for VMs that are not in a VPC. Use `attach` for VMs with a VPC interface. Requires scope: network.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.reserved_ips.attach_reserved_ip_direct(
+    reserved_ip_id="reserved_ip_id",
+    workspace_id="710995",
+    vm_id="vm_id",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**reserved_ip_id:** `str` — Reserved IP ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**vm_id:** `str` — VM to attach the address to, on its direct public interface.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**network_id:** `typing.Optional[str]` — Provider network of the VM. Resolved automatically when the VM has one.
     
 </dd>
 </dl>
@@ -6917,7 +8158,7 @@ client.firewalls.create_firewall_group(
 <dl>
 <dd>
 
-**name:** `str` 
+**name:** `str` — Display name of the group.
     
 </dd>
 </dl>
@@ -6933,7 +8174,7 @@ client.firewalls.create_firewall_group(
 <dl>
 <dd>
 
-**description:** `typing.Optional[str]` 
+**description:** `typing.Optional[str]` — Optional description.
     
 </dd>
 </dl>
@@ -6941,7 +8182,7 @@ client.firewalls.create_firewall_group(
 <dl>
 <dd>
 
-**is_default:** `typing.Optional[bool]` 
+**is_default:** `typing.Optional[bool]` — Mark the group as the workspace's default group. Default false.
     
 </dd>
 </dl>
@@ -7385,7 +8626,7 @@ client.firewalls.update_firewall_rule(
 <dl>
 <dd>
 
-**description:** `typing.Optional[str]` 
+**description:** `typing.Optional[str]` — Optional description of the rule.
     
 </dd>
 </dl>
@@ -7394,6 +8635,9 @@ client.firewalls.update_firewall_rule(
 <dd>
 
 **direction:** `typing.Optional[FirewallRuleFieldsDirection]` 
+
+- `ingress`: traffic into the VM (default).
+- `egress`: traffic out of the VM.
     
 </dd>
 </dl>
@@ -7402,6 +8646,11 @@ client.firewalls.update_firewall_rule(
 <dd>
 
 **protocol:** `typing.Optional[FirewallRuleFieldsProtocol]` 
+
+- `tcp` (default)
+- `udp`
+- `icmp`
+- `any`: all protocols.
     
 </dd>
 </dl>
@@ -7409,7 +8658,7 @@ client.firewalls.update_firewall_rule(
 <dl>
 <dd>
 
-**port_start:** `typing.Optional[int]` 
+**port_start:** `typing.Optional[int]` — First port of the range (1-65535). Required for `tcp` and `udp`; ignored for other protocols.
     
 </dd>
 </dl>
@@ -7417,7 +8666,7 @@ client.firewalls.update_firewall_rule(
 <dl>
 <dd>
 
-**port_end:** `typing.Optional[int]` 
+**port_end:** `typing.Optional[int]` — Last port of the range (1-65535). Defaults to `port_start`.
     
 </dd>
 </dl>
@@ -7425,7 +8674,7 @@ client.firewalls.update_firewall_rule(
 <dl>
 <dd>
 
-**remote_targets:** `typing.Optional[typing.List[str]]` 
+**remote_targets:** `typing.Optional[typing.List[str]]` — Remote IPv4 addresses or CIDRs the rule matches, for example `0.0.0.0/0`.
     
 </dd>
 </dl>
@@ -7434,6 +8683,9 @@ client.firewalls.update_firewall_rule(
 <dd>
 
 **action:** `typing.Optional[FirewallRuleFieldsAction]` 
+
+- `allow`: let matching traffic through (default).
+- `drop`: discard matching traffic.
     
 </dd>
 </dl>
@@ -7441,7 +8693,7 @@ client.firewalls.update_firewall_rule(
 <dl>
 <dd>
 
-**priority:** `typing.Optional[int]` 
+**priority:** `typing.Optional[int]` — Evaluation priority of the rule.
     
 </dd>
 </dl>
@@ -7449,7 +8701,7 @@ client.firewalls.update_firewall_rule(
 <dl>
 <dd>
 
-**enabled:** `typing.Optional[bool]` 
+**enabled:** `typing.Optional[bool]` — Whether the rule is applied.
     
 </dd>
 </dl>
@@ -7547,7 +8799,7 @@ client.firewalls.list_firewall_group_attachments(
 <dl>
 <dd>
 
-**skip:** `typing.Optional[int]` 
+**skip:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
     
 </dd>
 </dl>
@@ -7630,7 +8882,7 @@ client.firewalls.attach_firewall_group(
 <dl>
 <dd>
 
-**vm_id:** `str` 
+**vm_id:** `str` — ID of the VM.
     
 </dd>
 </dl>
@@ -7811,7 +9063,7 @@ client.load_balancers.list_load_balancers(
 <dl>
 <dd>
 
-**status:** `typing.Optional[LoadBalancerStatus]` 
+**status:** `typing.Optional[LoadBalancerStatus]` — Return only load balancers in this status.
     
 </dd>
 </dl>
@@ -7820,6 +9072,10 @@ client.load_balancers.list_load_balancers(
 <dd>
 
 **layer:** `typing.Optional[ListLoadBalancersRequestLayer]` 
+
+Return only load balancers of this layer.
+- `l4`
+- `l7`
     
 </dd>
 </dl>
@@ -7827,7 +9083,7 @@ client.load_balancers.list_load_balancers(
 <dl>
 <dd>
 
-**protocol:** `typing.Optional[LoadBalancerProtocol]` 
+**protocol:** `typing.Optional[LoadBalancerProtocol]` — Return only load balancers that accept this protocol.
     
 </dd>
 </dl>
@@ -7835,7 +9091,7 @@ client.load_balancers.list_load_balancers(
 <dl>
 <dd>
 
-**limit:** `typing.Optional[int]` 
+**limit:** `typing.Optional[int]` — Maximum number of items to return (1-500). Default 100.
     
 </dd>
 </dl>
@@ -7843,7 +9099,7 @@ client.load_balancers.list_load_balancers(
 <dl>
 <dd>
 
-**skip:** `typing.Optional[int]` 
+**skip:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
     
 </dd>
 </dl>
@@ -7924,7 +9180,7 @@ client.load_balancers.create_l4load_balancer(
 <dl>
 <dd>
 
-**name:** `str` 
+**name:** `str` — Display name of the load balancer.
     
 </dd>
 </dl>
@@ -7933,6 +9189,9 @@ client.load_balancers.create_l4load_balancer(
 <dd>
 
 **protocol:** `CreateL4LoadBalancerRequestProtocol` 
+
+- `tcp`
+- `tls_passthrough`
     
 </dd>
 </dl>
@@ -7940,7 +9199,7 @@ client.load_balancers.create_l4load_balancer(
 <dl>
 <dd>
 
-**backends:** `typing.List[LoadBalancerBackend]` 
+**backends:** `typing.List[LoadBalancerBackend]` — Backends to send traffic to.
     
 </dd>
 </dl>
@@ -7957,6 +9216,30 @@ client.load_balancers.create_l4load_balancer(
 <dd>
 
 **routing:** `typing.Optional[LoadBalancerRouting]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**health_check:** `typing.Optional[LoadBalancerHealthCheck]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**policy:** `typing.Optional[LoadBalancerPolicy]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**observability:** `typing.Optional[LoadBalancerObservability]` 
     
 </dd>
 </dl>
@@ -8045,7 +9328,7 @@ client.load_balancers.create_l7load_balancer(
 <dl>
 <dd>
 
-**name:** `str` 
+**name:** `str` — Display name of the load balancer.
     
 </dd>
 </dl>
@@ -8054,6 +9337,9 @@ client.load_balancers.create_l7load_balancer(
 <dd>
 
 **protocol:** `CreateL7LoadBalancerRequestProtocol` 
+
+- `http`
+- `https`
     
 </dd>
 </dl>
@@ -8061,7 +9347,7 @@ client.load_balancers.create_l7load_balancer(
 <dl>
 <dd>
 
-**backends:** `typing.List[LoadBalancerBackend]` 
+**backends:** `typing.List[LoadBalancerBackend]` — Default backends for requests no rule matches.
     
 </dd>
 </dl>
@@ -8085,6 +9371,30 @@ client.load_balancers.create_l7load_balancer(
 <dl>
 <dd>
 
+**health_check:** `typing.Optional[LoadBalancerHealthCheck]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**policy:** `typing.Optional[LoadBalancerPolicy]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**observability:** `typing.Optional[LoadBalancerObservability]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **tls:** `typing.Optional[LoadBalancerTls]` 
     
 </dd>
@@ -8093,7 +9403,7 @@ client.load_balancers.create_l7load_balancer(
 <dl>
 <dd>
 
-**custom_domain:** `typing.Optional[CreateL7LoadBalancerRequestCustomDomain]` 
+**custom_domain:** `typing.Optional[CreateL7LoadBalancerRequestCustomDomain]` — Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
     
 </dd>
 </dl>
@@ -8101,7 +9411,7 @@ client.load_balancers.create_l7load_balancer(
 <dl>
 <dd>
 
-**rules:** `typing.Optional[typing.List[LoadBalancerRule]]` 
+**rules:** `typing.Optional[typing.List[LoadBalancerRule]]` — Path- and header-based routing rules.
     
 </dd>
 </dl>
@@ -8355,7 +9665,7 @@ client.load_balancers.update_l4load_balancer(
 <dl>
 <dd>
 
-**name:** `typing.Optional[str]` 
+**name:** `typing.Optional[str]` — New display name.
     
 </dd>
 </dl>
@@ -8363,7 +9673,7 @@ client.load_balancers.update_l4load_balancer(
 <dl>
 <dd>
 
-**backends:** `typing.Optional[typing.List[LoadBalancerBackend]]` 
+**backends:** `typing.Optional[typing.List[LoadBalancerBackend]]` — Replacement backend list.
     
 </dd>
 </dl>
@@ -8372,6 +9682,30 @@ client.load_balancers.update_l4load_balancer(
 <dd>
 
 **routing:** `typing.Optional[LoadBalancerRouting]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**health_check:** `typing.Optional[LoadBalancerHealthCheck]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**policy:** `typing.Optional[LoadBalancerPolicy]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**observability:** `typing.Optional[LoadBalancerObservability]` 
     
 </dd>
 </dl>
@@ -8469,7 +9803,7 @@ client.load_balancers.update_l7load_balancer(
 <dl>
 <dd>
 
-**name:** `typing.Optional[str]` 
+**name:** `typing.Optional[str]` — New display name.
     
 </dd>
 </dl>
@@ -8477,7 +9811,7 @@ client.load_balancers.update_l7load_balancer(
 <dl>
 <dd>
 
-**backends:** `typing.Optional[typing.List[LoadBalancerBackend]]` 
+**backends:** `typing.Optional[typing.List[LoadBalancerBackend]]` — Replacement default backend list.
     
 </dd>
 </dl>
@@ -8493,6 +9827,30 @@ client.load_balancers.update_l7load_balancer(
 <dl>
 <dd>
 
+**health_check:** `typing.Optional[LoadBalancerHealthCheck]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**policy:** `typing.Optional[LoadBalancerPolicy]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**observability:** `typing.Optional[LoadBalancerObservability]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **tls:** `typing.Optional[LoadBalancerTls]` 
     
 </dd>
@@ -8501,7 +9859,7 @@ client.load_balancers.update_l7load_balancer(
 <dl>
 <dd>
 
-**custom_domain:** `typing.Optional[UpdateL7LoadBalancerRequestCustomDomain]` 
+**custom_domain:** `typing.Optional[UpdateL7LoadBalancerRequestCustomDomain]` — Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
     
 </dd>
 </dl>
@@ -8509,7 +9867,7 @@ client.load_balancers.update_l7load_balancer(
 <dl>
 <dd>
 
-**rules:** `typing.Optional[typing.List[LoadBalancerRule]]` 
+**rules:** `typing.Optional[typing.List[LoadBalancerRule]]` — Replacement routing rules.
     
 </dd>
 </dl>
@@ -8740,6 +10098,10 @@ client.compute_catalog.list_compute_plans(
 <dd>
 
 **vm_type:** `VmType` 
+
+Kind of VM the plans are for. Required.
+- `cloud`
+- `gpu`
     
 </dd>
 </dl>
@@ -8763,7 +10125,7 @@ client.compute_catalog.list_compute_plans(
 <dl>
 <dd>
 
-**currency:** `typing.Optional[str]` 
+**currency:** `typing.Optional[str]` — ISO 4217 code of the currency to quote prices in. Default `INR`.
     
 </dd>
 </dl>
@@ -8772,6 +10134,34 @@ client.compute_catalog.list_compute_plans(
 <dd>
 
 **billing_interval:** `typing.Optional[BillingInterval]` 
+
+Billing period to quote prices for.
+- `HOURLY`
+- `MONTHLY` (default)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**include_availability:** `typing.Optional[bool]` — Include an advisory placement check. Requires site_id. This does not reserve stock.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**os_type:** `typing.Optional[ListComputePlansRequestOsType]` — OS pool to check when include_availability is true.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**requires_public_ip:** `typing.Optional[bool]` — Include public IPv4 capacity in the advisory placement check.
     
 </dd>
 </dl>
@@ -8846,6 +10236,10 @@ client.compute_catalog.list_compute_images(
 <dd>
 
 **vm_type:** `VmType` 
+
+Kind of VM the images are for. Required.
+- `cloud`
+- `gpu`
     
 </dd>
 </dl>
@@ -8862,6 +10256,200 @@ client.compute_catalog.list_compute_images(
 <dd>
 
 **site_id:** `typing.Optional[str]` — Optional exact placement filter. Copy `site_id` from `GET /compute/sites`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.compute_catalog.<a href="src/ibee/compute_catalog/client.py">list_snapshot_storage_plans</a>(...) -> RecoveryStoragePlanList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Select a priced item and send its billing_catalog unchanged when creating a snapshot. Discovery does not reserve capacity or create a resource.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.compute_catalog.list_snapshot_storage_plans(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**site_id:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**currency:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**billing_interval:** `typing.Optional[ListSnapshotStoragePlansRequestBillingInterval]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.compute_catalog.<a href="src/ibee/compute_catalog/client.py">list_backup_storage_plans</a>(...) -> RecoveryStoragePlanList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Select a priced item and send its billing_catalog unchanged when enabling backups or creating a manual backup run.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.compute_catalog.list_backup_storage_plans(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**site_id:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**currency:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**billing_interval:** `typing.Optional[ListBackupStoragePlansRequestBillingInterval]` 
     
 </dd>
 </dl>
@@ -8959,6 +10547,46 @@ client.cloud_vms.list_cloud_vms(
 <dl>
 <dd>
 
+**search:** `typing.Optional[str]` — Return only VMs whose name, IP address, OS or plan contains this text.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**sort_by:** `typing.Optional[ListCloudVmsRequestSortBy]` — Field to sort by. Default `created_at`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**sort_direction:** `typing.Optional[ListCloudVmsRequestSortDirection]` — Sort direction. Default `desc`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**status:** `typing.Optional[ListCloudVmsRequestStatus]` — Send `all` to include VMs deleted in the selected month (see `date`).
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**date:** `typing.Optional[str]` — Calendar month `YYYY-MM` for the deleted-VM history returned with `status=all`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
     
 </dd>
@@ -8998,7 +10626,7 @@ Creates a cloud VM. Returns an operation you can poll for status. Requires scope
 <dd>
 
 ```python
-from ibee import Ibee
+from ibee import Ibee, ComputeBillingSelection
 from ibee.environment import IbeeEnvironment
 
 client = Ibee(
@@ -9009,16 +10637,22 @@ client = Ibee(
 client.cloud_vms.create_cloud_vm(
     workspace_id="710995",
     name="web-server-01",
-    site_id="site_id",
+    site_id="68b99bd78a8eda32ff3f16ea",
     os_distro="ubuntu",
     os_type="linux",
     template_id="tmpl_ubuntu_2204",
     cpu=2,
     ram_mb=4096,
-    plan_id="plan_id",
-    billing_catalog={
-        "key": "value"
-    },
+    plan_id="019f25b7-c1b3-7a9e-bfb9-8c83e323b517",
+    billing_catalog=ComputeBillingSelection(
+        sku_id="sku_id",
+        sku_code="sku_code",
+        billing_interval="HOURLY",
+        committed=False,
+        commitment_period="HOURLY",
+        unit_price_minor=1,
+        price_currency="INR",
+    ),
 )
 
 ```
@@ -9099,7 +10733,7 @@ client.cloud_vms.create_cloud_vm(
 <dl>
 <dd>
 
-**billing_catalog:** `typing.Dict[str, typing.Any]` — The selected plan's `billing_catalog` object from `GET /compute/plans`, passed through unmodified — the same flow the portal uses. Treat it as opaque. Billing charges are always computed server-side from `plan_id`, not from this echoed copy.
+**billing_catalog:** `ComputeBillingSelection` 
     
 </dd>
 </dl>
@@ -10050,205 +11684,6 @@ client.cloud_vms.resize_cloud_vm(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">resize_cloud_vm_plan</a>(...) -> OperationAccepted</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Moves a cloud VM to a different CPU and memory plan. Downgrades require explicit confirmation. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.cloud_vms.resize_cloud_vm_plan(
-    vm_id="vm_id",
-    workspace_id="710995",
-    cpu=1,
-    ram_mb=1,
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `VmResizePlanRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**idempotency_key:** `typing.Optional[str]` — Unique key used to safely retry write operations.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">resize_cloud_vm_root_disk</a>(...) -> OperationAccepted</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Increases a cloud VM's root disk size. Shrinking a root disk is not supported. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.cloud_vms.resize_cloud_vm_root_disk(
-    vm_id="vm_id",
-    workspace_id="710995",
-    new_size_gb=1,
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `VmResizeRootDiskRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**idempotency_key:** `typing.Optional[str]` — Unique key used to safely retry write operations.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 <details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">attach_cloud_vm_volume</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
@@ -10451,97 +11886,6 @@ client.cloud_vms.detach_cloud_vm_volume(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">acknowledge_cloud_vm_mount_guidance</a>(...) -> MountGuidanceAcknowledge</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Records that you have reviewed the guest mount instructions for a data volume attached to a cloud VM. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.cloud_vms.acknowledge_cloud_vm_mount_guidance(
-    vm_id="vm_id",
-    workspace_id="710995",
-    volume_id="volume_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `MountGuidanceAcknowledgeRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 <details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">list_cloud_vm_events</a>(...) -> typing.List[VmEvent]</code></summary>
 <dl>
 <dd>
@@ -10612,7 +11956,7 @@ client.cloud_vms.list_cloud_vm_events(
 <dl>
 <dd>
 
-**limit:** `typing.Optional[int]` 
+**limit:** `typing.Optional[int]` — Maximum number of items to return (1-500). Default 100.
     
 </dd>
 </dl>
@@ -10703,6 +12047,15 @@ client.cloud_vms.get_cloud_vm_metrics_timeseries(
 <dd>
 
 **range:** `typing.Optional[GetCloudVmMetricsTimeseriesRequestRange]` 
+
+Time window to return, ending now.
+- `30m`
+- `1h`
+- `6h`
+- `24h`
+- `7d`
+
+Default `1h`.
     
 </dd>
 </dl>
@@ -10785,7 +12138,7 @@ client.cloud_vms.get_cloud_vm_bandwidth(
 <dl>
 <dd>
 
-**month:** `str` 
+**month:** `str` — Calendar month to report, as `YYYY-MM` (for example `2026-08`).
     
 </dd>
 </dl>
@@ -10891,7 +12244,7 @@ client.cloud_vms.list_cloud_vm_snapshots(
 <dl>
 <dd>
 
-**offset:** `typing.Optional[int]` 
+**offset:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
     
 </dd>
 </dl>
@@ -10899,7 +12252,7 @@ client.cloud_vms.list_cloud_vm_snapshots(
 <dl>
 <dd>
 
-**search:** `typing.Optional[str]` 
+**search:** `typing.Optional[str]` — Return only snapshot sets whose name contains this text.
     
 </dd>
 </dl>
@@ -11085,7 +12438,7 @@ client.cloud_vms.restore_cloud_vm_snapshot(
 <dl>
 <dd>
 
-**request:** `RecoveryRestoreRequest` 
+**request:** `SnapshotRestoreRequest` 
     
 </dd>
 </dl>
@@ -11094,6 +12447,103 @@ client.cloud_vms.restore_cloud_vm_snapshot(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">list_all_cloud_vm_snapshots</a>(...) -> SnapshotSetList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists snapshot sets of every Cloud VM in the workspace, as the portal's Snapshots page does. Requires scope: vm.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.cloud_vms.list_all_cloud_vm_snapshots(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` — Maximum number of snapshot sets to return (1-500). Default 100.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**offset:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**search:** `typing.Optional[str]` — Return only snapshot sets whose fields contain this text.
     
 </dd>
 </dl>
@@ -11687,106 +13137,6 @@ client.cloud_vms.disable_cloud_vm_backups(
 <dl>
 <dd>
 
-**request:** `BackupPolicyDisableRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">reschedule_cloud_vm_backup</a>(...) -> BackupPolicy</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Sets when a cloud VM's next automated backup runs. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-import datetime
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.cloud_vms.reschedule_cloud_vm_backup(
-    vm_id="vm_id",
-    workspace_id="710995",
-    next_run_at=datetime.datetime.fromisoformat("2024-01-15T09:30:00+00:00"),
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `BackupPolicyNextRunRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
     
 </dd>
@@ -11885,7 +13235,7 @@ client.cloud_vms.list_cloud_vm_backup_runs(
 <dl>
 <dd>
 
-**offset:** `typing.Optional[int]` 
+**offset:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
     
 </dd>
 </dl>
@@ -11893,101 +13243,7 @@ client.cloud_vms.list_cloud_vm_backup_runs(
 <dl>
 <dd>
 
-**search:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">create_cloud_vm_backup_run</a>(...) -> BackupRun</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Queues a manual backup of a cloud VM using its backup configuration. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee, BillingCatalogSelection
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.cloud_vms.create_cloud_vm_backup_run(
-    vm_id="vm_id",
-    workspace_id="710995",
-    billing_catalog=BillingCatalogSelection(
-        sku_id="sku_id",
-        sku_code="sku_code",
-    ),
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `ManualBackupRunRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+**search:** `typing.Optional[str]` — Return only backup runs whose fields contain this text.
     
 </dd>
 </dl>
@@ -12098,6 +13354,119 @@ client.cloud_vms.restore_cloud_vm_backup(
 </dl>
 </details>
 
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">list_all_cloud_vm_backup_runs</a>(...) -> BackupRunList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists backup runs and recovery points of every Cloud VM in the workspace, as the portal's Backups page does. Filter by `vm_id` or `status`. Requires scope: vm.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.cloud_vms.list_all_cloud_vm_backup_runs(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**vm_id:** `typing.Optional[str]` — Return only runs of this VM.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**status:** `typing.Optional[typing.Union[BackupStatus, typing.Sequence[BackupStatus]]]` — Return only runs in these states. Repeat the parameter for several states.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` — Maximum number of records to return.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**offset:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**search:** `typing.Optional[str]` — Return only backup runs whose fields contain this text.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 <details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">get_cloud_vm_backup_run</a>(...) -> BackupRun</code></summary>
 <dl>
 <dd>
@@ -12134,6 +13503,88 @@ client = Ibee(
 )
 
 client.cloud_vms.get_cloud_vm_backup_run(
+    run_id="run_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**run_id:** `str` — Backup run or recovery-point ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">delete_cloud_vm_backup_run</a>(...)</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Deletes one backup run and its recovery point, as the portal's Backups page does. Requires scope: vm.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.cloud_vms.delete_cloud_vm_backup_run(
     run_id="run_id",
     workspace_id="710995",
 )
@@ -12422,6 +13873,30 @@ client.gpu_vms.list_gpu_vms(
 <dl>
 <dd>
 
+**search:** `typing.Optional[str]` — Return only VMs whose name, IP address, OS or plan contains this text.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**sort_by:** `typing.Optional[ListGpuVmsRequestSortBy]` — Field to sort by. Default `created_at`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**sort_direction:** `typing.Optional[ListGpuVmsRequestSortDirection]` — Sort direction. Default `desc`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
     
 </dd>
@@ -12461,7 +13936,7 @@ Creates a GPU VM. Returns an operation you can poll for status. Requires scope: 
 <dd>
 
 ```python
-from ibee import Ibee
+from ibee import Ibee, ComputeBillingSelection
 from ibee.environment import IbeeEnvironment
 
 client = Ibee(
@@ -12472,7 +13947,7 @@ client = Ibee(
 client.gpu_vms.create_gpu_vm(
     workspace_id="710995",
     name="ml-training-01",
-    site_id="site_id",
+    site_id="68b99bd78a8eda32ff3f16ea",
     os_distro="ubuntu",
     os_type="linux",
     template_id="tmpl_ubuntu_2204_cuda",
@@ -12480,10 +13955,16 @@ client.gpu_vms.create_gpu_vm(
     ram_mb=32768,
     gpu_count=1,
     gpu_model="A100",
-    plan_id="plan_id",
-    billing_catalog={
-        "key": "value"
-    },
+    plan_id="019f25b7-c1b3-7a9e-bfb9-8c83e323b517",
+    billing_catalog=ComputeBillingSelection(
+        sku_id="sku_id",
+        sku_code="sku_code",
+        billing_interval="HOURLY",
+        committed=False,
+        commitment_period="HOURLY",
+        unit_price_minor=1,
+        price_currency="INR",
+    ),
 )
 
 ```
@@ -12580,7 +14061,7 @@ client.gpu_vms.create_gpu_vm(
 <dl>
 <dd>
 
-**billing_catalog:** `typing.Dict[str, typing.Any]` — The selected plan's `billing_catalog` object from `GET /compute/plans?vm_type=gpu`, passed through unmodified — the same flow the portal uses. Treat it as opaque. Billing charges are always computed server-side from `plan_id`, not from this echoed copy.
+**billing_catalog:** `ComputeBillingSelection` 
     
 </dd>
 </dl>
@@ -13531,205 +15012,6 @@ client.gpu_vms.resize_gpu_vm(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">resize_gpu_vm_plan</a>(...) -> OperationAccepted</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Moves a GPU VM to a different CPU and memory plan. Downgrades require explicit confirmation. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.gpu_vms.resize_gpu_vm_plan(
-    vm_id="vm_id",
-    workspace_id="710995",
-    cpu=1,
-    ram_mb=1,
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `VmResizePlanRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**idempotency_key:** `typing.Optional[str]` — Unique key used to safely retry write operations.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">resize_gpu_vm_root_disk</a>(...) -> OperationAccepted</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Increases a GPU VM's root disk size, for example to fit larger models or datasets. Shrinking a root disk is not supported. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.gpu_vms.resize_gpu_vm_root_disk(
-    vm_id="vm_id",
-    workspace_id="710995",
-    new_size_gb=1,
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `VmResizeRootDiskRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**idempotency_key:** `typing.Optional[str]` — Unique key used to safely retry write operations.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 <details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">attach_gpu_vm_volume</a>(...) -> OperationAccepted</code></summary>
 <dl>
 <dd>
@@ -13932,97 +15214,6 @@ client.gpu_vms.detach_gpu_vm_volume(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">acknowledge_gpu_vm_mount_guidance</a>(...) -> MountGuidanceAcknowledge</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Records that you have reviewed the guest mount instructions for a data volume attached to a GPU VM. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.gpu_vms.acknowledge_gpu_vm_mount_guidance(
-    vm_id="vm_id",
-    workspace_id="710995",
-    volume_id="volume_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `MountGuidanceAcknowledgeRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 <details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">list_gpu_vm_events</a>(...) -> typing.List[VmEvent]</code></summary>
 <dl>
 <dd>
@@ -14093,7 +15284,7 @@ client.gpu_vms.list_gpu_vm_events(
 <dl>
 <dd>
 
-**limit:** `typing.Optional[int]` 
+**limit:** `typing.Optional[int]` — Maximum number of items to return (1-500). Default 100.
     
 </dd>
 </dl>
@@ -14184,6 +15375,15 @@ client.gpu_vms.get_gpu_vm_metrics_timeseries(
 <dd>
 
 **range:** `typing.Optional[GetGpuVmMetricsTimeseriesRequestRange]` 
+
+Time window to return, ending now.
+- `30m`
+- `1h`
+- `6h`
+- `24h`
+- `7d`
+
+Default `1h`.
     
 </dd>
 </dl>
@@ -14266,7 +15466,7 @@ client.gpu_vms.get_gpu_vm_bandwidth(
 <dl>
 <dd>
 
-**month:** `str` 
+**month:** `str` — Calendar month to report, as `YYYY-MM` (for example `2026-08`).
     
 </dd>
 </dl>
@@ -14372,7 +15572,7 @@ client.gpu_vms.list_gpu_vm_snapshots(
 <dl>
 <dd>
 
-**offset:** `typing.Optional[int]` 
+**offset:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
     
 </dd>
 </dl>
@@ -14380,7 +15580,7 @@ client.gpu_vms.list_gpu_vm_snapshots(
 <dl>
 <dd>
 
-**search:** `typing.Optional[str]` 
+**search:** `typing.Optional[str]` — Return only snapshot sets whose name contains this text.
     
 </dd>
 </dl>
@@ -14566,7 +15766,7 @@ client.gpu_vms.restore_gpu_vm_snapshot(
 <dl>
 <dd>
 
-**request:** `RecoveryRestoreRequest` 
+**request:** `SnapshotRestoreRequest` 
     
 </dd>
 </dl>
@@ -14575,6 +15775,103 @@ client.gpu_vms.restore_gpu_vm_snapshot(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">list_all_gpu_vm_snapshots</a>(...) -> SnapshotSetList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists snapshot sets of every Gpu VM in the workspace, as the portal's Snapshots page does. Requires scope: vm.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.gpu_vms.list_all_gpu_vm_snapshots(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` — Maximum number of snapshot sets to return (1-500). Default 100.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**offset:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**search:** `typing.Optional[str]` — Return only snapshot sets whose fields contain this text.
     
 </dd>
 </dl>
@@ -15168,106 +16465,6 @@ client.gpu_vms.disable_gpu_vm_backups(
 <dl>
 <dd>
 
-**request:** `BackupPolicyDisableRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">reschedule_gpu_vm_backup</a>(...) -> BackupPolicy</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Sets when a GPU VM's next automated backup runs. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-import datetime
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.gpu_vms.reschedule_gpu_vm_backup(
-    vm_id="vm_id",
-    workspace_id="710995",
-    next_run_at=datetime.datetime.fromisoformat("2024-01-15T09:30:00+00:00"),
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `BackupPolicyNextRunRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
     
 </dd>
@@ -15366,7 +16563,7 @@ client.gpu_vms.list_gpu_vm_backup_runs(
 <dl>
 <dd>
 
-**offset:** `typing.Optional[int]` 
+**offset:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
     
 </dd>
 </dl>
@@ -15374,101 +16571,7 @@ client.gpu_vms.list_gpu_vm_backup_runs(
 <dl>
 <dd>
 
-**search:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">create_gpu_vm_backup_run</a>(...) -> BackupRun</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Queues a manual backup of a GPU VM using its backup configuration. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee, BillingCatalogSelection
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.gpu_vms.create_gpu_vm_backup_run(
-    vm_id="vm_id",
-    workspace_id="710995",
-    billing_catalog=BillingCatalogSelection(
-        sku_id="sku_id",
-        sku_code="sku_code",
-    ),
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` — Virtual machine ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `ManualBackupRunRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+**search:** `typing.Optional[str]` — Return only backup runs whose fields contain this text.
     
 </dd>
 </dl>
@@ -15579,6 +16682,119 @@ client.gpu_vms.restore_gpu_vm_backup(
 </dl>
 </details>
 
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">list_all_gpu_vm_backup_runs</a>(...) -> BackupRunList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists backup runs and recovery points of every Gpu VM in the workspace, as the portal's Backups page does. Filter by `vm_id` or `status`. Requires scope: vm.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.gpu_vms.list_all_gpu_vm_backup_runs(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**vm_id:** `typing.Optional[str]` — Return only runs of this VM.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**status:** `typing.Optional[typing.Union[BackupStatus, typing.Sequence[BackupStatus]]]` — Return only runs in these states. Repeat the parameter for several states.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` — Maximum number of records to return.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**offset:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**search:** `typing.Optional[str]` — Return only backup runs whose fields contain this text.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 <details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">get_gpu_vm_backup_run</a>(...) -> BackupRun</code></summary>
 <dl>
 <dd>
@@ -15615,6 +16831,88 @@ client = Ibee(
 )
 
 client.gpu_vms.get_gpu_vm_backup_run(
+    run_id="run_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**run_id:** `str` — Backup run or recovery-point ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">delete_gpu_vm_backup_run</a>(...)</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Deletes one backup run and its recovery point, as the portal's Backups page does. Requires scope: vm.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.gpu_vms.delete_gpu_vm_backup_run(
     run_id="run_id",
     workspace_id="710995",
 )
@@ -15743,417 +17041,104 @@ client.gpu_vms.get_gpu_vm_backup_restore(
 </dl>
 </details>
 
-## VmConsole
-<details><summary><code>client.vm_console.<a href="src/ibee/vm_console/client.py">create_vm_console_session</a>(...) -> VmConsoleSession</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Creates a short-lived graphical console session for a cloud or GPU VM. The returned connect URL contains an expiring token; do not log or persist it. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.vm_console.create_vm_console_session(
-    workspace_id="710995",
-    vm_id="vm_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**vm_id:** `str` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**vm_type:** `typing.Optional[VmType]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**console_type:** `typing.Optional[VmConsoleSessionCreateRequestConsoleType]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**requested_by:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**user_id:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.vm_console.<a href="src/ibee/vm_console/client.py">get_vm_console_session</a>(...) -> VmConsoleSessionStatus</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Returns the status of a workspace-owned console session. Requires scope: vm.read.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.vm_console.get_vm_console_session(
-    session_id="session_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**session_id:** `str` — VM console session ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.vm_console.<a href="src/ibee/vm_console/client.py">close_vm_console_session</a>(...) -> VmConsoleClose</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Closes a workspace-owned console session and invalidates its connection token. Requires scope: vm.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.vm_console.close_vm_console_session(
-    session_id="session_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**session_id:** `str` — VM console session ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**reason:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-## Billing
-<details><summary><code>client.billing.<a href="src/ibee/billing/client.py">check_resource_eligibility</a>(...) -> BillingEligibility</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Returns a point-in-time eligibility decision from the same existing billing service used by the portal. Call it before a billable create and continue only when `allowed` is exactly `true`. This check does not reserve funds, create a resource, or guarantee that a later product operation will succeed. Requires scope: billing.read.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.billing.check_resource_eligibility(
-    workspace_id="710995",
-    sku_code="STANDARD-2-8-50",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**sku_code:** `typing.Optional[str]` — Billing catalog SKU for the intended resource. Unknown or unavailable SKUs may be denied.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**estimated_cost_minor:** `typing.Optional[int]` — Optional estimated cost expressed in the organization's currency minor unit. Use a value from a trusted catalog.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**operation:** `typing.Optional[BillingEligibilityRequestOperation]` — The kind of action Billing should decide on.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**resource_type:** `typing.Optional[BillingEligibilityRequestResourceType]` — What the request would create, so Billing also checks the plan's resource limit for it. Omit it for a money check only. `bucket`, `secret_store` and `secret` have no limit and get the money check only.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**quantity:** `typing.Optional[int]` — How many resources would be created at once; 0 for a resize, which adds size only.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**size_gb:** `typing.Optional[int]` — GiB being added (a new volume's size, a resize's increase, or the disks a snapshot will capture), checked against the size limit of that kind.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 ## BlockStorage
+<details><summary><code>client.block_storage.<a href="src/ibee/block_storage/client.py">list_block_storage_plans</a>(...) -> BlockStoragePlanList</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the block storage plans with their sizes, performance and prices, as the portal's Create Volume page shows them. Pick a `sku_code` for createBlockVolume. Requires scope: block-storage.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.block_storage.list_block_storage_plans(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**site_id:** `typing.Optional[str]` — Return only plans offered at this site.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**currency:** `typing.Optional[str]` — Price currency. Default `INR`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**billing_interval:** `typing.Optional[ListBlockStoragePlansRequestBillingInterval]` — Billing interval of the listed prices. Default `MONTHLY`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 <details><summary><code>client.block_storage.<a href="src/ibee/block_storage/client.py">list_block_volumes</a>(...) -> typing.List[BlockVolume]</code></summary>
 <dl>
 <dd>
@@ -16266,7 +17251,7 @@ client.block_storage.create_block_volume(
     workspace_id="710995",
     name="name",
     size_gb=1,
-    site_id="site_id",
+    site_id="68b99bd78a8eda32ff3f16ea",
 )
 
 ```
@@ -16283,7 +17268,7 @@ client.block_storage.create_block_volume(
 <dl>
 <dd>
 
-**name:** `str` 
+**name:** `str` — Display name of the volume (1-255 characters).
     
 </dd>
 </dl>
@@ -16291,7 +17276,7 @@ client.block_storage.create_block_volume(
 <dl>
 <dd>
 
-**size_gb:** `int` 
+**size_gb:** `int` — Size in GB (1-10000).
     
 </dd>
 </dl>
@@ -16299,7 +17284,7 @@ client.block_storage.create_block_volume(
 <dl>
 <dd>
 
-**site_id:** `str` 
+**site_id:** `str` — Site to create the volume at.
     
 </dd>
 </dl>
@@ -16315,7 +17300,7 @@ client.block_storage.create_block_volume(
 <dl>
 <dd>
 
-**site_name:** `typing.Optional[str]` 
+**site_name:** `typing.Optional[str]` — Display name of that site, as shown in the portal.
     
 </dd>
 </dl>
@@ -16332,6 +17317,12 @@ client.block_storage.create_block_volume(
 <dd>
 
 **volume_class:** `typing.Optional[CreateBlockVolumeRequestVolumeClass]` 
+
+Performance class of the volume.
+- `capacity`: lowest cost per GB.
+- `balanced`: general purpose.
+- `performance`: highest throughput and IOPS.
+Default `balanced`.
     
 </dd>
 </dl>
@@ -16339,7 +17330,7 @@ client.block_storage.create_block_volume(
 <dl>
 <dd>
 
-**replica_count:** `typing.Optional[int]` 
+**replica_count:** `typing.Optional[int]` — Number of synchronous replicas kept for the volume (1-5). Default 2.
     
 </dd>
 </dl>
@@ -16347,7 +17338,7 @@ client.block_storage.create_block_volume(
 <dl>
 <dd>
 
-**backup_enabled:** `typing.Optional[bool]` 
+**backup_enabled:** `typing.Optional[bool]` — Whether volume backups are enabled. Default true.
     
 </dd>
 </dl>
@@ -16355,7 +17346,7 @@ client.block_storage.create_block_volume(
 <dl>
 <dd>
 
-**idempotency_key:** `typing.Optional[str]` 
+**idempotency_key:** `typing.Optional[str]` — Caller-chosen key that makes a retried request return the original operation instead of starting a new one.
     
 </dd>
 </dl>
@@ -16527,7 +17518,7 @@ client.block_storage.delete_block_volume(
 <dl>
 <dd>
 
-**force:** `typing.Optional[bool]` 
+**force:** `typing.Optional[bool]` — Delete the volume even if it is still attached. Default false.
     
 </dd>
 </dl>
@@ -16629,292 +17620,6 @@ client.block_storage.list_block_volume_operations(
 </dl>
 </details>
 
-<details><summary><code>client.block_storage.<a href="src/ibee/block_storage/client.py">attach_block_volume</a>(...) -> BlockVolumeAction</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Attaches a block storage volume to a VM so it can be mounted in the guest. Requires scope: block-storage.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.block_storage.attach_block_volume(
-    volume_id="volume_id",
-    workspace_id="710995",
-    node_name="node_name",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**volume_id:** `str` — Workspace-owned block-volume ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**node_name:** `str` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**mode:** `typing.Optional[AttachBlockVolumeRequestMode]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**vm_id:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**vm_name:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**vm_state:** `typing.Optional[AttachBlockVolumeRequestVmState]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**vm_site_id:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**vm_type:** `typing.Optional[AttachBlockVolumeRequestVmType]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**idempotency_key:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.block_storage.<a href="src/ibee/block_storage/client.py">detach_block_volume</a>(...) -> BlockVolumeAction</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Detaches a block storage volume from its VM. Unmount it in the guest first. Requires scope: block-storage.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.block_storage.detach_block_volume(
-    volume_id="volume_id",
-    workspace_id="710995",
-    node_name="node_name",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**volume_id:** `str` — Workspace-owned block-volume ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**node_name:** `str` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**force:** `typing.Optional[bool]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**confirm_unmounted:** `typing.Optional[bool]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**vm_state:** `typing.Optional[DetachBlockVolumeRequestVmState]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**vm_type:** `typing.Optional[DetachBlockVolumeRequestVmType]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**reason:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**idempotency_key:** `typing.Optional[str]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 <details><summary><code>client.block_storage.<a href="src/ibee/block_storage/client.py">resize_block_volume</a>(...) -> BlockVolumeAction</code></summary>
 <dl>
 <dd>
@@ -16978,7 +17683,7 @@ client.block_storage.resize_block_volume(
 <dl>
 <dd>
 
-**new_size_gb:** `int` 
+**new_size_gb:** `int` — New size in GB.
     
 </dd>
 </dl>
@@ -16995,6 +17700,11 @@ client.block_storage.resize_block_volume(
 <dd>
 
 **vm_state:** `typing.Optional[ResizeBlockVolumeRequestVmState]` 
+
+Current power state of the VM, when the caller knows it.
+- `running`
+- `stopped`
+- `suspended`
     
 </dd>
 </dl>
@@ -17002,7 +17712,7 @@ client.block_storage.resize_block_volume(
 <dl>
 <dd>
 
-**allow_online:** `typing.Optional[bool]` 
+**allow_online:** `typing.Optional[bool]` — Permit the resize while the volume is attached to a running VM. Default false.
     
 </dd>
 </dl>
@@ -17010,7 +17720,7 @@ client.block_storage.resize_block_volume(
 <dl>
 <dd>
 
-**idempotency_key:** `typing.Optional[str]` 
+**idempotency_key:** `typing.Optional[str]` — Caller-chosen key that makes a retried request return the original operation instead of starting a new one.
     
 </dd>
 </dl>
@@ -17031,113 +17741,6 @@ client.block_storage.resize_block_volume(
 </details>
 
 ## Cdn
-<details><summary><code>client.cdn.<a href="src/ibee/cdn/client.py">generate_cdn_url</a>(...) -> GeneratedCdnUrl</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Generates a time-limited CDN URL for an object in an object storage bucket, with optional download disposition. Requires scope: cdn.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.cdn.generate_cdn_url(
-    workspace_id="710995",
-    bucket_name="bucket_name",
-    object_key="object_key",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**bucket_name:** `str` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**object_key:** `str` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**expires_in:** `typing.Optional[int]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**disposition:** `typing.Optional[GenerateCdnUrlRequestDisposition]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 <details><summary><code>client.cdn.<a href="src/ibee/cdn/client.py">list_cdn_distributions</a>(...) -> CdnDistributionList</code></summary>
 <dl>
 <dd>
@@ -17266,7 +17869,7 @@ client.cdn.create_cdn_distribution(
 <dl>
 <dd>
 
-**name:** `str` 
+**name:** `str` — Display name of the distribution (1-128 characters).
     
 </dd>
 </dl>
@@ -17274,7 +17877,7 @@ client.cdn.create_cdn_distribution(
 <dl>
 <dd>
 
-**origin_id:** `str` 
+**origin_id:** `str` — Bucket name for `bucket` origins, or the custom origin's ID.
     
 </dd>
 </dl>
@@ -17291,6 +17894,9 @@ client.cdn.create_cdn_distribution(
 <dd>
 
 **origin_type:** `typing.Optional[CreateCdnDistributionRequestOriginType]` 
+
+- `bucket`: serve an Object Storage bucket (default).
+- `custom`: serve a custom origin.
     
 </dd>
 </dl>
@@ -17299,6 +17905,12 @@ client.cdn.create_cdn_distribution(
 <dd>
 
 **cache_policy:** `typing.Optional[CreateCdnDistributionRequestCachePolicy]` 
+
+Caching behaviour. Default `static-assets`.
+- `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+- `media`: medium-term caching for video and audio; 30 days at the CDN.
+- `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+- `no-cache`: no caching, for dynamic responses.
     
 </dd>
 </dl>
@@ -17552,7 +18164,7 @@ client.cdn.update_cdn_distribution(
 <dl>
 <dd>
 
-**name:** `typing.Optional[str]` 
+**name:** `typing.Optional[str]` — New display name.
     
 </dd>
 </dl>
@@ -17561,6 +18173,12 @@ client.cdn.update_cdn_distribution(
 <dd>
 
 **cache_policy:** `typing.Optional[UpdateCdnDistributionRequestCachePolicy]` 
+
+New caching behaviour.
+- `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+- `media`: medium-term caching for video and audio; 30 days at the CDN.
+- `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+- `no-cache`: no caching, for dynamic responses.
     
 </dd>
 </dl>
@@ -17568,7 +18186,97 @@ client.cdn.update_cdn_distribution(
 <dl>
 <dd>
 
-**enabled:** `typing.Optional[bool]` 
+**enabled:** `typing.Optional[bool]` — Whether the distribution serves traffic.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.cdn.<a href="src/ibee/cdn/client.py">get_cdn_distribution_metrics</a>(...) -> CdnDistributionMetrics</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns traffic, cache and origin metrics of the distribution for the last 24 hours, 7 days or 30 days, as the portal's Metrics tab shows them. Requires scope: cdn.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.cdn.get_cdn_distribution_metrics(
+    distribution_id="distribution_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**distribution_id:** `str` — CDN distribution ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**range:** `typing.Optional[GetCdnDistributionMetricsRequestRange]` — Time range. Default `24h`.
     
 </dd>
 </dl>
@@ -17740,7 +18448,7 @@ client.cdn.update_cdn_website_config(
 <dl>
 <dd>
 
-**index_document:** `typing.Optional[str]` 
+**index_document:** `typing.Optional[str]` — Object served for directory requests. Default `index.html`.
     
 </dd>
 </dl>
@@ -17987,7 +18695,7 @@ client.cdn.create_cdn_custom_domain(
 <dl>
 <dd>
 
-**domain:** `str` 
+**domain:** `str` — Fully qualified hostname to serve, for example `cdn.example.com`.
     
 </dd>
 </dl>
@@ -18359,6 +19067,12 @@ client.cdn.purge_cdn_cache(
 <dd>
 
 **mode:** `PurgeCdnCacheRequestMode` 
+
+- `url`: purge the paths in `paths`.
+- `hostname`: purge everything for the hostnames in `hostnames`.
+- `tag`: purge content tagged with `tags`.
+- `prefix`: purge paths starting with `prefixes`.
+- `all`: purge the whole distribution.
     
 </dd>
 </dl>
@@ -18374,7 +19088,7 @@ client.cdn.purge_cdn_cache(
 <dl>
 <dd>
 
-**paths:** `typing.Optional[typing.List[str]]` 
+**paths:** `typing.Optional[typing.List[str]]` — Paths to purge, for `url` mode.
     
 </dd>
 </dl>
@@ -18382,7 +19096,7 @@ client.cdn.purge_cdn_cache(
 <dl>
 <dd>
 
-**hostnames:** `typing.Optional[typing.List[str]]` 
+**hostnames:** `typing.Optional[typing.List[str]]` — Hostnames to purge, for `hostname` mode.
     
 </dd>
 </dl>
@@ -18390,7 +19104,7 @@ client.cdn.purge_cdn_cache(
 <dl>
 <dd>
 
-**tags:** `typing.Optional[typing.List[str]]` 
+**tags:** `typing.Optional[typing.List[str]]` — Cache tags to purge, for `tag` mode.
     
 </dd>
 </dl>
@@ -18398,7 +19112,7 @@ client.cdn.purge_cdn_cache(
 <dl>
 <dd>
 
-**prefixes:** `typing.Optional[typing.List[str]]` 
+**prefixes:** `typing.Optional[typing.List[str]]` — Path prefixes to purge, for `prefix` mode.
     
 </dd>
 </dl>
@@ -18691,6 +19405,9 @@ client.container_registry.create_container_registry(
 <dd>
 
 **visibility:** `typing.Optional[ContainerRegistryVisibility]` 
+
+- `PRIVATE`: pulls need an access token (default).
+- `PUBLIC`: anonymous pulls are allowed; egress is charged.
     
 </dd>
 </dl>
@@ -19054,97 +19771,6 @@ client.container_registry.retry_container_registry_provisioning(
 <dd>
 
 **registry_id:** `str` — Registry ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">empty_container_registry</a>(...) -> ContainerRegistryEmptyResult</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Permanently deletes every repository and image in a registry, so it can be deleted. A bounded run can stop early with 409 `detail.code: registry_empty_incomplete` (`retryable: true`); pause pushes and call again. Requires scope: container-registry.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.container_registry.empty_container_registry(
-    registry_id="registry_id",
-    workspace_id="710995",
-    confirm_registry_name="confirm_registry_name",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**registry_id:** `str` — Registry ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**confirm_registry_name:** `str` — The registry's name, repeated to confirm a destructive call.
     
 </dd>
 </dl>
@@ -19538,6 +20164,9 @@ client.container_registry.create_container_registry_access_token(
 <dd>
 
 **permission:** `typing.Optional[ContainerRegistryAccessTokenPermission]` 
+
+- `PULL`: pull only (default).
+- `PULL_PUSH`: pull and push.
     
 </dd>
 </dl>
@@ -19553,7 +20182,7 @@ client.container_registry.create_container_registry_access_token(
 <dl>
 <dd>
 
-**description:** `typing.Optional[str]` 
+**description:** `typing.Optional[str]` — Optional description (up to 255 characters).
     
 </dd>
 </dl>
@@ -20619,6 +21248,14 @@ client.container_registry.list_container_registry_vulnerabilities(
 <dd>
 
 **severity:** `typing.Optional[ListContainerRegistryVulnerabilitiesRequestSeverity]` 
+
+Return only findings of this severity.
+- `Critical`
+- `High`
+- `Medium`
+- `Low`
+- `Unknown`
+- `None`
     
 </dd>
 </dl>
@@ -20626,7 +21263,7 @@ client.container_registry.list_container_registry_vulnerabilities(
 <dl>
 <dd>
 
-**cve_id:** `typing.Optional[str]` 
+**cve_id:** `typing.Optional[str]` — Return only findings for this CVE or advisory ID.
     
 </dd>
 </dl>
@@ -20634,7 +21271,7 @@ client.container_registry.list_container_registry_vulnerabilities(
 <dl>
 <dd>
 
-**repository_name:** `typing.Optional[str]` 
+**repository_name:** `typing.Optional[str]` — Return only findings on artifacts in this repository.
     
 </dd>
 </dl>
@@ -20642,7 +21279,7 @@ client.container_registry.list_container_registry_vulnerabilities(
 <dl>
 <dd>
 
-**digest:** `typing.Optional[str]` 
+**digest:** `typing.Optional[str]` — Return only findings on the artifact with this digest.
     
 </dd>
 </dl>
@@ -20650,7 +21287,7 @@ client.container_registry.list_container_registry_vulnerabilities(
 <dl>
 <dd>
 
-**tag:** `typing.Optional[str]` 
+**tag:** `typing.Optional[str]` — Return only findings on artifacts carrying this tag.
     
 </dd>
 </dl>
@@ -20658,7 +21295,7 @@ client.container_registry.list_container_registry_vulnerabilities(
 <dl>
 <dd>
 
-**package:** `typing.Optional[str]` 
+**package:** `typing.Optional[str]` — Return only findings in this package.
     
 </dd>
 </dl>

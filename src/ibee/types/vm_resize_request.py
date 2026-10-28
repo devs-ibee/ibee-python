@@ -11,10 +11,20 @@ class VmResizeRequest(UniversalBaseModel):
     At least one target value must be supplied.
     """
 
-    cpu: typing.Optional[int] = None
-    ram_mb: typing.Optional[int] = None
-    disk_gb: typing.Optional[int] = None
-    requested_by: typing.Optional[str] = None
+    cpu: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Target vCPUs.
+    """
+
+    ram_mb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Target memory in MB.
+    """
+
+    disk_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Target root disk size in GB.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

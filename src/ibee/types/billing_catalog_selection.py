@@ -33,7 +33,10 @@ class BillingCatalogSelection(UniversalBaseModel):
     Billing catalog product code.
     """
 
-    display_name: typing.Optional[str] = None
+    display_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the SKU, as listed in the billing catalog.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

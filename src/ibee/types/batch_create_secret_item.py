@@ -7,8 +7,19 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class BatchCreateSecretItem(UniversalBaseModel):
-    secret_name: str
-    value: typing.Dict[str, typing.Any]
+    """
+    One secret in a batch create.
+    """
+
+    secret_name: str = pydantic.Field()
+    """
+    Unique name for the secret within the store (2-64 characters).
+    """
+
+    value: typing.Dict[str, typing.Any] = pydantic.Field()
+    """
+    Key-value pairs containing the secret data.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

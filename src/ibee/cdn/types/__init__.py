@@ -8,13 +8,13 @@ from importlib import import_module
 if typing.TYPE_CHECKING:
     from .create_cdn_distribution_request_cache_policy import CreateCdnDistributionRequestCachePolicy
     from .create_cdn_distribution_request_origin_type import CreateCdnDistributionRequestOriginType
-    from .generate_cdn_url_request_disposition import GenerateCdnUrlRequestDisposition
+    from .get_cdn_distribution_metrics_request_range import GetCdnDistributionMetricsRequestRange
     from .purge_cdn_cache_request_mode import PurgeCdnCacheRequestMode
     from .update_cdn_distribution_request_cache_policy import UpdateCdnDistributionRequestCachePolicy
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateCdnDistributionRequestCachePolicy": ".create_cdn_distribution_request_cache_policy",
     "CreateCdnDistributionRequestOriginType": ".create_cdn_distribution_request_origin_type",
-    "GenerateCdnUrlRequestDisposition": ".generate_cdn_url_request_disposition",
+    "GetCdnDistributionMetricsRequestRange": ".get_cdn_distribution_metrics_request_range",
     "PurgeCdnCacheRequestMode": ".purge_cdn_cache_request_mode",
     "UpdateCdnDistributionRequestCachePolicy": ".update_cdn_distribution_request_cache_policy",
 }
@@ -44,7 +44,7 @@ def __dir__():
 __all__ = [
     "CreateCdnDistributionRequestCachePolicy",
     "CreateCdnDistributionRequestOriginType",
-    "GenerateCdnUrlRequestDisposition",
+    "GetCdnDistributionMetricsRequestRange",
     "PurgeCdnCacheRequestMode",
     "UpdateCdnDistributionRequestCachePolicy",
 ]

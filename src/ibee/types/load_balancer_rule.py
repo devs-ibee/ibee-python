@@ -8,10 +8,29 @@ from .load_balancer_backend import LoadBalancerBackend
 
 
 class LoadBalancerRule(UniversalBaseModel):
-    priority: typing.Optional[int] = None
-    path_prefix: typing.Optional[str] = None
-    headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = None
-    backends: typing.Optional[typing.List[LoadBalancerBackend]] = None
+    """
+    An L7 routing rule.
+    """
+
+    priority: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Order in which rules are evaluated; lower values first. Default 1.
+    """
+
+    path_prefix: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Request path prefix the rule matches. Default `/`.
+    """
+
+    headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = pydantic.Field(default=None)
+    """
+    Header names and values a request must carry to match.
+    """
+
+    backends: typing.Optional[typing.List[LoadBalancerBackend]] = pydantic.Field(default=None)
+    """
+    Backends for matching requests; the load balancer's own backends are used when omitted.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

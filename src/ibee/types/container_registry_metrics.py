@@ -14,16 +14,65 @@ from .container_registry_metrics_storage import ContainerRegistryMetricsStorage
 
 
 class ContainerRegistryMetrics(UniversalBaseModel):
-    registry_id: str
-    range: ContainerRegistryMetricsRange
-    granularity: ContainerRegistryMetricsGranularity
-    range_start: dt.datetime
-    range_end: dt.datetime
-    generated_at: dt.datetime
-    storage: ContainerRegistryMetricsStorage
-    bandwidth: ContainerRegistryMetricsBandwidth
-    bandwidth_points: typing.List[ContainerRegistryMetricsBandwidthPointsItem]
-    coverage: ContainerRegistryMetricsCoverage
+    """
+    Storage use against the plan quota and outbound bandwidth over the requested window. Bytes are decimal (1 GB = 1,000,000,000 bytes).
+    """
+
+    registry_id: str = pydantic.Field()
+    """
+    ID of the registry.
+    """
+
+    range: ContainerRegistryMetricsRange = pydantic.Field()
+    """
+    Window covered.
+    - `24h`
+    - `7d`
+    - `30d`
+    """
+
+    granularity: ContainerRegistryMetricsGranularity = pydantic.Field()
+    """
+    Spacing of `bandwidth_points`.
+    - `15m`
+    - `1h`
+    - `1d`
+    """
+
+    range_start: dt.datetime = pydantic.Field()
+    """
+    Start of the window (ISO 8601).
+    """
+
+    range_end: dt.datetime = pydantic.Field()
+    """
+    End of the window (ISO 8601).
+    """
+
+    generated_at: dt.datetime = pydantic.Field()
+    """
+    When the metrics were computed (ISO 8601).
+    """
+
+    storage: ContainerRegistryMetricsStorage = pydantic.Field()
+    """
+    Storage use against the plan quota.
+    """
+
+    bandwidth: ContainerRegistryMetricsBandwidth = pydantic.Field()
+    """
+    Outbound bandwidth over the window.
+    """
+
+    bandwidth_points: typing.List[ContainerRegistryMetricsBandwidthPointsItem] = pydantic.Field()
+    """
+    Outbound bytes per interval across the window.
+    """
+
+    coverage: ContainerRegistryMetricsCoverage = pydantic.Field()
+    """
+    How complete the bandwidth data is for the window.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

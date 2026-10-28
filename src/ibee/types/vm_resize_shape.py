@@ -7,9 +7,24 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class VmResizeShape(UniversalBaseModel):
-    cpu: int
-    ram_mb: int
-    disk_gb: int
+    """
+    A VM shape: vCPUs, memory and root disk.
+    """
+
+    cpu: int = pydantic.Field()
+    """
+    vCPUs.
+    """
+
+    ram_mb: int = pydantic.Field()
+    """
+    Memory in MB.
+    """
+
+    disk_gb: int = pydantic.Field()
+    """
+    Root disk size in GB.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -9,9 +9,24 @@ from .container_registry_metrics_coverage_status import ContainerRegistryMetrics
 
 
 class ContainerRegistryMetricsCoverage(UniversalBaseModel):
-    status: ContainerRegistryMetricsCoverageStatus
-    data_available_from: typing.Optional[dt.datetime] = None
-    data_through: typing.Optional[dt.datetime] = None
+    """
+    How complete the bandwidth data is for the window.
+    """
+
+    status: ContainerRegistryMetricsCoverageStatus = pydantic.Field()
+    """
+    `provisional`: bandwidth data is still being accumulated and may not cover the whole window.
+    """
+
+    data_available_from: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    Earliest time bandwidth data exists for (ISO 8601).
+    """
+
+    data_through: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    Latest time bandwidth data exists for (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

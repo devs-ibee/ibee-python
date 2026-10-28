@@ -10,21 +10,83 @@ from .vpc_connectivity_type import VpcConnectivityType
 
 
 class Vpc(UniversalBaseModel):
-    vpc_id: str
-    account_id: typing.Optional[str] = None
-    organization_id: str
-    workspace_id: str
-    site_id: str
-    name: str
-    description: typing.Optional[str] = None
-    region: typing.Optional[str] = None
-    cidr: str
+    """
+    An isolated virtual network at one site.
+    """
+
+    vpc_id: str = pydantic.Field()
+    """
+    Unique ID of the VPC.
+    """
+
+    account_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Legacy alias of `organization_id`.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the owning workspace.
+    """
+
+    site_id: str = pydantic.Field()
+    """
+    Site the VPC lives at.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the VPC.
+    """
+
+    description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Description of the VPC.
+    """
+
+    region: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Region label stored with the VPC, when set.
+    """
+
+    cidr: str = pydantic.Field()
+    """
+    IPv4 CIDR of the VPC.
+    """
+
     status: NetworkingResourceStatus
-    is_default: typing.Optional[bool] = None
-    connectivity_type: VpcConnectivityType
-    error_message: typing.Optional[str] = None
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    is_default: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether this is the workspace's default VPC.
+    """
+
+    connectivity_type: VpcConnectivityType = pydantic.Field()
+    """
+    The VPC's internet model.
+    - `public`: instances may have dedicated public IPs.
+    - `nat_gateway`: private VPC with managed outbound NAT; dedicated public IPs are not allowed.
+    - `private`: no managed internet path.
+    """
+
+    error_message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error detail when `status` is `error`.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

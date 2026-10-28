@@ -10,11 +10,15 @@ if typing.TYPE_CHECKING:
     from .create_gpu_vm_request_os_type import CreateGpuVmRequestOsType
     from .create_gpu_vm_request_vpc_attachment_mode import CreateGpuVmRequestVpcAttachmentMode
     from .get_gpu_vm_metrics_timeseries_request_range import GetGpuVmMetricsTimeseriesRequestRange
+    from .list_gpu_vms_request_sort_by import ListGpuVmsRequestSortBy
+    from .list_gpu_vms_request_sort_direction import ListGpuVmsRequestSortDirection
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateGpuVmRequestNetworkConnectivity": ".create_gpu_vm_request_network_connectivity",
     "CreateGpuVmRequestOsType": ".create_gpu_vm_request_os_type",
     "CreateGpuVmRequestVpcAttachmentMode": ".create_gpu_vm_request_vpc_attachment_mode",
     "GetGpuVmMetricsTimeseriesRequestRange": ".get_gpu_vm_metrics_timeseries_request_range",
+    "ListGpuVmsRequestSortBy": ".list_gpu_vms_request_sort_by",
+    "ListGpuVmsRequestSortDirection": ".list_gpu_vms_request_sort_direction",
 }
 
 
@@ -44,4 +48,6 @@ __all__ = [
     "CreateGpuVmRequestOsType",
     "CreateGpuVmRequestVpcAttachmentMode",
     "GetGpuVmMetricsTimeseriesRequestRange",
+    "ListGpuVmsRequestSortBy",
+    "ListGpuVmsRequestSortDirection",
 ]

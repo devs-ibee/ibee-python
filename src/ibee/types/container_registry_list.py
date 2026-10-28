@@ -8,10 +8,29 @@ from .container_registry import ContainerRegistry
 
 
 class ContainerRegistryList(UniversalBaseModel):
-    items: typing.List[ContainerRegistry]
-    total: int
-    page: int
-    page_size: int
+    """
+    A page of registries.
+    """
+
+    items: typing.List[ContainerRegistry] = pydantic.Field()
+    """
+    Registries on this page.
+    """
+
+    total: int = pydantic.Field()
+    """
+    Total number of items matching the request.
+    """
+
+    page: int = pydantic.Field()
+    """
+    Page number returned (1-based).
+    """
+
+    page_size: int = pydantic.Field()
+    """
+    Page size that was applied.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

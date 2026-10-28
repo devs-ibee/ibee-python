@@ -7,7 +7,14 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class DeleteResponse(UniversalBaseModel):
-    detail: typing.Optional[str] = None
+    """
+    Confirmation of a delete.
+    """
+
+    detail: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Human-readable result.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

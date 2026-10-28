@@ -8,9 +8,24 @@ from .cdn_custom_domain import CdnCustomDomain
 
 
 class CdnCustomDomainList(UniversalBaseModel):
-    distribution_id: str
-    default_domain: str
-    custom_domains: typing.List[CdnCustomDomain]
+    """
+    Custom hostnames of a distribution.
+    """
+
+    distribution_id: str = pydantic.Field()
+    """
+    ID of the distribution.
+    """
+
+    default_domain: str = pydantic.Field()
+    """
+    Hostname IBEE assigned to the distribution; the CNAME target for custom hostnames.
+    """
+
+    custom_domains: typing.List[CdnCustomDomain] = pydantic.Field()
+    """
+    Custom hostnames returned.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

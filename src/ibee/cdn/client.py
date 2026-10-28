@@ -10,12 +10,12 @@ from ..types.cdn_custom_domain_list import CdnCustomDomainList
 from ..types.cdn_custom_domain_verification import CdnCustomDomainVerification
 from ..types.cdn_distribution import CdnDistribution
 from ..types.cdn_distribution_list import CdnDistributionList
+from ..types.cdn_distribution_metrics import CdnDistributionMetrics
 from ..types.cdn_website_config import CdnWebsiteConfig
-from ..types.generated_cdn_url import GeneratedCdnUrl
 from .raw_client import AsyncRawCdnClient, RawCdnClient
 from .types.create_cdn_distribution_request_cache_policy import CreateCdnDistributionRequestCachePolicy
 from .types.create_cdn_distribution_request_origin_type import CreateCdnDistributionRequestOriginType
-from .types.generate_cdn_url_request_disposition import GenerateCdnUrlRequestDisposition
+from .types.get_cdn_distribution_metrics_request_range import GetCdnDistributionMetricsRequestRange
 from .types.purge_cdn_cache_request_mode import PurgeCdnCacheRequestMode
 from .types.update_cdn_distribution_request_cache_policy import UpdateCdnDistributionRequestCachePolicy
 
@@ -37,63 +37,6 @@ class CdnClient:
         RawCdnClient
         """
         return self._raw_client
-
-    def generate_cdn_url(
-        self,
-        *,
-        bucket_name: str,
-        object_key: str,
-        workspace_id: typing.Optional[str] = None,
-        expires_in: typing.Optional[int] = OMIT,
-        disposition: typing.Optional[GenerateCdnUrlRequestDisposition] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> GeneratedCdnUrl:
-        """
-        Generates a time-limited CDN URL for an object in an object storage bucket, with optional download disposition. Requires scope: cdn.write.
-
-        Parameters
-        ----------
-        bucket_name : str
-
-        object_key : str
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        expires_in : typing.Optional[int]
-
-        disposition : typing.Optional[GenerateCdnUrlRequestDisposition]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        GeneratedCdnUrl
-            CDN URL generated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.cdn.generate_cdn_url(
-            workspace_id="710995",
-            bucket_name="bucket_name",
-            object_key="object_key",
-        )
-        """
-        _response = self._raw_client.generate_cdn_url(
-            bucket_name=bucket_name,
-            object_key=object_key,
-            workspace_id=workspace_id,
-            expires_in=expires_in,
-            disposition=disposition,
-            request_options=request_options,
-        )
-        return _response.data
 
     def list_cdn_distributions(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
@@ -144,15 +87,24 @@ class CdnClient:
         Parameters
         ----------
         name : str
+            Display name of the distribution (1-128 characters).
 
         origin_id : str
+            Bucket name for `bucket` origins, or the custom origin's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         origin_type : typing.Optional[CreateCdnDistributionRequestOriginType]
+            - `bucket`: serve an Object Storage bucket (default).
+            - `custom`: serve a custom origin.
 
         cache_policy : typing.Optional[CreateCdnDistributionRequestCachePolicy]
+            Caching behaviour. Default `static-assets`.
+            - `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+            - `media`: medium-term caching for video and audio; 30 days at the CDN.
+            - `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+            - `no-cache`: no caching, for dynamic responses.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -292,10 +244,17 @@ class CdnClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         cache_policy : typing.Optional[UpdateCdnDistributionRequestCachePolicy]
+            New caching behaviour.
+            - `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+            - `media`: medium-term caching for video and audio; 30 days at the CDN.
+            - `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+            - `no-cache`: no caching, for dynamic responses.
 
         enabled : typing.Optional[bool]
+            Whether the distribution serves traffic.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -324,6 +283,53 @@ class CdnClient:
             cache_policy=cache_policy,
             enabled=enabled,
             request_options=request_options,
+        )
+        return _response.data
+
+    def get_cdn_distribution_metrics(
+        self,
+        distribution_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        range: typing.Optional[GetCdnDistributionMetricsRequestRange] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> CdnDistributionMetrics:
+        """
+        Returns traffic, cache and origin metrics of the distribution for the last 24 hours, 7 days or 30 days, as the portal's Metrics tab shows them. Requires scope: cdn.read.
+
+        Parameters
+        ----------
+        distribution_id : str
+            CDN distribution ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        range : typing.Optional[GetCdnDistributionMetricsRequestRange]
+            Time range. Default `24h`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        CdnDistributionMetrics
+            Metrics returned successfully.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.cdn.get_cdn_distribution_metrics(
+            distribution_id="distribution_id",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.get_cdn_distribution_metrics(
+            distribution_id, workspace_id=workspace_id, range=range, request_options=request_options
         )
         return _response.data
 
@@ -390,6 +396,7 @@ class CdnClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         index_document : typing.Optional[str]
+            Object served for directory requests. Default `index.html`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -519,6 +526,7 @@ class CdnClient:
             CDN distribution ID.
 
         domain : str
+            Fully qualified hostname to serve, for example `cdn.example.com`.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -717,17 +725,26 @@ class CdnClient:
             CDN distribution ID.
 
         mode : PurgeCdnCacheRequestMode
+            - `url`: purge the paths in `paths`.
+            - `hostname`: purge everything for the hostnames in `hostnames`.
+            - `tag`: purge content tagged with `tags`.
+            - `prefix`: purge paths starting with `prefixes`.
+            - `all`: purge the whole distribution.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         paths : typing.Optional[typing.Sequence[str]]
+            Paths to purge, for `url` mode.
 
         hostnames : typing.Optional[typing.Sequence[str]]
+            Hostnames to purge, for `hostname` mode.
 
         tags : typing.Optional[typing.Sequence[str]]
+            Cache tags to purge, for `tag` mode.
 
         prefixes : typing.Optional[typing.Sequence[str]]
+            Path prefixes to purge, for `prefix` mode.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -778,71 +795,6 @@ class AsyncCdnClient:
         AsyncRawCdnClient
         """
         return self._raw_client
-
-    async def generate_cdn_url(
-        self,
-        *,
-        bucket_name: str,
-        object_key: str,
-        workspace_id: typing.Optional[str] = None,
-        expires_in: typing.Optional[int] = OMIT,
-        disposition: typing.Optional[GenerateCdnUrlRequestDisposition] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> GeneratedCdnUrl:
-        """
-        Generates a time-limited CDN URL for an object in an object storage bucket, with optional download disposition. Requires scope: cdn.write.
-
-        Parameters
-        ----------
-        bucket_name : str
-
-        object_key : str
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        expires_in : typing.Optional[int]
-
-        disposition : typing.Optional[GenerateCdnUrlRequestDisposition]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        GeneratedCdnUrl
-            CDN URL generated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.cdn.generate_cdn_url(
-                workspace_id="710995",
-                bucket_name="bucket_name",
-                object_key="object_key",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.generate_cdn_url(
-            bucket_name=bucket_name,
-            object_key=object_key,
-            workspace_id=workspace_id,
-            expires_in=expires_in,
-            disposition=disposition,
-            request_options=request_options,
-        )
-        return _response.data
 
     async def list_cdn_distributions(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
@@ -903,15 +855,24 @@ class AsyncCdnClient:
         Parameters
         ----------
         name : str
+            Display name of the distribution (1-128 characters).
 
         origin_id : str
+            Bucket name for `bucket` origins, or the custom origin's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         origin_type : typing.Optional[CreateCdnDistributionRequestOriginType]
+            - `bucket`: serve an Object Storage bucket (default).
+            - `custom`: serve a custom origin.
 
         cache_policy : typing.Optional[CreateCdnDistributionRequestCachePolicy]
+            Caching behaviour. Default `static-assets`.
+            - `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+            - `media`: medium-term caching for video and audio; 30 days at the CDN.
+            - `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+            - `no-cache`: no caching, for dynamic responses.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1075,10 +1036,17 @@ class AsyncCdnClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         cache_policy : typing.Optional[UpdateCdnDistributionRequestCachePolicy]
+            New caching behaviour.
+            - `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+            - `media`: medium-term caching for video and audio; 30 days at the CDN.
+            - `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+            - `no-cache`: no caching, for dynamic responses.
 
         enabled : typing.Optional[bool]
+            Whether the distribution serves traffic.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1115,6 +1083,61 @@ class AsyncCdnClient:
             cache_policy=cache_policy,
             enabled=enabled,
             request_options=request_options,
+        )
+        return _response.data
+
+    async def get_cdn_distribution_metrics(
+        self,
+        distribution_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        range: typing.Optional[GetCdnDistributionMetricsRequestRange] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> CdnDistributionMetrics:
+        """
+        Returns traffic, cache and origin metrics of the distribution for the last 24 hours, 7 days or 30 days, as the portal's Metrics tab shows them. Requires scope: cdn.read.
+
+        Parameters
+        ----------
+        distribution_id : str
+            CDN distribution ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        range : typing.Optional[GetCdnDistributionMetricsRequestRange]
+            Time range. Default `24h`.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        CdnDistributionMetrics
+            Metrics returned successfully.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.cdn.get_cdn_distribution_metrics(
+                distribution_id="distribution_id",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_cdn_distribution_metrics(
+            distribution_id, workspace_id=workspace_id, range=range, request_options=request_options
         )
         return _response.data
 
@@ -1189,6 +1212,7 @@ class AsyncCdnClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         index_document : typing.Optional[str]
+            Object served for directory requests. Default `index.html`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1342,6 +1366,7 @@ class AsyncCdnClient:
             CDN distribution ID.
 
         domain : str
+            Fully qualified hostname to serve, for example `cdn.example.com`.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -1572,17 +1597,26 @@ class AsyncCdnClient:
             CDN distribution ID.
 
         mode : PurgeCdnCacheRequestMode
+            - `url`: purge the paths in `paths`.
+            - `hostname`: purge everything for the hostnames in `hostnames`.
+            - `tag`: purge content tagged with `tags`.
+            - `prefix`: purge paths starting with `prefixes`.
+            - `all`: purge the whole distribution.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         paths : typing.Optional[typing.Sequence[str]]
+            Paths to purge, for `url` mode.
 
         hostnames : typing.Optional[typing.Sequence[str]]
+            Hostnames to purge, for `hostname` mode.
 
         tags : typing.Optional[typing.Sequence[str]]
+            Cache tags to purge, for `tag` mode.
 
         prefixes : typing.Optional[typing.Sequence[str]]
+            Path prefixes to purge, for `prefix` mode.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

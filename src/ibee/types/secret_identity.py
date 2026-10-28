@@ -11,18 +11,73 @@ from .secret_identity_token_policy_mode import SecretIdentityTokenPolicyMode
 
 
 class SecretIdentity(UniversalBaseModel):
-    id: str
-    organization_id: str
-    workspace_id: str
-    name: str
-    auth_method: SecretIdentityAuthMethod
-    openbao_role_name: str
-    status: SecretIdentityStatus
-    token_policy_mode: SecretIdentityTokenPolicyMode
-    k8s_namespace: typing.Optional[str] = None
-    k8s_service_account: typing.Optional[str] = None
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    """
+    An application identity that authenticates to Secret Store with AppRole or Kubernetes credentials.
+    """
+
+    id: str = pydantic.Field()
+    """
+    Unique ID of the identity.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the owning workspace.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the identity.
+    """
+
+    auth_method: SecretIdentityAuthMethod = pydantic.Field()
+    """
+    - `approle`: authenticates with a role ID and secret ID.
+    - `kubernetes`: authenticates with a Kubernetes service account token.
+    """
+
+    openbao_role_name: str = pydantic.Field()
+    """
+    Name of the backend authentication role created for the identity.
+    """
+
+    status: SecretIdentityStatus = pydantic.Field()
+    """
+    - `active`: can authenticate.
+    - `disabled`: authentication is refused.
+    """
+
+    token_policy_mode: SecretIdentityTokenPolicyMode = pydantic.Field()
+    """
+    Access mode of the identity's tokens.
+    - `read_only`
+    - `read_write`
+    """
+
+    k8s_namespace: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Kubernetes namespace of the service account, for `kubernetes` identities.
+    """
+
+    k8s_service_account: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Kubernetes service account name, for `kubernetes` identities.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the record was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the record was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

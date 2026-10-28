@@ -9,20 +9,55 @@ from .container_registry_access_token_permission import ContainerRegistryAccessT
 
 
 class ContainerRegistryAccessToken(UniversalBaseModel):
-    token_id: str
-    token_name: str
+    """
+    A registry access token without its secret.
+    """
+
+    token_id: str = pydantic.Field()
+    """
+    Unique ID of the token.
+    """
+
+    token_name: str = pydantic.Field()
+    """
+    Name of the token.
+    """
+
     harbor_username: str = pydantic.Field()
     """
     Docker login username (the `username` returned at creation).
     """
 
     permission: ContainerRegistryAccessTokenPermission
-    registry_ids: typing.List[str]
-    disabled: bool
-    expires_at: typing.Optional[dt.datetime] = None
-    created_by_user_id: typing.Optional[str] = None
-    created_at: dt.datetime
-    revoked_at: typing.Optional[dt.datetime] = None
+    registry_ids: typing.List[str] = pydantic.Field()
+    """
+    Registries the token may use.
+    """
+
+    disabled: bool = pydantic.Field()
+    """
+    True when the token has been revoked or disabled and no longer authenticates.
+    """
+
+    expires_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the token expires (ISO 8601); null for a token that does not expire.
+    """
+
+    created_by_user_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    User who created the token, when it was created by a user.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the token was created (ISO 8601).
+    """
+
+    revoked_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the token was revoked (ISO 8601); null while valid.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

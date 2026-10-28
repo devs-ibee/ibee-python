@@ -8,10 +8,29 @@ from .secret import Secret
 
 
 class SecretList(UniversalBaseModel):
-    secrets: typing.Optional[typing.List[Secret]] = None
-    total: typing.Optional[int] = None
-    page: typing.Optional[int] = None
-    limit: typing.Optional[int] = None
+    """
+    A page of secrets.
+    """
+
+    secrets: typing.Optional[typing.List[Secret]] = pydantic.Field(default=None)
+    """
+    Secrets on this page.
+    """
+
+    total: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Total number of items matching the request.
+    """
+
+    page: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Page number returned (1-based).
+    """
+
+    limit: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Page size that was applied.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

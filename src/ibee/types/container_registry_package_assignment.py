@@ -8,17 +8,44 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistryPackageAssignment(UniversalBaseModel):
-    assignment_id: str
-    sku_id: str
-    sku_code: str
-    quota_bytes: int
+    """
+    A storage plan assigned to the registry for a period.
+    """
+
+    assignment_id: str = pydantic.Field()
+    """
+    Unique ID of the assignment.
+    """
+
+    sku_id: str = pydantic.Field()
+    """
+    Billing catalog SKU ID of the plan.
+    """
+
+    sku_code: str = pydantic.Field()
+    """
+    Storage plan SKU code.
+    """
+
+    quota_bytes: int = pydantic.Field()
+    """
+    Storage quota of the plan in bytes (decimal GB).
+    """
+
     quota_gb: float = pydantic.Field()
     """
     Decimal GB (1 GB = 1,000,000,000 bytes).
     """
 
-    effective_from: dt.datetime
-    effective_to: typing.Optional[dt.datetime] = None
+    effective_from: dt.datetime = pydantic.Field()
+    """
+    When the plan took effect (ISO 8601).
+    """
+
+    effective_to: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the plan stopped applying (ISO 8601); null while current.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

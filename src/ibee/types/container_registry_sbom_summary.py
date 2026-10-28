@@ -13,21 +13,91 @@ from .container_registry_scanner import ContainerRegistryScanner
 
 
 class ContainerRegistrySbomSummary(UniversalBaseModel):
-    repository_name: str
-    artifact_digest: str
-    tags: typing.List[str]
-    status: ContainerRegistrySbomSummaryStatus
-    start_time: typing.Optional[dt.datetime] = None
-    end_time: typing.Optional[dt.datetime] = None
-    duration: typing.Optional[int] = None
-    sbom_digest: typing.Optional[str] = None
-    report_id: typing.Optional[str] = None
-    scanner: typing.Optional[ContainerRegistryScanner] = None
-    format: typing.Optional[ContainerRegistrySbomSummaryFormat] = None
-    package_count: typing.Optional[int] = None
-    artifact_kind: ContainerRegistrySbomSummaryArtifactKind
-    platform: typing.Optional[ContainerRegistryArtifactPlatform] = None
-    platforms: typing.List[ContainerRegistryArtifactPlatform]
+    """
+    SBOM status of one artifact.
+    """
+
+    repository_name: str = pydantic.Field()
+    """
+    Repository the artifact is in.
+    """
+
+    artifact_digest: str = pydantic.Field()
+    """
+    Digest of the artifact.
+    """
+
+    tags: typing.List[str] = pydantic.Field()
+    """
+    Tags pointing at the artifact.
+    """
+
+    status: ContainerRegistrySbomSummaryStatus = pydantic.Field()
+    """
+    - `GENERATED`: an SBOM exists for the artifact.
+    - `PROCESSING`: generation is running.
+    - `FAILED`: generation failed.
+    - `NOT_GENERATED`: no SBOM has been requested or produced.
+    - `UNKNOWN`: the registry did not report a status.
+    """
+
+    start_time: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When SBOM generation started (ISO 8601).
+    """
+
+    end_time: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When SBOM generation finished (ISO 8601).
+    """
+
+    duration: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Generation time in seconds.
+    """
+
+    sbom_digest: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Digest of the generated SBOM.
+    """
+
+    report_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Report ID in the registry backend.
+    """
+
+    scanner: typing.Optional[ContainerRegistryScanner] = pydantic.Field(default=None)
+    """
+    Scanner that generated the SBOM.
+    """
+
+    format: typing.Optional[ContainerRegistrySbomSummaryFormat] = pydantic.Field(default=None)
+    """
+    SBOM format.
+    - `SPDX`
+    - `CycloneDX`
+    """
+
+    package_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of packages listed in the SBOM.
+    """
+
+    artifact_kind: ContainerRegistrySbomSummaryArtifactKind = pydantic.Field()
+    """
+    - `image`: a single-platform image.
+    - `index`: a multi-platform manifest index; see `platforms`.
+    """
+
+    platform: typing.Optional[ContainerRegistryArtifactPlatform] = pydantic.Field(default=None)
+    """
+    Platform of a single-platform image.
+    """
+
+    platforms: typing.List[ContainerRegistryArtifactPlatform] = pydantic.Field()
+    """
+    Platforms of a multi-platform index.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -10,15 +10,68 @@ from .operation_status_status import OperationStatusStatus
 
 
 class OperationStatus(UniversalBaseModel):
-    operation_id: str
-    vm_id: str
-    action: OperationStatusAction
-    status: OperationStatusStatus
-    current_step: typing.Optional[str] = None
-    error_code: typing.Optional[str] = None
-    error_message: typing.Optional[str] = None
-    submitted_at: dt.datetime
-    updated_at: dt.datetime
+    """
+    Progress of an asynchronous VM operation.
+    """
+
+    operation_id: str = pydantic.Field()
+    """
+    ID of the operation.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the VM the operation acts on.
+    """
+
+    action: OperationStatusAction = pydantic.Field()
+    """
+    What the operation does.
+    - `create`, `delete`: create or delete the VM.
+    - `start`, `stop`, `reboot`: power actions.
+    - `resize`, `resize_plan`, `resize_root_disk`: change the shape or the root disk.
+    - `attach_volume`, `detach_volume`: block volume attachment.
+    - `update_access`: SSH key or password change.
+    - `snapshot`, `restore`: snapshot or restore.
+    - `rebuild`, `rescue`: rebuild the VM or boot it into rescue mode.
+    """
+
+    status: OperationStatusStatus = pydantic.Field()
+    """
+    - `accepted`: queued, not started.
+    - `running`: in progress.
+    - `waiting`: paused until an external step completes.
+    - `compensating`: rolling back after a failure.
+    - `succeeded`: finished successfully.
+    - `failed`: finished with an error; see `error_code` and `error_message`.
+    - `cancelled`: stopped before completion.
+    - `timed_out`: did not finish within the allowed time.
+    """
+
+    current_step: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Name of the step currently running, when the workflow reports one.
+    """
+
+    error_code: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Machine-readable error code when `status` is `failed`.
+    """
+
+    error_message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Human-readable error detail when `status` is `failed`.
+    """
+
+    submitted_at: dt.datetime = pydantic.Field()
+    """
+    When the operation was accepted (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the status last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

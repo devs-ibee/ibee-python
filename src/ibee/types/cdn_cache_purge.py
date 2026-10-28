@@ -8,10 +8,34 @@ from .cdn_cache_purge_mode import CdnCachePurgeMode
 
 
 class CdnCachePurge(UniversalBaseModel):
-    success: bool
-    mode: CdnCachePurgeMode
-    purged: typing.Optional[typing.List[str]] = None
-    message: typing.Optional[str] = None
+    """
+    Result of a cache purge.
+    """
+
+    success: bool = pydantic.Field()
+    """
+    True when the purge was accepted.
+    """
+
+    mode: CdnCachePurgeMode = pydantic.Field()
+    """
+    Purge mode that was applied.
+    - `url`
+    - `hostname`
+    - `tag`
+    - `prefix`
+    - `all`
+    """
+
+    purged: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Items that were purged, when the mode lists them.
+    """
+
+    message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Human-readable result.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

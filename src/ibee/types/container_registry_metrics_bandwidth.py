@@ -7,6 +7,10 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistryMetricsBandwidth(UniversalBaseModel):
+    """
+    Outbound bandwidth over the window.
+    """
+
     used_bytes: int = pydantic.Field()
     """
     Outbound bytes in the range.

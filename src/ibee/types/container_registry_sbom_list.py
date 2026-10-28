@@ -9,15 +9,34 @@ from .container_registry_sbom_summary import ContainerRegistrySbomSummary
 
 
 class ContainerRegistrySbomList(UniversalBaseModel):
-    items: typing.List[ContainerRegistrySbomSummary]
+    """
+    A page of artifacts with their SBOM status.
+    """
+
+    items: typing.List[ContainerRegistrySbomSummary] = pydantic.Field()
+    """
+    Artifacts on this page.
+    """
+
     page_summary: ContainerRegistrySbomListPageSummary = pydantic.Field()
     """
     SBOM status counts for the items on this page.
     """
 
-    total: int
-    page: int
-    page_size: int
+    total: int = pydantic.Field()
+    """
+    Total number of items matching the request.
+    """
+
+    page: int = pydantic.Field()
+    """
+    Page number returned (1-based).
+    """
+
+    page_size: int = pydantic.Field()
+    """
+    Page size that was applied.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

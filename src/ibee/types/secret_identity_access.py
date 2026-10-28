@@ -8,8 +8,21 @@ from .secret_identity_access_auth_method import SecretIdentityAccessAuthMethod
 
 
 class SecretIdentityAccess(UniversalBaseModel):
-    identity_id: str
-    auth_method: SecretIdentityAccessAuthMethod
+    """
+    Credentials an application uses to authenticate as the identity. Returned once; store them securely.
+    """
+
+    identity_id: str = pydantic.Field()
+    """
+    ID of the identity.
+    """
+
+    auth_method: SecretIdentityAccessAuthMethod = pydantic.Field()
+    """
+    - `approle`
+    - `kubernetes`
+    """
+
     role_id: typing.Optional[str] = pydantic.Field(default=None)
     """
     AppRole role ID.
@@ -20,14 +33,25 @@ class SecretIdentityAccess(UniversalBaseModel):
     Fresh AppRole secret ID. Treat this value as sensitive.
     """
 
-    secret_id_accessor: typing.Optional[str] = None
+    secret_id_accessor: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Accessor of the issued AppRole secret ID, usable to revoke it.
+    """
+
     openbao_role_name: typing.Optional[str] = pydantic.Field(default=None)
     """
     Kubernetes authentication role.
     """
 
-    k8s_namespace: typing.Optional[str] = None
-    k8s_service_account: typing.Optional[str] = None
+    k8s_namespace: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Kubernetes namespace bound to the identity, for `kubernetes`.
+    """
+
+    k8s_service_account: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Kubernetes service account bound to the identity, for `kubernetes`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

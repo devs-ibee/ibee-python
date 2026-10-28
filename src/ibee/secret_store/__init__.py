@@ -10,15 +10,11 @@ if typing.TYPE_CHECKING:
         CreateSecretIdentityRequestAuthMethod,
         CreateSecretIdentityRequestTokenPolicyMode,
         CreateSecretIdentityScopeRequestAccessMode,
-        UpdateSecretIdentityRequestTokenPolicyMode,
-        UpdateSecretIdentityScopeRequestAccessMode,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateSecretIdentityRequestAuthMethod": ".types",
     "CreateSecretIdentityRequestTokenPolicyMode": ".types",
     "CreateSecretIdentityScopeRequestAccessMode": ".types",
-    "UpdateSecretIdentityRequestTokenPolicyMode": ".types",
-    "UpdateSecretIdentityScopeRequestAccessMode": ".types",
 }
 
 
@@ -47,6 +43,4 @@ __all__ = [
     "CreateSecretIdentityRequestAuthMethod",
     "CreateSecretIdentityRequestTokenPolicyMode",
     "CreateSecretIdentityScopeRequestAccessMode",
-    "UpdateSecretIdentityRequestTokenPolicyMode",
-    "UpdateSecretIdentityScopeRequestAccessMode",
 ]

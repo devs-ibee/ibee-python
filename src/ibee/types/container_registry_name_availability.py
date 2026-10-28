@@ -7,8 +7,20 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ContainerRegistryNameAvailability(UniversalBaseModel):
-    registry_name: str
-    available: bool
+    """
+    Whether a registry name can be used.
+    """
+
+    registry_name: str = pydantic.Field()
+    """
+    Name that was checked.
+    """
+
+    available: bool = pydantic.Field()
+    """
+    True when the name is free.
+    """
+
     suggestions: typing.List[str] = pydantic.Field()
     """
     Free names close to the requested one, when it is taken.
