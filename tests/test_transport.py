@@ -9,13 +9,11 @@ from mockapi import ACCEPTED, VM, WS, Recorder, async_client, client
 
 from ibee.core.api_error import ApiError
 from ibee.errors import (
-    BadGatewayError,
     ConflictError,
     ForbiddenError,
     LockedError,
     PaymentRequiredError,
     ServiceUnavailableError,
-    TooManyRequestsError,
 )
 
 EDGE_402 = {
@@ -92,8 +90,9 @@ def test_reads_are_retried(status: int) -> None:
 
 def test_reads_give_up_after_max_retries() -> None:
     rec = Recorder((502, {"detail": "bad"}))
-    with pytest.raises(BadGatewayError):
+    with pytest.raises(ApiError) as info:
         client(rec, workspace_id=WS).reserved_ips.list_reserved_ips()
+    assert info.value.status_code == 502
     assert len(rec.requests) == 3
 
 
@@ -288,13 +287,15 @@ def test_product_service_detail_is_relayed_unchanged() -> None:
 
 @pytest.mark.parametrize(
     ("status", "cls"),
-    [(403, ForbiddenError), (423, LockedError), (429, TooManyRequestsError), (502, BadGatewayError)],
+    [(403, ForbiddenError), (423, LockedError), (429, ApiError), (502, ApiError), (504, ApiError)],
 )
 def test_status_named_classes(status: int, cls: type) -> None:
-    rec = Recorder((status, {"error": "organization_restricted"}))
-    with pytest.raises(cls) as info:
+    # Contract 0.6.2 declares no 429, 502 or 504 answer, so those raise ApiError itself.
+    rec = Recorder((status, {"error": "organization_restricted"}, {"x-request-id": "req-1"}))
+    with pytest.raises(ApiError) as info:
         client(rec, workspace_id=WS, max_retries=0).cloud_vms.get_cloud_vm(VM)
-    assert info.value.code == "organization_restricted"
+    assert type(info.value) is cls
+    assert (info.value.status_code, info.value.code, info.value.request_id) == (status, "organization_restricted", "req-1")
 
 
 def test_other_statuses_and_text_bodies() -> None:

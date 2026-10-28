@@ -1,4 +1,4 @@
-"""Container Registry (contract 0.5.0): generated calls, the ``Idempotency-Key`` default, answers unchanged."""
+"""Container Registry: generated calls, the ``Idempotency-Key`` default, answers unchanged."""
 
 import asyncio
 import uuid
