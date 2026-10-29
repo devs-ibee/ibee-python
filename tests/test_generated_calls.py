@@ -1,4 +1,4 @@
-"""Contract 0.7.0: every method is the generated call; the request goes out as given and the answer comes back unchanged."""
+"""Contract 0.7.1: every method is the generated call; the request goes out as given and the answer comes back unchanged."""
 
 import asyncio
 import json
@@ -98,14 +98,15 @@ def test_resize_sends_the_shape_only() -> None:
 
 
 @pytest.mark.parametrize("family", ["cloud", "gpu"])
-def test_backups_disable_sends_no_body(family: str) -> None:
+def test_backups_disable_sends_the_empty_object_given(family: str) -> None:
+    """Contract 0.7.1: the body is optional; pass request={} (the production engine refuses no body)."""
     rec = Recorder((200, {}))
     try:
-        getattr(getattr(client(rec, workspace_id=WS), f"{family}_vms"), f"disable_{family}_vm_backups")(VM)
+        getattr(getattr(client(rec, workspace_id=WS), f"{family}_vms"), f"disable_{family}_vm_backups")(VM, request={})
     except ParsingError:
         pass  # the mock answer is not a BackupPolicy; only the request matters
     assert _calls(rec) == [("POST", f"compute/{family}-vms/{VM}/backups/disable")]
-    assert rec.requests[0].content == b""
+    assert rec.requests[0].content == b"{}"
 
 
 def test_recovery_storage_plans() -> None:

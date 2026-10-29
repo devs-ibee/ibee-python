@@ -290,7 +290,7 @@ def test_product_service_detail_is_relayed_unchanged() -> None:
     [(403, ForbiddenError), (423, LockedError), (429, ApiError), (502, ApiError), (504, ApiError)],
 )
 def test_status_named_classes(status: int, cls: type) -> None:
-    # Contract 0.7.0 declares no 429, 502 or 504 answer, so those raise ApiError itself.
+    # Contract 0.7.1 declares no 429, 502 or 504 answer, so those raise ApiError itself.
     rec = Recorder((status, {"error": "organization_restricted"}, {"x-request-id": "req-1"}))
     with pytest.raises(ApiError) as info:
         client(rec, workspace_id=WS, max_retries=0).cloud_vms.get_cloud_vm(VM)
