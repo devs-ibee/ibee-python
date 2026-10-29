@@ -1,4 +1,4 @@
-"""Contract 0.6.3: every method is the generated call; the request goes out as given and the answer comes back unchanged."""
+"""Contract 0.7.0: every method is the generated call; the request goes out as given and the answer comes back unchanged."""
 
 import asyncio
 import json

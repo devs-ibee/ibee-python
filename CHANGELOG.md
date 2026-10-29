@@ -2,7 +2,7 @@
 
 ## 0.6.0
 
-Generated from the public API contract 0.6.3 (`contract/ibee-cloud.yaml`, 225
+Generated from the public API contract 0.7.0 (`contract/ibee-cloud.yaml`, 225
 operations; 0.5.2 was generated from 0.4.1). The public API now runs through
 portal-client-api, which applies the portal's own checks, so the SDK is the generated
 client alone: the hand layer of temporary behaviours (`ibee.held`) is removed, and
@@ -119,8 +119,9 @@ idempotency keys, safe retries, status-named errors) and the error fields
 - `create_s3credential`: `permission_type` is typed
   (`CreateS3CredentialRequestPermissionType`): `admin_rw` (the server's default),
   `admin_ro`, `object_rw` or `object_ro`.
-- `disable_cloud_vm_backups` / `disable_gpu_vm_backups` send no body, as the contract
-  has it (the server accepts that).
+- `disable_cloud_vm_backups` / `disable_gpu_vm_backups` take an optional `request`.
+  Pass `request={}`: contract 0.7.0 asks for an empty JSON object, and the production
+  virtualization engine answers 422 to a request with no body.
 - `X-Idempotency-Key` is declared on 18 VM write operations; the SDK sends a random one
   where it is declared and you pass none, as before. VM creates are never retried.
 - `delete_cloud_vm` / `delete_gpu_vm`: `public_ip_action` has no default. For a VM with
