@@ -285,7 +285,7 @@ class RawSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretStore]:
         """
-        Gets one secret store. Requires scope: secret-store.read.
+        Gets one secret store. A permanently deleted store answers 403, not 404. Requires scope: secret-store.read.
 
         Parameters
         ----------
@@ -598,7 +598,7 @@ class RawSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretLifecycleStatus]:
         """
-        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
+        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Afterwards, reads of the store answer 403. Requires scope: secret-store.write.
 
         Parameters
         ----------
@@ -1096,7 +1096,7 @@ class RawSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Secret]:
         """
-        Gets one secret metadata record. Secret value is not returned. Requires scope: secret-store.read.
+        Gets one secret metadata record. Secret value is not returned. A permanently deleted secret answers 403, not 404. Requires scope: secret-store.read.
 
         Parameters
         ----------
@@ -1793,7 +1793,7 @@ class RawSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretLifecycleStatus]:
         """
-        Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
+        Irreversibly deletes all versions and metadata for a secret. Afterwards, reads of the secret answer 403. Requires scope: secret-store.write.
 
         Parameters
         ----------
@@ -3835,7 +3835,7 @@ class AsyncRawSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretStore]:
         """
-        Gets one secret store. Requires scope: secret-store.read.
+        Gets one secret store. A permanently deleted store answers 403, not 404. Requires scope: secret-store.read.
 
         Parameters
         ----------
@@ -4148,7 +4148,7 @@ class AsyncRawSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretLifecycleStatus]:
         """
-        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
+        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Afterwards, reads of the store answer 403. Requires scope: secret-store.write.
 
         Parameters
         ----------
@@ -4646,7 +4646,7 @@ class AsyncRawSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Secret]:
         """
-        Gets one secret metadata record. Secret value is not returned. Requires scope: secret-store.read.
+        Gets one secret metadata record. Secret value is not returned. A permanently deleted secret answers 403, not 404. Requires scope: secret-store.read.
 
         Parameters
         ----------
@@ -5343,7 +5343,7 @@ class AsyncRawSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretLifecycleStatus]:
         """
-        Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
+        Irreversibly deletes all versions and metadata for a secret. Afterwards, reads of the secret answer 403. Requires scope: secret-store.write.
 
         Parameters
         ----------

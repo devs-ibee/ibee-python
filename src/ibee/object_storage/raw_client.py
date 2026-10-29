@@ -1843,7 +1843,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketCustomDomainConfig]:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Requires scope: object-storage.read.
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2082,7 +2082,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketCustomDomainRemoved]:
         """
-        Removes a custom hostname from the bucket. Requires scope: object-storage.write.
+        Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -4631,7 +4631,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketCustomDomainConfig]:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Requires scope: object-storage.read.
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -4870,7 +4870,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketCustomDomainRemoved]:
         """
-        Removes a custom hostname from the bucket. Requires scope: object-storage.write.
+        Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
 
         Parameters
         ----------

@@ -158,7 +158,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Creates a cloud VM. Returns an operation you can poll for status. Requires scope: vm.write.
+        Creates a cloud VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -335,7 +335,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Requires scope: vm.write.
+        Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -399,7 +399,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Starts a stopped cloud VM. Requires scope: vm.write.
+        Starts a stopped cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -454,7 +454,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Stops a running cloud VM. Requires scope: vm.write.
+        Stops a running cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -509,7 +509,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Reboots a cloud VM. Requires scope: vm.write.
+        Reboots a cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -612,7 +612,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a cloud VM without rebooting it. Requires scope: vm.write.
+        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a cloud VM without rebooting it. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -745,7 +745,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Changes a cloud VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Requires scope: vm.write.
+        Changes a cloud VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -810,7 +810,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Attaches a persistent block storage volume to a cloud VM. Requires scope: vm.write.
+        Attaches a persistent block storage volume to a cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -881,7 +881,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Detaches a persistent block storage volume from a cloud VM. Unmount its filesystem in the guest first unless force is used. Requires scope: vm.write.
+        Detaches a persistent block storage volume from a cloud VM. Unmount its filesystem in the guest first unless force is used. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -1243,7 +1243,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RecoveryRestore:
         """
-        Restores a cloud VM snapshot by replacing the VM, creating a new VM, or restoring a single volume. Requires scope: vm.write.
+        Restores a cloud VM snapshot by replacing the VM, creating a new VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -1719,16 +1719,19 @@ class CloudVmsClient:
         self,
         vm_id: str,
         *,
+        request: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
-        Stops future automated backups for a cloud VM without deleting existing recovery points. Requires scope: vm.write.
+        Stops future automated backups for a cloud VM without deleting existing recovery points. Send an empty JSON object body (`{}`); the virtualization engine rejects a request with no body. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
             Virtual machine ID.
+
+        request : typing.Dict[str, typing.Any]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -1749,12 +1752,13 @@ class CloudVmsClient:
             token="YOUR_TOKEN",
         )
         client.cloud_vms.disable_cloud_vm_backups(
-            vm_id="vm_id",
+            vm_id="vm-7f3c2d1e",
             workspace_id="710995",
+            request={},
         )
         """
         _response = self._raw_client.disable_cloud_vm_backups(
-            vm_id, workspace_id=workspace_id, request_options=request_options
+            vm_id, request=request, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -1834,7 +1838,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RecoveryRestore:
         """
-        Restores a cloud VM backup recovery point by replacing the VM, creating a new VM, or restoring a single volume. Requires scope: vm.write.
+        Restores a cloud VM backup recovery point by replacing the VM, creating a new VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2286,7 +2290,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Creates a cloud VM. Returns an operation you can poll for status. Requires scope: vm.write.
+        Creates a cloud VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2481,7 +2485,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Requires scope: vm.write.
+        Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2553,7 +2557,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Starts a stopped cloud VM. Requires scope: vm.write.
+        Starts a stopped cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2616,7 +2620,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Stops a running cloud VM. Requires scope: vm.write.
+        Stops a running cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2679,7 +2683,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Reboots a cloud VM. Requires scope: vm.write.
+        Reboots a cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2798,7 +2802,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a cloud VM without rebooting it. Requires scope: vm.write.
+        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a cloud VM without rebooting it. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2947,7 +2951,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Changes a cloud VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Requires scope: vm.write.
+        Changes a cloud VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -3020,7 +3024,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Attaches a persistent block storage volume to a cloud VM. Requires scope: vm.write.
+        Attaches a persistent block storage volume to a cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -3099,7 +3103,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Detaches a persistent block storage volume from a cloud VM. Unmount its filesystem in the guest first unless force is used. Requires scope: vm.write.
+        Detaches a persistent block storage volume from a cloud VM. Unmount its filesystem in the guest first unless force is used. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -3509,7 +3513,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RecoveryRestore:
         """
-        Restores a cloud VM snapshot by replacing the VM, creating a new VM, or restoring a single volume. Requires scope: vm.write.
+        Restores a cloud VM snapshot by replacing the VM, creating a new VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -4049,16 +4053,19 @@ class AsyncCloudVmsClient:
         self,
         vm_id: str,
         *,
+        request: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupPolicy:
         """
-        Stops future automated backups for a cloud VM without deleting existing recovery points. Requires scope: vm.write.
+        Stops future automated backups for a cloud VM without deleting existing recovery points. Send an empty JSON object body (`{}`); the virtualization engine rejects a request with no body. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
             Virtual machine ID.
+
+        request : typing.Dict[str, typing.Any]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -4084,15 +4091,16 @@ class AsyncCloudVmsClient:
 
         async def main() -> None:
             await client.cloud_vms.disable_cloud_vm_backups(
-                vm_id="vm_id",
+                vm_id="vm-7f3c2d1e",
                 workspace_id="710995",
+                request={},
             )
 
 
         asyncio.run(main())
         """
         _response = await self._raw_client.disable_cloud_vm_backups(
-            vm_id, workspace_id=workspace_id, request_options=request_options
+            vm_id, request=request, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -4180,7 +4188,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RecoveryRestore:
         """
-        Restores a cloud VM backup recovery point by replacing the VM, creating a new VM, or restoring a single volume. Requires scope: vm.write.
+        Restores a cloud VM backup recovery point by replacing the VM, creating a new VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 
         Parameters
         ----------

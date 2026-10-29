@@ -200,7 +200,7 @@ client.secret_store.create_secret_store(
 <dl>
 <dd>
 
-Gets one secret store. Requires scope: secret-store.read.
+Gets one secret store. A permanently deleted store answers 403, not 404. Requires scope: secret-store.read.
 </dd>
 </dl>
 </dd>
@@ -446,7 +446,7 @@ client.secret_store.unarchive_secret_store(
 <dl>
 <dd>
 
-Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
+Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Afterwards, reads of the store answer 403. Requires scope: secret-store.write.
 </dd>
 </dl>
 </dd>
@@ -840,7 +840,7 @@ client.secret_store.batch_create_secrets(
 <dl>
 <dd>
 
-Gets one secret metadata record. Secret value is not returned. Requires scope: secret-store.read.
+Gets one secret metadata record. Secret value is not returned. A permanently deleted secret answers 403, not 404. Requires scope: secret-store.read.
 </dd>
 </dl>
 </dd>
@@ -1374,7 +1374,7 @@ client.secret_store.destroy_secret_versions(
 <dl>
 <dd>
 
-Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
+Irreversibly deletes all versions and metadata for a secret. Afterwards, reads of the secret answer 403. Requires scope: secret-store.write.
 </dd>
 </dl>
 </dd>
@@ -4225,7 +4225,7 @@ client.object_storage.delete_bucket_notifications(
 <dl>
 <dd>
 
-Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Requires scope: object-storage.read.
+Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4398,7 +4398,7 @@ client.object_storage.add_bucket_custom_domain(
 <dl>
 <dd>
 
-Removes a custom hostname from the bucket. Requires scope: object-storage.write.
+Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -10616,7 +10616,7 @@ client.cloud_vms.list_cloud_vms(
 <dl>
 <dd>
 
-Creates a cloud VM. Returns an operation you can poll for status. Requires scope: vm.write.
+Creates a cloud VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -10940,7 +10940,7 @@ client.cloud_vms.get_cloud_vm(
 <dl>
 <dd>
 
-Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Requires scope: vm.write.
+Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -11039,7 +11039,7 @@ client.cloud_vms.delete_cloud_vm(
 <dl>
 <dd>
 
-Starts a stopped cloud VM. Requires scope: vm.write.
+Starts a stopped cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -11137,7 +11137,7 @@ client.cloud_vms.start_cloud_vm(
 <dl>
 <dd>
 
-Stops a running cloud VM. Requires scope: vm.write.
+Stops a running cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -11235,7 +11235,7 @@ client.cloud_vms.stop_cloud_vm(
 <dl>
 <dd>
 
-Reboots a cloud VM. Requires scope: vm.write.
+Reboots a cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -11415,7 +11415,7 @@ client.cloud_vms.get_cloud_vm_metrics(
 <dl>
 <dd>
 
-Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a cloud VM without rebooting it. Requires scope: vm.write.
+Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a cloud VM without rebooting it. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -11603,7 +11603,7 @@ client.cloud_vms.precheck_cloud_vm_resize(
 <dl>
 <dd>
 
-Changes a cloud VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Requires scope: vm.write.
+Changes a cloud VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -11701,7 +11701,7 @@ client.cloud_vms.resize_cloud_vm(
 <dl>
 <dd>
 
-Attaches a persistent block storage volume to a cloud VM. Requires scope: vm.write.
+Attaches a persistent block storage volume to a cloud VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -11804,7 +11804,7 @@ client.cloud_vms.attach_cloud_vm_volume(
 <dl>
 <dd>
 
-Detaches a persistent block storage volume from a cloud VM. Unmount its filesystem in the guest first unless force is used. Requires scope: vm.write.
+Detaches a persistent block storage volume from a cloud VM. Unmount its filesystem in the guest first unless force is used. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -12384,7 +12384,7 @@ client.cloud_vms.create_cloud_vm_snapshot(
 <dl>
 <dd>
 
-Restores a cloud VM snapshot by replacing the VM, creating a new VM, or restoring a single volume. Requires scope: vm.write.
+Restores a cloud VM snapshot by replacing the VM, creating a new VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -13092,7 +13092,7 @@ client.cloud_vms.enable_cloud_vm_backups(
 <dl>
 <dd>
 
-Stops future automated backups for a cloud VM without deleting existing recovery points. Requires scope: vm.write.
+Stops future automated backups for a cloud VM without deleting existing recovery points. Send an empty JSON object body (`{}`); the virtualization engine rejects a request with no body. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -13116,8 +13116,9 @@ client = Ibee(
 )
 
 client.cloud_vms.disable_cloud_vm_backups(
-    vm_id="vm_id",
+    vm_id="vm-7f3c2d1e",
     workspace_id="710995",
+    request={},
 )
 
 ```
@@ -13135,6 +13136,14 @@ client.cloud_vms.disable_cloud_vm_backups(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `typing.Dict[str, typing.Any]` 
     
 </dd>
 </dl>
@@ -13280,7 +13289,7 @@ client.cloud_vms.list_cloud_vm_backup_runs(
 <dl>
 <dd>
 
-Restores a cloud VM backup recovery point by replacing the VM, creating a new VM, or restoring a single volume. Requires scope: vm.write.
+Restores a cloud VM backup recovery point by replacing the VM, creating a new VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -13926,7 +13935,7 @@ client.gpu_vms.list_gpu_vms(
 <dl>
 <dd>
 
-Creates a GPU VM. Returns an operation you can poll for status. Requires scope: vm.write.
+Creates a GPU VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -14268,7 +14277,7 @@ client.gpu_vms.get_gpu_vm(
 <dl>
 <dd>
 
-Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Requires scope: vm.write.
+Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -14367,7 +14376,7 @@ client.gpu_vms.delete_gpu_vm(
 <dl>
 <dd>
 
-Starts a stopped GPU VM. Requires scope: vm.write.
+Starts a stopped GPU VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -14465,7 +14474,7 @@ client.gpu_vms.start_gpu_vm(
 <dl>
 <dd>
 
-Stops a running GPU VM. Requires scope: vm.write.
+Stops a running GPU VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -14563,7 +14572,7 @@ client.gpu_vms.stop_gpu_vm(
 <dl>
 <dd>
 
-Reboots a GPU VM. Requires scope: vm.write.
+Reboots a GPU VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -14743,7 +14752,7 @@ client.gpu_vms.get_gpu_vm_metrics(
 <dl>
 <dd>
 
-Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a GPU VM without rebooting it or interrupting running GPU workloads. Requires scope: vm.write.
+Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a GPU VM without rebooting it or interrupting running GPU workloads. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -14931,7 +14940,7 @@ client.gpu_vms.precheck_gpu_vm_resize(
 <dl>
 <dd>
 
-Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Requires scope: vm.write.
+Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -15029,7 +15038,7 @@ client.gpu_vms.resize_gpu_vm(
 <dl>
 <dd>
 
-Attaches a persistent block storage volume to a GPU VM, for datasets, checkpoints, or model weights. Requires scope: vm.write.
+Attaches a persistent block storage volume to a GPU VM, for datasets, checkpoints, or model weights. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -15132,7 +15141,7 @@ client.gpu_vms.attach_gpu_vm_volume(
 <dl>
 <dd>
 
-Detaches a persistent block storage volume from a GPU VM. Stop jobs using it and unmount its filesystem in the guest first unless force is used. Requires scope: vm.write.
+Detaches a persistent block storage volume from a GPU VM. Stop jobs using it and unmount its filesystem in the guest first unless force is used. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -15712,7 +15721,7 @@ client.gpu_vms.create_gpu_vm_snapshot(
 <dl>
 <dd>
 
-Restores a GPU VM snapshot by replacing the VM, creating a new GPU VM, or restoring a single volume. Requires scope: vm.write.
+Restores a GPU VM snapshot by replacing the VM, creating a new GPU VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -16420,7 +16429,7 @@ client.gpu_vms.enable_gpu_vm_backups(
 <dl>
 <dd>
 
-Stops future automated backups for a GPU VM without deleting existing recovery points. Requires scope: vm.write.
+Stops future automated backups for a GPU VM without deleting existing recovery points. Send an empty JSON object body (`{}`); the virtualization engine rejects a request with no body. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -16444,8 +16453,9 @@ client = Ibee(
 )
 
 client.gpu_vms.disable_gpu_vm_backups(
-    vm_id="vm_id",
+    vm_id="gpu-7f3c2d1e",
     workspace_id="710995",
+    request={},
 )
 
 ```
@@ -16463,6 +16473,14 @@ client.gpu_vms.disable_gpu_vm_backups(
 <dd>
 
 **vm_id:** `str` — Virtual machine ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `typing.Dict[str, typing.Any]` 
     
 </dd>
 </dl>
@@ -16608,7 +16626,7 @@ client.gpu_vms.list_gpu_vm_backup_runs(
 <dl>
 <dd>
 
-Restores a GPU VM backup recovery point by replacing the VM, creating a new GPU VM, or restoring a single volume. Requires scope: vm.write.
+Restores a GPU VM backup recovery point by replacing the VM, creating a new GPU VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -17229,7 +17247,7 @@ client.block_storage.list_block_volumes(
 <dl>
 <dd>
 
-The public edge resolves authoritative pricing from the server-owned product catalog and validates billing before forwarding this request to the existing portal volume flow. Client-supplied price or billing catalog objects are not accepted.
+The public edge resolves authoritative pricing from the server-owned product catalog and validates billing before forwarding this request to the existing portal volume flow. Client-supplied price or billing catalog objects are not accepted. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`.
 </dd>
 </dl>
 </dd>
@@ -17465,7 +17483,7 @@ client.block_storage.get_block_volume(
 <dl>
 <dd>
 
-Permanently deletes a block storage volume and its data. Requires scope: block-storage.write.
+Permanently deletes a block storage volume and its data. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`. Requires scope: block-storage.write.
 </dd>
 </dl>
 </dd>
@@ -17637,7 +17655,7 @@ client.block_storage.list_block_volume_operations(
 <dl>
 <dd>
 
-Block volumes can only be increased in size.
+Block volumes can only be increased in size. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`.
 </dd>
 </dl>
 </dd>
@@ -19328,6 +19346,8 @@ plan and refuses with 403 `billing_resource_not_eligible` (and a
 202 while provisioning finishes in the background; poll the registry
 until `observed_state` is `ACTIVE`. Requires scope:
 container-registry.write.
+
+Asynchronous: `observed_state` moves from `PROVISIONING` to `ACTIVE` or `ERROR`; poll `GET /container-registry/registries/{registry_id}`.
 </dd>
 </dl>
 </dd>
@@ -19542,7 +19562,7 @@ client.container_registry.get_container_registry(
 <dl>
 <dd>
 
-Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Requires scope: container-registry.write.
+Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -19905,6 +19925,8 @@ registry service asks Billing first and refuses with 403
 the original operation (202 while pending, 200 once applied); the same
 key with a different plan returns 409. Requires scope:
 container-registry.write.
+
+Asynchronous: the package operation moves from `PENDING` to `APPLIED` or `CANCELLED`; read `GET /container-registry/registries/{registry_id}/package`.
 </dd>
 </dl>
 </dd>
@@ -20523,7 +20545,7 @@ client.container_registry.list_container_registry_repositories(
 <dl>
 <dd>
 
-Permanently deletes a repository and all of its images. Requires `confirm=true`. Requires scope: container-registry.write.
+Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20730,7 +20752,7 @@ client.container_registry.list_container_registry_artifacts(
 <dl>
 <dd>
 
-Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Requires scope: container-registry.write.
+Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>

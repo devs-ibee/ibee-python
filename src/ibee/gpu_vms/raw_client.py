@@ -196,7 +196,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
-        Creates a GPU VM. Returns an operation you can poll for status. Requires scope: vm.write.
+        Creates a GPU VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -515,7 +515,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
-        Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Requires scope: vm.write.
+        Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -673,7 +673,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
-        Starts a stopped GPU VM. Requires scope: vm.write.
+        Starts a stopped GPU VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -808,7 +808,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
-        Stops a running GPU VM. Requires scope: vm.write.
+        Stops a running GPU VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -943,7 +943,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
-        Reboots a GPU VM. Requires scope: vm.write.
+        Reboots a GPU VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -1180,7 +1180,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
-        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a GPU VM without rebooting it or interrupting running GPU workloads. Requires scope: vm.write.
+        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a GPU VM without rebooting it or interrupting running GPU workloads. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -1489,7 +1489,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
-        Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Requires scope: vm.write.
+        Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -1645,7 +1645,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
-        Attaches a persistent block storage volume to a GPU VM, for datasets, checkpoints, or model weights. Requires scope: vm.write.
+        Attaches a persistent block storage volume to a GPU VM, for datasets, checkpoints, or model weights. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -1804,7 +1804,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
-        Detaches a persistent block storage volume from a GPU VM. Stop jobs using it and unmount its filesystem in the guest first unless force is used. Requires scope: vm.write.
+        Detaches a persistent block storage volume from a GPU VM. Stop jobs using it and unmount its filesystem in the guest first unless force is used. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2598,7 +2598,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[RecoveryRestore]:
         """
-        Restores a GPU VM snapshot by replacing the VM, creating a new GPU VM, or restoring a single volume. Requires scope: vm.write.
+        Restores a GPU VM snapshot by replacing the VM, creating a new GPU VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -3622,16 +3622,19 @@ class RawGpuVmsClient:
         self,
         vm_id: str,
         *,
+        request: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BackupPolicy]:
         """
-        Stops future automated backups for a GPU VM without deleting existing recovery points. Requires scope: vm.write.
+        Stops future automated backups for a GPU VM without deleting existing recovery points. Send an empty JSON object body (`{}`); the virtualization engine rejects a request with no body. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
             Virtual machine ID.
+
+        request : typing.Dict[str, typing.Any]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -3650,7 +3653,12 @@ class RawGpuVmsClient:
             params={
                 "workspace_id": workspace_id,
             },
+            json=request,
+            headers={
+                "content-type": "application/json",
+            },
             request_options=request_options,
+            omit=OMIT,
         )
         try:
             if 200 <= _response.status_code < 300:
@@ -3870,7 +3878,7 @@ class RawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[RecoveryRestore]:
         """
-        Restores a GPU VM backup recovery point by replacing the VM, creating a new GPU VM, or restoring a single volume. Requires scope: vm.write.
+        Restores a GPU VM backup recovery point by replacing the VM, creating a new GPU VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -4605,7 +4613,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
-        Creates a GPU VM. Returns an operation you can poll for status. Requires scope: vm.write.
+        Creates a GPU VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -4924,7 +4932,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
-        Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Requires scope: vm.write.
+        Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -5082,7 +5090,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
-        Starts a stopped GPU VM. Requires scope: vm.write.
+        Starts a stopped GPU VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -5217,7 +5225,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
-        Stops a running GPU VM. Requires scope: vm.write.
+        Stops a running GPU VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -5352,7 +5360,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
-        Reboots a GPU VM. Requires scope: vm.write.
+        Reboots a GPU VM. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -5589,7 +5597,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
-        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a GPU VM without rebooting it or interrupting running GPU workloads. Requires scope: vm.write.
+        Adds or removes SSH keys, resets the Linux user password, or changes SSH password authentication on a GPU VM without rebooting it or interrupting running GPU workloads. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -5898,7 +5906,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
-        Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Requires scope: vm.write.
+        Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -6054,7 +6062,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
-        Attaches a persistent block storage volume to a GPU VM, for datasets, checkpoints, or model weights. Requires scope: vm.write.
+        Attaches a persistent block storage volume to a GPU VM, for datasets, checkpoints, or model weights. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -6213,7 +6221,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
-        Detaches a persistent block storage volume from a GPU VM. Stop jobs using it and unmount its filesystem in the guest first unless force is used. Requires scope: vm.write.
+        Detaches a persistent block storage volume from a GPU VM. Stop jobs using it and unmount its filesystem in the guest first unless force is used. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -7007,7 +7015,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[RecoveryRestore]:
         """
-        Restores a GPU VM snapshot by replacing the VM, creating a new GPU VM, or restoring a single volume. Requires scope: vm.write.
+        Restores a GPU VM snapshot by replacing the VM, creating a new GPU VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -8031,16 +8039,19 @@ class AsyncRawGpuVmsClient:
         self,
         vm_id: str,
         *,
+        request: typing.Dict[str, typing.Any],
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BackupPolicy]:
         """
-        Stops future automated backups for a GPU VM without deleting existing recovery points. Requires scope: vm.write.
+        Stops future automated backups for a GPU VM without deleting existing recovery points. Send an empty JSON object body (`{}`); the virtualization engine rejects a request with no body. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
             Virtual machine ID.
+
+        request : typing.Dict[str, typing.Any]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -8059,7 +8070,12 @@ class AsyncRawGpuVmsClient:
             params={
                 "workspace_id": workspace_id,
             },
+            json=request,
+            headers={
+                "content-type": "application/json",
+            },
             request_options=request_options,
+            omit=OMIT,
         )
         try:
             if 200 <= _response.status_code < 300:
@@ -8279,7 +8295,7 @@ class AsyncRawGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[RecoveryRestore]:
         """
-        Restores a GPU VM backup recovery point by replacing the VM, creating a new GPU VM, or restoring a single volume. Requires scope: vm.write.
+        Restores a GPU VM backup recovery point by replacing the VM, creating a new GPU VM, or restoring a single volume. Asynchronous: the response carries `restore_id`; poll the restore status read until `status` is `succeeded`, `failed` or `cancelled`. If your client times out, read the status; never resubmit. Requires scope: vm.write.
 
         Parameters
         ----------

@@ -229,7 +229,7 @@ class RawBlockStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BlockVolumeAction]:
         """
-        The public edge resolves authoritative pricing from the server-owned product catalog and validates billing before forwarding this request to the existing portal volume flow. Client-supplied price or billing catalog objects are not accepted.
+        The public edge resolves authoritative pricing from the server-owned product catalog and validates billing before forwarding this request to the existing portal volume flow. Client-supplied price or billing catalog objects are not accepted. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`.
 
         Parameters
         ----------
@@ -489,7 +489,7 @@ class RawBlockStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BlockVolumeDelete]:
         """
-        Permanently deletes a block storage volume and its data. Requires scope: block-storage.write.
+        Permanently deletes a block storage volume and its data. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`. Requires scope: block-storage.write.
 
         Parameters
         ----------
@@ -713,7 +713,7 @@ class RawBlockStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BlockVolumeAction]:
         """
-        Block volumes can only be increased in size.
+        Block volumes can only be increased in size. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`.
 
         Parameters
         ----------
@@ -1046,7 +1046,7 @@ class AsyncRawBlockStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BlockVolumeAction]:
         """
-        The public edge resolves authoritative pricing from the server-owned product catalog and validates billing before forwarding this request to the existing portal volume flow. Client-supplied price or billing catalog objects are not accepted.
+        The public edge resolves authoritative pricing from the server-owned product catalog and validates billing before forwarding this request to the existing portal volume flow. Client-supplied price or billing catalog objects are not accepted. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`.
 
         Parameters
         ----------
@@ -1306,7 +1306,7 @@ class AsyncRawBlockStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BlockVolumeDelete]:
         """
-        Permanently deletes a block storage volume and its data. Requires scope: block-storage.write.
+        Permanently deletes a block storage volume and its data. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`. Requires scope: block-storage.write.
 
         Parameters
         ----------
@@ -1530,7 +1530,7 @@ class AsyncRawBlockStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BlockVolumeAction]:
         """
-        Block volumes can only be increased in size.
+        Block volumes can only be increased in size. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`.
 
         Parameters
         ----------
