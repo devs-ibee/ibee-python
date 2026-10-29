@@ -99,7 +99,7 @@ def test_resize_sends_the_shape_only() -> None:
 
 @pytest.mark.parametrize("family", ["cloud", "gpu"])
 def test_backups_disable_sends_the_empty_object_given(family: str) -> None:
-    """Contract 0.7.1: the body is optional; pass request={} (the production engine refuses no body)."""
+    """Contract 0.7.1: pass request={} (the production engine refuses a request with no body)."""
     rec = Recorder((200, {}))
     try:
         getattr(getattr(client(rec, workspace_id=WS), f"{family}_vms"), f"disable_{family}_vm_backups")(VM, request={})

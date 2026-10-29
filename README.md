@@ -92,7 +92,7 @@ A few calls to know:
 - Snapshot create and backup enable take a `billing_catalog` from
   `compute_catalog.list_snapshot_storage_plans()` / `list_backup_storage_plans()`.
 - `disable_cloud_vm_backups(vm_id, request={})` / `disable_gpu_vm_backups`: pass
-  `request={}`. Contract 0.7.1 asks for an empty JSON object; the production
+  `request={}`. Contract 0.7.1 declares an empty JSON object body; the production
   virtualization engine answers 422 to a request with no body.
 - VM delete sends `public_ip_action` only when you pass it; for a VM with an
   automatically assigned public IP the server answers 400 until you pass `release` or

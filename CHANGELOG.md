@@ -119,8 +119,8 @@ idempotency keys, safe retries, status-named errors) and the error fields
 - `create_s3credential`: `permission_type` is typed
   (`CreateS3CredentialRequestPermissionType`): `admin_rw` (the server's default),
   `admin_ro`, `object_rw` or `object_ro`.
-- `disable_cloud_vm_backups` / `disable_gpu_vm_backups` take an optional `request`.
-  Pass `request={}`: contract 0.7.1 asks for an empty JSON object, and the production
+- `disable_cloud_vm_backups` / `disable_gpu_vm_backups` take a keyword `request`: pass
+  `request={}`. Contract 0.7.1 declares an empty JSON object body, and the production
   virtualization engine answers 422 to a request with no body.
 - `X-Idempotency-Key` is declared on 18 VM write operations; the SDK sends a random one
   where it is declared and you pass none, as before. VM creates are never retried.
