@@ -7,8 +7,19 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class S3CredentialRevoked(UniversalBaseModel):
-    success: bool
-    message: str
+    """
+    Result of revoking an S3 access key pair.
+    """
+
+    success: bool = pydantic.Field()
+    """
+    True when the key pair was revoked.
+    """
+
+    message: str = pydantic.Field()
+    """
+    Human-readable result.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

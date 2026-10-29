@@ -11,9 +11,24 @@ from .vpc_summary import VpcSummary
 
 
 class VpcDetail(VpcSummary):
-    subnets: typing.Optional[typing.List[Subnet]] = None
-    nat_gateways: typing.Optional[typing.List[NatGateway]] = None
-    attached_nodes: typing.Optional[typing.List[VpcAttachedNode]] = None
+    """
+    A VPC with its subnets, NAT gateways and attached VMs.
+    """
+
+    subnets: typing.Optional[typing.List[Subnet]] = pydantic.Field(default=None)
+    """
+    Subnets in the VPC.
+    """
+
+    nat_gateways: typing.Optional[typing.List[NatGateway]] = pydantic.Field(default=None)
+    """
+    NAT gateways in the VPC.
+    """
+
+    attached_nodes: typing.Optional[typing.List[VpcAttachedNode]] = pydantic.Field(default=None)
+    """
+    VMs attached to the VPC.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

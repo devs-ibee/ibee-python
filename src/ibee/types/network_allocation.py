@@ -8,21 +8,87 @@ from .network_allocation_connectivity import NetworkAllocationConnectivity
 
 
 class NetworkAllocation(UniversalBaseModel):
-    allocation_id: str
-    vpc_id: str
-    subnet_id: str
-    vm_id: str
-    connectivity: NetworkAllocationConnectivity
-    private_ip: str
-    prefix_length: int
-    subnet_mask: str
-    gateway: str
-    dns: typing.List[str]
-    public_ip_id: typing.Optional[str] = None
-    public_ip: typing.Optional[str] = None
-    nat_gateway_id: typing.Optional[str] = None
-    nat_public_ip: typing.Optional[str] = None
-    status: str
+    """
+    A VM's attachment to a VPC subnet: its private address and how it reaches the internet.
+    """
+
+    allocation_id: str = pydantic.Field()
+    """
+    Unique ID of the attachment.
+    """
+
+    vpc_id: str = pydantic.Field()
+    """
+    VPC the VM is attached to.
+    """
+
+    subnet_id: str = pydantic.Field()
+    """
+    Subnet the VM is attached to.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the attached VM.
+    """
+
+    connectivity: NetworkAllocationConnectivity = pydantic.Field()
+    """
+    How the VM reaches the internet from this subnet.
+    - `private`: no internet path.
+    - `public_ip`: a Reserved IP is attached to the allocation.
+    - `nat`: outbound traffic goes through the VPC's NAT gateway.
+    """
+
+    private_ip: str = pydantic.Field()
+    """
+    Private IPv4 address assigned to the VM.
+    """
+
+    prefix_length: int = pydantic.Field()
+    """
+    Prefix length of the subnet.
+    """
+
+    subnet_mask: str = pydantic.Field()
+    """
+    Subnet mask in dotted-decimal form.
+    """
+
+    gateway: str = pydantic.Field()
+    """
+    Gateway IPv4 address of the subnet.
+    """
+
+    dns: typing.List[str] = pydantic.Field()
+    """
+    DNS resolvers handed to the VM.
+    """
+
+    public_ip_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Reserved IP attached to the allocation, when `connectivity` is `public_ip`.
+    """
+
+    public_ip: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Address of that Reserved IP.
+    """
+
+    nat_gateway_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    NAT gateway used, when `connectivity` is `nat`.
+    """
+
+    nat_public_ip: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Public address of that NAT gateway.
+    """
+
+    status: str = pydantic.Field()
+    """
+    Attachment state: `reserved`, `attaching`, `attached`, `moving`, `detaching` or `releasing`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

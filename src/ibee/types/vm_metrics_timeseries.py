@@ -12,11 +12,43 @@ from .vm_metrics_timeseries_resolution import VmMetricsTimeseriesResolution
 
 
 class VmMetricsTimeseries(UniversalBaseModel):
-    range: VmMetricsTimeseriesRange
-    resolution: VmMetricsTimeseriesResolution
-    from_: typing_extensions.Annotated[dt.datetime, FieldMetadata(alias="from"), pydantic.Field(alias="from")]
-    to: dt.datetime
-    series: typing.Dict[str, typing.List[typing.List[typing.Any]]]
+    """
+    Metric series for a VM over the requested window.
+    """
+
+    range: VmMetricsTimeseriesRange = pydantic.Field()
+    """
+    Window covered.
+    - `30m`
+    - `1h`
+    - `6h`
+    - `24h`
+    - `7d`
+    """
+
+    resolution: VmMetricsTimeseriesResolution = pydantic.Field()
+    """
+    Spacing between points.
+    - `1m`
+    - `5m`
+    - `15m`
+    - `2h`
+    """
+
+    from_: typing_extensions.Annotated[
+        dt.datetime,
+        FieldMetadata(alias="from"),
+        pydantic.Field(alias="from", description="Start of the window (ISO 8601)."),
+    ]
+    to: dt.datetime = pydantic.Field()
+    """
+    End of the window (ISO 8601).
+    """
+
+    series: typing.Dict[str, typing.List[typing.List[typing.Any]]] = pydantic.Field()
+    """
+    Map of series name to `[timestamp, value]` pairs; `value` is null where no sample exists. Series: `cpu_percent`, `memory_used_percent`, `storage_used_percent`, `disk_read_bps`, `disk_write_bps`, `disk_read_iops`, `disk_write_iops`, `net_rx_bps`, `net_tx_bps`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

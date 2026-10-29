@@ -5,16 +5,59 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
+from .create_nat_port_forwarding_rule_request_target_type import CreateNatPortForwardingRuleRequestTargetType
 
 
 class CreateNatPortForwardingRuleRequest(UniversalBaseModel):
-    name: str
-    protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = None
-    external_port: int
-    internal_ip: str
-    internal_port: int
-    note: typing.Optional[str] = None
-    enabled: typing.Optional[bool] = None
+    """
+    Body for forwarding a port on the NAT gateway's public address to a VM in the VPC.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the rule.
+    """
+
+    protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = pydantic.Field(default=None)
+    """
+    - `tcp` (default)
+    - `udp`
+    """
+
+    external_port: int = pydantic.Field()
+    """
+    Port on the gateway's public address (1-65535).
+    """
+
+    internal_ip: str = pydantic.Field()
+    """
+    Private IPv4 address of the VM inside the VPC that receives the traffic.
+    """
+
+    internal_port: int = pydantic.Field()
+    """
+    Port on the VM that receives the traffic (1-65535).
+    """
+
+    target_type: typing.Optional[CreateNatPortForwardingRuleRequestTargetType] = pydantic.Field(default=None)
+    """
+    `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
+    """
+
+    target_vm_ids: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
+    """
+
+    note: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Free-text note stored with the rule. Default empty.
+    """
+
+    enabled: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether the rule is applied. Default true.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

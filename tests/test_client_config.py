@@ -1,12 +1,11 @@
-"""ibee.client configuration and the held token environment check."""
+"""ibee.client configuration: token, workspace and endpoint from arguments or the environment."""
 
 import asyncio
 
-import httpx
 import pytest
 from mockapi import Recorder, async_client, client
 
-from ibee import AsyncIbee, Ibee, IbeeEnvironment
+from ibee import Ibee, IbeeEnvironment
 from ibee.client import IbeeValidationError, environment_from_name, resolve_base_url
 
 
@@ -72,53 +71,11 @@ def test_environment_names() -> None:
     assert info.value.code == "invalid_environment"
 
 
-# held: token environment check ---------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("token", "env"),
-    [("ibee_dev_key_abc", IbeeEnvironment.PRODUCTION), ("ibee_prod_key_abc", IbeeEnvironment.DEVELOPMENT)],
-)
-def test_token_for_the_other_environment_is_refused(token: str, env: IbeeEnvironment) -> None:
-    with pytest.raises(IbeeValidationError) as info:
-        Ibee(token=token, environment=env)
-    assert info.value.code == "token_environment_mismatch"
-
-
-def test_matching_tokens_and_other_hosts_are_accepted() -> None:
-    Ibee(token="ibee_prod_key_abc")
-    Ibee(token="ibee_dev_key_abc", environment=IbeeEnvironment.DEVELOPMENT)
-    Ibee(token="ibee_dev_key_abc", base_url="https://mock.example.test/v1")
-
-
-def test_token_with_a_line_break_is_refused() -> None:
-    with pytest.raises(IbeeValidationError) as info:
-        Ibee(token="abc\r\nX-Evil: 1")
-    assert info.value.code == "invalid_token"
-
-
-def test_callable_and_async_tokens_are_checked_per_request() -> None:
+def test_tokens_are_sent_as_given_to_any_endpoint() -> None:
     rec = Recorder((200, []))
-    api = client(rec, token=lambda: "ibee_dev_key_abc", base_url="https://api.ibee.ai/v1", workspace_id="1")
-    with pytest.raises(IbeeValidationError):
-        api.reserved_ips.list_reserved_ips()
-    assert rec.requests == []
-
-    async def bad_token() -> str:
-        return "ibee_dev_key_abc"
-
-    async def run() -> None:
-        api = AsyncIbee(
-            async_token=bad_token,
-            base_url="https://api.ibee.ai/v1",
-            workspace_id="1",
-            httpx_client=httpx.AsyncClient(transport=httpx.MockTransport(rec)),
-        )
-        with pytest.raises(IbeeValidationError):
-            await api.reserved_ips.list_reserved_ips()
-
-    asyncio.run(run())
-    assert rec.requests == []
+    client(rec, token="ibee_dev_key_abc", base_url="https://api.ibee.ai/v1", workspace_id="1").reserved_ips.list_reserved_ips()
+    client(rec, token=lambda: "from-callable", workspace_id="1").reserved_ips.list_reserved_ips()
+    assert [r.headers["authorization"] for r in rec.requests] == ["Bearer ibee_dev_key_abc", "Bearer from-callable"]
 
 
 def test_async_client_reads_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:

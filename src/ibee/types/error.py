@@ -14,7 +14,7 @@ class Error(UniversalBaseModel):
 
     error: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Machine-readable code from the gateway's authorization step, for example `invalid_api_key`, `insufficient_scope`, `organization_restricted`, `organization_suspended`, `verification_required` or `billing_denied`. The response descriptions list the codes for each status.
+    Machine-readable code from the gateway's authorization step, for example `invalid_api_key`, `insufficient_scope`, `organization_restricted`, `organization_suspended`, `verification_required`, `product_not_enabled` or `billing_denied`. The response descriptions list the codes for each status.
     """
 
     required_scope: typing.Optional[str] = pydantic.Field(default=None)

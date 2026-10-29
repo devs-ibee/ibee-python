@@ -9,12 +9,16 @@ if typing.TYPE_CHECKING:
     from .types import (
         AttachVpcNodeRequestConnectivity,
         CreateVpcRequestConnectivityType,
+        NatGatewayDeleteRequestPublicIpAction,
         UpdateNatPortForwardingRuleRequestProtocol,
+        UpdateNatPortForwardingRuleRequestTargetType,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "AttachVpcNodeRequestConnectivity": ".types",
     "CreateVpcRequestConnectivityType": ".types",
+    "NatGatewayDeleteRequestPublicIpAction": ".types",
     "UpdateNatPortForwardingRuleRequestProtocol": ".types",
+    "UpdateNatPortForwardingRuleRequestTargetType": ".types",
 }
 
 
@@ -42,5 +46,7 @@ def __dir__():
 __all__ = [
     "AttachVpcNodeRequestConnectivity",
     "CreateVpcRequestConnectivityType",
+    "NatGatewayDeleteRequestPublicIpAction",
     "UpdateNatPortForwardingRuleRequestProtocol",
+    "UpdateNatPortForwardingRuleRequestTargetType",
 ]

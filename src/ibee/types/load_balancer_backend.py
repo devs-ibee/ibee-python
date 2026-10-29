@@ -8,11 +8,36 @@ from .load_balancer_backend_type import LoadBalancerBackendType
 
 
 class LoadBalancerBackend(UniversalBaseModel):
-    type: typing.Optional[LoadBalancerBackendType] = None
-    target: str
-    port: int
-    weight: typing.Optional[int] = None
-    tls: typing.Optional[bool] = None
+    """
+    A backend the load balancer sends traffic to.
+    """
+
+    type: typing.Optional[LoadBalancerBackendType] = pydantic.Field(default=None)
+    """
+    - `service`: a Kubernetes service name (default).
+    - `ip`: an IP address.
+    - `hostname`: a fully qualified domain name.
+    """
+
+    target: str = pydantic.Field()
+    """
+    Backend address: a service name, an IP address or an FQDN, depending on `type`.
+    """
+
+    port: int = pydantic.Field()
+    """
+    Backend port (1-65535).
+    """
+
+    weight: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Relative weight for traffic distribution (1-1000). Default 100.
+    """
+
+    tls: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Use TLS between the load balancer and the backend. Default false.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

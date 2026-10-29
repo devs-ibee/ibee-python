@@ -8,11 +8,15 @@ from importlib import import_module
 if typing.TYPE_CHECKING:
     from .attach_vpc_node_request_connectivity import AttachVpcNodeRequestConnectivity
     from .create_vpc_request_connectivity_type import CreateVpcRequestConnectivityType
+    from .nat_gateway_delete_request_public_ip_action import NatGatewayDeleteRequestPublicIpAction
     from .update_nat_port_forwarding_rule_request_protocol import UpdateNatPortForwardingRuleRequestProtocol
+    from .update_nat_port_forwarding_rule_request_target_type import UpdateNatPortForwardingRuleRequestTargetType
 _dynamic_imports: typing.Dict[str, str] = {
     "AttachVpcNodeRequestConnectivity": ".attach_vpc_node_request_connectivity",
     "CreateVpcRequestConnectivityType": ".create_vpc_request_connectivity_type",
+    "NatGatewayDeleteRequestPublicIpAction": ".nat_gateway_delete_request_public_ip_action",
     "UpdateNatPortForwardingRuleRequestProtocol": ".update_nat_port_forwarding_rule_request_protocol",
+    "UpdateNatPortForwardingRuleRequestTargetType": ".update_nat_port_forwarding_rule_request_target_type",
 }
 
 
@@ -40,5 +44,7 @@ def __dir__():
 __all__ = [
     "AttachVpcNodeRequestConnectivity",
     "CreateVpcRequestConnectivityType",
+    "NatGatewayDeleteRequestPublicIpAction",
     "UpdateNatPortForwardingRuleRequestProtocol",
+    "UpdateNatPortForwardingRuleRequestTargetType",
 ]

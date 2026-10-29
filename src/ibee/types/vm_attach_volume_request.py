@@ -9,14 +9,25 @@ from .vm_attach_volume_request_mode import VmAttachVolumeRequestMode
 
 
 class VmAttachVolumeRequest(UniversalBaseModel):
-    volume_id: str
-    mode: typing.Optional[VmAttachVolumeRequestMode] = None
+    """
+    Body for attaching a block storage volume to a VM.
+    """
+
+    volume_id: str = pydantic.Field()
+    """
+    ID of the block storage volume to attach.
+    """
+
+    mode: typing.Optional[VmAttachVolumeRequestMode] = pydantic.Field(default=None)
+    """
+    - `single-writer`: only this VM may write to the volume (default).
+    - `multi-writer`: the volume may be attached to several VMs.
+    """
+
     billing_catalog: BillingCatalogSelection = pydantic.Field()
     """
     Required. The Block Storage SKU from the Billing catalog that the VM engine records for this attachment. Copy it from the volume's `metadata.billing_catalog` (`GET /block-storage/volumes/{volume_id}`).
     """
-
-    requested_by: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -10,11 +10,17 @@ if typing.TYPE_CHECKING:
     from .create_cloud_vm_request_os_type import CreateCloudVmRequestOsType
     from .create_cloud_vm_request_vpc_attachment_mode import CreateCloudVmRequestVpcAttachmentMode
     from .get_cloud_vm_metrics_timeseries_request_range import GetCloudVmMetricsTimeseriesRequestRange
+    from .list_cloud_vms_request_sort_by import ListCloudVmsRequestSortBy
+    from .list_cloud_vms_request_sort_direction import ListCloudVmsRequestSortDirection
+    from .list_cloud_vms_request_status import ListCloudVmsRequestStatus
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateCloudVmRequestNetworkConnectivity": ".create_cloud_vm_request_network_connectivity",
     "CreateCloudVmRequestOsType": ".create_cloud_vm_request_os_type",
     "CreateCloudVmRequestVpcAttachmentMode": ".create_cloud_vm_request_vpc_attachment_mode",
     "GetCloudVmMetricsTimeseriesRequestRange": ".get_cloud_vm_metrics_timeseries_request_range",
+    "ListCloudVmsRequestSortBy": ".list_cloud_vms_request_sort_by",
+    "ListCloudVmsRequestSortDirection": ".list_cloud_vms_request_sort_direction",
+    "ListCloudVmsRequestStatus": ".list_cloud_vms_request_status",
 }
 
 
@@ -44,4 +50,7 @@ __all__ = [
     "CreateCloudVmRequestOsType",
     "CreateCloudVmRequestVpcAttachmentMode",
     "GetCloudVmMetricsTimeseriesRequestRange",
+    "ListCloudVmsRequestSortBy",
+    "ListCloudVmsRequestSortDirection",
+    "ListCloudVmsRequestStatus",
 ]

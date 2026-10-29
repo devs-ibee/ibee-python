@@ -10,27 +10,106 @@ from .backup_status import BackupStatus
 
 
 class BackupPolicy(UniversalBaseModel):
-    organization_id: str
-    organization_name: typing.Optional[str] = None
-    workspace_id: str
-    workspace_name: typing.Optional[str] = None
-    policy_id: str
-    vm_id: str
-    vm_name: typing.Optional[str] = None
-    os_type: typing.Optional[str] = None
-    os_distro: typing.Optional[str] = None
-    template_id: typing.Optional[str] = None
-    enabled: bool
+    """
+    A VM's scheduled-backup policy and the result of its last run.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the organization that owns the VM.
+    """
+
+    organization_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the owning organization, when the service has it.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the workspace the VM belongs to.
+    """
+
+    workspace_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the workspace, when the service has it.
+    """
+
+    policy_id: str = pydantic.Field()
+    """
+    Unique ID of the backup policy.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the VM the policy protects.
+    """
+
+    vm_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the VM, as recorded on the policy.
+    """
+
+    os_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    OS family of the VM (`linux` or `windows`), as recorded on the policy.
+    """
+
+    os_distro: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    OS distribution of the VM, as recorded on the policy.
+    """
+
+    template_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Template the VM was created from, as recorded on the policy.
+    """
+
+    enabled: bool = pydantic.Field()
+    """
+    Whether scheduled runs are active.
+    """
+
     schedule: BackupPolicySchedule
-    retention_days: int
-    full_backup_interval_days: int
-    incremental_enabled: bool
-    storage_backend: str
-    next_run_at: typing.Optional[dt.datetime] = None
-    last_run_at: typing.Optional[dt.datetime] = None
+    retention_days: int = pydantic.Field()
+    """
+    Days a backup run is kept before it is expired.
+    """
+
+    full_backup_interval_days: int = pydantic.Field()
+    """
+    Days between full backups.
+    """
+
+    incremental_enabled: bool = pydantic.Field()
+    """
+    Whether runs between full backups capture only changes.
+    """
+
+    storage_backend: str = pydantic.Field()
+    """
+    Identifier of the storage backend that holds the captured data.
+    """
+
+    next_run_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the next scheduled run is due; null when none is scheduled.
+    """
+
+    last_run_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the most recent run started; null before the first run.
+    """
+
     last_status: typing.Optional[BackupStatus] = None
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the policy was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the policy was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

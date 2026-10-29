@@ -10,18 +10,78 @@ from .cdn_distribution_status import CdnDistributionStatus
 
 
 class CdnDistribution(UniversalBaseModel):
-    id: str
-    name: str
-    origin_type: CdnDistributionOriginType
-    origin_id: str
-    cache_policy: str
-    enabled: bool
-    status: CdnDistributionStatus
-    default_domain: str
-    default_url: str
-    custom_domains: typing.List[str]
-    created_at: dt.datetime
-    updated_at: typing.Optional[dt.datetime] = None
+    """
+    A CDN distribution in front of a bucket or custom origin.
+    """
+
+    id: str = pydantic.Field()
+    """
+    Unique ID of the distribution.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the distribution.
+    """
+
+    origin_type: CdnDistributionOriginType = pydantic.Field()
+    """
+    - `bucket`: an Object Storage bucket.
+    - `custom`: a custom origin.
+    """
+
+    origin_id: str = pydantic.Field()
+    """
+    Bucket name or custom origin ID.
+    """
+
+    cache_policy: str = pydantic.Field()
+    """
+    Caching behaviour in effect.
+    - `static-assets`: long-term caching for immutable assets; 1 year at the CDN, browsers revalidate.
+    - `media`: medium-term caching for video and audio; 30 days at the CDN.
+    - `short`: short-term caching for frequently changing content; 1 hour at the CDN.
+    - `no-cache`: no caching, for dynamic responses.
+    """
+
+    enabled: bool = pydantic.Field()
+    """
+    Whether the distribution serves traffic.
+    """
+
+    status: CdnDistributionStatus = pydantic.Field()
+    """
+    - `active`: serving.
+    - `deploying`: configuration is being rolled out to the edge.
+    - `disabled`: turned off.
+    - `failed`: deployment failed.
+    - `deleted`: removed.
+    """
+
+    default_domain: str = pydantic.Field()
+    """
+    Hostname IBEE assigned to the distribution, for example `dl-abc123.cdn.ibee.ai`.
+    """
+
+    default_url: str = pydantic.Field()
+    """
+    `https://` URL of `default_domain`.
+    """
+
+    custom_domains: typing.List[str] = pydantic.Field()
+    """
+    Custom hostnames attached to the distribution.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the distribution was created (ISO 8601).
+    """
+
+    updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the distribution was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

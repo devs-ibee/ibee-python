@@ -12,9 +12,21 @@ class DefaultRetention(UniversalBaseModel):
     Optional default object retention. Supply exactly one of `days` or `years`, and set `object_lock_enabled` to `true`.
     """
 
-    mode: DefaultRetentionMode
-    days: typing.Optional[int] = None
-    years: typing.Optional[int] = None
+    mode: DefaultRetentionMode = pydantic.Field()
+    """
+    - `GOVERNANCE`: retention can be overridden by users with the bypass permission.
+    - `COMPLIANCE`: retention cannot be shortened or removed until it expires.
+    """
+
+    days: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Retention period in days (1-36500). Supply either `days` or `years`.
+    """
+
+    years: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Retention period in years (1-100). Supply either `days` or `years`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

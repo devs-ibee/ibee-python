@@ -10,16 +10,65 @@ from .block_volume_operation_status import BlockVolumeOperationStatus
 
 
 class BlockVolumeOperation(UniversalBaseModel):
-    id: str
-    volume_id: str
-    operation: BlockVolumeOperationOperation
-    status: BlockVolumeOperationStatus
-    idempotency_key: typing.Optional[str] = None
-    result: typing.Optional[typing.Dict[str, typing.Any]] = None
-    error: typing.Optional[str] = None
-    created_at: dt.datetime
-    started_at: dt.datetime
-    completed_at: typing.Optional[dt.datetime] = None
+    """
+    One operation run on a volume.
+    """
+
+    id: str = pydantic.Field()
+    """
+    Unique ID of the operation.
+    """
+
+    volume_id: str = pydantic.Field()
+    """
+    Volume the operation acts on.
+    """
+
+    operation: BlockVolumeOperationOperation = pydantic.Field()
+    """
+    - `create`
+    - `attach`
+    - `detach`
+    - `resize`
+    - `delete`
+    """
+
+    status: BlockVolumeOperationStatus = pydantic.Field()
+    """
+    - `in-progress`: running.
+    - `succeeded`: finished successfully.
+    - `failed`: finished with an error; see `error`.
+    """
+
+    idempotency_key: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Idempotency key the request was made with, when one was given.
+    """
+
+    result: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Operation-specific result details as key-value data.
+    """
+
+    error: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error detail when `status` is `failed`.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the operation was accepted (ISO 8601).
+    """
+
+    started_at: dt.datetime = pydantic.Field()
+    """
+    When the operation started (ISO 8601).
+    """
+
+    completed_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the operation finished (ISO 8601); null while running.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

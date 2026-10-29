@@ -8,7 +8,14 @@ from .recovery_restore_request import RecoveryRestoreRequest
 
 
 class BackupRestoreRequest(RecoveryRestoreRequest):
-    recovery_point_id: str
+    """
+    Body for restoring a VM from a backup run.
+    """
+
+    recovery_point_id: str = pydantic.Field()
+    """
+    Recovery point to restore: the `recovery_point_id` of a succeeded backup run.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

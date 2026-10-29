@@ -9,11 +9,37 @@ from .cdn_custom_domain_status import CdnCustomDomainStatus
 
 
 class CdnCustomDomain(UniversalBaseModel):
-    domain: str
-    status: CdnCustomDomainStatus
-    tls_status: typing.Optional[str] = None
-    created_at: dt.datetime
-    instructions: typing.Optional[typing.List[str]] = None
+    """
+    A custom hostname on a distribution.
+    """
+
+    domain: str = pydantic.Field()
+    """
+    The hostname.
+    """
+
+    status: CdnCustomDomainStatus = pydantic.Field()
+    """
+    - `pending_validation`: waiting for the DNS CNAME to be detected.
+    - `pending_tls`: validated; the certificate is being issued.
+    - `active`: certificate issued; the domain serves traffic.
+    - `failed`: validation or certificate issuance failed.
+    """
+
+    tls_status: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Certificate status reported by the edge provider, when available.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the hostname was added (ISO 8601).
+    """
+
+    instructions: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Steps to complete setup, such as the CNAME record to create.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

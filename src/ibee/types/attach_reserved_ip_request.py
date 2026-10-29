@@ -7,9 +7,24 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class AttachReservedIpRequest(UniversalBaseModel):
-    vm_id: str
-    vpc_id: typing.Optional[str] = None
-    subnet_id: typing.Optional[str] = None
+    """
+    Body for attaching a Reserved IP to a VM, either on the VM's own public network or inside a VPC.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the VM to attach the address to.
+    """
+
+    vpc_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    VPC of the VM when attaching inside a VPC. Send together with `subnet_id`.
+    """
+
+    subnet_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Subnet of the VM's VPC attachment. Send together with `vpc_id`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -12,21 +12,94 @@ from .block_volume_volume_class import BlockVolumeVolumeClass
 
 
 class BlockVolume(UniversalBaseModel):
-    id: str
-    organization_id: typing.Optional[str] = None
-    workspace_id: typing.Optional[str] = None
-    workspace_name: typing.Optional[str] = None
-    site_id: typing.Optional[str] = None
-    site_name: typing.Optional[str] = None
-    name: str
-    size_gb: int
-    state: BlockVolumeState
-    volume_class: BlockVolumeVolumeClass
-    replica_count: int
-    attachments: typing.List[BlockVolumeAttachment]
-    created_at: dt.datetime
-    updated_at: dt.datetime
-    metadata: typing.Optional[BlockVolumeMetadata] = None
+    """
+    A block storage volume.
+    """
+
+    id: str = pydantic.Field()
+    """
+    Unique ID of the volume.
+    """
+
+    organization_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning workspace.
+    """
+
+    workspace_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the workspace.
+    """
+
+    site_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Site the volume lives at.
+    """
+
+    site_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of that site.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the volume.
+    """
+
+    size_gb: int = pydantic.Field()
+    """
+    Size in GB.
+    """
+
+    state: BlockVolumeState = pydantic.Field()
+    """
+    Lifecycle state of the volume.
+    - `creating`: being provisioned.
+    - `ready`: provisioned and detached.
+    - `in-use`: attached to a node.
+    - `attaching`, `detaching`: an attachment change is in progress.
+    - `resizing`: a resize is in progress.
+    - `deleting`: being removed.
+    - `error`: the last operation failed; see its `error`.
+    """
+
+    volume_class: BlockVolumeVolumeClass = pydantic.Field()
+    """
+    Performance class of the volume.
+    - `capacity`: lowest cost per GB.
+    - `balanced`: general purpose.
+    - `performance`: highest throughput and IOPS.
+    """
+
+    replica_count: int = pydantic.Field()
+    """
+    Number of synchronous replicas kept for the volume.
+    """
+
+    attachments: typing.List[BlockVolumeAttachment] = pydantic.Field()
+    """
+    Current attachments; empty when detached.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the volume was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the volume was last changed (ISO 8601).
+    """
+
+    metadata: typing.Optional[BlockVolumeMetadata] = pydantic.Field(default=None)
+    """
+    Additional key-value data, including the `billing_catalog` the volume was created with.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

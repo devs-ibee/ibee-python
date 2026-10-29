@@ -9,15 +9,55 @@ from .secret_status import SecretStatus
 
 
 class Secret(UniversalBaseModel):
-    id: typing.Optional[str] = None
-    organization_id: typing.Optional[str] = None
-    workspace_id: typing.Optional[str] = None
-    store_id: typing.Optional[str] = None
-    store_key: typing.Optional[str] = None
-    secret_name: typing.Optional[str] = None
-    status: typing.Optional[SecretStatus] = None
-    created_at: typing.Optional[dt.datetime] = None
-    updated_at: typing.Optional[dt.datetime] = None
+    """
+    A secret's metadata. Values are returned by the value endpoints only.
+    """
+
+    id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Unique ID of the secret.
+    """
+
+    organization_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning workspace.
+    """
+
+    store_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the store that holds the secret.
+    """
+
+    store_key: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    URL-safe key of that store.
+    """
+
+    secret_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Name of the secret within the store.
+    """
+
+    status: typing.Optional[SecretStatus] = pydantic.Field(default=None)
+    """
+    - `active`: readable.
+    - `soft_deleted`: deleted but recoverable until permanently deleted.
+    """
+
+    created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the record was created (ISO 8601).
+    """
+
+    updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the record was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

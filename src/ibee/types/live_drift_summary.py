@@ -7,10 +7,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class LiveDriftSummary(UniversalBaseModel):
-    drifted: typing.Optional[bool] = None
-    missing_from_live: typing.Optional[typing.List[str]] = None
-    new_live_only: typing.Optional[typing.List[str]] = None
-    message: typing.Optional[str] = None
+    """
+    Difference between the volumes in a recovery point and the volumes attached to the VM now.
+    """
+
+    drifted: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True when the VM's current volumes differ from the recovery point.
+    """
+
+    missing_from_live: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Volumes in the recovery point that are no longer attached to the VM.
+    """
+
+    new_live_only: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Volumes attached to the VM now that are not in the recovery point.
+    """
+
+    message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Human-readable description of the drift, when any.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

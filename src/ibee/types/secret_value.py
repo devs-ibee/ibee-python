@@ -7,14 +7,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class SecretValue(UniversalBaseModel):
-    id: typing.Optional[str] = None
-    secret_name: typing.Optional[str] = None
+    """
+    A secret's current value.
+    """
+
+    id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Unique ID of the secret.
+    """
+
+    secret_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Name of the secret within the store.
+    """
+
     data: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
     """
     Key-value pairs containing the secret data.
     """
 
-    metadata: typing.Optional[typing.Dict[str, typing.Any]] = None
+    metadata: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Version metadata for the returned value, including `version` and `created_time`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

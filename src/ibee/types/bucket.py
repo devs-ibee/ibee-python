@@ -62,8 +62,15 @@ class Bucket(UniversalBaseModel):
     Total size in bytes of the objects stored in the bucket. Returned by the read and list endpoints only.
     """
 
-    created_at: typing.Optional[dt.datetime] = None
-    updated_at: typing.Optional[dt.datetime] = None
+    created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the bucket was created (ISO 8601).
+    """
+
+    updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When the bucket settings were last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

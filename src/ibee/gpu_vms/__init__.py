@@ -11,12 +11,16 @@ if typing.TYPE_CHECKING:
         CreateGpuVmRequestOsType,
         CreateGpuVmRequestVpcAttachmentMode,
         GetGpuVmMetricsTimeseriesRequestRange,
+        ListGpuVmsRequestSortBy,
+        ListGpuVmsRequestSortDirection,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateGpuVmRequestNetworkConnectivity": ".types",
     "CreateGpuVmRequestOsType": ".types",
     "CreateGpuVmRequestVpcAttachmentMode": ".types",
     "GetGpuVmMetricsTimeseriesRequestRange": ".types",
+    "ListGpuVmsRequestSortBy": ".types",
+    "ListGpuVmsRequestSortDirection": ".types",
 }
 
 
@@ -46,4 +50,6 @@ __all__ = [
     "CreateGpuVmRequestOsType",
     "CreateGpuVmRequestVpcAttachmentMode",
     "GetGpuVmMetricsTimeseriesRequestRange",
+    "ListGpuVmsRequestSortBy",
+    "ListGpuVmsRequestSortDirection",
 ]

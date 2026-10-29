@@ -8,8 +8,19 @@ from .snapshot_delete_result_status import SnapshotDeleteResultStatus
 
 
 class SnapshotDeleteResult(UniversalBaseModel):
-    status: SnapshotDeleteResultStatus
-    snapshot_set_id: str
+    """
+    Confirmation that a snapshot set was deleted.
+    """
+
+    status: SnapshotDeleteResultStatus = pydantic.Field()
+    """
+    Always `deleted`.
+    """
+
+    snapshot_set_id: str = pydantic.Field()
+    """
+    ID of the deleted snapshot set.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

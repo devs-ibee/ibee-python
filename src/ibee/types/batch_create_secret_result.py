@@ -9,10 +9,31 @@ from .secret import Secret
 
 
 class BatchCreateSecretResult(UniversalBaseModel):
-    secret_name: str
-    status: BatchCreateSecretResultStatus
-    secret: typing.Optional[Secret] = None
-    error: typing.Optional[str] = None
+    """
+    Outcome for one secret in a batch create.
+    """
+
+    secret_name: str = pydantic.Field()
+    """
+    Name of the secret the result refers to.
+    """
+
+    status: BatchCreateSecretResultStatus = pydantic.Field()
+    """
+    - `created`: the secret was created.
+    - `skipped`: a secret with this name already existed.
+    - `failed`: creation failed; see `error`.
+    """
+
+    secret: typing.Optional[Secret] = pydantic.Field(default=None)
+    """
+    The created secret, when `status` is `created`.
+    """
+
+    error: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error detail when `status` is `failed`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -9,17 +9,65 @@ from .secret_identity_scope_access_mode import SecretIdentityScopeAccessMode
 
 
 class SecretIdentityScope(UniversalBaseModel):
-    id: str
-    identity_id: str
-    scope_type: str
-    store_id: str
-    organization_id: str
-    workspace_id: str
-    access_mode: SecretIdentityScopeAccessMode
-    allow_version_read: bool
-    allow_rollback: bool
-    allow_destroy: bool
-    created_at: dt.datetime
+    """
+    An identity's access grant to one store.
+    """
+
+    id: str = pydantic.Field()
+    """
+    Unique ID of the scope.
+    """
+
+    identity_id: str = pydantic.Field()
+    """
+    Identity the scope belongs to.
+    """
+
+    scope_type: str = pydantic.Field()
+    """
+    Always `store`: scopes are granted per store.
+    """
+
+    store_id: str = pydantic.Field()
+    """
+    Store the scope grants access to.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the owning workspace.
+    """
+
+    access_mode: SecretIdentityScopeAccessMode = pydantic.Field()
+    """
+    - `read_only`: the identity can read secrets in the store.
+    - `read_write`: the identity can also create and update them.
+    """
+
+    allow_version_read: bool = pydantic.Field()
+    """
+    Whether the identity may read non-current versions of a secret.
+    """
+
+    allow_rollback: bool = pydantic.Field()
+    """
+    Whether the identity may roll a secret back to an earlier version.
+    """
+
+    allow_destroy: bool = pydantic.Field()
+    """
+    Whether the identity may destroy secret versions.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the scope was created (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -8,7 +8,14 @@ from .s3credential import S3Credential
 
 
 class S3CredentialList(UniversalBaseModel):
-    credentials: typing.List[S3Credential]
+    """
+    S3 access key pairs in the workspace.
+    """
+
+    credentials: typing.List[S3Credential] = pydantic.Field()
+    """
+    Key pairs returned.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

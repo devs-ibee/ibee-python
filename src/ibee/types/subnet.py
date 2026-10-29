@@ -9,19 +9,70 @@ from .networking_resource_status import NetworkingResourceStatus
 
 
 class Subnet(UniversalBaseModel):
-    subnet_id: str
-    vpc_id: str
-    organization_id: typing.Optional[str] = None
-    workspace_id: typing.Optional[str] = None
-    site_id: str
-    name: str
-    cidr: str
-    gateway: str
-    dns: typing.List[str]
+    """
+    A subnet of a VPC.
+    """
+
+    subnet_id: str = pydantic.Field()
+    """
+    Unique ID of the subnet.
+    """
+
+    vpc_id: str = pydantic.Field()
+    """
+    VPC the subnet belongs to.
+    """
+
+    organization_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning organization.
+    """
+
+    workspace_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the owning workspace.
+    """
+
+    site_id: str = pydantic.Field()
+    """
+    Site the subnet lives at.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the subnet.
+    """
+
+    cidr: str = pydantic.Field()
+    """
+    IPv4 CIDR of the subnet.
+    """
+
+    gateway: str = pydantic.Field()
+    """
+    Gateway IPv4 address of the subnet.
+    """
+
+    dns: typing.List[str] = pydantic.Field()
+    """
+    DNS resolvers handed to instances in the subnet.
+    """
+
     status: NetworkingResourceStatus
-    error_message: typing.Optional[str] = None
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    error_message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error detail when `status` is `error`.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the resource was last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

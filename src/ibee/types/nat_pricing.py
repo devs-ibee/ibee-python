@@ -7,10 +7,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class NatPricing(UniversalBaseModel):
-    currency: typing.Optional[str] = None
-    price_per_hour: typing.Optional[float] = None
-    data_price_per_gb: typing.Optional[float] = None
-    billing_enforced: typing.Optional[bool] = None
+    """
+    Price of a NAT gateway as recorded when it was created.
+    """
+
+    currency: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ISO 4217 code of the currency the prices are in.
+    """
+
+    price_per_hour: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Hourly charge for the gateway.
+    """
+
+    data_price_per_gb: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Charge per GB of data processed.
+    """
+
+    billing_enforced: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether these charges are being applied.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

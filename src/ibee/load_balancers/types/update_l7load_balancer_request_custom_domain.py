@@ -7,7 +7,14 @@ from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class UpdateL7LoadBalancerRequestCustomDomain(UniversalBaseModel):
-    hostname: typing.Optional[str] = None
+    """
+    Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
+    """
+
+    hostname: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Fully qualified domain name to serve.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

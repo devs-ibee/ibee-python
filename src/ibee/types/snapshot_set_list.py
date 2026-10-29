@@ -8,8 +8,19 @@ from .snapshot_set import SnapshotSet
 
 
 class SnapshotSetList(UniversalBaseModel):
-    snapshots: typing.List[SnapshotSet]
-    total: int
+    """
+    Snapshot sets of a VM.
+    """
+
+    snapshots: typing.List[SnapshotSet] = pydantic.Field()
+    """
+    Snapshot sets on this page.
+    """
+
+    total: int = pydantic.Field()
+    """
+    Total number of snapshot sets matching the request.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

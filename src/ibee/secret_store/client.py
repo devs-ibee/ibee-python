@@ -24,8 +24,6 @@ from .raw_client import AsyncRawSecretStoreClient, RawSecretStoreClient
 from .types.create_secret_identity_request_auth_method import CreateSecretIdentityRequestAuthMethod
 from .types.create_secret_identity_request_token_policy_mode import CreateSecretIdentityRequestTokenPolicyMode
 from .types.create_secret_identity_scope_request_access_mode import CreateSecretIdentityScopeRequestAccessMode
-from .types.update_secret_identity_request_token_policy_mode import UpdateSecretIdentityRequestTokenPolicyMode
-from .types.update_secret_identity_scope_request_access_mode import UpdateSecretIdentityScopeRequestAccessMode
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -114,11 +112,13 @@ class SecretStoreClient:
         Parameters
         ----------
         name : str
+            Display name of the store (1-128 characters). Its URL-safe form becomes `store_key`.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -154,7 +154,7 @@ class SecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretStore:
         """
-        Gets one secret store. Requires scope: secret-store.read.
+        Gets one secret store. A permanently deleted store answers 403, not 404. Requires scope: secret-store.read.
 
         Parameters
         ----------
@@ -186,55 +186,6 @@ class SecretStoreClient:
         """
         _response = self._raw_client.get_secret_store(
             store_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    def update_secret_store(
-        self,
-        store_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        description: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SecretStore:
-        """
-        Updates store name or description. Requires scope: secret-store.write.
-
-        Parameters
-        ----------
-        store_id : str
-            Secret store ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-
-        description : typing.Optional[str]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SecretStore
-            Store updated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.secret_store.update_secret_store(
-            store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
-            workspace_id="710995",
-        )
-        """
-        _response = self._raw_client.update_secret_store(
-            store_id, workspace_id=workspace_id, name=name, description=description, request_options=request_options
         )
         return _response.data
 
@@ -332,7 +283,7 @@ class SecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretLifecycleStatus:
         """
-        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
+        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Afterwards, reads of the store answer 403. Requires scope: secret-store.write.
 
         Parameters
         ----------
@@ -492,6 +443,7 @@ class SecretStoreClient:
             Secret store ID.
 
         secrets : typing.Sequence[BatchCreateSecretItem]
+            Secrets to create (1-500).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -539,7 +491,7 @@ class SecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Secret:
         """
-        Gets one secret metadata record. Secret value is not returned. Requires scope: secret-store.read.
+        Gets one secret metadata record. Secret value is not returned. A permanently deleted secret answers 403, not 404. Requires scope: secret-store.read.
 
         Parameters
         ----------
@@ -711,54 +663,6 @@ class SecretStoreClient:
         )
         return _response.data
 
-    def patch_secret_value(
-        self,
-        secret_id: str,
-        *,
-        value: typing.Dict[str, typing.Any],
-        workspace_id: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SecretValue:
-        """
-        Merges the supplied keys into the current value and creates a new version. Requires scope: secret-store.write.
-
-        Parameters
-        ----------
-        secret_id : str
-            Secret ID.
-
-        value : typing.Dict[str, typing.Any]
-            Key-value pairs to merge into the current value. Creates a new version.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SecretValue
-            Secret value patched successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.secret_store.patch_secret_value(
-            secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-            workspace_id="710995",
-            value={"username": "rotated-user"},
-        )
-        """
-        _response = self._raw_client.patch_secret_value(
-            secret_id, value=value, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
     def undelete_secret(
         self,
         secret_id: str,
@@ -863,7 +767,7 @@ class SecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretLifecycleStatus:
         """
-        Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
+        Irreversibly deletes all versions and metadata for a secret. Afterwards, reads of the secret answer 403. Requires scope: secret-store.write.
 
         Parameters
         ----------
@@ -1104,11 +1008,15 @@ class SecretStoreClient:
             Authentication method used by the application.
 
         name : str
+            Display name of the identity (1-128 characters).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         token_policy_mode : typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]
+            Default access mode for the identity's tokens.
+            - `read_only` (default)
+            - `read_write`
 
         k8s_namespace : typing.Optional[str]
             Required when auth_method is kubernetes.
@@ -1234,54 +1142,6 @@ class SecretStoreClient:
         """
         _response = self._raw_client.delete_secret_identity(
             identity_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    def update_secret_identity(
-        self,
-        identity_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        token_policy_mode: typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SecretIdentity:
-        """
-        Updates the token policy mode. Identity names cannot be changed after creation. Requires scope: secret-store.write.
-
-        Parameters
-        ----------
-        identity_id : str
-            Secret Store application identity ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        token_policy_mode : typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode]
-            Updating the mode also aligns every existing scope and revokes active sessions.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SecretIdentity
-            Identity updated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.secret_store.update_secret_identity(
-            identity_id="identity_id",
-            workspace_id="710995",
-            token_policy_mode="read_write",
-        )
-        """
-        _response = self._raw_client.update_secret_identity(
-            identity_id, workspace_id=workspace_id, token_policy_mode=token_policy_mode, request_options=request_options
         )
         return _response.data
 
@@ -1564,17 +1424,24 @@ class SecretStoreClient:
             Secret Store application identity ID.
 
         store_id : str
+            Store the identity gets access to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         access_mode : typing.Optional[CreateSecretIdentityScopeRequestAccessMode]
+            - `read_only`: the identity can read secrets in the store.
+            - `read_write`: the identity can also create and update them.
+            Default `read_only`.
 
         allow_version_read : typing.Optional[bool]
+            Whether the identity may read non-current versions of a secret.
 
         allow_rollback : typing.Optional[bool]
+            Whether the identity may roll a secret back to an earlier version.
 
         allow_destroy : typing.Optional[bool]
+            Whether the identity may destroy secret versions.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1653,71 +1520,6 @@ class SecretStoreClient:
         """
         _response = self._raw_client.delete_secret_identity_scope(
             scope_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    def update_secret_identity_scope(
-        self,
-        scope_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        access_mode: typing.Optional[UpdateSecretIdentityScopeRequestAccessMode] = OMIT,
-        allow_version_read: typing.Optional[bool] = OMIT,
-        allow_rollback: typing.Optional[bool] = OMIT,
-        allow_destroy: typing.Optional[bool] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SecretIdentityScope:
-        """
-        Updates store access and version permissions for a scope. Requires scope: secret-store.write.
-
-        Parameters
-        ----------
-        scope_id : str
-            Secret Store identity scope ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        access_mode : typing.Optional[UpdateSecretIdentityScopeRequestAccessMode]
-
-        allow_version_read : typing.Optional[bool]
-
-        allow_rollback : typing.Optional[bool]
-
-        allow_destroy : typing.Optional[bool]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SecretIdentityScope
-            Scope updated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.secret_store.update_secret_identity_scope(
-            scope_id="scope_id",
-            workspace_id="710995",
-            access_mode="read_write",
-            allow_version_read=True,
-            allow_rollback=True,
-            allow_destroy=False,
-        )
-        """
-        _response = self._raw_client.update_secret_identity_scope(
-            scope_id,
-            workspace_id=workspace_id,
-            access_mode=access_mode,
-            allow_version_read=allow_version_read,
-            allow_rollback=allow_rollback,
-            allow_destroy=allow_destroy,
-            request_options=request_options,
         )
         return _response.data
 
@@ -1813,11 +1615,13 @@ class AsyncSecretStoreClient:
         Parameters
         ----------
         name : str
+            Display name of the store (1-128 characters). Its URL-safe form becomes `store_key`.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1861,7 +1665,7 @@ class AsyncSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretStore:
         """
-        Gets one secret store. Requires scope: secret-store.read.
+        Gets one secret store. A permanently deleted store answers 403, not 404. Requires scope: secret-store.read.
 
         Parameters
         ----------
@@ -1901,63 +1705,6 @@ class AsyncSecretStoreClient:
         """
         _response = await self._raw_client.get_secret_store(
             store_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    async def update_secret_store(
-        self,
-        store_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        description: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SecretStore:
-        """
-        Updates store name or description. Requires scope: secret-store.write.
-
-        Parameters
-        ----------
-        store_id : str
-            Secret store ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-
-        description : typing.Optional[str]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SecretStore
-            Store updated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.secret_store.update_secret_store(
-                store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
-                workspace_id="710995",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.update_secret_store(
-            store_id, workspace_id=workspace_id, name=name, description=description, request_options=request_options
         )
         return _response.data
 
@@ -2071,7 +1818,7 @@ class AsyncSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretLifecycleStatus:
         """
-        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Requires scope: secret-store.write.
+        Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Afterwards, reads of the store answer 403. Requires scope: secret-store.write.
 
         Parameters
         ----------
@@ -2255,6 +2002,7 @@ class AsyncSecretStoreClient:
             Secret store ID.
 
         secrets : typing.Sequence[BatchCreateSecretItem]
+            Secrets to create (1-500).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -2310,7 +2058,7 @@ class AsyncSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Secret:
         """
-        Gets one secret metadata record. Secret value is not returned. Requires scope: secret-store.read.
+        Gets one secret metadata record. Secret value is not returned. A permanently deleted secret answers 403, not 404. Requires scope: secret-store.read.
 
         Parameters
         ----------
@@ -2516,62 +2264,6 @@ class AsyncSecretStoreClient:
         )
         return _response.data
 
-    async def patch_secret_value(
-        self,
-        secret_id: str,
-        *,
-        value: typing.Dict[str, typing.Any],
-        workspace_id: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SecretValue:
-        """
-        Merges the supplied keys into the current value and creates a new version. Requires scope: secret-store.write.
-
-        Parameters
-        ----------
-        secret_id : str
-            Secret ID.
-
-        value : typing.Dict[str, typing.Any]
-            Key-value pairs to merge into the current value. Creates a new version.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SecretValue
-            Secret value patched successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.secret_store.patch_secret_value(
-                secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-                workspace_id="710995",
-                value={"username": "rotated-user"},
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.patch_secret_value(
-            secret_id, value=value, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
     async def undelete_secret(
         self,
         secret_id: str,
@@ -2692,7 +2384,7 @@ class AsyncSecretStoreClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretLifecycleStatus:
         """
-        Irreversibly deletes all versions and metadata for a secret. Requires scope: secret-store.write.
+        Irreversibly deletes all versions and metadata for a secret. Afterwards, reads of the secret answer 403. Requires scope: secret-store.write.
 
         Parameters
         ----------
@@ -2973,11 +2665,15 @@ class AsyncSecretStoreClient:
             Authentication method used by the application.
 
         name : str
+            Display name of the identity (1-128 characters).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         token_policy_mode : typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]
+            Default access mode for the identity's tokens.
+            - `read_only` (default)
+            - `read_write`
 
         k8s_namespace : typing.Optional[str]
             Required when auth_method is kubernetes.
@@ -3127,62 +2823,6 @@ class AsyncSecretStoreClient:
         """
         _response = await self._raw_client.delete_secret_identity(
             identity_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    async def update_secret_identity(
-        self,
-        identity_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        token_policy_mode: typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SecretIdentity:
-        """
-        Updates the token policy mode. Identity names cannot be changed after creation. Requires scope: secret-store.write.
-
-        Parameters
-        ----------
-        identity_id : str
-            Secret Store application identity ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        token_policy_mode : typing.Optional[UpdateSecretIdentityRequestTokenPolicyMode]
-            Updating the mode also aligns every existing scope and revokes active sessions.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SecretIdentity
-            Identity updated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.secret_store.update_secret_identity(
-                identity_id="identity_id",
-                workspace_id="710995",
-                token_policy_mode="read_write",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.update_secret_identity(
-            identity_id, workspace_id=workspace_id, token_policy_mode=token_policy_mode, request_options=request_options
         )
         return _response.data
 
@@ -3513,17 +3153,24 @@ class AsyncSecretStoreClient:
             Secret Store application identity ID.
 
         store_id : str
+            Store the identity gets access to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         access_mode : typing.Optional[CreateSecretIdentityScopeRequestAccessMode]
+            - `read_only`: the identity can read secrets in the store.
+            - `read_write`: the identity can also create and update them.
+            Default `read_only`.
 
         allow_version_read : typing.Optional[bool]
+            Whether the identity may read non-current versions of a secret.
 
         allow_rollback : typing.Optional[bool]
+            Whether the identity may roll a secret back to an earlier version.
 
         allow_destroy : typing.Optional[bool]
+            Whether the identity may destroy secret versions.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3618,78 +3265,5 @@ class AsyncSecretStoreClient:
         """
         _response = await self._raw_client.delete_secret_identity_scope(
             scope_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    async def update_secret_identity_scope(
-        self,
-        scope_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        access_mode: typing.Optional[UpdateSecretIdentityScopeRequestAccessMode] = OMIT,
-        allow_version_read: typing.Optional[bool] = OMIT,
-        allow_rollback: typing.Optional[bool] = OMIT,
-        allow_destroy: typing.Optional[bool] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SecretIdentityScope:
-        """
-        Updates store access and version permissions for a scope. Requires scope: secret-store.write.
-
-        Parameters
-        ----------
-        scope_id : str
-            Secret Store identity scope ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        access_mode : typing.Optional[UpdateSecretIdentityScopeRequestAccessMode]
-
-        allow_version_read : typing.Optional[bool]
-
-        allow_rollback : typing.Optional[bool]
-
-        allow_destroy : typing.Optional[bool]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SecretIdentityScope
-            Scope updated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.secret_store.update_secret_identity_scope(
-                scope_id="scope_id",
-                workspace_id="710995",
-                access_mode="read_write",
-                allow_version_read=True,
-                allow_rollback=True,
-                allow_destroy=False,
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.update_secret_identity_scope(
-            scope_id,
-            workspace_id=workspace_id,
-            access_mode=access_mode,
-            allow_version_read=allow_version_read,
-            allow_rollback=allow_rollback,
-            allow_destroy=allow_destroy,
-            request_options=request_options,
         )
         return _response.data

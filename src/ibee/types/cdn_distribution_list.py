@@ -8,8 +8,19 @@ from .cdn_distribution import CdnDistribution
 
 
 class CdnDistributionList(UniversalBaseModel):
-    distributions: typing.List[CdnDistribution]
-    count: int
+    """
+    Distributions in the workspace.
+    """
+
+    distributions: typing.List[CdnDistribution] = pydantic.Field()
+    """
+    Distributions returned.
+    """
+
+    count: int = pydantic.Field()
+    """
+    Number of items in `distributions`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

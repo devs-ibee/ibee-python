@@ -7,10 +7,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class SecretVersionSummary(UniversalBaseModel):
-    version: int
-    created_time: str
-    deletion_time: str
-    destroyed: bool
+    """
+    Summary of one version of a secret.
+    """
+
+    version: int = pydantic.Field()
+    """
+    Version number (1-based, increasing).
+    """
+
+    created_time: str = pydantic.Field()
+    """
+    When the version was written (RFC 3339).
+    """
+
+    deletion_time: str = pydantic.Field()
+    """
+    When the version was deleted (RFC 3339); empty when it is not deleted.
+    """
+
+    destroyed: bool = pydantic.Field()
+    """
+    True when the version's data was irreversibly destroyed.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

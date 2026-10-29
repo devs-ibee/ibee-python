@@ -8,7 +8,15 @@ from .secret_lifecycle_status_status import SecretLifecycleStatusStatus
 
 
 class SecretLifecycleStatus(UniversalBaseModel):
-    status: SecretLifecycleStatusStatus
+    """
+    Result of a destroy or permanent-delete action.
+    """
+
+    status: SecretLifecycleStatusStatus = pydantic.Field()
+    """
+    - `destroyed`: the versions' data was irreversibly destroyed.
+    - `permanently_deleted`: the secret and all its versions were removed.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

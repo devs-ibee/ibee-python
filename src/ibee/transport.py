@@ -3,7 +3,8 @@
 
 * ``workspace_id``: when a call leaves it empty, the client's default is sent
   (``Ibee(workspace_id=...)`` or ``IBEE_WORKSPACE_ID``).
-* ``X-Idempotency-Key``: where the contract has the header and the caller passed
+* ``X-Idempotency-Key`` (and ``Idempotency-Key``, which Container Registry's plan
+  upgrade reads instead): where the contract has the header and the caller passed
   none, a random UUID is sent, and the same key is reused on every retry.
 * Safe retries, at most ``max_retries`` (default 2): GET/HEAD/OPTIONS on 429, 502,
   503 and 504, and writes that carry an idempotency key (the header, or Block
@@ -12,7 +13,8 @@
   the same rule, and any request whose connection never opened is retried.
   VM creates (cloud and GPU) are never retried: whether the server de-duplicates a
   replayed create with the same key is unverified, so a replay could create a
-  second VM.
+  second VM. ``GET /secret-store/identities/{id}/access`` is never retried either:
+  every call mints a new AppRole credential.
   Errors carry ``idempotency_key``, so a caller can retry with the same key.
 * Errors: every status >= 400 raises the status-named error class from
   ``ibee.errors`` (``ApiError`` for other statuses) with the body and headers
@@ -20,6 +22,7 @@
 """
 
 import asyncio
+import re
 import time
 import typing
 import uuid
@@ -30,6 +33,8 @@ from .core.api_error import ApiError
 from .core.http_client import AsyncHttpClient, HttpClient, _retry_timeout, _retry_timeout_from_retries
 
 IDEMPOTENCY_HEADER = "X-Idempotency-Key"
+#: Every idempotency header in the contract (Container Registry upgrade uses ``Idempotency-Key``).
+IDEMPOTENCY_HEADERS = (IDEMPOTENCY_HEADER, "Idempotency-Key")
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 #: Substrings of gateway codes that come from billing admission or the catalog quote.
 BILLING_MARKERS = ("billing", "admission", "catalog", "quote")
@@ -39,9 +44,10 @@ _sleep = time.sleep
 _async_sleep = asyncio.sleep
 
 
-def _key(headers: typing.Mapping[str, typing.Any]) -> typing.Optional[str]:
+def _key(headers: typing.Mapping[str, typing.Any], names: typing.Iterable[str] = IDEMPOTENCY_HEADERS) -> typing.Optional[str]:
+    wanted = {n.lower() for n in names}
     for name, value in headers.items():
-        if name.lower() == IDEMPOTENCY_HEADER.lower() and value:
+        if name.lower() in wanted and value:
             return str(value)
     return None
 
@@ -64,8 +70,9 @@ def prepare(
         params["workspace_id"] = workspace_id
     headers = dict(headers or {})
     extra = dict((request_options or {}).get("additional_headers") or {})
-    if IDEMPOTENCY_HEADER in headers and headers[IDEMPOTENCY_HEADER] is None and _key(extra) is None:
-        headers[IDEMPOTENCY_HEADER] = str(uuid.uuid4())
+    for name in IDEMPOTENCY_HEADERS:
+        if name in headers and headers[name] is None and _key(extra, (name,)) is None:
+            headers[name] = str(uuid.uuid4())
     return params, headers, _key(extra) or _key(headers)
 
 
@@ -123,10 +130,15 @@ def raise_for_status(response: httpx.Response, idempotency_key: typing.Optional[
 
 #: VM creates (POST to these collections) are never retried.
 NEVER_RETRIED_CREATES = frozenset({"compute/cloud-vms", "compute/gpu-vms"})
+#: The identity access read, under any version prefix: each call mints a new AppRole credential.
+NEVER_RETRIED_READ = re.compile(r"(^|/)secret-store/identities/[^/]+/access$")
 
 
 def _never_retried(method: str, path: typing.Optional[str]) -> bool:
-    return method.upper() == "POST" and (path or "").strip("/") in NEVER_RETRIED_CREATES
+    method, path = method.upper(), (path or "").strip("/")
+    if method == "POST":
+        return path in NEVER_RETRIED_CREATES
+    return method in SAFE_METHODS and NEVER_RETRIED_READ.search(path) is not None
 
 
 def _retry_transport_error(exc: httpx.TransportError, retry_safe: bool) -> bool:

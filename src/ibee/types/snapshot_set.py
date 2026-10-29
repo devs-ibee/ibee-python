@@ -15,41 +15,174 @@ from .vm_type import VmType
 
 
 class SnapshotSet(UniversalBaseModel):
-    organization_id: str
-    organization_name: typing.Optional[str] = None
-    workspace_id: str
-    workspace_name: typing.Optional[str] = None
-    snapshot_set_id: str
-    vm_id: str
-    vm_name: typing.Optional[str] = None
+    """
+    A snapshot set: a point-in-time capture of a VM's root disk and, depending on `capture_scope`, its data volumes. It is a recovery point that the snapshot restore action accepts.
+    """
+
+    organization_id: str = pydantic.Field()
+    """
+    ID of the organization that owns the VM.
+    """
+
+    organization_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the owning organization, when the service has it.
+    """
+
+    workspace_id: str = pydantic.Field()
+    """
+    ID of the workspace the VM belongs to.
+    """
+
+    workspace_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the workspace, when the service has it.
+    """
+
+    snapshot_set_id: str = pydantic.Field()
+    """
+    Unique ID of the snapshot set.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the VM the snapshot was taken from.
+    """
+
+    vm_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the VM at capture time.
+    """
+
     vm_type: typing.Optional[VmType] = None
-    name: str
-    description: typing.Optional[str] = None
-    recovery_point_id: str
-    recovery_point_type: typing.Optional[SnapshotSetRecoveryPointType] = None
-    capture_scope: typing.Optional[SnapshotSetCaptureScope] = None
+    name: str = pydantic.Field()
+    """
+    Display name of the snapshot set.
+    """
+
+    description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Description given at creation.
+    """
+
+    recovery_point_id: str = pydantic.Field()
+    """
+    Recovery point ID of this snapshot set.
+    """
+
+    recovery_point_type: typing.Optional[SnapshotSetRecoveryPointType] = pydantic.Field(default=None)
+    """
+    Always `snapshot` for a snapshot set.
+    """
+
+    capture_scope: typing.Optional[SnapshotSetCaptureScope] = pydantic.Field(default=None)
+    """
+    Which volumes the recovery point contains.
+    - `root_only`: the root disk only.
+    - `all_attached`: the root disk and every attached data volume.
+    - `selective`: the root disk and the data volumes that were selected.
+    """
+
     status: BackupStatus
-    captured_volume_count: typing.Optional[int] = None
-    root_only: typing.Optional[bool] = None
-    size_gb: typing.Optional[int] = None
-    source_disk_size_gb: typing.Optional[int] = None
-    display_size_gb: typing.Optional[int] = None
-    display_storage_bytes: typing.Optional[int] = None
-    backend_protected_storage_bytes: typing.Optional[int] = None
-    protected_storage_bytes: typing.Optional[int] = None
-    billing_storage_bytes: typing.Optional[int] = None
-    billing_storage_source: typing.Optional[str] = None
-    metering_status: typing.Optional[str] = None
-    storage_backend: typing.Optional[str] = None
-    captured_topology_hash: typing.Optional[str] = None
-    root_volume_id: typing.Optional[str] = None
-    root_volume_name: typing.Optional[str] = None
-    volume_manifest: typing.Optional[typing.List[RecoveryVolumeManifestItem]] = None
+    captured_volume_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of volumes in the snapshot set.
+    """
+
+    root_only: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True when only the root disk was captured.
+    """
+
+    size_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Size of the captured data in GiB.
+    """
+
+    source_disk_size_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Provisioned size of the source root disk in GiB at capture time.
+    """
+
+    display_size_gb: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Size in GiB as shown in the portal.
+    """
+
+    display_storage_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    `display_size_gb` expressed in bytes.
+    """
+
+    backend_protected_storage_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Bytes of protected data as reported by the storage backend.
+    """
+
+    protected_storage_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Bytes of source data protected by this snapshot set.
+    """
+
+    billing_storage_bytes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Bytes billed for storing this snapshot set.
+    """
+
+    billing_storage_source: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    How `billing_storage_bytes` was obtained.
+    - `metered`: measured in the backup store.
+    - `metered_from_manifest`: summed from the volume manifest.
+    - `unavailable`: not measured yet.
+    """
+
+    metering_status: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    `metered` once storage has been measured for billing; `unavailable` until then.
+    """
+
+    storage_backend: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Identifier of the storage backend that holds the captured data.
+    """
+
+    captured_topology_hash: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Hash of the VM's volume layout at capture time; a different hash on the live VM means the layout drifted.
+    """
+
+    root_volume_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the captured root disk.
+    """
+
+    root_volume_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Display name of the captured root disk.
+    """
+
+    volume_manifest: typing.Optional[typing.List[RecoveryVolumeManifestItem]] = pydantic.Field(default=None)
+    """
+    One entry per captured volume.
+    """
+
     volume_manifest_summary: typing.Optional[RecoveryPointSummary] = None
     live_drift_summary: typing.Optional[LiveDriftSummary] = None
-    metadata: typing.Optional[typing.Dict[str, typing.Any]] = None
-    created_at: dt.datetime
-    updated_at: dt.datetime
+    metadata: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Additional service-specific key-value data.
+    """
+
+    created_at: dt.datetime = pydantic.Field()
+    """
+    When the snapshot set was created (ISO 8601).
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the snapshot set was last updated (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

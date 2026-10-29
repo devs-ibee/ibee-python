@@ -9,7 +9,15 @@ from .vpc import Vpc
 
 
 class VpcSummary(Vpc):
-    node_count: typing.Optional[int] = None
+    """
+    A VPC with its attached-node count and NAT gateway pricing.
+    """
+
+    node_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of VMs attached to the VPC.
+    """
+
     nat_pricing: typing.Optional[NatPricing] = None
 
     if IS_PYDANTIC_V2:

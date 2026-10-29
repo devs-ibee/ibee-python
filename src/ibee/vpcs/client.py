@@ -5,6 +5,7 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
+from ..types.create_nat_port_forwarding_rule_request_target_type import CreateNatPortForwardingRuleRequestTargetType
 from ..types.nat_gateway import NatGateway
 from ..types.nat_port_forwarding_rule import NatPortForwardingRule
 from ..types.network_allocation import NetworkAllocation
@@ -15,7 +16,9 @@ from ..types.vpc_summary import VpcSummary
 from .raw_client import AsyncRawVpcsClient, RawVpcsClient
 from .types.attach_vpc_node_request_connectivity import AttachVpcNodeRequestConnectivity
 from .types.create_vpc_request_connectivity_type import CreateVpcRequestConnectivityType
+from .types.nat_gateway_delete_request_public_ip_action import NatGatewayDeleteRequestPublicIpAction
 from .types.update_nat_port_forwarding_rule_request_protocol import UpdateNatPortForwardingRuleRequestProtocol
+from .types.update_nat_port_forwarding_rule_request_target_type import UpdateNatPortForwardingRuleRequestTargetType
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -133,6 +136,7 @@ class VpcsClient:
         Parameters
         ----------
         name : str
+            Display name of the VPC.
 
         site_id : str
             Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
@@ -141,19 +145,25 @@ class VpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description.
 
         region : typing.Optional[str]
+            Optional region label stored with the VPC.
 
         cidr : typing.Optional[str]
             RFC1918 IPv4 CIDR with a prefix between /22 and /28.
 
         auto_cidr : typing.Optional[bool]
+            Let the service choose a free CIDR when `cidr` is omitted. Default true.
 
         create_default_subnet : typing.Optional[bool]
+            Create a first subnet together with the VPC. Default true.
 
         default_subnet_cidr : typing.Optional[str]
+            CIDR for that first subnet; chosen automatically when omitted.
 
         is_default : typing.Optional[bool]
+            Mark the VPC as the workspace's default VPC. Default false.
 
         connectivity_type : typing.Optional[CreateVpcRequestConnectivityType]
             The VPC's internet model; the server uses `public` when this is omitted. `public` keeps dedicated public IPs available to its VMs. `private` has no shared public edge, but a VM can still be given a Reserved IP. `nat_gateway` is a private VPC with managed outbound NAT and refuses dedicated public IPs.
@@ -297,8 +307,10 @@ class VpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         description : typing.Optional[str]
+            New description.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -389,17 +401,22 @@ class VpcsClient:
             VPC ID.
 
         name : str
+            Display name of the subnet.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         cidr : typing.Optional[str]
+            IPv4 CIDR inside the VPC range. Chosen automatically when omitted and `auto_cidr` is true.
 
         auto_cidr : typing.Optional[bool]
+            Let the service choose a free CIDR when `cidr` is omitted. Default true.
 
         prefix_length : typing.Optional[int]
+            Prefix length to use for an automatically chosen CIDR.
 
         dns : typing.Optional[typing.Sequence[str]]
+            DNS resolvers handed to instances in the subnet. Default `1.1.1.1` and `8.8.8.8`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -529,60 +546,6 @@ class VpcsClient:
         )
         return _response.data
 
-    def update_vpc_subnet(
-        self,
-        vpc_id: str,
-        subnet_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        dns: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> Subnet:
-        """
-        Renames a VPC subnet or changes its DNS settings. Requires scope: network.write.
-
-        Parameters
-        ----------
-        vpc_id : str
-            VPC ID.
-
-        subnet_id : str
-            Subnet ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-
-        dns : typing.Optional[typing.Sequence[str]]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        Subnet
-            Subnet updated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.vpcs.update_vpc_subnet(
-            vpc_id="vpc_id",
-            subnet_id="subnet_id",
-            workspace_id="710995",
-        )
-        """
-        _response = self._raw_client.update_vpc_subnet(
-            vpc_id, subnet_id, workspace_id=workspace_id, name=name, dns=dns, request_options=request_options
-        )
-        return _response.data
-
     def list_vpc_nodes(
         self,
         vpc_id: str,
@@ -632,6 +595,7 @@ class VpcsClient:
         subnet_id: str,
         workspace_id: typing.Optional[str] = None,
         connectivity: typing.Optional[AttachVpcNodeRequestConnectivity] = OMIT,
+        requested_private_ip: typing.Optional[str] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> NetworkAllocation:
@@ -644,15 +608,27 @@ class VpcsClient:
             VPC ID.
 
         vm_id : str
+            ID of the VM to attach.
 
         subnet_id : str
+            Subnet of the VPC to attach the VM to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         connectivity : typing.Optional[AttachVpcNodeRequestConnectivity]
+            How the VM reaches the internet from this subnet.
+            - `private`: no internet path.
+            - `public_ip`: a Reserved IP is attached to the allocation.
+            - `nat`: outbound traffic goes through the VPC's NAT gateway.
+
+            Default `private`.
+
+        requested_private_ip : typing.Optional[str]
+            Private IPv4 address to give the VM in the subnet. Chosen automatically when omitted.
 
         reserved_public_ip_id : typing.Optional[str]
+            Reserved IP to attach to the VM. Only valid with `public_ip` connectivity.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -682,6 +658,7 @@ class VpcsClient:
             subnet_id=subnet_id,
             workspace_id=workspace_id,
             connectivity=connectivity,
+            requested_private_ip=requested_private_ip,
             reserved_public_ip_id=reserved_public_ip_id,
             request_options=request_options,
         )
@@ -799,10 +776,13 @@ class VpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         subnet_id : typing.Optional[str]
+            Subnet the gateway is placed in; chosen by the service when omitted.
 
         reserved_public_ip_id : typing.Optional[str]
+            Reserved IP to use as the gateway's public address; a platform-assigned address is used when omitted.
 
         name : typing.Optional[str]
+            Display name of the gateway. Default `NAT Gateway`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -840,6 +820,7 @@ class VpcsClient:
         nat_gateway_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
+        public_ip_action: typing.Optional[NatGatewayDeleteRequestPublicIpAction] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
@@ -855,6 +836,12 @@ class VpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        public_ip_action : typing.Optional[NatGatewayDeleteRequestPublicIpAction]
+            What to do with the gateway's public IP.
+            - `release`: give the address back.
+            - `reserve`: keep it as a Reserved IP in the workspace.
+            Omitted: platform-assigned addresses are released; customer Reserved IPs are detached and kept.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -877,7 +864,68 @@ class VpcsClient:
         )
         """
         _response = self._raw_client.delete_nat_gateway(
-            vpc_id, nat_gateway_id, workspace_id=workspace_id, request_options=request_options
+            vpc_id,
+            nat_gateway_id,
+            workspace_id=workspace_id,
+            public_ip_action=public_ip_action,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def update_nat_gateway_public_ip(
+        self,
+        vpc_id: str,
+        nat_gateway_id: str,
+        *,
+        reserved_public_ip_id: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> NatGateway:
+        """
+        Replaces the NAT gateway's public IP with a Reserved IP, keeping the port-forwarding rules, as the portal's NAT card does. Requires scope: network.write.
+
+        Parameters
+        ----------
+        vpc_id : str
+            VPC ID.
+
+        nat_gateway_id : str
+            NAT gateway ID.
+
+        reserved_public_ip_id : str
+            Reserved IP to put on the gateway. Port-forwarding rules are preserved.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        NatGateway
+            NAT gateway updated.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.vpcs.update_nat_gateway_public_ip(
+            vpc_id="vpc_id",
+            nat_gateway_id="nat_gateway_id",
+            workspace_id="710995",
+            reserved_public_ip_id="reserved_public_ip_id",
+        )
+        """
+        _response = self._raw_client.update_nat_gateway_public_ip(
+            vpc_id,
+            nat_gateway_id,
+            reserved_public_ip_id=reserved_public_ip_id,
+            workspace_id=workspace_id,
+            request_options=request_options,
         )
         return _response.data
 
@@ -940,6 +988,8 @@ class VpcsClient:
         internal_port: int,
         workspace_id: typing.Optional[str] = None,
         protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = OMIT,
+        target_type: typing.Optional[CreateNatPortForwardingRuleRequestTargetType] = OMIT,
+        target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -956,21 +1006,35 @@ class VpcsClient:
             NAT gateway ID.
 
         name : str
+            Display name of the rule.
 
         external_port : int
+            Port on the gateway's public address (1-65535).
 
         internal_ip : str
+            Private IPv4 address of the VM inside the VPC that receives the traffic.
 
         internal_port : int
+            Port on the VM that receives the traffic (1-65535).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         protocol : typing.Optional[CreateNatPortForwardingRuleRequestProtocol]
+            - `tcp` (default)
+            - `udp`
+
+        target_type : typing.Optional[CreateNatPortForwardingRuleRequestTargetType]
+            `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
+
+        target_vm_ids : typing.Optional[typing.Sequence[str]]
+            VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
 
         note : typing.Optional[str]
+            Free-text note stored with the rule. Default empty.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied. Default true.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1006,6 +1070,8 @@ class VpcsClient:
             internal_port=internal_port,
             workspace_id=workspace_id,
             protocol=protocol,
+            target_type=target_type,
+            target_vm_ids=target_vm_ids,
             note=note,
             enabled=enabled,
             request_options=request_options,
@@ -1076,6 +1142,8 @@ class VpcsClient:
         external_port: typing.Optional[int] = OMIT,
         internal_ip: typing.Optional[str] = OMIT,
         internal_port: typing.Optional[int] = OMIT,
+        target_type: typing.Optional[UpdateNatPortForwardingRuleRequestTargetType] = OMIT,
+        target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -1098,18 +1166,32 @@ class VpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            Display name of the rule.
 
         protocol : typing.Optional[UpdateNatPortForwardingRuleRequestProtocol]
+            - `tcp`
+            - `udp`
 
         external_port : typing.Optional[int]
+            Port on the gateway's public address (1-65535).
 
         internal_ip : typing.Optional[str]
+            Private IPv4 address of the VM inside the VPC that receives the traffic.
 
         internal_port : typing.Optional[int]
+            Port on the VM that receives the traffic (1-65535).
+
+        target_type : typing.Optional[UpdateNatPortForwardingRuleRequestTargetType]
+            `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
+
+        target_vm_ids : typing.Optional[typing.Sequence[str]]
+            VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
 
         note : typing.Optional[str]
+            Free-text note stored with the rule.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1143,6 +1225,8 @@ class VpcsClient:
             external_port=external_port,
             internal_ip=internal_ip,
             internal_port=internal_port,
+            target_type=target_type,
+            target_vm_ids=target_vm_ids,
             note=note,
             enabled=enabled,
             request_options=request_options,
@@ -1280,6 +1364,7 @@ class AsyncVpcsClient:
         Parameters
         ----------
         name : str
+            Display name of the VPC.
 
         site_id : str
             Required network placement site. Copy `site_id` from `GET /networking/sites` and choose an entry where `available` is `true`. Do not use a region name.
@@ -1288,19 +1373,25 @@ class AsyncVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         description : typing.Optional[str]
+            Optional description.
 
         region : typing.Optional[str]
+            Optional region label stored with the VPC.
 
         cidr : typing.Optional[str]
             RFC1918 IPv4 CIDR with a prefix between /22 and /28.
 
         auto_cidr : typing.Optional[bool]
+            Let the service choose a free CIDR when `cidr` is omitted. Default true.
 
         create_default_subnet : typing.Optional[bool]
+            Create a first subnet together with the VPC. Default true.
 
         default_subnet_cidr : typing.Optional[str]
+            CIDR for that first subnet; chosen automatically when omitted.
 
         is_default : typing.Optional[bool]
+            Mark the VPC as the workspace's default VPC. Default false.
 
         connectivity_type : typing.Optional[CreateVpcRequestConnectivityType]
             The VPC's internet model; the server uses `public` when this is omitted. `public` keeps dedicated public IPs available to its VMs. `private` has no shared public edge, but a VM can still be given a Reserved IP. `nat_gateway` is a private VPC with managed outbound NAT and refuses dedicated public IPs.
@@ -1470,8 +1561,10 @@ class AsyncVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            New display name.
 
         description : typing.Optional[str]
+            New description.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1578,17 +1671,22 @@ class AsyncVpcsClient:
             VPC ID.
 
         name : str
+            Display name of the subnet.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         cidr : typing.Optional[str]
+            IPv4 CIDR inside the VPC range. Chosen automatically when omitted and `auto_cidr` is true.
 
         auto_cidr : typing.Optional[bool]
+            Let the service choose a free CIDR when `cidr` is omitted. Default true.
 
         prefix_length : typing.Optional[int]
+            Prefix length to use for an automatically chosen CIDR.
 
         dns : typing.Optional[typing.Sequence[str]]
+            DNS resolvers handed to instances in the subnet. Default `1.1.1.1` and `8.8.8.8`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1742,68 +1840,6 @@ class AsyncVpcsClient:
         )
         return _response.data
 
-    async def update_vpc_subnet(
-        self,
-        vpc_id: str,
-        subnet_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        dns: typing.Optional[typing.Sequence[str]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> Subnet:
-        """
-        Renames a VPC subnet or changes its DNS settings. Requires scope: network.write.
-
-        Parameters
-        ----------
-        vpc_id : str
-            VPC ID.
-
-        subnet_id : str
-            Subnet ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-
-        dns : typing.Optional[typing.Sequence[str]]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        Subnet
-            Subnet updated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.vpcs.update_vpc_subnet(
-                vpc_id="vpc_id",
-                subnet_id="subnet_id",
-                workspace_id="710995",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.update_vpc_subnet(
-            vpc_id, subnet_id, workspace_id=workspace_id, name=name, dns=dns, request_options=request_options
-        )
-        return _response.data
-
     async def list_vpc_nodes(
         self,
         vpc_id: str,
@@ -1863,6 +1899,7 @@ class AsyncVpcsClient:
         subnet_id: str,
         workspace_id: typing.Optional[str] = None,
         connectivity: typing.Optional[AttachVpcNodeRequestConnectivity] = OMIT,
+        requested_private_ip: typing.Optional[str] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> NetworkAllocation:
@@ -1875,15 +1912,27 @@ class AsyncVpcsClient:
             VPC ID.
 
         vm_id : str
+            ID of the VM to attach.
 
         subnet_id : str
+            Subnet of the VPC to attach the VM to.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         connectivity : typing.Optional[AttachVpcNodeRequestConnectivity]
+            How the VM reaches the internet from this subnet.
+            - `private`: no internet path.
+            - `public_ip`: a Reserved IP is attached to the allocation.
+            - `nat`: outbound traffic goes through the VPC's NAT gateway.
+
+            Default `private`.
+
+        requested_private_ip : typing.Optional[str]
+            Private IPv4 address to give the VM in the subnet. Chosen automatically when omitted.
 
         reserved_public_ip_id : typing.Optional[str]
+            Reserved IP to attach to the VM. Only valid with `public_ip` connectivity.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1921,6 +1970,7 @@ class AsyncVpcsClient:
             subnet_id=subnet_id,
             workspace_id=workspace_id,
             connectivity=connectivity,
+            requested_private_ip=requested_private_ip,
             reserved_public_ip_id=reserved_public_ip_id,
             request_options=request_options,
         )
@@ -2054,10 +2104,13 @@ class AsyncVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         subnet_id : typing.Optional[str]
+            Subnet the gateway is placed in; chosen by the service when omitted.
 
         reserved_public_ip_id : typing.Optional[str]
+            Reserved IP to use as the gateway's public address; a platform-assigned address is used when omitted.
 
         name : typing.Optional[str]
+            Display name of the gateway. Default `NAT Gateway`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2103,6 +2156,7 @@ class AsyncVpcsClient:
         nat_gateway_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
+        public_ip_action: typing.Optional[NatGatewayDeleteRequestPublicIpAction] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
@@ -2118,6 +2172,12 @@ class AsyncVpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        public_ip_action : typing.Optional[NatGatewayDeleteRequestPublicIpAction]
+            What to do with the gateway's public IP.
+            - `release`: give the address back.
+            - `reserve`: keep it as a Reserved IP in the workspace.
+            Omitted: platform-assigned addresses are released; customer Reserved IPs are detached and kept.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2148,7 +2208,76 @@ class AsyncVpcsClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.delete_nat_gateway(
-            vpc_id, nat_gateway_id, workspace_id=workspace_id, request_options=request_options
+            vpc_id,
+            nat_gateway_id,
+            workspace_id=workspace_id,
+            public_ip_action=public_ip_action,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def update_nat_gateway_public_ip(
+        self,
+        vpc_id: str,
+        nat_gateway_id: str,
+        *,
+        reserved_public_ip_id: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> NatGateway:
+        """
+        Replaces the NAT gateway's public IP with a Reserved IP, keeping the port-forwarding rules, as the portal's NAT card does. Requires scope: network.write.
+
+        Parameters
+        ----------
+        vpc_id : str
+            VPC ID.
+
+        nat_gateway_id : str
+            NAT gateway ID.
+
+        reserved_public_ip_id : str
+            Reserved IP to put on the gateway. Port-forwarding rules are preserved.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        NatGateway
+            NAT gateway updated.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.vpcs.update_nat_gateway_public_ip(
+                vpc_id="vpc_id",
+                nat_gateway_id="nat_gateway_id",
+                workspace_id="710995",
+                reserved_public_ip_id="reserved_public_ip_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.update_nat_gateway_public_ip(
+            vpc_id,
+            nat_gateway_id,
+            reserved_public_ip_id=reserved_public_ip_id,
+            workspace_id=workspace_id,
+            request_options=request_options,
         )
         return _response.data
 
@@ -2219,6 +2348,8 @@ class AsyncVpcsClient:
         internal_port: int,
         workspace_id: typing.Optional[str] = None,
         protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = OMIT,
+        target_type: typing.Optional[CreateNatPortForwardingRuleRequestTargetType] = OMIT,
+        target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -2235,21 +2366,35 @@ class AsyncVpcsClient:
             NAT gateway ID.
 
         name : str
+            Display name of the rule.
 
         external_port : int
+            Port on the gateway's public address (1-65535).
 
         internal_ip : str
+            Private IPv4 address of the VM inside the VPC that receives the traffic.
 
         internal_port : int
+            Port on the VM that receives the traffic (1-65535).
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         protocol : typing.Optional[CreateNatPortForwardingRuleRequestProtocol]
+            - `tcp` (default)
+            - `udp`
+
+        target_type : typing.Optional[CreateNatPortForwardingRuleRequestTargetType]
+            `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
+
+        target_vm_ids : typing.Optional[typing.Sequence[str]]
+            VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
 
         note : typing.Optional[str]
+            Free-text note stored with the rule. Default empty.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied. Default true.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2293,6 +2438,8 @@ class AsyncVpcsClient:
             internal_port=internal_port,
             workspace_id=workspace_id,
             protocol=protocol,
+            target_type=target_type,
+            target_vm_ids=target_vm_ids,
             note=note,
             enabled=enabled,
             request_options=request_options,
@@ -2371,6 +2518,8 @@ class AsyncVpcsClient:
         external_port: typing.Optional[int] = OMIT,
         internal_ip: typing.Optional[str] = OMIT,
         internal_port: typing.Optional[int] = OMIT,
+        target_type: typing.Optional[UpdateNatPortForwardingRuleRequestTargetType] = OMIT,
+        target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         note: typing.Optional[str] = OMIT,
         enabled: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -2393,18 +2542,32 @@ class AsyncVpcsClient:
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         name : typing.Optional[str]
+            Display name of the rule.
 
         protocol : typing.Optional[UpdateNatPortForwardingRuleRequestProtocol]
+            - `tcp`
+            - `udp`
 
         external_port : typing.Optional[int]
+            Port on the gateway's public address (1-65535).
 
         internal_ip : typing.Optional[str]
+            Private IPv4 address of the VM inside the VPC that receives the traffic.
 
         internal_port : typing.Optional[int]
+            Port on the VM that receives the traffic (1-65535).
+
+        target_type : typing.Optional[UpdateNatPortForwardingRuleRequestTargetType]
+            `vm`: forward to one VM's private IP. `vip`: forward to a Virtual IP announced by the VMs in `target_vm_ids`.
+
+        target_vm_ids : typing.Optional[typing.Sequence[str]]
+            VMs that announce the Virtual IP. Required with `vip`, must be empty with `vm`.
 
         note : typing.Optional[str]
+            Free-text note stored with the rule.
 
         enabled : typing.Optional[bool]
+            Whether the rule is applied.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2446,6 +2609,8 @@ class AsyncVpcsClient:
             external_port=external_port,
             internal_ip=internal_ip,
             internal_port=internal_port,
+            target_type=target_type,
+            target_vm_ids=target_vm_ids,
             note=note,
             enabled=enabled,
             request_options=request_options,

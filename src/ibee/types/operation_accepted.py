@@ -8,10 +8,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class OperationAccepted(UniversalBaseModel):
-    operation_id: str
-    vm_id: str
-    status: str
-    submitted_at: dt.datetime
+    """
+    Acknowledgement that an asynchronous VM operation was queued. Poll `GET /compute/operations/{operation_id}` for progress.
+    """
+
+    operation_id: str = pydantic.Field()
+    """
+    ID of the queued operation.
+    """
+
+    vm_id: str = pydantic.Field()
+    """
+    ID of the VM the operation acts on.
+    """
+
+    status: str = pydantic.Field()
+    """
+    Always `accepted`.
+    """
+
+    submitted_at: dt.datetime = pydantic.Field()
+    """
+    When the operation was accepted (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

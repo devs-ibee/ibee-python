@@ -7,17 +7,44 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class ComputeSite(UniversalBaseModel):
+    """
+    A placement site (data-centre location) that accepts VM creation.
+    """
+
     site_id: str = pydantic.Field()
     """
     Canonical opaque placement ID accepted by VM creation. Copy it exactly; do not substitute `site_code`, `region_id`, or `name`.
     """
 
-    site_code: typing.Optional[str] = None
-    name: str
-    location: typing.Optional[str] = None
-    region_id: typing.Optional[str] = None
-    country_id: typing.Optional[str] = None
-    timezone: typing.Optional[str] = None
+    site_code: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Short site code, when the catalog has one.
+    """
+
+    name: str = pydantic.Field()
+    """
+    Display name of the site.
+    """
+
+    location: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    City or location label, as shown in the portal.
+    """
+
+    region_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the region the site belongs to.
+    """
+
+    country_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    ID of the country the site is in.
+    """
+
+    timezone: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    IANA time zone of the site.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

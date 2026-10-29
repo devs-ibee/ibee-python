@@ -8,12 +8,35 @@ from .backup_frequency import BackupFrequency
 
 
 class BackupPolicySchedule(UniversalBaseModel):
+    """
+    When a backup policy runs. Times are interpreted in `timezone`.
+    """
+
     frequency: typing.Optional[BackupFrequency] = None
-    timezone: typing.Optional[str] = None
-    hour: typing.Optional[int] = None
-    minute: typing.Optional[int] = None
-    day_of_week: typing.Optional[int] = None
-    window_minutes: typing.Optional[int] = None
+    timezone: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    IANA time zone name used for `hour` and `minute`. Default `UTC`.
+    """
+
+    hour: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Hour of the day the run is due (0-23). Default 20.
+    """
+
+    minute: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Minute of the hour the run is due (0-59). Default 0.
+    """
+
+    day_of_week: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Day of the week for weekly schedules: 0 = Monday to 6 = Sunday. Required when `frequency` is `weekly`.
+    """
+
+    window_minutes: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Spread window in minutes (5-180) after the scheduled time within which the run may start, so runs are not all launched at the same instant. Default 30.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

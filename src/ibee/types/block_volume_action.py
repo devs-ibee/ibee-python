@@ -9,6 +9,10 @@ from .block_volume_operation import BlockVolumeOperation
 
 
 class BlockVolumeAction(UniversalBaseModel):
+    """
+    The volume after an action, together with the operation the action created.
+    """
+
     volume: BlockVolume
     operation: BlockVolumeOperation
 

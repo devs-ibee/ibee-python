@@ -9,14 +9,14 @@ if typing.TYPE_CHECKING:
     from .types import (
         CreateCdnDistributionRequestCachePolicy,
         CreateCdnDistributionRequestOriginType,
-        GenerateCdnUrlRequestDisposition,
+        GetCdnDistributionMetricsRequestRange,
         PurgeCdnCacheRequestMode,
         UpdateCdnDistributionRequestCachePolicy,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateCdnDistributionRequestCachePolicy": ".types",
     "CreateCdnDistributionRequestOriginType": ".types",
-    "GenerateCdnUrlRequestDisposition": ".types",
+    "GetCdnDistributionMetricsRequestRange": ".types",
     "PurgeCdnCacheRequestMode": ".types",
     "UpdateCdnDistributionRequestCachePolicy": ".types",
 }
@@ -46,7 +46,7 @@ def __dir__():
 __all__ = [
     "CreateCdnDistributionRequestCachePolicy",
     "CreateCdnDistributionRequestOriginType",
-    "GenerateCdnUrlRequestDisposition",
+    "GetCdnDistributionMetricsRequestRange",
     "PurgeCdnCacheRequestMode",
     "UpdateCdnDistributionRequestCachePolicy",
 ]

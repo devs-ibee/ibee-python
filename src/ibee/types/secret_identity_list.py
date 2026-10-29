@@ -8,8 +8,19 @@ from .secret_identity import SecretIdentity
 
 
 class SecretIdentityList(UniversalBaseModel):
-    identities: typing.List[SecretIdentity]
-    total: int
+    """
+    Identities in the workspace.
+    """
+
+    identities: typing.List[SecretIdentity] = pydantic.Field()
+    """
+    Identities returned.
+    """
+
+    total: int = pydantic.Field()
+    """
+    Total number of identities.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

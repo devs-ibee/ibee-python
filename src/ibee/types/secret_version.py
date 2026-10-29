@@ -7,11 +7,34 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class SecretVersion(UniversalBaseModel):
-    secret_id: str
-    secret_name: str
-    version: int
-    data: typing.Dict[str, typing.Any]
-    metadata: typing.Dict[str, typing.Any]
+    """
+    One version of a secret, with its data.
+    """
+
+    secret_id: str = pydantic.Field()
+    """
+    Unique ID of the secret.
+    """
+
+    secret_name: str = pydantic.Field()
+    """
+    Name of the secret within the store.
+    """
+
+    version: int = pydantic.Field()
+    """
+    Version number.
+    """
+
+    data: typing.Dict[str, typing.Any] = pydantic.Field()
+    """
+    Key-value pairs stored in this version.
+    """
+
+    metadata: typing.Dict[str, typing.Any] = pydantic.Field()
+    """
+    Version metadata, including `version` and `created_time`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

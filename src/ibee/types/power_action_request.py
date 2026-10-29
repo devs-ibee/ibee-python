@@ -7,6 +7,10 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
 class PowerActionRequest(UniversalBaseModel):
+    """
+    Optional body for the start, stop and reboot actions.
+    """
+
     force: typing.Optional[bool] = pydantic.Field(default=None)
     """
     Force the action even if the VM is in a transitional state.

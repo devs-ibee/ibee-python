@@ -9,22 +9,71 @@ from .vm_type import VmType
 
 
 class ComputeImage(UniversalBaseModel):
+    """
+    An OS image (template) that VM creation accepts.
+    """
+
     template_id: str = pydantic.Field()
     """
     Template ID accepted by VM creation.
     """
 
-    name: str
-    description: typing.Optional[str] = None
-    os_distro: str
-    os_type: ComputeImageOsType
-    distro_version: typing.Optional[str] = None
-    architecture: str
-    image_format: typing.Optional[str] = None
-    size_bytes: int
-    gpu_compatible: bool
-    compatible_vm_types: typing.List[VmType]
-    site_ids: typing.List[str]
+    name: str = pydantic.Field()
+    """
+    Display name of the image.
+    """
+
+    description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Description of the image, when the catalog has one.
+    """
+
+    os_distro: str = pydantic.Field()
+    """
+    OS distribution, for example `ubuntu`.
+    """
+
+    os_type: ComputeImageOsType = pydantic.Field()
+    """
+    OS family.
+    - `linux`
+    - `windows`
+    """
+
+    distro_version: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Distribution version, for example `22.04`.
+    """
+
+    architecture: str = pydantic.Field()
+    """
+    CPU architecture, for example `x86_64`.
+    """
+
+    image_format: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Disk image format, for example `qcow2`, when known.
+    """
+
+    size_bytes: int = pydantic.Field()
+    """
+    Image size in bytes; 0 when unknown.
+    """
+
+    gpu_compatible: bool = pydantic.Field()
+    """
+    Whether the image can be used for GPU VMs.
+    """
+
+    compatible_vm_types: typing.List[VmType] = pydantic.Field()
+    """
+    VM types the image can be used with.
+    """
+
+    site_ids: typing.List[str] = pydantic.Field()
+    """
+    Sites where the image is available.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

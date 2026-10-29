@@ -10,14 +10,41 @@ from .load_balancer_status import LoadBalancerStatus
 
 
 class LoadBalancerStatusResponse(UniversalBaseModel):
-    lb_id: str
+    """
+    Provisioning status of a load balancer.
+    """
+
+    lb_id: str = pydantic.Field()
+    """
+    ID of the load balancer.
+    """
+
     status: LoadBalancerStatus
     endpoint: LoadBalancerEndpoint
-    url: str
-    endpoint_url: str
-    conditions: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = None
-    error_message: typing.Optional[str] = None
-    updated_at: dt.datetime
+    url: str = pydantic.Field()
+    """
+    Public hostname of the load balancer.
+    """
+
+    endpoint_url: str = pydantic.Field()
+    """
+    URL with scheme and, for L4, port.
+    """
+
+    conditions: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
+    """
+    Provisioning conditions reported by the platform, passed through as returned.
+    """
+
+    error_message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error detail when `status` is `failed`.
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    When the status last changed (ISO 8601).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

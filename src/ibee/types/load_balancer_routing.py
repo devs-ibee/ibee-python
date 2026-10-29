@@ -8,8 +8,22 @@ from .load_balancer_routing_algorithm import LoadBalancerRoutingAlgorithm
 
 
 class LoadBalancerRouting(UniversalBaseModel):
-    algorithm: typing.Optional[LoadBalancerRoutingAlgorithm] = None
-    sticky_header: typing.Optional[str] = None
+    """
+    How requests are distributed across backends.
+    """
+
+    algorithm: typing.Optional[LoadBalancerRoutingAlgorithm] = pydantic.Field(default=None)
+    """
+    - `round_robin`: backends in turn (default).
+    - `least_request`: the backend with the fewest active requests.
+    - `random`: a random backend.
+    - `consistent_hash`: the same backend for the same `sticky_header` value.
+    """
+
+    sticky_header: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Request header whose value selects the backend with `consistent_hash`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

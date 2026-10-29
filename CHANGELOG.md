@@ -1,5 +1,148 @@
 # Changelog
 
+## 0.6.0
+
+Generated from the public API contract 0.7.1 (`contract/ibee-cloud.yaml`, 225
+operations; 0.5.2 was generated from 0.4.1). The public API now runs through
+portal-client-api, which applies the portal's own checks, so the SDK is the generated
+client alone: the hand layer of temporary behaviours (`ibee.held`) is removed, and
+every request is sent as you pass it. What stays hand-written is configuration
+(`ibee/client.py`), the transport (`ibee/transport.py`: workspace default, automatic
+idempotency keys, safe retries, status-named errors) and the error fields
+(`ibee/core/api_error.py`). Debug-log redaction is the generated core's.
+
+### Removed (breaking)
+
+- The hand layer `ibee.held` and everything it did:
+  - `create_cloud_vm` / `create_gpu_vm` no longer look up the plan and image or build
+    `billing_catalog`: pass `cpu`, `ram_mb`, `disk_gb` (`gpu_count`, `gpu_model`),
+    `os_type`, `os_distro` and `billing_catalog` yourself. The `billing_term` and
+    `windows_license` arguments are gone. The README shows how to build
+    `billing_catalog` from `list_compute_plans` (the plan's `billing_catalog` with the
+    whole `billing_options` entry of the chosen term merged in).
+  - `delete_cloud_vm` / `delete_gpu_vm` no longer read the VM to label a reserved
+    address: `reserved_ip_label` is sent only when you pass it.
+  - `attach_cloud_vm_volume` / `attach_gpu_vm_volume` no longer read the volume's
+    `metadata.billing_catalog`: pass `billing_catalog` (a contract field).
+  - `resize_cloud_vm` / `resize_gpu_vm` no longer take `plan_id`, `billing_term`,
+    `billing_catalog` or `windows_license`: send `cpu`, `ram_mb`, `disk_gb`.
+  - The extra `billing_catalog` fields the contract does not declare are gone from
+    `update_*_vm_backup_policy`, `reserve_ip`, `create_nat_gateway` and
+    `delete_nat_gateway`, and `nat_billing_catalog` from `create_vpc`.
+  - `list_cloud_vms`, `list_gpu_vms` and `list_firewall_groups` return the one page the
+    server sends instead of every page.
+  - The token environment check (a development token sent to production or the
+    reverse, a token with a line break) is gone: the server answers.
+- Methods of the 23 operations contract 0.6 removes:
+  `cloud_vms.resize_cloud_vm_plan`, `cloud_vms.resize_cloud_vm_root_disk`,
+  `gpu_vms.resize_gpu_vm_plan`, `gpu_vms.resize_gpu_vm_root_disk` (use
+  `resize_cloud_vm` / `resize_gpu_vm` with `cpu`, `ram_mb`, `disk_gb`);
+  `cloud_vms.create_cloud_vm_backup_run`, `gpu_vms.create_gpu_vm_backup_run`,
+  `cloud_vms.reschedule_cloud_vm_backup`, `gpu_vms.reschedule_gpu_vm_backup`,
+  `cloud_vms.acknowledge_cloud_vm_mount_guidance`,
+  `gpu_vms.acknowledge_gpu_vm_mount_guidance`;
+  `vm_console.create_vm_console_session`, `vm_console.get_vm_console_session`,
+  `vm_console.close_vm_console_session`;
+  `block_storage.attach_block_volume`, `block_storage.detach_block_volume` (use the
+  VM's `attach_*_vm_volume` / `detach_*_vm_volume`); `cdn.generate_cdn_url`;
+  `vpcs.update_vpc_subnet`; `secret_store.patch_secret_value`,
+  `secret_store.update_secret_store`, `secret_store.update_secret_identity`,
+  `secret_store.update_secret_identity_scope`;
+  `container_registry.empty_container_registry`;
+  `billing.check_resource_eligibility`.
+- Namespaces `client.billing` and `client.vm_console`.
+- Error classes `TooManyRequestsError`, `BadGatewayError` and `GatewayTimeoutError`:
+  contract 0.6.3 declares no 429, 502 or 504 answer, so those statuses raise
+  `ApiError` (check `status_code`). Retries on them are unchanged.
+- The types only those operations used (`VmResizePlanRequest`,
+  `VmResizeRootDiskRequest`, `VmConsoleSession`, `BillingEligibility`,
+  `GeneratedCdnUrl`, `ContainerRegistryEmptyResult`, `SshKeySecretRef`, ...), and the
+  `requested_by` argument on VM writes. `update_*_vm_access` loses `admin_username`
+  and `ssh_key_secret_refs`; backup and snapshot restore lose the `target_plan_*`,
+  `target_gpu_*`, `target_bandwidth_*`, `target_compute_node_id`,
+  `target_network_bandwidth`, `target_performance_category` and `target_site_name`
+  fields.
+
+### Added
+
+- The 29 operations contract 0.6 adds:
+  - Object storage settings: `object_storage.get_bucket_lifecycle`,
+    `set_bucket_lifecycle`, `delete_bucket_lifecycle`, `get_bucket_cors`,
+    `set_bucket_cors`, `delete_bucket_cors`, `get_bucket_object_lock`,
+    `set_bucket_object_lock`, `get_bucket_notifications`, `set_bucket_notifications`,
+    `delete_bucket_notifications`, `get_bucket_custom_domains`,
+    `add_bucket_custom_domain`, `remove_bucket_custom_domain`, `get_bucket_metrics`.
+    Object lock is chosen at bucket create and cannot be turned off; a locked bucket
+    cannot be deleted (400). A custom domain is refused (400) until the hostname is a
+    CNAME of its `cname_target`, and the list answers 404 when there is none.
+  - `object_storage.delete_s3credential` (`DELETE /object-storage/credentials/{id}`,
+    permanent).
+  - Recovery: `cloud_vms.list_all_cloud_vm_snapshots`,
+    `cloud_vms.list_all_cloud_vm_backup_runs`, `cloud_vms.delete_cloud_vm_backup_run`,
+    `gpu_vms.list_all_gpu_vm_snapshots`, `gpu_vms.list_all_gpu_vm_backup_runs`,
+    `gpu_vms.delete_gpu_vm_backup_run`.
+  - Catalogs: `compute_catalog.list_snapshot_storage_plans` and
+    `compute_catalog.list_backup_storage_plans` (the SKUs snapshot create and backup
+    enable take as `billing_catalog`), `block_storage.list_block_storage_plans`
+    (`included_usage.iops` and `included_usage.throughput` are the catalog's display
+    text, such as `Up to 10K`).
+  - Networking: `reserved_ips.convert_reserved_ip`,
+    `reserved_ips.attach_reserved_ip_direct`, `vpcs.update_nat_gateway_public_ip`.
+  - `cdn.get_cdn_distribution_metrics`.
+- `client.container_registry`: the 26 Container Registry operations, sync and async,
+  with their typed models. Registries (name check, list, create, get, delete,
+  visibility, retry provisioning), storage plan (get, upgrade), access tokens (list,
+  create, rotate, revoke), repositories (list, delete), artifacts (list, delete,
+  rescan), security settings (get, update), vulnerabilities (summary, list), SBOMs
+  (list, get, download) and metrics. Paging is `page`/`page_size` (at most 100), as
+  the contract has it. The registry service's answer (including Billing refusals such
+  as 403 `billing_resource_not_eligible`) comes back unchanged.
+- `upgrade_container_registry_package` sends a random `Idempotency-Key` header when you
+  pass no `idempotency_key`, and reuses it on retries, the same as `X-Idempotency-Key`
+  elsewhere (`fern/overrides.yml` makes the header optional; `transport.py` fills it).
+- New arguments: `search`, `sort_by`, `sort_direction` (and `status`, `date` on cloud
+  VMs) on the VM lists; `include_availability`, `os_type`, `requires_public_ip` on
+  `list_compute_plans`; `public_ip_action` on `delete_nat_gateway`; `target_type` and
+  `target_vm_ids` (for `target_type: vip` only) on NAT port-forwarding rules;
+  `requested_private_ip` on `attach_vpc_node`; `health_check`, `observability`,
+  `policy` on L4/L7 load balancer create and update; VPC and SSH fields and
+  `target_volume_names` on snapshot restore.
+
+### Changed
+
+- VM create `billing_catalog` is typed `ComputeBillingSelection`. The server refuses a
+  create without a term (400 `compute_billing_term_required`) and a partial or changed
+  entry (400 `invalid_compute_billing_selection`). Terms are `HOURLY` and `MONTHLY` (a
+  one-month commitment: delete and resize answer 409 `VM_COMMITTED`); `YEARLY` is gone.
+- `revoke_s3credential` is `POST /object-storage/credentials/{id}/revoke`: the key
+  stops working and the record stays, listed as revoked (it was `DELETE`).
+- `create_s3credential`: `permission_type` is typed
+  (`CreateS3CredentialRequestPermissionType`): `admin_rw` (the server's default),
+  `admin_ro`, `object_rw` or `object_ro`.
+- `disable_cloud_vm_backups` / `disable_gpu_vm_backups` take a keyword `request`: pass
+  `request={}`. Contract 0.7.1 declares an empty JSON object body, and the production
+  virtualization engine answers 422 to a request with no body.
+- `X-Idempotency-Key` is declared on 18 VM write operations; the SDK sends a random one
+  where it is declared and you pass none, as before. VM creates are never retried.
+- `delete_cloud_vm` / `delete_gpu_vm`: `public_ip_action` has no default. For a VM with
+  an automatically assigned public IP the server answers 400 until you pass `release`
+  or `reserve`.
+
+### Fixed
+
+- `get_secret_identity_access` (`GET /secret-store/identities/{id}/access`) is never
+  retried, on any status or connection error: every call mints a new AppRole secret
+  ID. Other reads retry as before.
+
+### Notes
+
+- `get_bucket_cors` raises `ibee.core.parse_error.ParsingError` while the server
+  returns S3-cased keys (`AllowedOrigins`, ...) although `set_bucket_cors` takes
+  snake_case; the response is on the error's `body`. The SDK does not rewrite it.
+- NAT port-forwarding rules carry their id as `port_forward_rule_id`.
+- An access token's `secret` is returned only by create and rotate. The SDK does not
+  log request or response bodies.
+
 ## 0.5.2
 
 Generated from the public API contract 0.4.1, now vendored at

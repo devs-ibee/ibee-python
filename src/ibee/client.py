@@ -10,15 +10,15 @@ Configuration, first match wins:
   The base URL must be ``https`` (``http`` only for localhost) with no credentials,
   query or fragment.
 
-Requests then go through :mod:`ibee.transport` (retries, idempotency keys, errors) and
-the temporary behaviours in :mod:`ibee.held`.
+Requests then go through :mod:`ibee.transport` (workspace default, idempotency keys,
+safe retries, errors). Every method is the generated one: the request is sent as you
+pass it and the server's answer comes back unchanged.
 """
 
 import os
 import typing
 from urllib.parse import urlsplit
 
-from . import held
 from .base_client import AsyncBaseIbee, BaseIbee
 from .environment import IbeeEnvironment
 from .transport import install
@@ -96,9 +96,8 @@ class Ibee(BaseIbee):
         **kwargs: typing.Any,
     ):
         url = resolve_base_url(base_url, environment)
-        super().__init__(base_url=url, token=held.checked_token(_token(token), url), **kwargs)
+        super().__init__(base_url=url, token=_token(token), **kwargs)
         install(self._client_wrapper, workspace_id or os.environ.get("IBEE_WORKSPACE_ID"))
-        held.install(self)
 
 
 class AsyncIbee(AsyncBaseIbee):
@@ -118,9 +117,8 @@ class AsyncIbee(AsyncBaseIbee):
         token = _token(token, required=async_token is None)
         super().__init__(
             base_url=url,
-            token=held.checked_token(token, url) if token is not None else "",
-            async_token=held.checked_async_token(async_token, url),
+            token=token if token is not None else "",
+            async_token=async_token,
             **kwargs,
         )
         install(self._client_wrapper, workspace_id or os.environ.get("IBEE_WORKSPACE_ID"))
-        held.install(self)

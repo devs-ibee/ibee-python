@@ -8,10 +8,29 @@ from .batch_create_secret_result import BatchCreateSecretResult
 
 
 class BatchCreateSecretsResponse(UniversalBaseModel):
-    results: typing.List[BatchCreateSecretResult]
-    created_count: int
-    skipped_count: int
-    failed_count: int
+    """
+    Result of a batch create.
+    """
+
+    results: typing.List[BatchCreateSecretResult] = pydantic.Field()
+    """
+    One result per requested secret, in request order.
+    """
+
+    created_count: int = pydantic.Field()
+    """
+    Number of secrets created.
+    """
+
+    skipped_count: int = pydantic.Field()
+    """
+    Number of secrets skipped because they already existed.
+    """
+
+    failed_count: int = pydantic.Field()
+    """
+    Number of secrets that failed to create.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

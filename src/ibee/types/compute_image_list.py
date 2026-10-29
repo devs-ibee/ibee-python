@@ -9,10 +9,25 @@ from .vm_type import VmType
 
 
 class ComputeImageList(UniversalBaseModel):
-    images: typing.List[ComputeImage]
-    count: int
+    """
+    Images returned by `GET /compute/images`.
+    """
+
+    images: typing.List[ComputeImage] = pydantic.Field()
+    """
+    Images matching the request.
+    """
+
+    count: int = pydantic.Field()
+    """
+    Number of items in `images`.
+    """
+
     vm_type: VmType
-    site_id: typing.Optional[str] = None
+    site_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Site filter that was applied, when one was given.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
