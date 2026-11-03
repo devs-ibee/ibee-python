@@ -2,4 +2,6 @@
 
 import typing
 
-BackupStatus = typing.Union[typing.Literal["queued", "running", "succeeded", "failed", "cancelled"], typing.Any]
+BackupStatus = typing.Union[
+    typing.Literal["queued", "running", "succeeded", "failed", "cancelled", "deleting"], typing.Any
+]

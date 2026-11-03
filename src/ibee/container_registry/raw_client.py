@@ -15,8 +15,11 @@ from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
+from ..errors.gateway_timeout_error import GatewayTimeoutError
+from ..errors.internal_server_error import InternalServerError
 from ..errors.not_found_error import NotFoundError
 from ..errors.service_unavailable_error import ServiceUnavailableError
+from ..errors.too_many_requests_error import TooManyRequestsError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.container_registry import ContainerRegistry
@@ -65,7 +68,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryNameAvailability]:
         """
-        Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -134,8 +137,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -163,7 +199,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryList]:
         """
-        Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -237,8 +273,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -270,7 +339,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistry]:
         """
-        Creates a registry with a storage plan (`billing_catalog.sku_code`).
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a registry with a storage plan (`billing_catalog.sku_code`).
         The registry service asks Billing whether the workspace may buy that
         plan and refuses with 403 `billing_resource_not_eligible` (and a
         `reason`) when it may not. Returns 201 when the registry is active, or
@@ -399,8 +468,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -427,7 +529,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistry]:
         """
-        Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -507,8 +609,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -536,7 +671,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistry]:
         """
-        Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -642,8 +777,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -672,7 +840,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistry]:
         """
-        Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -776,8 +944,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -804,7 +1005,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryReconcile]:
         """
-        Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -895,8 +1096,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -923,7 +1157,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryPackage]:
         """
-        Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1003,8 +1237,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1033,7 +1300,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryPackageOperation]:
         """
-        Moves an active registry to a larger storage plan. Only larger quotas
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Moves an active registry to a larger storage plan. Only larger quotas
         are accepted and only one change can be pending (409 otherwise). The
         registry service asks Billing first and refuses with 403
         `billing_resource_not_eligible` when the plan is not allowed. Send an
@@ -1148,8 +1415,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1177,7 +1477,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[ContainerRegistryAccessToken]]:
         """
-        Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1261,8 +1561,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1294,7 +1627,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryAccessTokenSecret]:
         """
-        Creates a Docker login credential for the registry. The `username`
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a Docker login credential for the registry. The `username`
         and `secret` are returned once and cannot be read again. The registry
         must be active, and the registry service asks Billing whether the
         workspace may create credentials. Requires scope:
@@ -1416,8 +1749,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1445,7 +1811,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryAccessTokenSecret]:
         """
-        Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -1539,8 +1905,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1568,7 +1967,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryMessage]:
         """
-        Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -1651,8 +2050,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1683,7 +2115,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryRepositoryList]:
         """
-        Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1790,8 +2222,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1820,7 +2285,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryMessage]:
         """
-        Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -1929,8 +2394,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1960,7 +2458,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryArtifactList]:
         """
-        Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2063,8 +2561,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2094,7 +2625,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryMessage]:
         """
-        Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -2207,8 +2738,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2237,7 +2801,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryMessage]:
         """
-        Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -2335,8 +2899,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2363,7 +2960,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistrySecuritySettingsStatus]:
         """
-        Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2443,8 +3040,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2472,7 +3102,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistrySecuritySettingsStatus]:
         """
-        Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -2572,8 +3202,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2600,7 +3263,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryVulnerabilitySummary]:
         """
-        Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2691,8 +3354,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2727,7 +3423,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryVulnerabilityList]:
         """
-        Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2856,8 +3552,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2887,7 +3616,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistrySbomList]:
         """
-        Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2990,8 +3719,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3023,7 +3785,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistrySbom]:
         """
-        Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -3133,8 +3895,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3164,7 +3959,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.Iterator[HttpResponse[typing.Iterator[bytes]]]:
         """
-        Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -3261,8 +4056,41 @@ class RawContainerRegistryClient:
                                 ),
                             ),
                         )
+                    if _response.status_code == 429:
+                        raise TooManyRequestsError(
+                            headers=dict(_response.headers),
+                            body=typing.cast(
+                                Error,
+                                parse_obj_as(
+                                    type_=Error,  # type: ignore
+                                    object_=_response.json(),
+                                ),
+                            ),
+                        )
+                    if _response.status_code == 500:
+                        raise InternalServerError(
+                            headers=dict(_response.headers),
+                            body=typing.cast(
+                                Error,
+                                parse_obj_as(
+                                    type_=Error,  # type: ignore
+                                    object_=_response.json(),
+                                ),
+                            ),
+                        )
                     if _response.status_code == 503:
                         raise ServiceUnavailableError(
+                            headers=dict(_response.headers),
+                            body=typing.cast(
+                                Error,
+                                parse_obj_as(
+                                    type_=Error,  # type: ignore
+                                    object_=_response.json(),
+                                ),
+                            ),
+                        )
+                    if _response.status_code == 504:
+                        raise GatewayTimeoutError(
                             headers=dict(_response.headers),
                             body=typing.cast(
                                 Error,
@@ -3297,7 +4125,7 @@ class RawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContainerRegistryMetrics]:
         """
-        Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -3392,8 +4220,41 @@ class RawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3425,7 +4286,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryNameAvailability]:
         """
-        Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -3494,8 +4355,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3523,7 +4417,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryList]:
         """
-        Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -3597,8 +4491,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3630,7 +4557,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistry]:
         """
-        Creates a registry with a storage plan (`billing_catalog.sku_code`).
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a registry with a storage plan (`billing_catalog.sku_code`).
         The registry service asks Billing whether the workspace may buy that
         plan and refuses with 403 `billing_resource_not_eligible` (and a
         `reason`) when it may not. Returns 201 when the registry is active, or
@@ -3759,8 +4686,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3787,7 +4747,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistry]:
         """
-        Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -3867,8 +4827,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3896,7 +4889,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistry]:
         """
-        Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -4002,8 +4995,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4032,7 +5058,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistry]:
         """
-        Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -4136,8 +5162,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4164,7 +5223,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryReconcile]:
         """
-        Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -4255,8 +5314,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4283,7 +5375,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryPackage]:
         """
-        Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -4363,8 +5455,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4393,7 +5518,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryPackageOperation]:
         """
-        Moves an active registry to a larger storage plan. Only larger quotas
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Moves an active registry to a larger storage plan. Only larger quotas
         are accepted and only one change can be pending (409 otherwise). The
         registry service asks Billing first and refuses with 403
         `billing_resource_not_eligible` when the plan is not allowed. Send an
@@ -4508,8 +5633,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4537,7 +5695,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[ContainerRegistryAccessToken]]:
         """
-        Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -4621,8 +5779,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4654,7 +5845,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryAccessTokenSecret]:
         """
-        Creates a Docker login credential for the registry. The `username`
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a Docker login credential for the registry. The `username`
         and `secret` are returned once and cannot be read again. The registry
         must be active, and the registry service asks Billing whether the
         workspace may create credentials. Requires scope:
@@ -4776,8 +5967,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4805,7 +6029,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryAccessTokenSecret]:
         """
-        Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -4899,8 +6123,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4928,7 +6185,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryMessage]:
         """
-        Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -5011,8 +6268,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5043,7 +6333,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryRepositoryList]:
         """
-        Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -5150,8 +6440,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5180,7 +6503,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryMessage]:
         """
-        Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -5289,8 +6612,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5320,7 +6676,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryArtifactList]:
         """
-        Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -5423,8 +6779,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5454,7 +6843,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryMessage]:
         """
-        Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -5567,8 +6956,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5597,7 +7019,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryMessage]:
         """
-        Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -5695,8 +7117,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5723,7 +7178,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistrySecuritySettingsStatus]:
         """
-        Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -5803,8 +7258,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5832,7 +7320,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistrySecuritySettingsStatus]:
         """
-        Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -5932,8 +7420,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5960,7 +7481,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryVulnerabilitySummary]:
         """
-        Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -6051,8 +7572,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -6087,7 +7641,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryVulnerabilityList]:
         """
-        Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -6216,8 +7770,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -6247,7 +7834,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistrySbomList]:
         """
-        Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -6350,8 +7937,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -6383,7 +8003,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistrySbom]:
         """
-        Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -6493,8 +8113,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -6524,7 +8177,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.AsyncIterator[AsyncHttpResponse[typing.AsyncIterator[bytes]]]:
         """
-        Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -6622,8 +8275,41 @@ class AsyncRawContainerRegistryClient:
                                 ),
                             ),
                         )
+                    if _response.status_code == 429:
+                        raise TooManyRequestsError(
+                            headers=dict(_response.headers),
+                            body=typing.cast(
+                                Error,
+                                parse_obj_as(
+                                    type_=Error,  # type: ignore
+                                    object_=_response.json(),
+                                ),
+                            ),
+                        )
+                    if _response.status_code == 500:
+                        raise InternalServerError(
+                            headers=dict(_response.headers),
+                            body=typing.cast(
+                                Error,
+                                parse_obj_as(
+                                    type_=Error,  # type: ignore
+                                    object_=_response.json(),
+                                ),
+                            ),
+                        )
                     if _response.status_code == 503:
                         raise ServiceUnavailableError(
+                            headers=dict(_response.headers),
+                            body=typing.cast(
+                                Error,
+                                parse_obj_as(
+                                    type_=Error,  # type: ignore
+                                    object_=_response.json(),
+                                ),
+                            ),
+                        )
+                    if _response.status_code == 504:
+                        raise GatewayTimeoutError(
                             headers=dict(_response.headers),
                             body=typing.cast(
                                 Error,
@@ -6658,7 +8344,7 @@ class AsyncRawContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContainerRegistryMetrics]:
         """
-        Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -6753,8 +8439,41 @@ class AsyncRawContainerRegistryClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

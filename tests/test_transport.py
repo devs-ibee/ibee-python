@@ -11,6 +11,8 @@ from ibee.core.api_error import ApiError
 from ibee.errors import (
     ConflictError,
     ForbiddenError,
+    GatewayTimeoutError,
+    TooManyRequestsError,
     LockedError,
     PaymentRequiredError,
     ServiceUnavailableError,
@@ -72,9 +74,9 @@ def test_caller_key_is_sent_unchanged() -> None:
 def test_routes_without_the_header_get_no_key() -> None:
     rec = Recorder((201, {}))
     try:
-        client(rec, workspace_id=WS).vpcs.create_vpc(name="v", site_id="s")
+        client(rec, workspace_id=WS).secret_store.create_secret_store(name="s")
     except Exception:
-        pass  # the mock body does not parse as a VPC; only the request matters
+        pass  # the mock body does not parse; only the request matters
     assert "x-idempotency-key" not in rec.requests[0].headers
 
 
@@ -138,7 +140,7 @@ def test_keyed_write_is_not_retried_on_502_or_504(status: int) -> None:
 def test_unkeyed_write_is_not_retried() -> None:
     rec = Recorder((503, {"detail": "busy"}))
     with pytest.raises(ServiceUnavailableError) as info:
-        client(rec, workspace_id=WS).vpcs.create_vpc(name="v", site_id="s")
+        client(rec, workspace_id=WS).secret_store.create_secret_store(name="s")
     assert len(rec.requests) == 1
     assert info.value.idempotency_key is None
 
@@ -195,7 +197,7 @@ def test_connect_error_is_retried_for_any_request() -> None:
 def test_read_timeout_is_retried_only_for_keyed_writes() -> None:
     rec = Recorder(httpx.ReadTimeout("slow"), (201, {}))
     with pytest.raises(httpx.ReadTimeout):
-        client(rec, workspace_id=WS).vpcs.create_vpc(name="v", site_id="s")
+        client(rec, workspace_id=WS).secret_store.create_secret_store(name="s")
     assert len(rec.requests) == 1
 
     rec = Recorder(httpx.ReadTimeout("slow"), (202, ACCEPTED))
@@ -287,10 +289,10 @@ def test_product_service_detail_is_relayed_unchanged() -> None:
 
 @pytest.mark.parametrize(
     ("status", "cls"),
-    [(403, ForbiddenError), (423, LockedError), (429, ApiError), (502, ApiError), (504, ApiError)],
+    [(403, ForbiddenError), (423, LockedError), (429, TooManyRequestsError), (502, ApiError), (504, GatewayTimeoutError)],
 )
 def test_status_named_classes(status: int, cls: type) -> None:
-    # Contract 0.7.1 declares no 429, 502 or 504 answer, so those raise ApiError itself.
+    # Contract 0.9 declares 429 and 504; undeclared 502 still raises ApiError.
     rec = Recorder((status, {"error": "organization_restricted"}, {"x-request-id": "req-1"}))
     with pytest.raises(ApiError) as info:
         client(rec, workspace_id=WS, max_retries=0).cloud_vms.get_cloud_vm(VM)
@@ -327,3 +329,34 @@ def test_async_retries_keys_and_errors() -> None:
     assert len(rec.requests) == 3
     assert rec.requests[0].headers["x-idempotency-key"] == rec.requests[1].headers["x-idempotency-key"]
     assert rec.requests[0].url.params["workspace_id"] == WS
+
+
+@pytest.mark.parametrize("path", ["object-storage/buckets", "container-registry/registries"])
+def test_paused_empty_404_has_an_explanation_and_keeps_the_raw_body(path):
+    from ibee.transport import raise_for_status
+    response = httpx.Response(404, content=b"")
+    with pytest.raises(ApiError) as info:
+        raise_for_status(response, None, path)
+    assert info.value.status_code == 404
+    assert info.value.code == "public_operation_temporarily_paused"
+    assert "temporarily paused" in info.value.message
+    assert info.value.raw_body == ""
+
+
+def test_normal_resource_not_found_is_not_reclassified():
+    from ibee.transport import raise_for_status
+    for path, body in [("object-storage/buckets/missing", b'{"detail":"Bucket not found"}'), ("compute/cloud-vms/missing", b"")]:
+        with pytest.raises(ApiError) as info:
+            raise_for_status(httpx.Response(404, content=body), None, path)
+        assert info.value.code != "public_operation_temporarily_paused"
+
+
+def test_sync_and_async_paused_client_methods_keep_working_as_methods():
+    rec = Recorder((404, ""))
+    with pytest.raises(ApiError, match="temporarily paused"):
+        client(rec).object_storage.list_buckets()
+    async def invoke():
+        api = async_client(Recorder((404, "")))
+        with pytest.raises(ApiError, match="temporarily paused"):
+            await api.object_storage.list_buckets()
+    asyncio.run(invoke())

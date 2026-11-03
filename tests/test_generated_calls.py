@@ -199,9 +199,9 @@ def test_reserved_ip_convert_and_attach_direct() -> None:
 # removed in 0.6 -----------------------------------------------------------------
 
 REMOVED = {
-    "cloud_vms": ["resize_cloud_vm_plan", "resize_cloud_vm_root_disk", "create_cloud_vm_backup_run",
+    "cloud_vms": ["resize_cloud_vm_plan", "resize_cloud_vm_root_disk",
                   "reschedule_cloud_vm_backup", "acknowledge_cloud_vm_mount_guidance"],
-    "gpu_vms": ["resize_gpu_vm_plan", "resize_gpu_vm_root_disk", "create_gpu_vm_backup_run",
+    "gpu_vms": ["resize_gpu_vm_plan", "resize_gpu_vm_root_disk",
                 "reschedule_gpu_vm_backup", "acknowledge_gpu_vm_mount_guidance"],
     "block_storage": ["attach_block_volume", "detach_block_volume"],
     "cdn": ["generate_cdn_url"],
@@ -231,3 +231,20 @@ def test_async_create_is_sent_once_with_a_key() -> None:
 
     asyncio.run(run())
     assert len(rec.requests) == 1 and rec.requests[0].headers["x-idempotency-key"]
+
+
+@pytest.mark.parametrize("family", ["cloud", "gpu"])
+def test_manual_backup_and_cancel_keep_the_public_paths(family: str) -> None:
+    from ibee.core.api_error import ApiError
+
+    rec = Recorder((418, {"error": "probe"}))
+    resource = getattr(client(rec, workspace_id=WS), f"{family}_vms")
+    with pytest.raises(ApiError):
+        getattr(resource, f"create_{family}_vm_backup_run")(VM)
+    with pytest.raises(ApiError):
+        getattr(resource, f"cancel_{family}_vm_backup_restore")("restore-1")
+    assert _calls(rec) == [
+        ("POST", f"compute/{family}-vms/{VM}/backups/runs"),
+        ("POST", f"compute/{family}-vm-backups/restores/restore-1/actions/cancel"),
+    ]
+    assert rec.body(0) == {}  # billing_catalog is inherited from the policy

@@ -89,3 +89,16 @@ class ApiError(Exception):
         }
         shown = ", ".join(f"{key}: {value}" for key, value in fields.items() if value is not None)
         return f"{shown}, body: {self.body}"
+
+
+class PublicOperationPausedError(ApiError):
+    """An empty gateway 404 for a temporarily paused public API family."""
+
+    @property
+    def code(self) -> str:
+        return "public_operation_temporarily_paused"
+
+    @property
+    def message(self) -> str:
+        return ("This public API operation is temporarily paused. The client method is retained "
+                "for compatibility; this empty 404 does not mean an existing resource was deleted.")

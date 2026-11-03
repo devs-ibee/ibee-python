@@ -1,5 +1,10 @@
 # IBEE Solutions Python SDK
 
+Object Storage and Container Registry public management operations are temporarily paused.
+Published methods and commands remain available for compatibility. An empty 404
+from these routes reports the pause; it does not prove an existing resource was deleted.
+CDN remains available.
+
 Official Python SDK for the IBEE Solutions API: cloud and GPU VMs, VPC networking,
 Reserved IPs, firewalls, load balancers, object storage, Block Storage, CDN,
 Secret Store and Container Registry.

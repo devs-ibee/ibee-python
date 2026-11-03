@@ -9,6 +9,8 @@ if typing.TYPE_CHECKING:
     from .create_cloud_vm_request_network_connectivity import CreateCloudVmRequestNetworkConnectivity
     from .create_cloud_vm_request_os_type import CreateCloudVmRequestOsType
     from .create_cloud_vm_request_vpc_attachment_mode import CreateCloudVmRequestVpcAttachmentMode
+    from .delete_cloud_vm_backup_run_response import DeleteCloudVmBackupRunResponse
+    from .delete_cloud_vm_backup_run_response_status import DeleteCloudVmBackupRunResponseStatus
     from .get_cloud_vm_metrics_timeseries_request_range import GetCloudVmMetricsTimeseriesRequestRange
     from .list_cloud_vms_request_sort_by import ListCloudVmsRequestSortBy
     from .list_cloud_vms_request_sort_direction import ListCloudVmsRequestSortDirection
@@ -17,6 +19,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "CreateCloudVmRequestNetworkConnectivity": ".create_cloud_vm_request_network_connectivity",
     "CreateCloudVmRequestOsType": ".create_cloud_vm_request_os_type",
     "CreateCloudVmRequestVpcAttachmentMode": ".create_cloud_vm_request_vpc_attachment_mode",
+    "DeleteCloudVmBackupRunResponse": ".delete_cloud_vm_backup_run_response",
+    "DeleteCloudVmBackupRunResponseStatus": ".delete_cloud_vm_backup_run_response_status",
     "GetCloudVmMetricsTimeseriesRequestRange": ".get_cloud_vm_metrics_timeseries_request_range",
     "ListCloudVmsRequestSortBy": ".list_cloud_vms_request_sort_by",
     "ListCloudVmsRequestSortDirection": ".list_cloud_vms_request_sort_direction",
@@ -49,6 +53,8 @@ __all__ = [
     "CreateCloudVmRequestNetworkConnectivity",
     "CreateCloudVmRequestOsType",
     "CreateCloudVmRequestVpcAttachmentMode",
+    "DeleteCloudVmBackupRunResponse",
+    "DeleteCloudVmBackupRunResponseStatus",
     "GetCloudVmMetricsTimeseriesRequestRange",
     "ListCloudVmsRequestSortBy",
     "ListCloudVmsRequestSortDirection",

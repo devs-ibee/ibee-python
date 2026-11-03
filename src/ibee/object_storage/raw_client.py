@@ -14,11 +14,15 @@ from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
+from ..errors.gateway_timeout_error import GatewayTimeoutError
+from ..errors.internal_server_error import InternalServerError
 from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
 from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.service_unavailable_error import ServiceUnavailableError
+from ..errors.too_many_requests_error import TooManyRequestsError
 from ..errors.unauthorized_error import UnauthorizedError
+from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.bucket import Bucket
 from ..types.bucket_cors_configuration import BucketCorsConfiguration
 from ..types.bucket_cors_rule import BucketCorsRule
@@ -61,7 +65,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketList]:
         """
-        Lists object storage buckets in a workspace. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists object storage buckets in a workspace. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -124,8 +128,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -157,7 +205,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Bucket]:
         """
-        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -265,6 +313,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -276,8 +335,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -304,7 +396,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Bucket]:
         """
-        Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -373,8 +465,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -401,7 +537,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteResponse]:
         """
-        Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -470,6 +606,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -481,8 +628,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -510,7 +690,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Bucket]:
         """
-        Updates mutable bucket settings. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Updates mutable bucket settings. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -600,6 +780,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -611,8 +802,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -639,7 +863,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketLifecycleConfiguration]:
         """
-        Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -708,8 +932,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -737,7 +1005,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteResponse]:
         """
-        Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -817,6 +1085,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -828,8 +1107,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -856,7 +1168,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteResponse]:
         """
-        Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -925,6 +1237,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -936,8 +1259,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -964,7 +1320,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketCorsConfiguration]:
         """
-        Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1033,8 +1389,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1062,7 +1462,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteResponse]:
         """
-        Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1142,6 +1542,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -1153,8 +1564,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1181,7 +1625,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteResponse]:
         """
-        Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1250,6 +1694,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -1261,8 +1716,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1289,7 +1777,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketObjectLockConfiguration]:
         """
-        Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1358,8 +1846,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1387,7 +1919,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteResponse]:
         """
-        Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1479,6 +2011,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -1490,8 +2033,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1518,7 +2094,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketNotificationConfiguration]:
         """
-        Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1587,8 +2163,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1616,7 +2236,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteResponse]:
         """
-        Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1696,6 +2316,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -1707,8 +2338,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1735,7 +2399,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteResponse]:
         """
-        Removes every notification rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1804,6 +2468,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -1815,8 +2490,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1843,7 +2551,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketCustomDomainConfig]:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1912,8 +2620,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1941,7 +2693,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketCustomDomain]:
         """
-        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2042,6 +2794,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -2053,8 +2816,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2082,7 +2878,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketCustomDomainRemoved]:
         """
-        Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2165,6 +2961,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -2176,8 +2983,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2205,7 +3045,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketMetrics]:
         """
-        Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2278,8 +3118,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2302,7 +3186,7 @@ class RawObjectStorageClient:
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[S3CredentialList]:
         """
-        Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2357,8 +3241,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2388,7 +3316,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[S3CredentialCreated]:
         """
-        Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2491,6 +3419,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -2502,8 +3441,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2530,7 +3502,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[S3Credential]:
         """
-        Returns credential metadata without the secret key. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns credential metadata without the secret key. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2599,8 +3571,52 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2627,7 +3643,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[S3CredentialRevoked]:
         """
-        Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2696,6 +3712,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -2707,8 +3734,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2735,7 +3795,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[S3CredentialRevoked]:
         """
-        Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2804,6 +3864,17 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -2815,8 +3886,41 @@ class RawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2849,7 +3953,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketList]:
         """
-        Lists object storage buckets in a workspace. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists object storage buckets in a workspace. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2912,8 +4016,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2945,7 +4093,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Bucket]:
         """
-        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -3053,6 +4201,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -3064,8 +4223,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3092,7 +4284,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Bucket]:
         """
-        Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -3161,8 +4353,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3189,7 +4425,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteResponse]:
         """
-        Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -3258,6 +4494,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -3269,8 +4516,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3298,7 +4578,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Bucket]:
         """
-        Updates mutable bucket settings. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Updates mutable bucket settings. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -3388,6 +4668,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -3399,8 +4690,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3427,7 +4751,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketLifecycleConfiguration]:
         """
-        Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -3496,8 +4820,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3525,7 +4893,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteResponse]:
         """
-        Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -3605,6 +4973,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -3616,8 +4995,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3644,7 +5056,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteResponse]:
         """
-        Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -3713,6 +5125,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -3724,8 +5147,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3752,7 +5208,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketCorsConfiguration]:
         """
-        Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -3821,8 +5277,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3850,7 +5350,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteResponse]:
         """
-        Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -3930,6 +5430,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -3941,8 +5452,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -3969,7 +5513,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteResponse]:
         """
-        Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -4038,6 +5582,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -4049,8 +5604,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4077,7 +5665,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketObjectLockConfiguration]:
         """
-        Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -4146,8 +5734,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4175,7 +5807,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteResponse]:
         """
-        Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -4267,6 +5899,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -4278,8 +5921,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4306,7 +5982,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketNotificationConfiguration]:
         """
-        Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -4375,8 +6051,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4404,7 +6124,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteResponse]:
         """
-        Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -4484,6 +6204,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -4495,8 +6226,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4523,7 +6287,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteResponse]:
         """
-        Removes every notification rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -4592,6 +6356,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -4603,8 +6378,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4631,7 +6439,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketCustomDomainConfig]:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -4700,8 +6508,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4729,7 +6581,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketCustomDomain]:
         """
-        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -4830,6 +6682,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -4841,8 +6704,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4870,7 +6766,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketCustomDomainRemoved]:
         """
-        Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -4953,6 +6849,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -4964,8 +6871,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -4993,7 +6933,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketMetrics]:
         """
-        Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -5066,8 +7006,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5090,7 +7074,7 @@ class AsyncRawObjectStorageClient:
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[S3CredentialList]:
         """
-        Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -5145,8 +7129,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5176,7 +7204,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[S3CredentialCreated]:
         """
-        Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -5279,6 +7307,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -5290,8 +7329,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5318,7 +7390,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[S3Credential]:
         """
-        Returns credential metadata without the secret key. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns credential metadata without the secret key. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -5387,8 +7459,52 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5415,7 +7531,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[S3CredentialRevoked]:
         """
-        Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -5484,6 +7600,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -5495,8 +7622,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -5523,7 +7683,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[S3CredentialRevoked]:
         """
-        Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -5592,6 +7752,17 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 423:
                 raise LockedError(
                     headers=dict(_response.headers),
@@ -5603,8 +7774,41 @@ class AsyncRawObjectStorageClient:
                         ),
                     ),
                 )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 503:
                 raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

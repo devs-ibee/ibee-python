@@ -56,7 +56,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketList:
         """
-        Lists object storage buckets in a workspace. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists object storage buckets in a workspace. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -109,7 +109,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -175,7 +175,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -216,7 +216,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -260,7 +260,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Updates mutable bucket settings. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Updates mutable bucket settings. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -307,7 +307,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketLifecycleConfiguration:
         """
-        Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -351,7 +351,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -401,7 +401,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -444,7 +444,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCorsConfiguration:
         """
-        Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -488,7 +488,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -539,7 +539,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -582,7 +582,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketObjectLockConfiguration:
         """
-        Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -626,7 +626,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -672,7 +672,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketNotificationConfiguration:
         """
-        Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -716,7 +716,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -766,7 +766,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Removes every notification rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -809,7 +809,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomainConfig:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -853,7 +853,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomain:
         """
-        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -901,7 +901,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomainRemoved:
         """
-        Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -949,7 +949,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketMetrics:
         """
-        Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -991,7 +991,7 @@ class ObjectStorageClient:
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> S3CredentialList:
         """
-        Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1031,7 +1031,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3CredentialCreated:
         """
-        Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1091,7 +1091,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3Credential:
         """
-        Returns credential metadata without the secret key. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns credential metadata without the secret key. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1134,7 +1134,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3CredentialRevoked:
         """
-        Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1177,7 +1177,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3CredentialRevoked:
         """
-        Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1237,7 +1237,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketList:
         """
-        Lists object storage buckets in a workspace. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists object storage buckets in a workspace. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1298,7 +1298,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1372,7 +1372,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1423,7 +1423,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -1475,7 +1475,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Bucket:
         """
-        Updates mutable bucket settings. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Updates mutable bucket settings. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1530,7 +1530,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketLifecycleConfiguration:
         """
-        Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1582,7 +1582,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1640,7 +1640,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1691,7 +1691,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCorsConfiguration:
         """
-        Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1743,7 +1743,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1802,7 +1802,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1853,7 +1853,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketObjectLockConfiguration:
         """
-        Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -1905,7 +1905,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -1959,7 +1959,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketNotificationConfiguration:
         """
-        Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2011,7 +2011,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2069,7 +2069,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Removes every notification rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2120,7 +2120,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomainConfig:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2172,7 +2172,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomain:
         """
-        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2228,7 +2228,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomainRemoved:
         """
-        Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2284,7 +2284,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketMetrics:
         """
-        Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2334,7 +2334,7 @@ class AsyncObjectStorageClient:
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
     ) -> S3CredentialList:
         """
-        Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2384,7 +2384,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3CredentialCreated:
         """
-        Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2452,7 +2452,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3Credential:
         """
-        Returns credential metadata without the secret key. Requires scope: object-storage.read.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns credential metadata without the secret key. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2503,7 +2503,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3CredentialRevoked:
         """
-        Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2554,7 +2554,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> S3CredentialRevoked:
         """
-        Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
 
         Parameters
         ----------
