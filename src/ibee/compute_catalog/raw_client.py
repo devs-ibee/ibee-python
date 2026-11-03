@@ -196,7 +196,7 @@ class RawComputeCatalogClient:
             - `MONTHLY` (default)
 
         include_availability : typing.Optional[bool]
-            Include an advisory placement check. Requires site_id. This does not reserve stock.
+            Check advisory placement by default when site_id is supplied. Set false for pricing-only discovery. This does not reserve stock.
 
         os_type : typing.Optional[ListComputePlansRequestOsType]
             OS pool to check when include_availability is true.
@@ -947,7 +947,7 @@ class AsyncRawComputeCatalogClient:
             - `MONTHLY` (default)
 
         include_availability : typing.Optional[bool]
-            Include an advisory placement check. Requires site_id. This does not reserve stock.
+            Check advisory placement by default when site_id is supplied. Set false for pricing-only discovery. This does not reserve stock.
 
         os_type : typing.Optional[ListComputePlansRequestOsType]
             OS pool to check when include_availability is true.

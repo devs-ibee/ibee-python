@@ -10198,7 +10198,7 @@ Billing period to quote prices for.
 <dl>
 <dd>
 
-**include_availability:** `typing.Optional[bool]` — Include an advisory placement check. Requires site_id. This does not reserve stock.
+**include_availability:** `typing.Optional[bool]` — Check advisory placement by default when site_id is supplied. Set false for pricing-only discovery. This does not reserve stock.
     
 </dd>
 </dl>
