@@ -159,7 +159,7 @@ class CloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Creates a cloud VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+        Creates a cloud VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If you received an `operation_id`, poll its status. If the create response was lost, repeat the identical request body with the original `X-Idempotency-Key` to recover the same operation. Keep the same body and key while the outcome is uncertain; a new key starts a separate create. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2394,7 +2394,7 @@ class AsyncCloudVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Creates a cloud VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+        Creates a cloud VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If you received an `operation_id`, poll its status. If the create response was lost, repeat the identical request body with the original `X-Idempotency-Key` to recover the same operation. Keep the same body and key while the outcome is uncertain; a new key starts a separate create. Requires scope: vm.write.
 
         Parameters
         ----------
