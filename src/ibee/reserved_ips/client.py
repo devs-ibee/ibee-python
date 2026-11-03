@@ -73,6 +73,7 @@ class ReservedIpsClient:
         *,
         site_id: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         label: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ReservedIp:
@@ -86,6 +87,9 @@ class ReservedIpsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         label : typing.Optional[str]
             Optional label for the address (up to 120 characters), shown as its name in the portal.
@@ -111,7 +115,11 @@ class ReservedIpsClient:
         )
         """
         _response = self._raw_client.reserve_ip(
-            site_id=site_id, workspace_id=workspace_id, label=label, request_options=request_options
+            site_id=site_id,
+            workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
+            label=label,
+            request_options=request_options,
         )
         return _response.data
 
@@ -599,6 +607,7 @@ class AsyncReservedIpsClient:
         *,
         site_id: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         label: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ReservedIp:
@@ -612,6 +621,9 @@ class AsyncReservedIpsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         label : typing.Optional[str]
             Optional label for the address (up to 120 characters), shown as its name in the portal.
@@ -645,7 +657,11 @@ class AsyncReservedIpsClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.reserve_ip(
-            site_id=site_id, workspace_id=workspace_id, label=label, request_options=request_options
+            site_id=site_id,
+            workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
+            label=label,
+            request_options=request_options,
         )
         return _response.data
 

@@ -120,6 +120,7 @@ class VpcsClient:
         name: str,
         site_id: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         description: typing.Optional[str] = OMIT,
         region: typing.Optional[str] = OMIT,
         cidr: typing.Optional[str] = OMIT,
@@ -143,6 +144,9 @@ class VpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         description : typing.Optional[str]
             Optional description.
@@ -193,6 +197,7 @@ class VpcsClient:
             name=name,
             site_id=site_id,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             description=description,
             region=region,
             cidr=cidr,
@@ -386,6 +391,7 @@ class VpcsClient:
         *,
         name: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         cidr: typing.Optional[str] = OMIT,
         auto_cidr: typing.Optional[bool] = OMIT,
         prefix_length: typing.Optional[int] = OMIT,
@@ -405,6 +411,9 @@ class VpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         cidr : typing.Optional[str]
             IPv4 CIDR inside the VPC range. Chosen automatically when omitted and `auto_cidr` is true.
@@ -443,6 +452,7 @@ class VpcsClient:
             vpc_id,
             name=name,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             cidr=cidr,
             auto_cidr=auto_cidr,
             prefix_length=prefix_length,
@@ -759,6 +769,7 @@ class VpcsClient:
         vpc_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         subnet_id: typing.Optional[str] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         name: typing.Optional[str] = OMIT,
@@ -774,6 +785,9 @@ class VpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         subnet_id : typing.Optional[str]
             Subnet the gateway is placed in; chosen by the service when omitted.
@@ -807,6 +821,7 @@ class VpcsClient:
         _response = self._raw_client.create_nat_gateway(
             vpc_id,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             subnet_id=subnet_id,
             reserved_public_ip_id=reserved_public_ip_id,
             name=name,
@@ -987,6 +1002,7 @@ class VpcsClient:
         internal_ip: str,
         internal_port: int,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = OMIT,
         target_type: typing.Optional[CreateNatPortForwardingRuleRequestTargetType] = OMIT,
         target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -1019,6 +1035,9 @@ class VpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         protocol : typing.Optional[CreateNatPortForwardingRuleRequestProtocol]
             - `tcp` (default)
@@ -1069,6 +1088,7 @@ class VpcsClient:
             internal_ip=internal_ip,
             internal_port=internal_port,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             protocol=protocol,
             target_type=target_type,
             target_vm_ids=target_vm_ids,
@@ -1348,6 +1368,7 @@ class AsyncVpcsClient:
         name: str,
         site_id: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         description: typing.Optional[str] = OMIT,
         region: typing.Optional[str] = OMIT,
         cidr: typing.Optional[str] = OMIT,
@@ -1371,6 +1392,9 @@ class AsyncVpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         description : typing.Optional[str]
             Optional description.
@@ -1429,6 +1453,7 @@ class AsyncVpcsClient:
             name=name,
             site_id=site_id,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             description=description,
             region=region,
             cidr=cidr,
@@ -1656,6 +1681,7 @@ class AsyncVpcsClient:
         *,
         name: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         cidr: typing.Optional[str] = OMIT,
         auto_cidr: typing.Optional[bool] = OMIT,
         prefix_length: typing.Optional[int] = OMIT,
@@ -1675,6 +1701,9 @@ class AsyncVpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         cidr : typing.Optional[str]
             IPv4 CIDR inside the VPC range. Chosen automatically when omitted and `auto_cidr` is true.
@@ -1721,6 +1750,7 @@ class AsyncVpcsClient:
             vpc_id,
             name=name,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             cidr=cidr,
             auto_cidr=auto_cidr,
             prefix_length=prefix_length,
@@ -2087,6 +2117,7 @@ class AsyncVpcsClient:
         vpc_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         subnet_id: typing.Optional[str] = OMIT,
         reserved_public_ip_id: typing.Optional[str] = OMIT,
         name: typing.Optional[str] = OMIT,
@@ -2102,6 +2133,9 @@ class AsyncVpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         subnet_id : typing.Optional[str]
             Subnet the gateway is placed in; chosen by the service when omitted.
@@ -2143,6 +2177,7 @@ class AsyncVpcsClient:
         _response = await self._raw_client.create_nat_gateway(
             vpc_id,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             subnet_id=subnet_id,
             reserved_public_ip_id=reserved_public_ip_id,
             name=name,
@@ -2347,6 +2382,7 @@ class AsyncVpcsClient:
         internal_ip: str,
         internal_port: int,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         protocol: typing.Optional[CreateNatPortForwardingRuleRequestProtocol] = OMIT,
         target_type: typing.Optional[CreateNatPortForwardingRuleRequestTargetType] = OMIT,
         target_vm_ids: typing.Optional[typing.Sequence[str]] = OMIT,
@@ -2379,6 +2415,9 @@ class AsyncVpcsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         protocol : typing.Optional[CreateNatPortForwardingRuleRequestProtocol]
             - `tcp` (default)
@@ -2437,6 +2476,7 @@ class AsyncVpcsClient:
             internal_ip=internal_ip,
             internal_port=internal_port,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             protocol=protocol,
             target_type=target_type,
             target_vm_ids=target_vm_ids,

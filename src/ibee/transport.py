@@ -29,7 +29,7 @@ import uuid
 
 import httpx
 from . import errors as _errors
-from .core.api_error import ApiError
+from .core.api_error import ApiError, PublicOperationPausedError
 from .core.http_client import AsyncHttpClient, HttpClient, _retry_timeout, _retry_timeout_from_retries
 
 IDEMPOTENCY_HEADER = "X-Idempotency-Key"
@@ -112,7 +112,7 @@ def _error_classes() -> typing.Dict[int, typing.Type[ApiError]]:
 _ERROR_CLASSES: typing.Dict[int, typing.Type[ApiError]] = {}
 
 
-def raise_for_status(response: httpx.Response, idempotency_key: typing.Optional[str]) -> None:
+def raise_for_status(response: httpx.Response, idempotency_key: typing.Optional[str], path: typing.Optional[str] = None) -> None:
     if response.status_code < 400:
         return
     if not _ERROR_CLASSES:
@@ -122,8 +122,12 @@ def raise_for_status(response: httpx.Response, idempotency_key: typing.Optional[
     except Exception:
         body = response.text
     headers = dict(response.headers)
-    cls = _ERROR_CLASSES.get(response.status_code)
-    error = cls(body=body, headers=headers) if cls else ApiError(status_code=response.status_code, headers=headers, body=body)  # type: ignore[call-arg]
+    if (response.status_code == 404 and not response.content.strip() and path
+            and re.search(r"(^|/)(object-storage|container-registry)(/|$)", path.split("?", 1)[0])):
+        error = PublicOperationPausedError(status_code=404, headers=headers, body=body)
+    else:
+        cls = _ERROR_CLASSES.get(response.status_code)
+        error = cls(body=body, headers=headers) if cls else ApiError(status_code=response.status_code, headers=headers, body=body)  # type: ignore[call-arg]
     error.idempotency_key = idempotency_key
     raise error
 
@@ -176,7 +180,7 @@ class IbeeHttpClient(HttpClient):
                 _sleep(_retry_timeout_from_retries(attempt))
             else:
                 if attempt >= max_retries or not should_retry(method, response, key is not None):
-                    raise_for_status(response, key)
+                    raise_for_status(response, key, path)
                     return response
                 _sleep(_retry_timeout(response, attempt))
             attempt += 1
@@ -207,7 +211,7 @@ class AsyncIbeeHttpClient(AsyncHttpClient):
                 await _async_sleep(_retry_timeout_from_retries(attempt))
             else:
                 if attempt >= max_retries or not should_retry(method, response, key is not None):
-                    raise_for_status(response, key)
+                    raise_for_status(response, key, path)
                     return response
                 await _async_sleep(_retry_timeout(response, attempt))
             attempt += 1

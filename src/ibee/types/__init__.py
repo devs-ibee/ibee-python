@@ -187,6 +187,7 @@ if typing.TYPE_CHECKING:
     from .load_balancer_status_response import LoadBalancerStatusResponse
     from .load_balancer_tls import LoadBalancerTls
     from .load_balancer_tls_mode import LoadBalancerTlsMode
+    from .manual_backup_run_request import ManualBackupRunRequest
     from .nat_gateway import NatGateway
     from .nat_port_forwarding_rule import NatPortForwardingRule
     from .nat_pricing import NatPricing
@@ -466,6 +467,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "LoadBalancerStatusResponse": ".load_balancer_status_response",
     "LoadBalancerTls": ".load_balancer_tls",
     "LoadBalancerTlsMode": ".load_balancer_tls_mode",
+    "ManualBackupRunRequest": ".manual_backup_run_request",
     "NatGateway": ".nat_gateway",
     "NatPortForwardingRule": ".nat_port_forwarding_rule",
     "NatPricing": ".nat_pricing",
@@ -769,6 +771,7 @@ __all__ = [
     "LoadBalancerStatusResponse",
     "LoadBalancerTls",
     "LoadBalancerTlsMode",
+    "ManualBackupRunRequest",
     "NatGateway",
     "NatPortForwardingRule",
     "NatPricing",

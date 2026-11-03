@@ -9,12 +9,22 @@ from .error_detail import ErrorDetail
 
 class Error(UniversalBaseModel):
     """
-    Error body. A refusal from the gateway's authorization step (auth-service ext-authz) carries `error` and the other fields below except `detail`; each of them is present, null when it does not apply. A refusal from the product service behind the gateway carries `detail` instead.
+    Errors through the public portal adapter contain string `error`, human-readable `message` and correlation `request_id`, while preserving actionable product `detail` for client errors. Internal diagnostics are redacted. Gateway authorization errors may omit message or request_id. A paused or unknown gateway route can return an empty 404; Cloudflare timeouts can return a problem-details object or HTML before the portal adapter is reached.
     """
 
     error: typing.Optional[str] = pydantic.Field(default=None)
     """
     Machine-readable code from the gateway's authorization step, for example `invalid_api_key`, `insufficient_scope`, `organization_restricted`, `organization_suspended`, `verification_required`, `product_not_enabled` or `billing_denied`. The response descriptions list the codes for each status.
+    """
+
+    message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Human-readable explanation, present on portal adapter errors.
+    """
+
+    request_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Correlation ID, present on portal adapter errors and in X-Request-Id.
     """
 
     required_scope: typing.Optional[str] = pydantic.Field(default=None)

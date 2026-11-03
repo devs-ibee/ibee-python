@@ -81,6 +81,7 @@ class FirewallsClient:
         *,
         name: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         description: typing.Optional[str] = OMIT,
         is_default: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -95,6 +96,9 @@ class FirewallsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         description : typing.Optional[str]
             Optional description.
@@ -125,6 +129,7 @@ class FirewallsClient:
         _response = self._raw_client.create_firewall_group(
             name=name,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             description=description,
             is_default=is_default,
             request_options=request_options,
@@ -677,6 +682,7 @@ class AsyncFirewallsClient:
         *,
         name: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         description: typing.Optional[str] = OMIT,
         is_default: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -691,6 +697,9 @@ class AsyncFirewallsClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
 
         description : typing.Optional[str]
             Optional description.
@@ -729,6 +738,7 @@ class AsyncFirewallsClient:
         _response = await self._raw_client.create_firewall_group(
             name=name,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             description=description,
             is_default=is_default,
             request_options=request_options,
