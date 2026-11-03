@@ -33,6 +33,7 @@ from .raw_client import AsyncRawGpuVmsClient, RawGpuVmsClient
 from .types.create_gpu_vm_request_network_connectivity import CreateGpuVmRequestNetworkConnectivity
 from .types.create_gpu_vm_request_os_type import CreateGpuVmRequestOsType
 from .types.create_gpu_vm_request_vpc_attachment_mode import CreateGpuVmRequestVpcAttachmentMode
+from .types.delete_gpu_vm_backup_run_response import DeleteGpuVmBackupRunResponse
 from .types.get_gpu_vm_metrics_timeseries_request_range import GetGpuVmMetricsTimeseriesRequestRange
 from .types.list_gpu_vms_request_sort_by import ListGpuVmsRequestSortBy
 from .types.list_gpu_vms_request_sort_direction import ListGpuVmsRequestSortDirection
@@ -148,7 +149,7 @@ class GpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Creates a GPU VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+        Creates a GPU VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If you received an `operation_id`, poll its status. If the create response was lost, repeat the identical request body with the original `X-Idempotency-Key` to recover the same operation. Keep the same body and key while the outcome is uncertain; a new key starts a separate create. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -1817,6 +1818,65 @@ class GpuVmsClient:
         )
         return _response.data
 
+    def create_gpu_vm_backup_run(
+        self,
+        vm_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        requested_by: typing.Optional[str] = OMIT,
+        reason: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BackupRun:
+        """
+        Queues a manual backup using the VM's enabled backup policy. When billing_catalog is omitted, the policy's stored catalog is used. Poll the returned run_id until the backup succeeds or fails. Requires scope: vm.write.
+
+        Parameters
+        ----------
+        vm_id : str
+            Virtual machine ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        requested_by : typing.Optional[str]
+
+        reason : typing.Optional[str]
+
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional override. When omitted, use the enabled policy's stored backup catalog.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BackupRun
+            Backup queued.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.gpu_vms.create_gpu_vm_backup_run(
+            vm_id="vm_id",
+            workspace_id="710995",
+            requested_by="api",
+        )
+        """
+        _response = self._raw_client.create_gpu_vm_backup_run(
+            vm_id,
+            workspace_id=workspace_id,
+            requested_by=requested_by,
+            reason=reason,
+            billing_catalog=billing_catalog,
+            request_options=request_options,
+        )
+        return _response.data
+
     def restore_gpu_vm_backup(
         self,
         vm_id: str,
@@ -2044,7 +2104,7 @@ class GpuVmsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteGpuVmBackupRunResponse:
         """
         Deletes one backup run and its recovery point, as the portal's Backups page does. Requires scope: vm.write.
 
@@ -2061,7 +2121,8 @@ class GpuVmsClient:
 
         Returns
         -------
-        None
+        DeleteGpuVmBackupRunResponse
+            Deletion accepted. GET returns status deleting until cleanup completes, then 404.
 
         Examples
         --------
@@ -2119,6 +2180,49 @@ class GpuVmsClient:
         )
         """
         _response = self._raw_client.get_gpu_vm_backup_restore(
+            restore_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def cancel_gpu_vm_backup_restore(
+        self,
+        restore_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryRestore:
+        """
+        Cancels a restore only while it is queued and has not started. A running restore is refused with 409. Repeating a successful cancellation returns the cancelled restore. Requires scope: vm.write.
+
+        Parameters
+        ----------
+        restore_id : str
+            Snapshot or backup restore operation ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryRestore
+            Restore cancelled before execution.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.gpu_vms.cancel_gpu_vm_backup_restore(
+            restore_id="restore_id",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.cancel_gpu_vm_backup_restore(
             restore_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
@@ -2239,7 +2343,7 @@ class AsyncGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Creates a GPU VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+        Creates a GPU VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If you received an `operation_id`, poll its status. If the create response was lost, repeat the identical request body with the original `X-Idempotency-Key` to recover the same operation. Keep the same body and key while the outcome is uncertain; a new key starts a separate create. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -4124,6 +4228,73 @@ class AsyncGpuVmsClient:
         )
         return _response.data
 
+    async def create_gpu_vm_backup_run(
+        self,
+        vm_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        requested_by: typing.Optional[str] = OMIT,
+        reason: typing.Optional[str] = OMIT,
+        billing_catalog: typing.Optional[BillingCatalogSelection] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BackupRun:
+        """
+        Queues a manual backup using the VM's enabled backup policy. When billing_catalog is omitted, the policy's stored catalog is used. Poll the returned run_id until the backup succeeds or fails. Requires scope: vm.write.
+
+        Parameters
+        ----------
+        vm_id : str
+            Virtual machine ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        requested_by : typing.Optional[str]
+
+        reason : typing.Optional[str]
+
+        billing_catalog : typing.Optional[BillingCatalogSelection]
+            Optional override. When omitted, use the enabled policy's stored backup catalog.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BackupRun
+            Backup queued.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.gpu_vms.create_gpu_vm_backup_run(
+                vm_id="vm_id",
+                workspace_id="710995",
+                requested_by="api",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.create_gpu_vm_backup_run(
+            vm_id,
+            workspace_id=workspace_id,
+            requested_by=requested_by,
+            reason=reason,
+            billing_catalog=billing_catalog,
+            request_options=request_options,
+        )
+        return _response.data
+
     async def restore_gpu_vm_backup(
         self,
         vm_id: str,
@@ -4375,7 +4546,7 @@ class AsyncGpuVmsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteGpuVmBackupRunResponse:
         """
         Deletes one backup run and its recovery point, as the portal's Backups page does. Requires scope: vm.write.
 
@@ -4392,7 +4563,8 @@ class AsyncGpuVmsClient:
 
         Returns
         -------
-        None
+        DeleteGpuVmBackupRunResponse
+            Deletion accepted. GET returns status deleting until cleanup completes, then 404.
 
         Examples
         --------
@@ -4466,6 +4638,57 @@ class AsyncGpuVmsClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.get_gpu_vm_backup_restore(
+            restore_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def cancel_gpu_vm_backup_restore(
+        self,
+        restore_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RecoveryRestore:
+        """
+        Cancels a restore only while it is queued and has not started. A running restore is refused with 409. Repeating a successful cancellation returns the cancelled restore. Requires scope: vm.write.
+
+        Parameters
+        ----------
+        restore_id : str
+            Snapshot or backup restore operation ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RecoveryRestore
+            Restore cancelled before execution.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.gpu_vms.cancel_gpu_vm_backup_restore(
+                restore_id="restore_id",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.cancel_gpu_vm_backup_restore(
             restore_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data

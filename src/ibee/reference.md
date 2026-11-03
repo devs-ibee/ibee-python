@@ -2801,7 +2801,7 @@ client.secret_store.delete_secret_identity_scope(
 <dl>
 <dd>
 
-Lists object storage buckets in a workspace. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists object storage buckets in a workspace. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -2890,7 +2890,7 @@ client.object_storage.list_buckets(
 <dl>
 <dd>
 
-Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3014,7 +3014,7 @@ client.object_storage.create_bucket(
 <dl>
 <dd>
 
-Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -3096,7 +3096,7 @@ client.object_storage.get_bucket(
 <dl>
 <dd>
 
-Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -3178,7 +3178,7 @@ client.object_storage.delete_bucket(
 <dl>
 <dd>
 
-Updates mutable bucket settings. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Updates mutable bucket settings. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3269,7 +3269,7 @@ client.object_storage.update_bucket(
 <dl>
 <dd>
 
-Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -3351,7 +3351,7 @@ client.object_storage.get_bucket_lifecycle(
 <dl>
 <dd>
 
-Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3446,7 +3446,7 @@ client.object_storage.set_bucket_lifecycle(
 <dl>
 <dd>
 
-Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3528,7 +3528,7 @@ client.object_storage.delete_bucket_lifecycle(
 <dl>
 <dd>
 
-Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -3610,7 +3610,7 @@ client.object_storage.get_bucket_cors(
 <dl>
 <dd>
 
-Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3710,7 +3710,7 @@ client.object_storage.set_bucket_cors(
 <dl>
 <dd>
 
-Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3792,7 +3792,7 @@ client.object_storage.delete_bucket_cors(
 <dl>
 <dd>
 
-Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -3874,7 +3874,7 @@ client.object_storage.get_bucket_object_lock(
 <dl>
 <dd>
 
-Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3964,7 +3964,7 @@ client.object_storage.set_bucket_object_lock(
 <dl>
 <dd>
 
-Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4046,7 +4046,7 @@ client.object_storage.get_bucket_notifications(
 <dl>
 <dd>
 
-Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4143,7 +4143,7 @@ client.object_storage.set_bucket_notifications(
 <dl>
 <dd>
 
-Removes every notification rule from the bucket. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4225,7 +4225,7 @@ client.object_storage.delete_bucket_notifications(
 <dl>
 <dd>
 
-Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4307,7 +4307,7 @@ client.object_storage.get_bucket_custom_domains(
 <dl>
 <dd>
 
-Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4398,7 +4398,7 @@ client.object_storage.add_bucket_custom_domain(
 <dl>
 <dd>
 
-Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4489,7 +4489,7 @@ client.object_storage.remove_bucket_custom_domain(
 <dl>
 <dd>
 
-Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4579,7 +4579,7 @@ client.object_storage.get_bucket_metrics(
 <dl>
 <dd>
 
-Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4652,7 +4652,7 @@ client.object_storage.list_s3credentials(
 <dl>
 <dd>
 
-Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4765,7 +4765,7 @@ client.object_storage.create_s3credential(
 <dl>
 <dd>
 
-Returns credential metadata without the secret key. Requires scope: object-storage.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns credential metadata without the secret key. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4847,7 +4847,7 @@ client.object_storage.get_s3credential(
 <dl>
 <dd>
 
-Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4929,7 +4929,7 @@ client.object_storage.delete_s3credential(
 <dl>
 <dd>
 
-Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -5226,6 +5226,14 @@ client.vpcs.create_vpc(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
     
 </dd>
 </dl>
@@ -5725,6 +5733,14 @@ client.vpcs.create_vpc_subnet(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
     
 </dd>
 </dl>
@@ -6414,6 +6430,14 @@ client.vpcs.create_nat_gateway(
 <dl>
 <dd>
 
+**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **subnet_id:** `typing.Optional[str]` — Subnet the gateway is placed in; chosen by the service when omitted.
     
 </dd>
@@ -6829,6 +6853,14 @@ client.vpcs.create_nat_port_forwarding_rule(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
     
 </dd>
 </dl>
@@ -7268,6 +7300,14 @@ client.reserved_ips.reserve_ip(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
     
 </dd>
 </dl>
@@ -8172,6 +8212,14 @@ client.firewalls.create_firewall_group(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
     
 </dd>
 </dl>
@@ -10150,7 +10198,7 @@ Billing period to quote prices for.
 <dl>
 <dd>
 
-**include_availability:** `typing.Optional[bool]` — Include an advisory placement check. Requires site_id. This does not reserve stock.
+**include_availability:** `typing.Optional[bool]` — Check advisory placement by default when site_id is supplied. Set false for pricing-only discovery. This does not reserve stock.
     
 </dd>
 </dl>
@@ -10616,7 +10664,7 @@ client.cloud_vms.list_cloud_vms(
 <dl>
 <dd>
 
-Creates a cloud VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+Creates a cloud VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If you received an `operation_id`, poll its status. If the create response was lost, repeat the identical request body with the original `X-Idempotency-Key` to recover the same operation. Keep the same body and key while the outcome is uncertain; a new key starts a separate create. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -13277,6 +13325,97 @@ client.cloud_vms.list_cloud_vm_backup_runs(
 </dl>
 </details>
 
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">create_cloud_vm_backup_run</a>(...) -> BackupRun</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Queues a manual backup using the VM's enabled backup policy. When billing_catalog is omitted, the policy's stored catalog is used. Poll the returned run_id until the backup succeeds or fails. Requires scope: vm.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.cloud_vms.create_cloud_vm_backup_run(
+    vm_id="vm_id",
+    workspace_id="710995",
+    requested_by="api",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**vm_id:** `str` — Virtual machine ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `ManualBackupRunRequest` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 <details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">restore_cloud_vm_backup</a>(...) -> RecoveryRestore</code></summary>
 <dl>
 <dd>
@@ -13563,7 +13702,7 @@ client.cloud_vms.get_cloud_vm_backup_run(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">delete_cloud_vm_backup_run</a>(...)</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">delete_cloud_vm_backup_run</a>(...) -> DeleteCloudVmBackupRunResponse</code></summary>
 <dl>
 <dd>
 
@@ -13809,6 +13948,88 @@ client.cloud_vms.get_compute_operation(
 </dl>
 </details>
 
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">cancel_cloud_vm_backup_restore</a>(...) -> RecoveryRestore</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Cancels a restore only while it is queued and has not started. A running restore is refused with 409. Repeating a successful cancellation returns the cancelled restore. Requires scope: vm.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.cloud_vms.cancel_cloud_vm_backup_restore(
+    restore_id="restore_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**restore_id:** `str` — Snapshot or backup restore operation ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 ## GpuVms
 <details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">list_gpu_vms</a>(...) -> typing.List[GpuVm]</code></summary>
 <dl>
@@ -13935,7 +14156,7 @@ client.gpu_vms.list_gpu_vms(
 <dl>
 <dd>
 
-Creates a GPU VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+Creates a GPU VM. Returns an operation you can poll for status. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If you received an `operation_id`, poll its status. If the create response was lost, repeat the identical request body with the original `X-Idempotency-Key` to recover the same operation. Keep the same body and key while the outcome is uncertain; a new key starts a separate create. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -16614,6 +16835,97 @@ client.gpu_vms.list_gpu_vm_backup_runs(
 </dl>
 </details>
 
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">create_gpu_vm_backup_run</a>(...) -> BackupRun</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Queues a manual backup using the VM's enabled backup policy. When billing_catalog is omitted, the policy's stored catalog is used. Poll the returned run_id until the backup succeeds or fails. Requires scope: vm.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.gpu_vms.create_gpu_vm_backup_run(
+    vm_id="vm_id",
+    workspace_id="710995",
+    requested_by="api",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**vm_id:** `str` — Virtual machine ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `ManualBackupRunRequest` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 <details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">restore_gpu_vm_backup</a>(...) -> RecoveryRestore</code></summary>
 <dl>
 <dd>
@@ -16900,7 +17212,7 @@ client.gpu_vms.get_gpu_vm_backup_run(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">delete_gpu_vm_backup_run</a>(...)</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">delete_gpu_vm_backup_run</a>(...) -> DeleteGpuVmBackupRunResponse</code></summary>
 <dl>
 <dd>
 
@@ -17018,6 +17330,88 @@ client = Ibee(
 )
 
 client.gpu_vms.get_gpu_vm_backup_restore(
+    restore_id="restore_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**restore_id:** `str` — Snapshot or backup restore operation ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">cancel_gpu_vm_backup_restore</a>(...) -> RecoveryRestore</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Cancels a restore only while it is queued and has not started. A running restore is refused with 409. Repeating a successful cancellation returns the cancelled restore. Requires scope: vm.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.gpu_vms.cancel_gpu_vm_backup_restore(
     restore_id="restore_id",
     workspace_id="710995",
 )
@@ -19168,7 +19562,7 @@ client.cdn.purge_cdn_cache(
 <dl>
 <dd>
 
-Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -19250,7 +19644,7 @@ client.container_registry.check_container_registry_name_availability(
 <dl>
 <dd>
 
-Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -19339,7 +19733,7 @@ client.container_registry.list_container_registries(
 <dl>
 <dd>
 
-Creates a registry with a storage plan (`billing_catalog.sku_code`).
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a registry with a storage plan (`billing_catalog.sku_code`).
 The registry service asks Billing whether the workspace may buy that
 plan and refuses with 403 `billing_resource_not_eligible` (and a
 `reason`) when it may not. Returns 201 when the registry is active, or
@@ -19480,7 +19874,7 @@ client.container_registry.create_container_registry(
 <dl>
 <dd>
 
-Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -19562,7 +19956,7 @@ client.container_registry.get_container_registry(
 <dl>
 <dd>
 
-Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -19653,7 +20047,7 @@ client.container_registry.delete_container_registry(
 <dl>
 <dd>
 
-Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -19753,7 +20147,7 @@ client.container_registry.update_container_registry_visibility(
 <dl>
 <dd>
 
-Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -19835,7 +20229,7 @@ client.container_registry.retry_container_registry_provisioning(
 <dl>
 <dd>
 
-Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -19917,7 +20311,7 @@ client.container_registry.get_container_registry_package(
 <dl>
 <dd>
 
-Moves an active registry to a larger storage plan. Only larger quotas
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Moves an active registry to a larger storage plan. Only larger quotas
 are accepted and only one change can be pending (409 otherwise). The
 registry service asks Billing first and refuses with 403
 `billing_resource_not_eligible` when the plan is not allowed. Send an
@@ -20027,7 +20421,7 @@ client.container_registry.upgrade_container_registry_package(
 <dl>
 <dd>
 
-Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -20117,7 +20511,7 @@ client.container_registry.list_container_registry_access_tokens(
 <dl>
 <dd>
 
-Creates a Docker login credential for the registry. The `username`
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a Docker login credential for the registry. The `username`
 and `secret` are returned once and cannot be read again. The registry
 must be active, and the registry service asks Billing whether the
 workspace may create credentials. Requires scope:
@@ -20249,7 +20643,7 @@ client.container_registry.create_container_registry_access_token(
 <dl>
 <dd>
 
-Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20340,7 +20734,7 @@ client.container_registry.rotate_container_registry_access_token(
 <dl>
 <dd>
 
-Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20431,7 +20825,7 @@ client.container_registry.revoke_container_registry_access_token(
 <dl>
 <dd>
 
-Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -20545,7 +20939,7 @@ client.container_registry.list_container_registry_repositories(
 <dl>
 <dd>
 
-Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20645,7 +21039,7 @@ client.container_registry.delete_container_registry_repository(
 <dl>
 <dd>
 
-Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -20752,7 +21146,7 @@ client.container_registry.list_container_registry_artifacts(
 <dl>
 <dd>
 
-Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20861,7 +21255,7 @@ client.container_registry.delete_container_registry_artifact(
 <dl>
 <dd>
 
-Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20961,7 +21355,7 @@ client.container_registry.scan_container_registry_artifact(
 <dl>
 <dd>
 
-Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21043,7 +21437,7 @@ client.container_registry.get_container_registry_security_settings(
 <dl>
 <dd>
 
-Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -21134,7 +21528,7 @@ client.container_registry.update_container_registry_security_settings(
 <dl>
 <dd>
 
-Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21216,7 +21610,7 @@ client.container_registry.get_container_registry_vulnerability_summary(
 <dl>
 <dd>
 
-Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21370,7 +21764,7 @@ Return only findings of this severity.
 <dl>
 <dd>
 
-Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21477,7 +21871,7 @@ client.container_registry.list_container_registry_sboms(
 <dl>
 <dd>
 
-Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21601,7 +21995,7 @@ client.container_registry.get_container_registry_sbom(
 <dl>
 <dd>
 
-Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21700,7 +22094,7 @@ client.container_registry.download_container_registry_sbom(
 <dl>
 <dd>
 
-Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
