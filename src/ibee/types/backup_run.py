@@ -17,7 +17,7 @@ from .recovery_volume_manifest_item import RecoveryVolumeManifestItem
 
 class BackupRun(UniversalBaseModel):
     """
-    One backup run of a VM. A succeeded run is a recovery point that `POST .../backups/restore` accepts through `recovery_point_id`.
+    One backup run of a VM. A succeeded run is a recovery point that `POST .../backups/actions/restore` accepts through `recovery_point_id`.
     """
 
     organization_id: str = pydantic.Field()
@@ -104,8 +104,7 @@ class BackupRun(UniversalBaseModel):
     """
     What started the run.
     - `scheduled`: the policy schedule.
-    - `manual`: an on-demand request from a user.
-    - `api`: an on-demand request through the API.
+    - `manual`: an on-demand request, from the portal or the API.
     """
 
     backup_type: BackupRunBackupType = pydantic.Field()

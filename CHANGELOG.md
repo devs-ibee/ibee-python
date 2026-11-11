@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.8.0
+
+- Update to public API contract 0.10.0: 231 client operations (229 plus two), including
+  the 51 temporarily paused Object Storage and Container Registry operations.
+- **Breaking:** `resize_cloud_vm` and `resize_gpu_vm` now require `cpu`, `ram_mb`,
+  `disk_gb` and `billing_catalog`, the target plan's exact size and its billing
+  catalog with a `billing_options` term merged in, as on create. The API already
+  refused a resize without them (`400` "Plan changes require the target
+  billing_catalog"), so 0.7.0 could not resize. The prechecks take only the size,
+  as before; their request type is now `VmResizePrecheckRequest`.
+- Add `client.billing`: `get_billing_wallet()` reads the organization's wallet
+  (`billing.read`), and `create_billing_topup(amount_minor=...)` returns a hosted
+  payment page that tops it up once paid (`billing.topup`). The SDK sends a random
+  `Idempotency-Key` when none is given, so a retried call returns the same link.
+- `413` and `502` answers raise `ContentTooLargeError` and `BadGatewayError` (contract
+  0.9.1 documents them on every operation); both are still `ApiError`s.
+- Contract 0.9.1 text corrections in the docstrings and `reference.md`.
+- Generate the SDK User-Agent with release version 0.8.0.
+
 ## 0.7.0
 
 - Update to public API contract 0.9.0: 229 client operations, including all 51

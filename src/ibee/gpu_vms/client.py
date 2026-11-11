@@ -336,7 +336,7 @@ class GpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+        Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. If the VM's IP is already a Reserved IP, send no body: `release` and `reserve` are both refused with 400. The IP stays in the workspace and keeps billing until you release it from Reserved IPs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -350,7 +350,7 @@ class GpuVmsClient:
             Unique key used to safely retry write operations.
 
         public_ip_action : typing.Optional[VmDeleteRequestPublicIpAction]
-            What to do with the VM's automatically assigned public IP. `reserve` converts it to a Reserved IP in this workspace; `release` releases it with the VM. Required when the VM has an automatically assigned public IP. `reserve` on a VM without one is refused with 400.
+            What to do with the VM's automatically assigned public IP. `reserve` converts it to a Reserved IP in this workspace; `release` releases it with the VM. Required when the VM has an automatically assigned public IP. `reserve` on a VM without one is refused with 400. If the IP has already been converted to a Reserved IP, `release` and `reserve` are both refused with 400: delete with no body to keep the IP, then release it from Reserved IPs to stop its billing.
 
         reserved_ip_label : typing.Optional[str]
             Label for the Reserved IP that `reserve` creates. Blank is treated as not set.
@@ -738,35 +738,38 @@ class GpuVmsClient:
         self,
         vm_id: str,
         *,
+        cpu: int,
+        ram_mb: int,
+        disk_gb: int,
+        billing_catalog: ComputeBillingSelection,
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
-        cpu: typing.Optional[int] = OMIT,
-        ram_mb: typing.Optional[int] = OMIT,
-        disk_gb: typing.Optional[int] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+        Moves a GPU VM to another plan with the same GPU: send the target plan's `cpu`, `ram_mb`, `disk_gb` and `billing_catalog` (see the request body). The root disk can grow, never shrink. The same precheck the portal runs is applied first. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
             Virtual machine ID.
 
+        cpu : int
+            Target vCPUs, from the target plan.
+
+        ram_mb : int
+            Target memory in MB, from the target plan.
+
+        disk_gb : int
+            Target root disk size in GB, from the target plan. The disk can grow, never shrink.
+
+        billing_catalog : ComputeBillingSelection
+
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         idempotency_key : typing.Optional[str]
             Unique key used to safely retry write operations.
-
-        cpu : typing.Optional[int]
-            Target vCPUs.
-
-        ram_mb : typing.Optional[int]
-            Target memory in MB.
-
-        disk_gb : typing.Optional[int]
-            Target root disk size in GB.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -778,7 +781,7 @@ class GpuVmsClient:
 
         Examples
         --------
-        from ibee import Ibee
+        from ibee import ComputeBillingSelection, Ibee
 
         client = Ibee(
             token="YOUR_TOKEN",
@@ -786,15 +789,28 @@ class GpuVmsClient:
         client.gpu_vms.resize_gpu_vm(
             vm_id="vm_id",
             workspace_id="710995",
+            cpu=4,
+            ram_mb=8192,
+            disk_gb=80,
+            billing_catalog=ComputeBillingSelection(
+                sku_id="sku_id",
+                sku_code="sku_code",
+                billing_interval="HOURLY",
+                committed=False,
+                commitment_period="HOURLY",
+                unit_price_minor=1,
+                price_currency="INR",
+            ),
         )
         """
         _response = self._raw_client.resize_gpu_vm(
             vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
             cpu=cpu,
             ram_mb=ram_mb,
             disk_gb=disk_gb,
+            billing_catalog=billing_catalog,
+            workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             request_options=request_options,
         )
         return _response.data
@@ -1774,7 +1790,7 @@ class GpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRunList:
         """
-        Lists backup runs and usable recovery points for one GPU VM. Requires scope: vm.read.
+        Lists the finished, successful backup runs (usable recovery points) of one GPU VM, newest first. A run being deleted shows `status: deleting`. Queued, running, failed and cancelled runs are not listed: read a run by ID with `GET /compute/gpu-vm-backups/runs/{run_id}` to see those states. The backup policy's `last_status` shows how the latest finished run ended. Requires scope: vm.read.
 
         Parameters
         ----------
@@ -2003,7 +2019,7 @@ class GpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRunList:
         """
-        Lists backup runs and recovery points of every Gpu VM in the workspace, as the portal's Backups page does. Filter by `vm_id` or `status`. Requires scope: vm.read.
+        Lists the finished, successful backup runs (usable recovery points) of every Gpu VM in the workspace, newest first, as the portal's Backups page does. A run being deleted shows `status: deleting`. Queued, running, failed and cancelled runs are not listed: read a run by ID with `GET /compute/gpu-vm-backups/runs/{run_id}` to see those states. Filter by `vm_id` or `status`. Requires scope: vm.read.
 
         Parameters
         ----------
@@ -2014,7 +2030,7 @@ class GpuVmsClient:
             Return only runs of this VM.
 
         status : typing.Optional[typing.Union[BackupStatus, typing.Sequence[BackupStatus]]]
-            Return only runs in these states. Repeat the parameter for several states.
+            Return only runs in these states. Repeat the parameter for several states. Only `succeeded` and `deleting` can match; any other state returns an empty list.
 
         limit : typing.Optional[int]
             Maximum number of records to return.
@@ -2546,7 +2562,7 @@ class AsyncGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+        Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. If the VM's IP is already a Reserved IP, send no body: `release` and `reserve` are both refused with 400. The IP stays in the workspace and keeps billing until you release it from Reserved IPs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
@@ -2560,7 +2576,7 @@ class AsyncGpuVmsClient:
             Unique key used to safely retry write operations.
 
         public_ip_action : typing.Optional[VmDeleteRequestPublicIpAction]
-            What to do with the VM's automatically assigned public IP. `reserve` converts it to a Reserved IP in this workspace; `release` releases it with the VM. Required when the VM has an automatically assigned public IP. `reserve` on a VM without one is refused with 400.
+            What to do with the VM's automatically assigned public IP. `reserve` converts it to a Reserved IP in this workspace; `release` releases it with the VM. Required when the VM has an automatically assigned public IP. `reserve` on a VM without one is refused with 400. If the IP has already been converted to a Reserved IP, `release` and `reserve` are both refused with 400: delete with no body to keep the IP, then release it from Reserved IPs to stop its billing.
 
         reserved_ip_label : typing.Optional[str]
             Label for the Reserved IP that `reserve` creates. Blank is treated as not set.
@@ -3004,35 +3020,38 @@ class AsyncGpuVmsClient:
         self,
         vm_id: str,
         *,
+        cpu: int,
+        ram_mb: int,
+        disk_gb: int,
+        billing_catalog: ComputeBillingSelection,
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
-        cpu: typing.Optional[int] = OMIT,
-        ram_mb: typing.Optional[int] = OMIT,
-        disk_gb: typing.Optional[int] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OperationAccepted:
         """
-        Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+        Moves a GPU VM to another plan with the same GPU: send the target plan's `cpu`, `ram_mb`, `disk_gb` and `billing_catalog` (see the request body). The root disk can grow, never shrink. The same precheck the portal runs is applied first. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
         Parameters
         ----------
         vm_id : str
             Virtual machine ID.
 
+        cpu : int
+            Target vCPUs, from the target plan.
+
+        ram_mb : int
+            Target memory in MB, from the target plan.
+
+        disk_gb : int
+            Target root disk size in GB, from the target plan. The disk can grow, never shrink.
+
+        billing_catalog : ComputeBillingSelection
+
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
         idempotency_key : typing.Optional[str]
             Unique key used to safely retry write operations.
-
-        cpu : typing.Optional[int]
-            Target vCPUs.
-
-        ram_mb : typing.Optional[int]
-            Target memory in MB.
-
-        disk_gb : typing.Optional[int]
-            Target root disk size in GB.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3046,7 +3065,7 @@ class AsyncGpuVmsClient:
         --------
         import asyncio
 
-        from ibee import AsyncIbee
+        from ibee import AsyncIbee, ComputeBillingSelection
 
         client = AsyncIbee(
             token="YOUR_TOKEN",
@@ -3057,6 +3076,18 @@ class AsyncGpuVmsClient:
             await client.gpu_vms.resize_gpu_vm(
                 vm_id="vm_id",
                 workspace_id="710995",
+                cpu=4,
+                ram_mb=8192,
+                disk_gb=80,
+                billing_catalog=ComputeBillingSelection(
+                    sku_id="sku_id",
+                    sku_code="sku_code",
+                    billing_interval="HOURLY",
+                    committed=False,
+                    commitment_period="HOURLY",
+                    unit_price_minor=1,
+                    price_currency="INR",
+                ),
             )
 
 
@@ -3064,11 +3095,12 @@ class AsyncGpuVmsClient:
         """
         _response = await self._raw_client.resize_gpu_vm(
             vm_id,
-            workspace_id=workspace_id,
-            idempotency_key=idempotency_key,
             cpu=cpu,
             ram_mb=ram_mb,
             disk_gb=disk_gb,
+            billing_catalog=billing_catalog,
+            workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             request_options=request_options,
         )
         return _response.data
@@ -4176,7 +4208,7 @@ class AsyncGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRunList:
         """
-        Lists backup runs and usable recovery points for one GPU VM. Requires scope: vm.read.
+        Lists the finished, successful backup runs (usable recovery points) of one GPU VM, newest first. A run being deleted shows `status: deleting`. Queued, running, failed and cancelled runs are not listed: read a run by ID with `GET /compute/gpu-vm-backups/runs/{run_id}` to see those states. The backup policy's `last_status` shows how the latest finished run ended. Requires scope: vm.read.
 
         Parameters
         ----------
@@ -4429,7 +4461,7 @@ class AsyncGpuVmsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BackupRunList:
         """
-        Lists backup runs and recovery points of every Gpu VM in the workspace, as the portal's Backups page does. Filter by `vm_id` or `status`. Requires scope: vm.read.
+        Lists the finished, successful backup runs (usable recovery points) of every Gpu VM in the workspace, newest first, as the portal's Backups page does. A run being deleted shows `status: deleting`. Queued, running, failed and cancelled runs are not listed: read a run by ID with `GET /compute/gpu-vm-backups/runs/{run_id}` to see those states. Filter by `vm_id` or `status`. Requires scope: vm.read.
 
         Parameters
         ----------
@@ -4440,7 +4472,7 @@ class AsyncGpuVmsClient:
             Return only runs of this VM.
 
         status : typing.Optional[typing.Union[BackupStatus, typing.Sequence[BackupStatus]]]
-            Return only runs in these states. Repeat the parameter for several states.
+            Return only runs in these states. Repeat the parameter for several states. Only `succeeded` and `deleting` can match; any other state returns an empty list.
 
         limit : typing.Optional[int]
             Maximum number of records to return.

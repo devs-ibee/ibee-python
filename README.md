@@ -92,8 +92,13 @@ with `vm_type="gpu"`, `create_gpu_vm`, `gpu_count` and `gpu_model`.
 
 A few calls to know:
 
-- Resize is `resize_cloud_vm(vm_id, cpu=..., ram_mb=..., disk_gb=...)`
-  (`precheck_cloud_vm_resize` first is optional).
+- Resize moves the VM to another plan: `resize_cloud_vm(vm_id, cpu=..., ram_mb=...,
+  disk_gb=..., billing_catalog=...)` with the target plan's exact size from
+  `list_compute_plans` and its `billing_catalog` with a `billing_options` term merged
+  in, as for a create (`precheck_cloud_vm_resize` first, with the size only, is optional).
+- `client.billing.get_billing_wallet()` reads the organization's wallet;
+  `client.billing.create_billing_topup(amount_minor=...)` returns a payment page
+  (`checkout_url`) that tops it up once paid.
 - Snapshot create and backup enable take a `billing_catalog` from
   `compute_catalog.list_snapshot_storage_plans()` / `list_backup_storage_plans()`.
 - `disable_cloud_vm_backups(vm_id, request={})` / `disable_gpu_vm_backups`: pass

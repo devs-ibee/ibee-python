@@ -401,7 +401,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -539,7 +539,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -766,7 +766,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -901,7 +901,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomainRemoved:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -1640,7 +1640,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -1802,7 +1802,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -2069,7 +2069,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteResponse:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.delete.
 
         Parameters
         ----------
@@ -2228,7 +2228,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomainRemoved:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
+        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.delete.
 
         Parameters
         ----------

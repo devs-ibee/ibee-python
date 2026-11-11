@@ -4,27 +4,30 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .compute_billing_selection import ComputeBillingSelection
 
 
 class VmResizeRequest(UniversalBaseModel):
     """
-    At least one target value must be supplied.
+    Body of a resize: the target plan from the compute catalog (`GET /compute/plans`, same `vm_type`). Send that plan's `cpu`, `ram_mb` and `disk_gb` exactly, and its `billing_catalog` with the chosen `billing_options` term merged in, as on create. The compute engine refuses with `400` a resize without `billing_catalog`, or with a CPU, memory or disk that doesn't match the SKU ("Target billing SKU dimensions do not match requested CPU, RAM and root disk"). A Windows VM also needs `billing_catalog.attached_skus.windows_license` with `quantity` equal to the target `cpu`.
     """
 
-    cpu: typing.Optional[int] = pydantic.Field(default=None)
+    cpu: int = pydantic.Field()
     """
-    Target vCPUs.
-    """
-
-    ram_mb: typing.Optional[int] = pydantic.Field(default=None)
-    """
-    Target memory in MB.
+    Target vCPUs, from the target plan.
     """
 
-    disk_gb: typing.Optional[int] = pydantic.Field(default=None)
+    ram_mb: int = pydantic.Field()
     """
-    Target root disk size in GB.
+    Target memory in MB, from the target plan.
     """
+
+    disk_gb: int = pydantic.Field()
+    """
+    Target root disk size in GB, from the target plan. The disk can grow, never shrink.
+    """
+
+    billing_catalog: ComputeBillingSelection
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
