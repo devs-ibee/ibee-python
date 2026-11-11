@@ -2,4 +2,4 @@
 
 import typing
 
-BackupRunTrigger = typing.Union[typing.Literal["scheduled", "manual", "api"], typing.Any]
+BackupRunTrigger = typing.Union[typing.Literal["scheduled", "manual"], typing.Any]

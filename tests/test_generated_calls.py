@@ -89,12 +89,39 @@ def test_vm_delete_sends_no_public_ip_action_of_its_own() -> None:
     assert rec.body() == {"public_ip_action": "reserve"}
 
 
-def test_resize_sends_the_shape_only() -> None:
+def test_resize_sends_the_target_plan_and_its_catalog() -> None:
+    """Contract 0.10.0: the engine refuses a resize without the target plan's billing_catalog."""
+    selection = {**PLAN_CATALOG, **PLAN_CATALOG["billing_options"][0]}
     rec = Recorder((202, ACCEPTED))
-    client(rec, workspace_id=WS).cloud_vms.resize_cloud_vm(VM, cpu=2, ram_mb=4096)
+    client(rec, workspace_id=WS).cloud_vms.resize_cloud_vm(VM, cpu=1, ram_mb=2048, disk_gb=50, billing_catalog=selection)
     assert _calls(rec) == [("POST", f"compute/cloud-vms/{VM}/actions/resize")]
-    assert rec.body() == {"cpu": 2, "ram_mb": 4096}
+    assert rec.body() == {"cpu": 1, "ram_mb": 2048, "disk_gb": 50, "billing_catalog": json.loads(json.dumps(selection))}
     assert rec.requests[0].headers["x-idempotency-key"]
+
+
+def test_resize_precheck_takes_the_shape_only() -> None:
+    rec = Recorder((200, {}))
+    try:
+        client(rec, workspace_id=WS).cloud_vms.precheck_cloud_vm_resize(VM, cpu=2, ram_mb=4096)
+    except ParsingError:
+        pass  # the mock answer is not a VmResizePrecheck; only the request matters
+    assert _calls(rec) == [("POST", f"compute/cloud-vms/{VM}/actions/resize/precheck")]
+    assert rec.body() == {"cpu": 2, "ram_mb": 4096}
+
+
+def test_billing_wallet_and_topup() -> None:
+    wallet = {"organization_id": "org_1", "currency": "INR", "status": "ACTIVE", "available_paid_balance_minor": 100,
+              "available_promo_balance_minor": 0, "held_paid_balance_minor": 0, "total_balance_minor": 100}
+    topup = {"checkout_url": "https://pay.example.test/x", "gateway": "razorpay", "amount_minor": 100000,
+             "currency": "INR", "expires_at": None, "payment_attempt_id": "pa_1", "organization_id": "org_1"}
+    rec = Recorder((200, wallet), (201, topup))
+    billing = client(rec, workspace_id=WS).billing
+    assert billing.get_billing_wallet().total_balance_minor == 100
+    assert billing.create_billing_topup(amount_minor=100000).checkout_url == topup["checkout_url"]
+    assert _calls(rec) == [("GET", "billing/wallet"), ("POST", "billing/topups")]
+    assert rec.body() == {"amount_minor": 100000}
+    # A random retry key is sent, so a retried call returns the same payment link.
+    assert rec.requests[1].headers["idempotency-key"]
 
 
 @pytest.mark.parametrize("family", ["cloud", "gpu"])
@@ -216,7 +243,9 @@ def test_removed_operations_are_gone() -> None:
     for namespace, methods in REMOVED.items():
         for method in methods:
             assert not hasattr(getattr(ibee, namespace), method), f"{namespace}.{method}"
-    assert not hasattr(ibee, "billing") and not hasattr(ibee, "vm_console")
+    assert not hasattr(ibee, "vm_console")
+    # Contract 0.10.0 brings billing back with the wallet and top-ups only (no eligibility check).
+    assert {m for m in dir(ibee.billing) if not m.startswith("_")} == {"get_billing_wallet", "create_billing_topup", "with_raw_response"}
 
 
 def test_async_create_is_sent_once_with_a_key() -> None:

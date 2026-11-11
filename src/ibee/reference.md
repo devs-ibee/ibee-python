@@ -3446,7 +3446,7 @@ client.object_storage.set_bucket_lifecycle(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -3710,7 +3710,7 @@ client.object_storage.set_bucket_cors(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -4143,7 +4143,7 @@ client.object_storage.set_bucket_notifications(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -4398,7 +4398,7 @@ client.object_storage.add_bucket_custom_domain(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.write.
+Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -5233,7 +5233,14 @@ client.vpcs.create_vpc(
 <dl>
 <dd>
 
-**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
+**idempotency_key:** `typing.Optional[str]` 
+
+Retry key for this create. Send the same key and the same body on every retry. The key is scoped to organization, workspace and path.
+- Create completed: you get the original answer for 24 hours, even if the plan limit has since been reached.
+- Refused or never sent: nothing was created, so the key is free to use again, including with a corrected body.
+- Unknown outcome (timeout, server error, lost connection): 409 `idempotency_in_progress` with `Retry-After`. This usually lasts 30 seconds and at most 3 minutes. Keep retrying with the same key and body. The next retry returns the Reserved IP, subnet or NAT gateway. For a VPC, firewall group or port forward, it either creates the resource or answers 409 "already exists".
+- Changed body, while the outcome is unresolved or after the create completed: 409 `idempotency_conflict`.
+- New key at the plan limit: 402.
     
 </dd>
 </dl>
@@ -5740,7 +5747,14 @@ client.vpcs.create_vpc_subnet(
 <dl>
 <dd>
 
-**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
+**idempotency_key:** `typing.Optional[str]` 
+
+Retry key for this create. Send the same key and the same body on every retry. The key is scoped to organization, workspace and path.
+- Create completed: you get the original answer for 24 hours, even if the plan limit has since been reached.
+- Refused or never sent: nothing was created, so the key is free to use again, including with a corrected body.
+- Unknown outcome (timeout, server error, lost connection): 409 `idempotency_in_progress` with `Retry-After`. This usually lasts 30 seconds and at most 3 minutes. Keep retrying with the same key and body. The next retry returns the Reserved IP, subnet or NAT gateway. For a VPC, firewall group or port forward, it either creates the resource or answers 409 "already exists".
+- Changed body, while the outcome is unresolved or after the create completed: 409 `idempotency_conflict`.
+- New key at the plan limit: 402.
     
 </dd>
 </dl>
@@ -6430,7 +6444,14 @@ client.vpcs.create_nat_gateway(
 <dl>
 <dd>
 
-**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
+**idempotency_key:** `typing.Optional[str]` 
+
+Retry key for this create. Send the same key and the same body on every retry. The key is scoped to organization, workspace and path.
+- Create completed: you get the original answer for 24 hours, even if the plan limit has since been reached.
+- Refused or never sent: nothing was created, so the key is free to use again, including with a corrected body.
+- Unknown outcome (timeout, server error, lost connection): 409 `idempotency_in_progress` with `Retry-After`. This usually lasts 30 seconds and at most 3 minutes. Keep retrying with the same key and body. The next retry returns the Reserved IP, subnet or NAT gateway. For a VPC, firewall group or port forward, it either creates the resource or answers 409 "already exists".
+- Changed body, while the outcome is unresolved or after the create completed: 409 `idempotency_conflict`.
+- New key at the plan limit: 402.
     
 </dd>
 </dl>
@@ -6860,7 +6881,14 @@ client.vpcs.create_nat_port_forwarding_rule(
 <dl>
 <dd>
 
-**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
+**idempotency_key:** `typing.Optional[str]` 
+
+Retry key for this create. Send the same key and the same body on every retry. The key is scoped to organization, workspace and path.
+- Create completed: you get the original answer for 24 hours, even if the plan limit has since been reached.
+- Refused or never sent: nothing was created, so the key is free to use again, including with a corrected body.
+- Unknown outcome (timeout, server error, lost connection): 409 `idempotency_in_progress` with `Retry-After`. This usually lasts 30 seconds and at most 3 minutes. Keep retrying with the same key and body. The next retry returns the Reserved IP, subnet or NAT gateway. For a VPC, firewall group or port forward, it either creates the resource or answers 409 "already exists".
+- Changed body, while the outcome is unresolved or after the create completed: 409 `idempotency_conflict`.
+- New key at the plan limit: 402.
     
 </dd>
 </dl>
@@ -7307,7 +7335,14 @@ client.reserved_ips.reserve_ip(
 <dl>
 <dd>
 
-**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
+**idempotency_key:** `typing.Optional[str]` 
+
+Retry key for this create. Send the same key and the same body on every retry. The key is scoped to organization, workspace and path.
+- Create completed: you get the original answer for 24 hours, even if the plan limit has since been reached.
+- Refused or never sent: nothing was created, so the key is free to use again, including with a corrected body.
+- Unknown outcome (timeout, server error, lost connection): 409 `idempotency_in_progress` with `Retry-After`. This usually lasts 30 seconds and at most 3 minutes. Keep retrying with the same key and body. The next retry returns the Reserved IP, subnet or NAT gateway. For a VPC, firewall group or port forward, it either creates the resource or answers 409 "already exists".
+- Changed body, while the outcome is unresolved or after the create completed: 409 `idempotency_conflict`.
+- New key at the plan limit: 402.
     
 </dd>
 </dl>
@@ -8219,7 +8254,14 @@ client.firewalls.create_firewall_group(
 <dl>
 <dd>
 
-**idempotency_key:** `typing.Optional[str]` — Retry the identical networking create with the same key to receive its dispatched create outcome for 24 hours. The key is scoped to organization, workspace and path. Reusing a dispatched key with a different request returns 409. Admission or validation refusals before a create is dispatched may be retried after correcting them. A pending or uncertain first request returns 409 with Retry-After; keep using the same body and key while its outcome is checked.
+**idempotency_key:** `typing.Optional[str]` 
+
+Retry key for this create. Send the same key and the same body on every retry. The key is scoped to organization, workspace and path.
+- Create completed: you get the original answer for 24 hours, even if the plan limit has since been reached.
+- Refused or never sent: nothing was created, so the key is free to use again, including with a corrected body.
+- Unknown outcome (timeout, server error, lost connection): 409 `idempotency_in_progress` with `Retry-After`. This usually lasts 30 seconds and at most 3 minutes. Keep retrying with the same key and body. The next retry returns the Reserved IP, subnet or NAT gateway. For a VPC, firewall group or port forward, it either creates the resource or answers 409 "already exists".
+- Changed body, while the outcome is unresolved or after the create completed: 409 `idempotency_conflict`.
+- New key at the plan limit: 402.
     
 </dd>
 </dl>
@@ -10022,6 +10064,170 @@ client.load_balancers.get_load_balancer_status(
 </dl>
 </details>
 
+## Billing
+<details><summary><code>client.billing.<a href="src/ibee/billing/client.py">get_billing_wallet</a>(...) -> BillingWallet</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns the wallet balance of the API token's organization. Amounts are integers in the currency's minor unit (paise for INR, cents for USD). The wallet belongs to the organization, so any workspace of the organization returns the same wallet. Read-only: an organization without a wallet gets 404 `wallet_not_found` and nothing is created. The token's principal also needs permission to view the organization's billing. Requires scope: billing.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.billing.get_billing_wallet(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.billing.<a href="src/ibee/billing/client.py">create_billing_topup</a>(...) -> BillingTopup</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Creates a hosted payment page (Stripe Checkout or a Razorpay Payment Link) that adds `amount_minor` to the API token's organization wallet once the customer pays. Open `checkout_url` in a browser; nothing is charged until the customer pays there, and the wallet is credited only after the payment succeeds (poll `GET /billing/wallet` to confirm). The gateway and currency follow the organization's billing profile. Billing applies its minimums and refuses a frozen or closed wallet, an organization that is not billed, or (first top-up) an amount below the first top-up minimum: 422 `topup_rejected` with Billing's `message`. An organization without a wallet gets 404 `wallet_not_found`; no wallet is created. The token's principal also needs permission to manage the organization's billing; a restricted or suspended organization can still top up. Requires scope: billing.topup.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.billing.create_billing_topup(
+    workspace_id="710995",
+    amount_minor=100000,
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**amount_minor:** `int` — Amount to add, an integer in the wallet currency's minor unit (paise for INR, cents for USD). Billing applies its minimum.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — Retry key for this top-up, scoped to the organization's wallet. A repeated key returns the payment link (and amount) it first created. Without a key, every call creates a new payment link.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 ## ComputeCatalog
 <details><summary><code>client.compute_catalog.<a href="src/ibee/compute_catalog/client.py">list_compute_sites</a>(...) -> ComputeSiteList</code></summary>
 <dl>
@@ -10988,7 +11194,7 @@ client.cloud_vms.get_cloud_vm(
 <dl>
 <dd>
 
-Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. If the VM's IP is already a Reserved IP, send no body: `release` and `reserve` are both refused with 400. The IP stays in the workspace and keeps billing until you release it from Reserved IPs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -11611,7 +11817,7 @@ client.cloud_vms.precheck_cloud_vm_resize(
 <dl>
 <dd>
 
-**request:** `VmResizeRequest` 
+**request:** `VmResizePrecheckRequest` 
     
 </dd>
 </dl>
@@ -11651,7 +11857,7 @@ client.cloud_vms.precheck_cloud_vm_resize(
 <dl>
 <dd>
 
-Changes a cloud VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+Moves a cloud VM to another plan: send the target plan's `cpu`, `ram_mb`, `disk_gb` and `billing_catalog` (see the request body). The root disk can grow, never shrink. The same precheck the portal runs is applied first. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -11666,7 +11872,7 @@ Changes a cloud VM's CPU and memory, and optionally grows its root disk, after t
 <dd>
 
 ```python
-from ibee import Ibee
+from ibee import Ibee, ComputeBillingSelection
 from ibee.environment import IbeeEnvironment
 
 client = Ibee(
@@ -11677,6 +11883,18 @@ client = Ibee(
 client.cloud_vms.resize_cloud_vm(
     vm_id="vm_id",
     workspace_id="710995",
+    cpu=4,
+    ram_mb=8192,
+    disk_gb=80,
+    billing_catalog=ComputeBillingSelection(
+        sku_id="sku_id",
+        sku_code="sku_code",
+        billing_interval="HOURLY",
+        committed=False,
+        commitment_period="HOURLY",
+        unit_price_minor=1,
+        price_currency="INR",
+    ),
 )
 
 ```
@@ -13231,7 +13449,7 @@ client.cloud_vms.disable_cloud_vm_backups(
 <dl>
 <dd>
 
-Lists backup runs and usable recovery points for one cloud VM. Requires scope: vm.read.
+Lists the finished, successful backup runs (usable recovery points) of one cloud VM, newest first. A run being deleted shows `status: deleting`. Queued, running, failed and cancelled runs are not listed: read a run by ID with `GET /compute/cloud-vm-backups/runs/{run_id}` to see those states. The backup policy's `last_status` shows how the latest finished run ended. Requires scope: vm.read.
 </dd>
 </dl>
 </dd>
@@ -13519,7 +13737,7 @@ client.cloud_vms.restore_cloud_vm_backup(
 <dl>
 <dd>
 
-Lists backup runs and recovery points of every Cloud VM in the workspace, as the portal's Backups page does. Filter by `vm_id` or `status`. Requires scope: vm.read.
+Lists the finished, successful backup runs (usable recovery points) of every Cloud VM in the workspace, newest first, as the portal's Backups page does. A run being deleted shows `status: deleting`. Queued, running, failed and cancelled runs are not listed: read a run by ID with `GET /compute/cloud-vm-backups/runs/{run_id}` to see those states. Filter by `vm_id` or `status`. Requires scope: vm.read.
 </dd>
 </dl>
 </dd>
@@ -13576,7 +13794,7 @@ client.cloud_vms.list_all_cloud_vm_backup_runs(
 <dl>
 <dd>
 
-**status:** `typing.Optional[typing.Union[BackupStatus, typing.Sequence[BackupStatus]]]` — Return only runs in these states. Repeat the parameter for several states.
+**status:** `typing.Optional[typing.Union[BackupStatus, typing.Sequence[BackupStatus]]]` — Return only runs in these states. Repeat the parameter for several states. Only `succeeded` and `deleting` can match; any other state returns an empty list.
     
 </dd>
 </dl>
@@ -14498,7 +14716,7 @@ client.gpu_vms.get_gpu_vm(
 <dl>
 <dd>
 
-Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+Deletes a GPU VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. If the VM's IP is already a Reserved IP, send no body: `release` and `reserve` are both refused with 400. The IP stays in the workspace and keeps billing until you release it from Reserved IPs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -15121,7 +15339,7 @@ client.gpu_vms.precheck_gpu_vm_resize(
 <dl>
 <dd>
 
-**request:** `VmResizeRequest` 
+**request:** `VmResizePrecheckRequest` 
     
 </dd>
 </dl>
@@ -15161,7 +15379,7 @@ client.gpu_vms.precheck_gpu_vm_resize(
 <dl>
 <dd>
 
-Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the same precheck the portal runs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
+Moves a GPU VM to another plan with the same GPU: send the target plan's `cpu`, `ram_mb`, `disk_gb` and `billing_catalog` (see the request body). The root disk can grow, never shrink. The same precheck the portal runs is applied first. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 </dd>
 </dl>
 </dd>
@@ -15176,7 +15394,7 @@ Changes a GPU VM's CPU and memory, and optionally grows its root disk, after the
 <dd>
 
 ```python
-from ibee import Ibee
+from ibee import Ibee, ComputeBillingSelection
 from ibee.environment import IbeeEnvironment
 
 client = Ibee(
@@ -15187,6 +15405,18 @@ client = Ibee(
 client.gpu_vms.resize_gpu_vm(
     vm_id="vm_id",
     workspace_id="710995",
+    cpu=4,
+    ram_mb=8192,
+    disk_gb=80,
+    billing_catalog=ComputeBillingSelection(
+        sku_id="sku_id",
+        sku_code="sku_code",
+        billing_interval="HOURLY",
+        committed=False,
+        commitment_period="HOURLY",
+        unit_price_minor=1,
+        price_currency="INR",
+    ),
 )
 
 ```
@@ -16741,7 +16971,7 @@ client.gpu_vms.disable_gpu_vm_backups(
 <dl>
 <dd>
 
-Lists backup runs and usable recovery points for one GPU VM. Requires scope: vm.read.
+Lists the finished, successful backup runs (usable recovery points) of one GPU VM, newest first. A run being deleted shows `status: deleting`. Queued, running, failed and cancelled runs are not listed: read a run by ID with `GET /compute/gpu-vm-backups/runs/{run_id}` to see those states. The backup policy's `last_status` shows how the latest finished run ended. Requires scope: vm.read.
 </dd>
 </dl>
 </dd>
@@ -17029,7 +17259,7 @@ client.gpu_vms.restore_gpu_vm_backup(
 <dl>
 <dd>
 
-Lists backup runs and recovery points of every Gpu VM in the workspace, as the portal's Backups page does. Filter by `vm_id` or `status`. Requires scope: vm.read.
+Lists the finished, successful backup runs (usable recovery points) of every Gpu VM in the workspace, newest first, as the portal's Backups page does. A run being deleted shows `status: deleting`. Queued, running, failed and cancelled runs are not listed: read a run by ID with `GET /compute/gpu-vm-backups/runs/{run_id}` to see those states. Filter by `vm_id` or `status`. Requires scope: vm.read.
 </dd>
 </dl>
 </dd>
@@ -17086,7 +17316,7 @@ client.gpu_vms.list_all_gpu_vm_backup_runs(
 <dl>
 <dd>
 
-**status:** `typing.Optional[typing.Union[BackupStatus, typing.Sequence[BackupStatus]]]` — Return only runs in these states. Repeat the parameter for several states.
+**status:** `typing.Optional[typing.Union[BackupStatus, typing.Sequence[BackupStatus]]]` — Return only runs in these states. Repeat the parameter for several states. Only `succeeded` and `deleting` can match; any other state returns an empty list.
     
 </dd>
 </dl>

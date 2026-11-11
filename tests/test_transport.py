@@ -9,6 +9,7 @@ from mockapi import ACCEPTED, VM, WS, Recorder, async_client, client
 
 from ibee.core.api_error import ApiError
 from ibee.errors import (
+    BadGatewayError,
     ConflictError,
     ForbiddenError,
     GatewayTimeoutError,
@@ -289,7 +290,7 @@ def test_product_service_detail_is_relayed_unchanged() -> None:
 
 @pytest.mark.parametrize(
     ("status", "cls"),
-    [(403, ForbiddenError), (423, LockedError), (429, TooManyRequestsError), (502, ApiError), (504, GatewayTimeoutError)],
+    [(403, ForbiddenError), (423, LockedError), (429, TooManyRequestsError), (502, BadGatewayError), (504, GatewayTimeoutError)],
 )
 def test_status_named_classes(status: int, cls: type) -> None:
     # Contract 0.9 declares 429 and 504; undeclared 502 still raises ApiError.

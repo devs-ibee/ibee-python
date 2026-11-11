@@ -28,6 +28,9 @@ if typing.TYPE_CHECKING:
     from .billing_catalog_selection_product_id import BillingCatalogSelectionProductId
     from .billing_catalog_selection_sku_id import BillingCatalogSelectionSkuId
     from .billing_interval import BillingInterval
+    from .billing_topup import BillingTopup
+    from .billing_topup_gateway import BillingTopupGateway
+    from .billing_wallet import BillingWallet
     from .block_storage_plan import BlockStoragePlan
     from .block_storage_plan_list import BlockStoragePlanList
     from .block_storage_plan_usage import BlockStoragePlanUsage
@@ -276,6 +279,7 @@ if typing.TYPE_CHECKING:
     from .vm_resize_precheck import VmResizePrecheck
     from .vm_resize_precheck_decision import VmResizePrecheckDecision
     from .vm_resize_precheck_mode import VmResizePrecheckMode
+    from .vm_resize_precheck_request import VmResizePrecheckRequest
     from .vm_resize_request import VmResizeRequest
     from .vm_resize_shape import VmResizeShape
     from .vm_type import VmType
@@ -308,6 +312,9 @@ _dynamic_imports: typing.Dict[str, str] = {
     "BillingCatalogSelectionProductId": ".billing_catalog_selection_product_id",
     "BillingCatalogSelectionSkuId": ".billing_catalog_selection_sku_id",
     "BillingInterval": ".billing_interval",
+    "BillingTopup": ".billing_topup",
+    "BillingTopupGateway": ".billing_topup_gateway",
+    "BillingWallet": ".billing_wallet",
     "BlockStoragePlan": ".block_storage_plan",
     "BlockStoragePlanList": ".block_storage_plan_list",
     "BlockStoragePlanUsage": ".block_storage_plan_usage",
@@ -556,6 +563,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "VmResizePrecheck": ".vm_resize_precheck",
     "VmResizePrecheckDecision": ".vm_resize_precheck_decision",
     "VmResizePrecheckMode": ".vm_resize_precheck_mode",
+    "VmResizePrecheckRequest": ".vm_resize_precheck_request",
     "VmResizeRequest": ".vm_resize_request",
     "VmResizeShape": ".vm_resize_shape",
     "VmType": ".vm_type",
@@ -612,6 +620,9 @@ __all__ = [
     "BillingCatalogSelectionProductId",
     "BillingCatalogSelectionSkuId",
     "BillingInterval",
+    "BillingTopup",
+    "BillingTopupGateway",
+    "BillingWallet",
     "BlockStoragePlan",
     "BlockStoragePlanList",
     "BlockStoragePlanUsage",
@@ -860,6 +871,7 @@ __all__ = [
     "VmResizePrecheck",
     "VmResizePrecheckDecision",
     "VmResizePrecheckMode",
+    "VmResizePrecheckRequest",
     "VmResizeRequest",
     "VmResizeShape",
     "VmType",

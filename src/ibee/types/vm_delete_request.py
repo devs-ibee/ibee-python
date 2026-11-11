@@ -10,12 +10,12 @@ from .vm_delete_request_reserved_ip_billing_catalog import VmDeleteRequestReserv
 
 class VmDeleteRequest(UniversalBaseModel):
     """
-    Optional VM delete body. A VM whose public IP was assigned automatically is refused with 400 unless `public_ip_action` is set.
+    Optional VM delete body. `public_ip_action` applies only to an automatically assigned public IP: a VM with one is refused with 400 unless it is set. If the VM's IP is already a Reserved IP, send no body. The IP stays in the workspace, and you release it from Reserved IPs to stop its billing.
     """
 
     public_ip_action: typing.Optional[VmDeleteRequestPublicIpAction] = pydantic.Field(default=None)
     """
-    What to do with the VM's automatically assigned public IP. `reserve` converts it to a Reserved IP in this workspace; `release` releases it with the VM. Required when the VM has an automatically assigned public IP. `reserve` on a VM without one is refused with 400.
+    What to do with the VM's automatically assigned public IP. `reserve` converts it to a Reserved IP in this workspace; `release` releases it with the VM. Required when the VM has an automatically assigned public IP. `reserve` on a VM without one is refused with 400. If the IP has already been converted to a Reserved IP, `release` and `reserve` are both refused with 400: delete with no body to keep the IP, then release it from Reserved IPs to stop its billing.
     """
 
     reserved_ip_label: typing.Optional[str] = pydantic.Field(default=None)

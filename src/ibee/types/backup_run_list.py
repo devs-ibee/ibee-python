@@ -9,7 +9,7 @@ from .backup_run import BackupRun
 
 class BackupRunList(UniversalBaseModel):
     """
-    Backup runs of a VM, newest first.
+    Finished, successful backup runs, newest first. A run being deleted shows `status: deleting`. Queued, running, failed and cancelled runs are not listed.
     """
 
     runs: typing.List[BackupRun] = pydantic.Field()

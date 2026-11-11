@@ -10,6 +10,7 @@ from .core.logging import LogConfig, Logger
 from .environment import IbeeEnvironment
 
 if typing.TYPE_CHECKING:
+    from .billing.client import AsyncBillingClient, BillingClient
     from .block_storage.client import AsyncBlockStorageClient, BlockStorageClient
     from .cdn.client import AsyncCdnClient, CdnClient
     from .cloud_vms.client import AsyncCloudVmsClient, CloudVmsClient
@@ -114,6 +115,7 @@ class BaseIbee:
         self._reserved_ips: typing.Optional[ReservedIpsClient] = None
         self._firewalls: typing.Optional[FirewallsClient] = None
         self._load_balancers: typing.Optional[LoadBalancersClient] = None
+        self._billing: typing.Optional[BillingClient] = None
         self._compute_catalog: typing.Optional[ComputeCatalogClient] = None
         self._cloud_vms: typing.Optional[CloudVmsClient] = None
         self._gpu_vms: typing.Optional[GpuVmsClient] = None
@@ -168,6 +170,14 @@ class BaseIbee:
 
             self._load_balancers = LoadBalancersClient(client_wrapper=self._client_wrapper)
         return self._load_balancers
+
+    @property
+    def billing(self):
+        if self._billing is None:
+            from .billing.client import BillingClient  # noqa: E402
+
+            self._billing = BillingClient(client_wrapper=self._client_wrapper)
+        return self._billing
 
     @property
     def compute_catalog(self):
@@ -329,6 +339,7 @@ class AsyncBaseIbee:
         self._reserved_ips: typing.Optional[AsyncReservedIpsClient] = None
         self._firewalls: typing.Optional[AsyncFirewallsClient] = None
         self._load_balancers: typing.Optional[AsyncLoadBalancersClient] = None
+        self._billing: typing.Optional[AsyncBillingClient] = None
         self._compute_catalog: typing.Optional[AsyncComputeCatalogClient] = None
         self._cloud_vms: typing.Optional[AsyncCloudVmsClient] = None
         self._gpu_vms: typing.Optional[AsyncGpuVmsClient] = None
@@ -383,6 +394,14 @@ class AsyncBaseIbee:
 
             self._load_balancers = AsyncLoadBalancersClient(client_wrapper=self._client_wrapper)
         return self._load_balancers
+
+    @property
+    def billing(self):
+        if self._billing is None:
+            from .billing.client import AsyncBillingClient  # noqa: E402
+
+            self._billing = AsyncBillingClient(client_wrapper=self._client_wrapper)
+        return self._billing
 
     @property
     def compute_catalog(self):
