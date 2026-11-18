@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.9.0
+
+- Update to public API contract 0.13.0: 219 operations, none paused.
+- **Breaking:** Secret Store (`client.secret_store`) is removed; the API replaced it
+  with Secret Manager in contract 0.11.0. `client.secret_manager` enables Secret
+  Manager for a workspace, lists and searches secret names, reads and writes secret
+  metadata and version history, deletes, undeletes or destroys versions, and manages
+  app credentials (create, list, read, issue a secret ID, revoke). No method reads or
+  writes a secret value: use the Vault API at the workspace endpoint.
+- **Breaking:** load balancers follow the regional load balancer service:
+  `create_load_balancer` and `update_load_balancer` take one full specification
+  (update with the current `version`), each change answers with an operation
+  (`get_load_balancer_operation`), and `list_load_balancer_regions`,
+  `get_load_balancer_metrics` and `get_load_balancer_metrics_history` are new. The
+  separate L4/L7 create and update methods and `get_load_balancer_status` are removed.
+- Object Storage and Container Registry management are no longer paused. Files and
+  images stay on S3 and the registry, so there are no object or image upload calls;
+  `download_container_registry_sbom` is removed (listing and reading SBOMs stay).
+- No method empties a whole bucket or registry: delete files with an S3 tool and
+  images with `docker` or the repository and image deletes, then delete the bucket or
+  registry. `delete_bucket` deletes an empty bucket (409 otherwise).
+- Issuing a Secret Manager secret ID is never retried (each call replaces the previous
+  secret ID); the Secret Store retry exception is gone with Secret Store.
+- Generate the SDK User-Agent with release version 0.9.0.
+
 ## 0.8.0
 
 - Update to public API contract 0.10.0: 231 client operations (229 plus two), including

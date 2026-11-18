@@ -1,6 +1,6 @@
 # Reference
-## Secret Store
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">list_secret_stores</a>(...) -> SecretStoreList</code></summary>
+## SecretManager
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">get_secret_manager_workspace</a>(...) -> SecretManagerWorkspace</code></summary>
 <dl>
 <dd>
 
@@ -12,7 +12,7 @@
 <dl>
 <dd>
 
-Lists secret stores in a workspace. Requires scope: secret-store.read.
+Returns whether Secret Manager is enabled for the workspace, its namespace, state and Vault endpoint. Requires scope: secret-manager.read.
 </dd>
 </dl>
 </dd>
@@ -35,7 +35,7 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.list_secret_stores(
+client.secret_manager.get_secret_manager_workspace(
     workspace_id="710995",
 )
 
@@ -61,30 +61,6 @@ client.secret_store.list_secret_stores(
 <dl>
 <dd>
 
-**page:** `typing.Optional[int]` — Page number.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**limit:** `typing.Optional[int]` — Maximum number of records to return.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**include_archived:** `typing.Optional[bool]` — Include archived stores in the result.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
     
 </dd>
@@ -97,7 +73,7 @@ client.secret_store.list_secret_stores(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">create_secret_store</a>(...) -> SecretStore</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">enable_secret_manager_workspace</a>(...) -> SecretManagerOperation</code></summary>
 <dl>
 <dd>
 
@@ -109,7 +85,7 @@ client.secret_store.list_secret_stores(
 <dl>
 <dd>
 
-Creates a secret store in a workspace. Requires scope: secret-store.write.
+Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (403 billing_denied). Requires scope: secret-manager.write.
 </dd>
 </dl>
 </dd>
@@ -132,10 +108,10 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.create_secret_store(
+client.secret_manager.enable_secret_manager_workspace(
     workspace_id="710995",
-    name="production-secrets",
-    description="Secrets for production workloads",
+    idempotency_key="Idempotency-Key",
+    namespace="namespace",
 )
 
 ```
@@ -152,7 +128,15 @@ client.secret_store.create_secret_store(
 <dl>
 <dd>
 
-**name:** `str` — Display name of the store (1-128 characters). Its URL-safe form becomes `store_key`.
+**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**namespace:** `str` 
     
 </dd>
 </dl>
@@ -168,7 +152,7 @@ client.secret_store.create_secret_store(
 <dl>
 <dd>
 
-**description:** `typing.Optional[str]` — Optional description.
+**max_versions:** `typing.Optional[int]` 
     
 </dd>
 </dl>
@@ -188,7 +172,7 @@ client.secret_store.create_secret_store(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">get_secret_store</a>(...) -> SecretStore</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">check_secret_manager_namespace_availability</a>(...) -> SecretManagerNamespaceAvailability</code></summary>
 <dl>
 <dd>
 
@@ -200,7 +184,7 @@ client.secret_store.create_secret_store(
 <dl>
 <dd>
 
-Gets one secret store. A permanently deleted store answers 403, not 404. Requires scope: secret-store.read.
+Says whether a namespace name is free before you enable Secret Manager. Requires scope: secret-manager.read.
 </dd>
 </dl>
 </dd>
@@ -223,8 +207,8 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.get_secret_store(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+client.secret_manager.check_secret_manager_namespace_availability(
+    name="name",
     workspace_id="710995",
 )
 
@@ -242,7 +226,7 @@ client.secret_store.get_secret_store(
 <dl>
 <dd>
 
-**store_id:** `str` — Secret store ID.
+**name:** `str` — The namespace to check.
     
 </dd>
 </dl>
@@ -270,7 +254,7 @@ client.secret_store.get_secret_store(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">archive_secret_store</a>(...) -> SecretStore</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">get_secret_manager_operation</a>(...) -> SecretManagerOperation</code></summary>
 <dl>
 <dd>
 
@@ -282,7 +266,7 @@ client.secret_store.get_secret_store(
 <dl>
 <dd>
 
-Archives a secret store. Requires scope: secret-store.write.
+Returns one asynchronous operation, such as enabling the workspace. Requires scope: secret-manager.read.
 </dd>
 </dl>
 </dd>
@@ -305,8 +289,8 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.archive_secret_store(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+client.secret_manager.get_secret_manager_operation(
+    operation_id="operation_id",
     workspace_id="710995",
 )
 
@@ -324,7 +308,7 @@ client.secret_store.archive_secret_store(
 <dl>
 <dd>
 
-**store_id:** `str` — Secret store ID.
+**operation_id:** `str` — The operation's ID.
     
 </dd>
 </dl>
@@ -352,7 +336,7 @@ client.secret_store.archive_secret_store(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">unarchive_secret_store</a>(...) -> SecretStore</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">list_secret_manager_secret_types</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -364,7 +348,7 @@ client.secret_store.archive_secret_store(
 <dl>
 <dd>
 
-Reactivates an archived secret store. Requires scope: secret-store.write.
+Lists the secret types you can record in a secret's metadata. Requires scope: secret-manager.read.
 </dd>
 </dl>
 </dd>
@@ -387,8 +371,7 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.unarchive_secret_store(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+client.secret_manager.list_secret_manager_secret_types(
     workspace_id="710995",
 )
 
@@ -406,7 +389,487 @@ client.secret_store.unarchive_secret_store(
 <dl>
 <dd>
 
-**store_id:** `str` — Secret store ID.
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">list_secret_manager_secrets</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists secret names under a folder. Never returns values. Billed as one list call. Requires scope: secret-manager.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.secret_manager.list_secret_manager_secrets(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**prefix:** `typing.Optional[str]` — Folder to list, such as `apps/billing`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**managed:** `typing.Optional[bool]` — Read the read-only managed store instead of your own secrets.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">search_secret_manager_catalog</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Searches secret names and metadata in the workspace. Never returns values. Billed as one list call. Requires scope: secret-manager.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.secret_manager.search_secret_manager_catalog(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**query:** `typing.Optional[str]` — Text to search for.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**secret_type:** `typing.Optional[str]` — Return only this secret type.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**managed_by:** `typing.Optional[str]` — Return only secrets managed by this tool.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**cursor:** `typing.Optional[str]` — Cursor from the previous page.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` — Page size (1-100). Default 50.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">get_secret_manager_secret_metadata</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns a secret's metadata and version list, without the value. Requires scope: secret-manager.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.secret_manager.get_secret_manager_secret_metadata(
+    secret_path="secret_path",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**secret_path:** `str` — The secret's path, such as `apps/billing/db`, sent with plain `/` between segments. An encoded `%2F` is answered with a 307 redirect to the plain-slash path. Segments use letters, digits, `_`, `.` and `-`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**managed:** `typing.Optional[bool]` — Read the read-only managed store instead of your own secrets.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">update_secret_manager_secret_metadata</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Creates the secret's entry (name, type and metadata) or updates it. It never takes a value: write values through the Vault API at the workspace endpoint with an app credential. Requires scope: secret-manager.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.secret_manager.update_secret_manager_secret_metadata(
+    secret_path="secret_path",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**secret_path:** `str` — The secret's path, such as `apps/billing/db`, sent with plain `/` between segments. An encoded `%2F` is answered with a 307 redirect to the plain-slash path. Segments use letters, digits, `_`, `.` and `-`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**custom_metadata:** `typing.Optional[typing.Dict[str, typing.Optional[str]]]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**max_versions:** `typing.Optional[int]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**cas_required:** `typing.Optional[bool]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**delete_version_after:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">delete_secret_manager_secret</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Deletes the secret and every version of it. This cannot be undone. Requires scope: secret-manager.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.secret_manager.delete_secret_manager_secret(
+    secret_path="secret_path",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**secret_path:** `str` — The secret's path, such as `apps/billing/db`, sent with plain `/` between segments. An encoded `%2F` is answered with a 307 redirect to the plain-slash path. Segments use letters, digits, `_`, `.` and `-`.
     
 </dd>
 </dl>
@@ -434,7 +897,7 @@ client.secret_store.unarchive_secret_store(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">permanently_delete_secret_store</a>(...) -> SecretLifecycleStatus</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">get_secret_manager_secret_history</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -446,7 +909,7 @@ client.secret_store.unarchive_secret_store(
 <dl>
 <dd>
 
-Irreversibly deletes a store and all store-scoped secrets, versions, identities, and policies. Afterwards, reads of the store answer 403. Requires scope: secret-store.write.
+Lists a secret's versions with their dates and states, without values. Requires scope: secret-manager.read.
 </dd>
 </dl>
 </dd>
@@ -469,8 +932,8 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.permanently_delete_secret_store(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+client.secret_manager.get_secret_manager_secret_history(
+    secret_path="secret_path",
     workspace_id="710995",
 )
 
@@ -488,7 +951,7 @@ client.secret_store.permanently_delete_secret_store(
 <dl>
 <dd>
 
-**store_id:** `str` — Secret store ID.
+**secret_path:** `str` — The secret's path, such as `apps/billing/db`, sent with plain `/` between segments. An encoded `%2F` is answered with a 307 redirect to the plain-slash path. Segments use letters, digits, `_`, `.` and `-`.
     
 </dd>
 </dl>
@@ -497,6 +960,14 @@ client.secret_store.permanently_delete_secret_store(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**managed:** `typing.Optional[bool]` — Read the read-only managed store instead of your own secrets.
     
 </dd>
 </dl>
@@ -516,7 +987,7 @@ client.secret_store.permanently_delete_secret_store(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">list_secrets</a>(...) -> SecretList</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">delete_secret_manager_secret_versions</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -528,7 +999,7 @@ client.secret_store.permanently_delete_secret_store(
 <dl>
 <dd>
 
-Lists secret metadata in a store. Secret values are not returned. Requires scope: secret-store.read.
+Soft-deletes versions. Undelete brings them back. Requires scope: secret-manager.write.
 </dd>
 </dl>
 </dd>
@@ -551,761 +1022,8 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.list_secrets(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**store_id:** `str` — Secret store ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**q:** `typing.Optional[str]` — Optional search query.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**page:** `typing.Optional[int]` — Page number.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**limit:** `typing.Optional[int]` — Maximum number of records to return.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">create_secret</a>(...) -> Secret</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Creates a secret in a store. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.create_secret(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
-    workspace_id="710995",
-    secret_name="database-url",
-    value={
-        "url": "postgres://user:pass@host:5432/mydb"
-    },
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**store_id:** `str` — Secret store ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**secret_name:** `str` — Unique name for the secret within the store. Lowercase alphanumeric and hyphens only.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**value:** `typing.Dict[str, typing.Any]` — Key-value pairs containing the secret data.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">batch_create_secrets</a>(...) -> BatchCreateSecretsResponse</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Creates up to 500 secrets without overwriting existing names. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee, BatchCreateSecretItem
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.batch_create_secrets(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
-    workspace_id="710995",
-    secrets=[
-        BatchCreateSecretItem(
-            secret_name="database-url",
-            value={
-                "url": "postgres://user:pass@host:5432/app"
-            },
-        ),
-        BatchCreateSecretItem(
-            secret_name="api-key",
-            value={
-                "key": "replace-with-your-value"
-            },
-        )
-    ],
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**store_id:** `str` — Secret store ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**secrets:** `typing.List[BatchCreateSecretItem]` — Secrets to create (1-500).
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">get_secret</a>(...) -> Secret</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Gets one secret metadata record. Secret value is not returned. A permanently deleted secret answers 403, not 404. Requires scope: secret-store.read.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.get_secret(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**secret_id:** `str` — Secret ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">delete_secret</a>(...) -> Secret</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Soft-deletes a secret. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.delete_secret(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**secret_id:** `str` — Secret ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">get_secret_value</a>(...) -> SecretValue</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Gets the latest value for a secret. Requires scope: secret-store.read.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.get_secret_value(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**secret_id:** `str` — Secret ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">update_secret_value</a>(...) -> SecretValue</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Creates a new version of the secret value. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.update_secret_value(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-    workspace_id="710995",
-    value={
-        "url": "postgres://user:updated@host:5432/mydb"
-    },
-    cas=1,
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**secret_id:** `str` — Secret ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**value:** `typing.Dict[str, typing.Any]` — Key-value pairs containing the new secret data. Creates a new version.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**cas:** `typing.Optional[int]` — Check-and-set: only update if the current version matches this number. Prevents overwriting concurrent changes.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">undelete_secret</a>(...) -> Secret</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Restores specified soft-deleted versions and reactivates the secret. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.undelete_secret(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-    workspace_id="710995",
-    versions=[
-        2
-    ],
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**secret_id:** `str` — Secret ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request:** `SecretVersionsRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">destroy_secret_versions</a>(...) -> SecretLifecycleStatus</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Irreversibly destroys specified secret versions. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.destroy_secret_versions(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+client.secret_manager.delete_secret_manager_secret_versions(
+    secret_path="secret_path",
     workspace_id="710995",
     versions=[
         1
@@ -1326,7 +1044,7 @@ client.secret_store.destroy_secret_versions(
 <dl>
 <dd>
 
-**secret_id:** `str` — Secret ID.
+**secret_path:** `str` — The secret's path, such as `apps/billing/db`, sent with plain `/` between segments. An encoded `%2F` is answered with a 307 redirect to the plain-slash path. Segments use letters, digits, `_`, `.` and `-`.
     
 </dd>
 </dl>
@@ -1334,89 +1052,7 @@ client.secret_store.destroy_secret_versions(
 <dl>
 <dd>
 
-**request:** `SecretVersionsRequest` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">permanently_delete_secret</a>(...) -> SecretLifecycleStatus</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Irreversibly deletes all versions and metadata for a secret. Afterwards, reads of the secret answer 403. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.permanently_delete_secret(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**secret_id:** `str` — Secret ID.
+**request:** `SecretManagerVersionCommand` 
     
 </dd>
 </dl>
@@ -1444,7 +1080,7 @@ client.secret_store.permanently_delete_secret(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">list_secret_versions</a>(...) -> SecretVersions</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">undelete_secret_manager_secret_versions</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -1456,7 +1092,7 @@ client.secret_store.permanently_delete_secret(
 <dl>
 <dd>
 
-Returns version metadata without secret values. Requires scope: secret-store.read.
+Restores soft-deleted versions. Requires scope: secret-manager.write.
 </dd>
 </dl>
 </dd>
@@ -1479,9 +1115,12 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.list_secret_versions(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+client.secret_manager.undelete_secret_manager_secret_versions(
+    secret_path="secret_path",
     workspace_id="710995",
+    versions=[
+        1
+    ],
 )
 
 ```
@@ -1498,7 +1137,15 @@ client.secret_store.list_secret_versions(
 <dl>
 <dd>
 
-**secret_id:** `str` — Secret ID.
+**secret_path:** `str` — The secret's path, such as `apps/billing/db`, sent with plain `/` between segments. An encoded `%2F` is answered with a 307 redirect to the plain-slash path. Segments use letters, digits, `_`, `.` and `-`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `SecretManagerVersionCommand` 
     
 </dd>
 </dl>
@@ -1526,7 +1173,7 @@ client.secret_store.list_secret_versions(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">get_secret_version</a>(...) -> SecretVersion</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">destroy_secret_manager_secret_versions</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -1538,7 +1185,7 @@ client.secret_store.list_secret_versions(
 <dl>
 <dd>
 
-Returns the value and metadata for one secret version. Requires scope: secret-store.read.
+Destroys versions permanently. This cannot be undone. Requires scope: secret-manager.write.
 </dd>
 </dl>
 </dd>
@@ -1561,10 +1208,12 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.get_secret_version(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
-    version=1,
+client.secret_manager.destroy_secret_manager_secret_versions(
+    secret_path="secret_path",
     workspace_id="710995",
+    versions=[
+        1
+    ],
 )
 
 ```
@@ -1581,7 +1230,7 @@ client.secret_store.get_secret_version(
 <dl>
 <dd>
 
-**secret_id:** `str` — Secret ID.
+**secret_path:** `str` — The secret's path, such as `apps/billing/db`, sent with plain `/` between segments. An encoded `%2F` is answered with a 307 redirect to the plain-slash path. Segments use letters, digits, `_`, `.` and `-`.
     
 </dd>
 </dl>
@@ -1589,7 +1238,7 @@ client.secret_store.get_secret_version(
 <dl>
 <dd>
 
-**version:** `int` — Positive secret version number.
+**request:** `SecretManagerVersionCommand` 
     
 </dd>
 </dl>
@@ -1617,7 +1266,7 @@ client.secret_store.get_secret_version(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">rollback_secret</a>(...) -> SecretValue</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">list_secret_manager_app_credentials</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -1629,7 +1278,7 @@ client.secret_store.get_secret_version(
 <dl>
 <dd>
 
-Copies a previous version into a new current version. Requires scope: secret-store.write.
+Lists AppRole credentials that apps, VMs and External Secrets use to reach the Vault API. Needs workspace admin. Requires scope: secret-manager.read.
 </dd>
 </dl>
 </dd>
@@ -1652,10 +1301,8 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.rollback_secret(
-    secret_id="019f1e4b-4a2c-71d0-a8b3-c5f92e7d1a4b",
+client.secret_manager.list_secret_manager_app_credentials(
     workspace_id="710995",
-    version=1,
 )
 
 ```
@@ -1672,7 +1319,7 @@ client.secret_store.rollback_secret(
 <dl>
 <dd>
 
-**secret_id:** `str` — Secret ID.
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
     
 </dd>
 </dl>
@@ -1680,7 +1327,180 @@ client.secret_store.rollback_secret(
 <dl>
 <dd>
 
-**version:** `int` — Previous version to copy into a new current version.
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">create_secret_manager_app_credential</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Creates an AppRole credential with read or read_write access to a folder. Issue its secret ID with issueSecretManagerAppCredentialSecretId. Needs workspace admin. Requires scope: secret-manager.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.secret_manager.create_secret_manager_app_credential(
+    workspace_id="710995",
+    idempotency_key="Idempotency-Key",
+    name="name",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**name:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**access:** `typing.Optional[SecretManagerAppCredentialCreateAccess]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**folder:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">get_secret_manager_app_credential</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns one app credential, without its secret ID. Needs workspace admin. Requires scope: secret-manager.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.secret_manager.get_secret_manager_app_credential(
+    credential_id="credential_id",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**credential_id:** `str` — The app credential's ID.
     
 </dd>
 </dl>
@@ -1708,7 +1528,7 @@ client.secret_store.rollback_secret(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">list_secret_identities</a>(...) -> SecretIdentityList</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">revoke_secret_manager_app_credential</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -1720,7 +1540,7 @@ client.secret_store.rollback_secret(
 <dl>
 <dd>
 
-Lists AppRole and Kubernetes identities bound to a store. Requires scope: secret-store.read.
+Revokes the credential and its secret IDs. Needs workspace admin. Requires scope: secret-manager.write.
 </dd>
 </dl>
 </dd>
@@ -1743,8 +1563,8 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.list_secret_identities(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
+client.secret_manager.revoke_secret_manager_app_credential(
+    credential_id="credential_id",
     workspace_id="710995",
 )
 
@@ -1762,7 +1582,7 @@ client.secret_store.list_secret_identities(
 <dl>
 <dd>
 
-**store_id:** `str` — Secret store ID.
+**credential_id:** `str` — The app credential's ID.
     
 </dd>
 </dl>
@@ -1790,7 +1610,7 @@ client.secret_store.list_secret_identities(
 </dl>
 </details>
 
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">create_secret_identity</a>(...) -> SecretIdentity</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">issue_secret_manager_app_credential_secret_id</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -1802,7 +1622,7 @@ client.secret_store.list_secret_identities(
 <dl>
 <dd>
 
-Creates an AppRole or Kubernetes identity with an initial scope for this store. Requires scope: secret-store.write.
+Issues a new secret ID for the credential and destroys the previous one. The secret ID is returned once and cannot be read again. Needs workspace admin. Requires scope: secret-manager.write.
 </dd>
 </dl>
 </dd>
@@ -1825,137 +1645,8 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.secret_store.create_secret_identity(
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
-    workspace_id="710995",
-    auth_method="approle",
-    name="payments-api",
-    token_policy_mode="read_only",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**store_id:** `str` — Secret store ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**auth_method:** `CreateSecretIdentityRequestAuthMethod` — Authentication method used by the application.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**name:** `str` — Display name of the identity (1-128 characters).
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**token_policy_mode:** `typing.Optional[CreateSecretIdentityRequestTokenPolicyMode]` 
-
-Default access mode for the identity's tokens.
-- `read_only` (default)
-- `read_write`
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**k8s_namespace:** `typing.Optional[str]` — Required when auth_method is kubernetes.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**k8s_service_account:** `typing.Optional[str]` — Required when auth_method is kubernetes.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">get_secret_identity</a>(...) -> SecretIdentity</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Gets one application identity without credentials. Requires scope: secret-store.read.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.get_secret_identity(
-    identity_id="identity_id",
+client.secret_manager.issue_secret_manager_app_credential_secret_id(
+    credential_id="credential_id",
     workspace_id="710995",
 )
 
@@ -1973,794 +1664,7 @@ client.secret_store.get_secret_identity(
 <dl>
 <dd>
 
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">delete_secret_identity</a>(...) -> SecretIdentityActionStatus</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Permanently removes the identity, its scopes, role, policy, and sessions. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.delete_secret_identity(
-    identity_id="identity_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">disable_secret_identity</a>(...) -> SecretIdentity</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Disables an identity and revokes its active sessions. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.disable_secret_identity(
-    identity_id="identity_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">enable_secret_identity</a>(...) -> SecretIdentity</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Re-enables a disabled identity. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.enable_secret_identity(
-    identity_id="identity_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">get_secret_identity_access</a>(...) -> SecretIdentityAccess</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Returns Kubernetes binding details or generates fresh AppRole credentials. Treat secret_id as sensitive. Each call for an AppRole identity mints a new credential, so the gateway treats this GET as a write. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.get_secret_identity_access(
-    identity_id="identity_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">rotate_secret_identity_secret_id</a>(...) -> SecretIdentityAccess</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Generates fresh AppRole credentials. Available only for AppRole identities. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.rotate_secret_identity_secret_id(
-    identity_id="identity_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">revoke_secret_identity_sessions</a>(...) -> SecretIdentityActionStatus</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Revokes active sessions without deleting or disabling the identity. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.revoke_secret_identity_sessions(
-    identity_id="identity_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">list_secret_identity_scopes</a>(...) -> SecretIdentityScopeList</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Lists the stores and permissions available to an identity. Requires scope: secret-store.read.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.list_secret_identity_scopes(
-    identity_id="identity_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">create_secret_identity_scope</a>(...) -> SecretIdentityScope</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Grants an identity access to another store. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.create_secret_identity_scope(
-    identity_id="identity_id",
-    workspace_id="710995",
-    store_id="019f1e4b-3edd-72cf-b90e-26864ba2f283",
-    access_mode="read_only",
-    allow_version_read=True,
-    allow_rollback=False,
-    allow_destroy=False,
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**identity_id:** `str` — Secret Store application identity ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**store_id:** `str` — Store the identity gets access to.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**access_mode:** `typing.Optional[CreateSecretIdentityScopeRequestAccessMode]` 
-
-- `read_only`: the identity can read secrets in the store.
-- `read_write`: the identity can also create and update them.
-Default `read_only`.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**allow_version_read:** `typing.Optional[bool]` — Whether the identity may read non-current versions of a secret.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**allow_rollback:** `typing.Optional[bool]` — Whether the identity may roll a secret back to an earlier version.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**allow_destroy:** `typing.Optional[bool]` — Whether the identity may destroy secret versions.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.secret_store.<a href="src/ibee/secret_store/client.py">delete_secret_identity_scope</a>(...) -> SecretIdentityActionStatus</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Removes a store permission from an identity. Requires scope: secret-store.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.secret_store.delete_secret_identity_scope(
-    scope_id="scope_id",
-    workspace_id="710995",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**scope_id:** `str` — Secret Store identity scope ID.
+**credential_id:** `str` — The app credential's ID.
     
 </dd>
 </dl>
@@ -2801,7 +1705,7 @@ client.secret_store.delete_secret_identity_scope(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists object storage buckets in a workspace. Requires scope: object-storage.read.
+Lists object storage buckets in a workspace. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -2890,7 +1794,7 @@ client.object_storage.list_buckets(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
+Creates an object storage bucket. `region` is required and must match an Object Storage region identifier configured for the target environment. Do not send a compute `site_id`. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3014,7 +1918,7 @@ client.object_storage.create_bucket(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
+Returns bucket configuration and usage statistics. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -3096,7 +2000,7 @@ client.object_storage.get_bucket(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a bucket and all of its contents. Requires scope: object-storage.delete.
+Deletes an empty bucket. A bucket that still holds files is refused with 409: delete its files first with an S3 tool. Files are managed over the S3 API at `<workspace>.blob.ibeestorage.com`, not through this API. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -3178,7 +2082,7 @@ client.object_storage.delete_bucket(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Updates mutable bucket settings. Requires scope: object-storage.write.
+Updates mutable bucket settings. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3269,7 +2173,7 @@ client.object_storage.update_bucket(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
+Returns the bucket's lifecycle rules, as the portal's Settings › Lifecycle tab shows them. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -3351,7 +2255,7 @@ client.object_storage.get_bucket_lifecycle(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
+Replaces every lifecycle rule of the bucket. Each rule expires objects after a number of days or on a date, optionally only under a prefix. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3446,7 +2350,7 @@ client.object_storage.set_bucket_lifecycle(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every lifecycle rule from the bucket. Requires scope: object-storage.delete.
+Removes every lifecycle rule from the bucket. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -3528,7 +2432,7 @@ client.object_storage.delete_bucket_lifecycle(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
+Returns the bucket's CORS rules, as the portal's Settings › CORS tab shows them. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -3610,7 +2514,7 @@ client.object_storage.get_bucket_cors(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
+Replaces every CORS rule of the bucket. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3710,7 +2614,7 @@ client.object_storage.set_bucket_cors(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every CORS rule from the bucket. Requires scope: object-storage.delete.
+Removes every CORS rule from the bucket. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -3792,7 +2696,7 @@ client.object_storage.delete_bucket_cors(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
+Returns the default retention of a bucket created with object lock, as the portal's Settings › Lock tab shows it. Answers 404 when the bucket has no object lock. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -3874,7 +2778,7 @@ client.object_storage.get_bucket_object_lock(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
+Changes the default retention applied to new objects in a bucket that has object lock. Send `rule: null` to remove the default. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3964,7 +2868,7 @@ client.object_storage.set_bucket_object_lock(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
+Returns the webhook notification rules of the bucket, as the portal's Settings › Event notifications tab shows them. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4046,7 +2950,7 @@ client.object_storage.get_bucket_notifications(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
+Replaces every notification rule of the bucket. Each rule posts `upload` or `delete` events, optionally filtered by prefix or suffix, to a webhook URL. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4143,7 +3047,7 @@ client.object_storage.set_bucket_notifications(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes every notification rule from the bucket. Requires scope: object-storage.delete.
+Removes every notification rule from the bucket. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -4225,7 +3129,7 @@ client.object_storage.delete_bucket_notifications(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4307,7 +3211,7 @@ client.object_storage.get_bucket_custom_domains(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4398,7 +3302,7 @@ client.object_storage.add_bucket_custom_domain(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.delete.
+Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.delete.
 </dd>
 </dl>
 </dd>
@@ -4489,7 +3393,7 @@ client.object_storage.remove_bucket_custom_domain(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
+Returns request and storage metrics of the bucket for the last 24 hours or 7 days, as the portal's Metrics tab shows them. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4579,7 +3483,7 @@ client.object_storage.get_bucket_metrics(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
+Lists S3-compatible credentials without secret keys. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4652,7 +3556,7 @@ client.object_storage.list_s3credentials(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
+Creates an access key pair. The secret is returned only once. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4765,7 +3669,7 @@ client.object_storage.create_s3credential(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns credential metadata without the secret key. Requires scope: object-storage.read.
+Returns credential metadata without the secret key. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -4847,7 +3751,7 @@ client.object_storage.get_s3credential(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
+Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -4929,7 +3833,7 @@ client.object_storage.delete_s3credential(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
+Revokes a credential so it can no longer authenticate S3 requests. The record stays listed as revoked, as in the portal; delete it afterwards with DELETE /object-storage/credentials/{access_key_id}. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -9097,7 +8001,7 @@ client.firewalls.detach_firewall_group(
 </details>
 
 ## LoadBalancers
-<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">list_load_balancers</a>(...) -> typing.List[LoadBalancer]</code></summary>
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">list_load_balancer_regions</a>(...) -> typing.List[typing.Dict[str, typing.Any]]</code></summary>
 <dl>
 <dd>
 
@@ -9109,7 +8013,80 @@ client.firewalls.detach_firewall_group(
 <dl>
 <dd>
 
-Lists the L4 and L7 load balancers in a workspace. Requires scope: load-balancer.read.
+Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.load_balancers.list_load_balancer_regions(
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">list_load_balancers</a>(...) -> LoadBalancerPage</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Lists load balancers in the workspace, newest first. Requires scope: load-balancer.read.
 </dd>
 </dl>
 </dd>
@@ -9158,7 +8135,7 @@ client.load_balancers.list_load_balancers(
 <dl>
 <dd>
 
-**status:** `typing.Optional[LoadBalancerStatus]` — Return only load balancers in this status.
+**cursor:** `typing.Optional[str]` — Cursor from the previous page (`next_cursor`).
     
 </dd>
 </dl>
@@ -9166,35 +8143,7 @@ client.load_balancers.list_load_balancers(
 <dl>
 <dd>
 
-**layer:** `typing.Optional[ListLoadBalancersRequestLayer]` 
-
-Return only load balancers of this layer.
-- `l4`
-- `l7`
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**protocol:** `typing.Optional[LoadBalancerProtocol]` — Return only load balancers that accept this protocol.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**limit:** `typing.Optional[int]` — Maximum number of items to return (1-500). Default 100.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**skip:** `typing.Optional[int]` — Number of items to skip before the first returned item. Default 0.
+**limit:** `typing.Optional[int]` — Page size (1-100). Default 50.
     
 </dd>
 </dl>
@@ -9214,7 +8163,7 @@ Return only load balancers of this layer.
 </dl>
 </details>
 
-<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">create_l4load_balancer</a>(...) -> LoadBalancer</code></summary>
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">create_load_balancer</a>(...) -> LoadBalancerOperation</code></summary>
 <dl>
 <dd>
 
@@ -9226,7 +8175,7 @@ Return only load balancers of this layer.
 <dl>
 <dd>
 
-Creates a layer 4 (TCP/UDP) load balancer that spreads connections across backend VMs, with optional TLS. Requires scope: load-balancer.write.
+Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
 </dd>
 </dl>
 </dd>
@@ -9241,7 +8190,7 @@ Creates a layer 4 (TCP/UDP) load balancer that spreads connections across backen
 <dd>
 
 ```python
-from ibee import Ibee, LoadBalancerBackend
+from ibee import Ibee, LoadBalancerListener, LoadBalancerTargetGroup
 from ibee.environment import IbeeEnvironment
 
 client = Ibee(
@@ -9249,14 +8198,24 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.load_balancers.create_l4load_balancer(
+client.load_balancers.create_load_balancer(
     workspace_id="710995",
+    idempotency_key="Idempotency-Key",
     name="name",
-    protocol="tcp",
-    backends=[
-        LoadBalancerBackend(
-            target="target",
+    region_id="region_id",
+    traffic_type="http",
+    listeners=[
+        LoadBalancerListener(
+            name="name",
+            protocol="HTTP",
             port=1,
+            target_group="target_group",
+        )
+    ],
+    target_groups=[
+        LoadBalancerTargetGroup(
+            name="name",
+            protocol="HTTP",
         )
     ],
 )
@@ -9275,7 +8234,7 @@ client.load_balancers.create_l4load_balancer(
 <dl>
 <dd>
 
-**name:** `str` — Display name of the load balancer.
+**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
     
 </dd>
 </dl>
@@ -9283,18 +8242,7 @@ client.load_balancers.create_l4load_balancer(
 <dl>
 <dd>
 
-**protocol:** `CreateL4LoadBalancerRequestProtocol` 
-
-- `tcp`
-- `tls_passthrough`
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**backends:** `typing.List[LoadBalancerBackend]` — Backends to send traffic to.
+**request:** `LoadBalancerSpec` 
     
 </dd>
 </dl>
@@ -9303,210 +8251,6 @@ client.load_balancers.create_l4load_balancer(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**routing:** `typing.Optional[LoadBalancerRouting]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**health_check:** `typing.Optional[LoadBalancerHealthCheck]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**policy:** `typing.Optional[LoadBalancerPolicy]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**observability:** `typing.Optional[LoadBalancerObservability]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**tls:** `typing.Optional[LoadBalancerTls]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">create_l7load_balancer</a>(...) -> LoadBalancer</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Creates a layer 7 (HTTP/HTTPS) load balancer with routing rules, optional TLS, and an optional custom domain. Requires scope: load-balancer.write.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee, LoadBalancerBackend
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.load_balancers.create_l7load_balancer(
-    workspace_id="710995",
-    name="name",
-    protocol="http",
-    backends=[
-        LoadBalancerBackend(
-            target="target",
-            port=1,
-        )
-    ],
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**name:** `str` — Display name of the load balancer.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**protocol:** `CreateL7LoadBalancerRequestProtocol` 
-
-- `http`
-- `https`
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**backends:** `typing.List[LoadBalancerBackend]` — Default backends for requests no rule matches.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**routing:** `typing.Optional[LoadBalancerRouting]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**health_check:** `typing.Optional[LoadBalancerHealthCheck]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**policy:** `typing.Optional[LoadBalancerPolicy]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**observability:** `typing.Optional[LoadBalancerObservability]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**tls:** `typing.Optional[LoadBalancerTls]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**custom_domain:** `typing.Optional[CreateL7LoadBalancerRequestCustomDomain]` — Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**rules:** `typing.Optional[typing.List[LoadBalancerRule]]` — Path- and header-based routing rules.
     
 </dd>
 </dl>
@@ -9538,7 +8282,7 @@ client.load_balancers.create_l7load_balancer(
 <dl>
 <dd>
 
-Returns a load balancer's configuration, including its backends, routing, and TLS settings. Requires scope: load-balancer.read.
+Returns one load balancer with its specification, `observed_state` and `conditions`. Requires scope: load-balancer.read.
 </dd>
 </dl>
 </dd>
@@ -9580,7 +8324,7 @@ client.load_balancers.get_load_balancer(
 <dl>
 <dd>
 
-**load_balancer_id:** `str` — Load balancer ID.
+**load_balancer_id:** `str` — The load balancer's ID.
     
 </dd>
 </dl>
@@ -9608,7 +8352,7 @@ client.load_balancers.get_load_balancer(
 </dl>
 </details>
 
-<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">delete_load_balancer</a>(...)</code></summary>
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">update_load_balancer</a>(...) -> LoadBalancerOperation</code></summary>
 <dl>
 <dd>
 
@@ -9620,7 +8364,134 @@ client.load_balancers.get_load_balancer(
 <dl>
 <dd>
 
-Deletes a load balancer. The backend VMs are not deleted. Requires scope: load-balancer.write.
+Replaces the whole specification. Send the current `version` from getLoadBalancer; a stale version answers 409. Load balancers made by a Kubernetes cluster can't be changed here. Requires scope: load-balancer.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee, LoadBalancerSpec, LoadBalancerListener, LoadBalancerTargetGroup
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.load_balancers.update_load_balancer(
+    load_balancer_id="load_balancer_id",
+    workspace_id="710995",
+    idempotency_key="Idempotency-Key",
+    version=1,
+    specification=LoadBalancerSpec(
+        name="name",
+        region_id="region_id",
+        traffic_type="http",
+        listeners=[
+            LoadBalancerListener(
+                name="name",
+                protocol="HTTP",
+                port=1,
+                target_group="target_group",
+            )
+        ],
+        target_groups=[
+            LoadBalancerTargetGroup(
+                name="name",
+                protocol="HTTP",
+            )
+        ],
+    ),
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**load_balancer_id:** `str` — The load balancer's ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**version:** `int` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**specification:** `LoadBalancerSpec` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">delete_load_balancer</a>(...) -> LoadBalancerOperation</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Deletes the load balancer. Answers 202 with an operation. Requires scope: load-balancer.write.
 </dd>
 </dl>
 </dd>
@@ -9646,6 +8517,7 @@ client = Ibee(
 client.load_balancers.delete_load_balancer(
     load_balancer_id="load_balancer_id",
     workspace_id="710995",
+    idempotency_key="Idempotency-Key",
 )
 
 ```
@@ -9662,7 +8534,15 @@ client.load_balancers.delete_load_balancer(
 <dl>
 <dd>
 
-**load_balancer_id:** `str` — Load balancer ID.
+**load_balancer_id:** `str` — The load balancer's ID.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
     
 </dd>
 </dl>
@@ -9690,7 +8570,7 @@ client.load_balancers.delete_load_balancer(
 </dl>
 </details>
 
-<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">update_l4load_balancer</a>(...) -> LoadBalancer</code></summary>
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">get_load_balancer_operation</a>(...) -> LoadBalancerOperation</code></summary>
 <dl>
 <dd>
 
@@ -9702,7 +8582,7 @@ client.load_balancers.delete_load_balancer(
 <dl>
 <dd>
 
-Changes an L4 load balancer's backends, routing, or TLS settings. Requires scope: load-balancer.write.
+Returns one create, update or delete operation. Requires scope: load-balancer.read.
 </dd>
 </dl>
 </dd>
@@ -9725,8 +8605,8 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.load_balancers.update_l4load_balancer(
-    load_balancer_id="load_balancer_id",
+client.load_balancers.get_load_balancer_operation(
+    operation_id="operation_id",
     workspace_id="710995",
 )
 
@@ -9744,7 +8624,7 @@ client.load_balancers.update_l4load_balancer(
 <dl>
 <dd>
 
-**load_balancer_id:** `str` — Load balancer ID.
+**operation_id:** `str` — The operation's ID.
     
 </dd>
 </dl>
@@ -9753,62 +8633,6 @@ client.load_balancers.update_l4load_balancer(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**name:** `typing.Optional[str]` — New display name.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**backends:** `typing.Optional[typing.List[LoadBalancerBackend]]` — Replacement backend list.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**routing:** `typing.Optional[LoadBalancerRouting]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**health_check:** `typing.Optional[LoadBalancerHealthCheck]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**policy:** `typing.Optional[LoadBalancerPolicy]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**observability:** `typing.Optional[LoadBalancerObservability]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**tls:** `typing.Optional[LoadBalancerTls]` 
     
 </dd>
 </dl>
@@ -9828,7 +8652,7 @@ client.load_balancers.update_l4load_balancer(
 </dl>
 </details>
 
-<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">update_l7load_balancer</a>(...) -> LoadBalancer</code></summary>
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">get_load_balancer_metrics</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -9840,7 +8664,7 @@ client.load_balancers.update_l4load_balancer(
 <dl>
 <dd>
 
-Changes an L7 load balancer's backends, routing rules, TLS settings, or custom domain. Requires scope: load-balancer.write.
+Returns current traffic and health metrics. Requires scope: load-balancer.read.
 </dd>
 </dl>
 </dd>
@@ -9863,7 +8687,7 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.load_balancers.update_l7load_balancer(
+client.load_balancers.get_load_balancer_metrics(
     load_balancer_id="load_balancer_id",
     workspace_id="710995",
 )
@@ -9882,7 +8706,7 @@ client.load_balancers.update_l7load_balancer(
 <dl>
 <dd>
 
-**load_balancer_id:** `str` — Load balancer ID.
+**load_balancer_id:** `str` — The load balancer's ID.
     
 </dd>
 </dl>
@@ -9891,78 +8715,6 @@ client.load_balancers.update_l7load_balancer(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**name:** `typing.Optional[str]` — New display name.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**backends:** `typing.Optional[typing.List[LoadBalancerBackend]]` — Replacement default backend list.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**routing:** `typing.Optional[LoadBalancerRouting]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**health_check:** `typing.Optional[LoadBalancerHealthCheck]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**policy:** `typing.Optional[LoadBalancerPolicy]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**observability:** `typing.Optional[LoadBalancerObservability]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**tls:** `typing.Optional[LoadBalancerTls]` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**custom_domain:** `typing.Optional[UpdateL7LoadBalancerRequestCustomDomain]` — Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**rules:** `typing.Optional[typing.List[LoadBalancerRule]]` — Replacement routing rules.
     
 </dd>
 </dl>
@@ -9982,7 +8734,7 @@ client.load_balancers.update_l7load_balancer(
 </dl>
 </details>
 
-<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">get_load_balancer_status</a>(...) -> LoadBalancerStatusResponse</code></summary>
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">get_load_balancer_metrics_history</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -9994,7 +8746,7 @@ client.load_balancers.update_l7load_balancer(
 <dl>
 <dd>
 
-Returns a load balancer's provisioning status, endpoint URL, and any error conditions. Requires scope: load-balancer.read.
+Returns metrics over a time window. Requires scope: load-balancer.read.
 </dd>
 </dl>
 </dd>
@@ -10017,7 +8769,7 @@ client = Ibee(
     environment=IbeeEnvironment.PRODUCTION,
 )
 
-client.load_balancers.get_load_balancer_status(
+client.load_balancers.get_load_balancer_metrics_history(
     load_balancer_id="load_balancer_id",
     workspace_id="710995",
 )
@@ -10036,7 +8788,7 @@ client.load_balancers.get_load_balancer_status(
 <dl>
 <dd>
 
-**load_balancer_id:** `str` — Load balancer ID.
+**load_balancer_id:** `str` — The load balancer's ID.
     
 </dd>
 </dl>
@@ -10045,6 +8797,14 @@ client.load_balancers.get_load_balancer_status(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**window:** `typing.Optional[GetLoadBalancerMetricsHistoryRequestWindow]` — Time window. Default 1h.
     
 </dd>
 </dl>
@@ -19792,7 +18552,7 @@ client.cdn.purge_cdn_cache(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
+Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -19874,7 +18634,7 @@ client.container_registry.check_container_registry_name_availability(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -19963,7 +18723,7 @@ client.container_registry.list_container_registries(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a registry with a storage plan (`billing_catalog.sku_code`).
+Creates a registry with a storage plan (`billing_catalog.sku_code`).
 The registry service asks Billing whether the workspace may buy that
 plan and refuses with 403 `billing_resource_not_eligible` (and a
 `reason`) when it may not. Returns 201 when the registry is active, or
@@ -20104,7 +18864,7 @@ client.container_registry.create_container_registry(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
+Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -20186,7 +18946,7 @@ client.container_registry.get_container_registry(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
+Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20277,7 +19037,7 @@ client.container_registry.delete_container_registry(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
+Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20377,7 +19137,7 @@ client.container_registry.update_container_registry_visibility(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
+Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20459,7 +19219,7 @@ client.container_registry.retry_container_registry_provisioning(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
+Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -20541,7 +19301,7 @@ client.container_registry.get_container_registry_package(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Moves an active registry to a larger storage plan. Only larger quotas
+Moves an active registry to a larger storage plan. Only larger quotas
 are accepted and only one change can be pending (409 otherwise). The
 registry service asks Billing first and refuses with 403
 `billing_resource_not_eligible` when the plan is not allowed. Send an
@@ -20651,7 +19411,7 @@ client.container_registry.upgrade_container_registry_package(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
+Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -20741,7 +19501,7 @@ client.container_registry.list_container_registry_access_tokens(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a Docker login credential for the registry. The `username`
+Creates a Docker login credential for the registry. The `username`
 and `secret` are returned once and cannot be read again. The registry
 must be active, and the registry service asks Billing whether the
 workspace may create credentials. Requires scope:
@@ -20873,7 +19633,7 @@ client.container_registry.create_container_registry_access_token(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
+Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -20964,7 +19724,7 @@ client.container_registry.rotate_container_registry_access_token(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
+Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -21055,7 +19815,7 @@ client.container_registry.revoke_container_registry_access_token(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21169,7 +19929,7 @@ client.container_registry.list_container_registry_repositories(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
+Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -21269,7 +20029,7 @@ client.container_registry.delete_container_registry_repository(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21376,7 +20136,7 @@ client.container_registry.list_container_registry_artifacts(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
+Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -21485,7 +20245,7 @@ client.container_registry.delete_container_registry_artifact(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
+Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -21585,7 +20345,7 @@ client.container_registry.scan_container_registry_artifact(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
+Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21667,7 +20427,7 @@ client.container_registry.get_container_registry_security_settings(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
+Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
 </dd>
 </dl>
 </dd>
@@ -21758,7 +20518,7 @@ client.container_registry.update_container_registry_security_settings(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
+Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21840,7 +20600,7 @@ client.container_registry.get_container_registry_vulnerability_summary(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -21994,7 +20754,7 @@ Return only findings of this severity.
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -22101,7 +20861,7 @@ client.container_registry.list_container_registry_sboms(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>
@@ -22213,105 +20973,6 @@ client.container_registry.get_container_registry_sbom(
 </dl>
 </details>
 
-<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">download_container_registry_sbom</a>(...) -> typing.Iterator[bytes]</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from ibee import Ibee
-from ibee.environment import IbeeEnvironment
-
-client = Ibee(
-    token="<token>",
-    environment=IbeeEnvironment.PRODUCTION,
-)
-
-client.container_registry.download_container_registry_sbom(
-    registry_id="registry_id",
-    artifact_digest="artifact_digest",
-    repository_name="x",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**registry_id:** `str` — Registry ID.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**artifact_digest:** `str` — Image digest, for example `sha256:4f3c...`.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**repository_name:** `str` — Repository name inside the registry, for example `api` or `team/api`.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 <details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">get_container_registry_metrics</a>(...) -> ContainerRegistryMetrics</code></summary>
 <dl>
 <dd>
@@ -22324,7 +20985,7 @@ client.container_registry.download_container_registry_sbom(
 <dl>
 <dd>
 
-Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
+Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
 </dd>
 </dl>
 </dd>

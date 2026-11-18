@@ -1,13 +1,14 @@
 # IBEE Solutions Python SDK
 
-Object Storage and Container Registry public management operations are temporarily paused.
-Published methods and commands remain available for compatibility. An empty 404
-from these routes reports the pause; it does not prove an existing resource was deleted.
-CDN remains available.
-
 Official Python SDK for the IBEE Solutions API: cloud and GPU VMs, VPC networking,
-Reserved IPs, firewalls, load balancers, object storage, Block Storage, CDN,
-Secret Store and Container Registry.
+Reserved IPs, firewalls, regional load balancers, Object Storage, Block Storage, CDN,
+Secret Manager, Container Registry and the organization wallet.
+
+The API manages resources. Data stays on each product's own endpoint, with the
+clients that already exist for it: files over the S3 API
+(`<workspace>.blob.ibeestorage.com`, any S3 tool), container images with `docker`
+at `registry.ibee.ai`, and secret values with `bao` or `vault` at your Secret
+Manager endpoint.
 
 The SDK is the client generated from the public API contract
 ([reference](https://ibee.ai/docs/api-reference)): every operation is one method,

@@ -5,22 +5,18 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.load_balancer import LoadBalancer
-from ..types.load_balancer_backend import LoadBalancerBackend
-from ..types.load_balancer_health_check import LoadBalancerHealthCheck
-from ..types.load_balancer_observability import LoadBalancerObservability
-from ..types.load_balancer_policy import LoadBalancerPolicy
-from ..types.load_balancer_protocol import LoadBalancerProtocol
-from ..types.load_balancer_routing import LoadBalancerRouting
-from ..types.load_balancer_rule import LoadBalancerRule
-from ..types.load_balancer_status import LoadBalancerStatus
-from ..types.load_balancer_status_response import LoadBalancerStatusResponse
-from ..types.load_balancer_tls import LoadBalancerTls
+from ..types.load_balancer_listener import LoadBalancerListener
+from ..types.load_balancer_logging import LoadBalancerLogging
+from ..types.load_balancer_operation import LoadBalancerOperation
+from ..types.load_balancer_page import LoadBalancerPage
+from ..types.load_balancer_spec import LoadBalancerSpec
+from ..types.load_balancer_spec_capacity_mode import LoadBalancerSpecCapacityMode
+from ..types.load_balancer_spec_scope import LoadBalancerSpecScope
+from ..types.load_balancer_spec_traffic_type import LoadBalancerSpecTrafficType
+from ..types.load_balancer_spec_visibility import LoadBalancerSpecVisibility
+from ..types.load_balancer_target_group import LoadBalancerTargetGroup
 from .raw_client import AsyncRawLoadBalancersClient, RawLoadBalancersClient
-from .types.create_l4load_balancer_request_protocol import CreateL4LoadBalancerRequestProtocol
-from .types.create_l7load_balancer_request_custom_domain import CreateL7LoadBalancerRequestCustomDomain
-from .types.create_l7load_balancer_request_protocol import CreateL7LoadBalancerRequestProtocol
-from .types.list_load_balancers_request_layer import ListLoadBalancersRequestLayer
-from .types.update_l7load_balancer_request_custom_domain import UpdateL7LoadBalancerRequestCustomDomain
+from .types.get_load_balancer_metrics_history_request_window import GetLoadBalancerMetricsHistoryRequestWindow
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -41,49 +37,70 @@ class LoadBalancersClient:
         """
         return self._raw_client
 
-    def list_load_balancers(
-        self,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        status: typing.Optional[LoadBalancerStatus] = None,
-        layer: typing.Optional[ListLoadBalancersRequestLayer] = None,
-        protocol: typing.Optional[LoadBalancerProtocol] = None,
-        limit: typing.Optional[int] = None,
-        skip: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[LoadBalancer]:
+    def list_load_balancer_regions(
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
+    ) -> typing.List[typing.Dict[str, typing.Any]]:
         """
-        Lists the L4 and L7 load balancers in a workspace. Requires scope: load-balancer.read.
+        Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
-        status : typing.Optional[LoadBalancerStatus]
-            Return only load balancers in this status.
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
 
-        layer : typing.Optional[ListLoadBalancersRequestLayer]
-            Return only load balancers of this layer.
-            - `l4`
-            - `l7`
+        Returns
+        -------
+        typing.List[typing.Dict[str, typing.Any]]
+            Success.
 
-        protocol : typing.Optional[LoadBalancerProtocol]
-            Return only load balancers that accept this protocol.
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.load_balancers.list_load_balancer_regions(
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.list_load_balancer_regions(
+            workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def list_load_balancers(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        cursor: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> LoadBalancerPage:
+        """
+        Lists load balancers in the workspace, newest first. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        cursor : typing.Optional[str]
+            Cursor from the previous page (`next_cursor`).
 
         limit : typing.Optional[int]
-            Maximum number of items to return (1-500). Default 100.
-
-        skip : typing.Optional[int]
-            Number of items to skip before the first returned item. Default 0.
+            Page size (1-100). Default 50.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[LoadBalancer]
-            Load balancers returned successfully.
+        LoadBalancerPage
+            Success.
 
         Examples
         --------
@@ -97,188 +114,112 @@ class LoadBalancersClient:
         )
         """
         _response = self._raw_client.list_load_balancers(
-            workspace_id=workspace_id,
-            status=status,
-            layer=layer,
-            protocol=protocol,
-            limit=limit,
-            skip=skip,
-            request_options=request_options,
+            workspace_id=workspace_id, cursor=cursor, limit=limit, request_options=request_options
         )
         return _response.data
 
-    def create_l4load_balancer(
+    def create_load_balancer(
         self,
         *,
+        idempotency_key: str,
         name: str,
-        protocol: CreateL4LoadBalancerRequestProtocol,
-        backends: typing.Sequence[LoadBalancerBackend],
+        region_id: str,
+        traffic_type: LoadBalancerSpecTrafficType,
+        listeners: typing.Sequence[LoadBalancerListener],
+        target_groups: typing.Sequence[LoadBalancerTargetGroup],
         workspace_id: typing.Optional[str] = None,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
+        vpc_id: typing.Optional[str] = OMIT,
+        scope: typing.Optional[LoadBalancerSpecScope] = OMIT,
+        capacity_mode: typing.Optional[LoadBalancerSpecCapacityMode] = OMIT,
+        visibility: typing.Optional[LoadBalancerSpecVisibility] = OMIT,
+        node_count: typing.Optional[int] = OMIT,
+        logging: typing.Optional[LoadBalancerLogging] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancer:
+    ) -> LoadBalancerOperation:
         """
-        Creates a layer 4 (TCP/UDP) load balancer that spreads connections across backend VMs, with optional TLS. Requires scope: load-balancer.write.
+        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
 
         Parameters
         ----------
+        idempotency_key : str
+            A unique key for this change. Retry with the same key and body to get the same operation back.
+
         name : str
-            Display name of the load balancer.
 
-        protocol : CreateL4LoadBalancerRequestProtocol
-            - `tcp`
-            - `tls_passthrough`
+        region_id : str
 
-        backends : typing.Sequence[LoadBalancerBackend]
-            Backends to send traffic to.
+        traffic_type : LoadBalancerSpecTrafficType
+
+        listeners : typing.Sequence[LoadBalancerListener]
+
+        target_groups : typing.Sequence[LoadBalancerTargetGroup]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
-        routing : typing.Optional[LoadBalancerRouting]
+        vpc_id : typing.Optional[str]
 
-        health_check : typing.Optional[LoadBalancerHealthCheck]
+        scope : typing.Optional[LoadBalancerSpecScope]
 
-        policy : typing.Optional[LoadBalancerPolicy]
+        capacity_mode : typing.Optional[LoadBalancerSpecCapacityMode]
 
-        observability : typing.Optional[LoadBalancerObservability]
+        visibility : typing.Optional[LoadBalancerSpecVisibility]
 
-        tls : typing.Optional[LoadBalancerTls]
+        node_count : typing.Optional[int]
+
+        logging : typing.Optional[LoadBalancerLogging]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        LoadBalancer
-            L4 load balancer created successfully.
+        LoadBalancerOperation
+            Accepted.
 
         Examples
         --------
-        from ibee import Ibee, LoadBalancerBackend
+        from ibee import Ibee, LoadBalancerListener, LoadBalancerTargetGroup
 
         client = Ibee(
             token="YOUR_TOKEN",
         )
-        client.load_balancers.create_l4load_balancer(
+        client.load_balancers.create_load_balancer(
+            idempotency_key="Idempotency-Key",
             workspace_id="710995",
             name="name",
-            protocol="tcp",
-            backends=[
-                LoadBalancerBackend(
-                    target="target",
+            region_id="region_id",
+            traffic_type="http",
+            listeners=[
+                LoadBalancerListener(
+                    name="name",
+                    protocol="HTTP",
                     port=1,
+                    target_group="target_group",
+                )
+            ],
+            target_groups=[
+                LoadBalancerTargetGroup(
+                    name="name",
+                    protocol="HTTP",
                 )
             ],
         )
         """
-        _response = self._raw_client.create_l4load_balancer(
+        _response = self._raw_client.create_load_balancer(
+            idempotency_key=idempotency_key,
             name=name,
-            protocol=protocol,
-            backends=backends,
+            region_id=region_id,
+            traffic_type=traffic_type,
+            listeners=listeners,
+            target_groups=target_groups,
             workspace_id=workspace_id,
-            routing=routing,
-            health_check=health_check,
-            policy=policy,
-            observability=observability,
-            tls=tls,
-            request_options=request_options,
-        )
-        return _response.data
-
-    def create_l7load_balancer(
-        self,
-        *,
-        name: str,
-        protocol: CreateL7LoadBalancerRequestProtocol,
-        backends: typing.Sequence[LoadBalancerBackend],
-        workspace_id: typing.Optional[str] = None,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        custom_domain: typing.Optional[CreateL7LoadBalancerRequestCustomDomain] = OMIT,
-        rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancer:
-        """
-        Creates a layer 7 (HTTP/HTTPS) load balancer with routing rules, optional TLS, and an optional custom domain. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        name : str
-            Display name of the load balancer.
-
-        protocol : CreateL7LoadBalancerRequestProtocol
-            - `http`
-            - `https`
-
-        backends : typing.Sequence[LoadBalancerBackend]
-            Default backends for requests no rule matches.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        custom_domain : typing.Optional[CreateL7LoadBalancerRequestCustomDomain]
-            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-
-        rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
-            Path- and header-based routing rules.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        LoadBalancer
-            L7 load balancer created successfully.
-
-        Examples
-        --------
-        from ibee import Ibee, LoadBalancerBackend
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.load_balancers.create_l7load_balancer(
-            workspace_id="710995",
-            name="name",
-            protocol="http",
-            backends=[
-                LoadBalancerBackend(
-                    target="target",
-                    port=1,
-                )
-            ],
-        )
-        """
-        _response = self._raw_client.create_l7load_balancer(
-            name=name,
-            protocol=protocol,
-            backends=backends,
-            workspace_id=workspace_id,
-            routing=routing,
-            health_check=health_check,
-            policy=policy,
-            observability=observability,
-            tls=tls,
-            custom_domain=custom_domain,
-            rules=rules,
+            vpc_id=vpc_id,
+            scope=scope,
+            capacity_mode=capacity_mode,
+            visibility=visibility,
+            node_count=node_count,
+            logging=logging,
             request_options=request_options,
         )
         return _response.data
@@ -291,12 +232,12 @@ class LoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancer:
         """
-        Returns a load balancer's configuration, including its backends, routing, and TLS settings. Requires scope: load-balancer.read.
+        Returns one load balancer with its specification, `observed_state` and `conditions`. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -307,7 +248,7 @@ class LoadBalancersClient:
         Returns
         -------
         LoadBalancer
-            Load balancer returned successfully.
+            Success.
 
         Examples
         --------
@@ -326,20 +267,30 @@ class LoadBalancersClient:
         )
         return _response.data
 
-    def delete_load_balancer(
+    def update_load_balancer(
         self,
         load_balancer_id: str,
         *,
+        idempotency_key: str,
+        version: int,
+        specification: LoadBalancerSpec,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> LoadBalancerOperation:
         """
-        Deletes a load balancer. The backend VMs are not deleted. Requires scope: load-balancer.write.
+        Replaces the whole specification. Send the current `version` from getLoadBalancer; a stale version answers 409. Load balancers made by a Kubernetes cluster can't be changed here. Requires scope: load-balancer.write.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
+
+        idempotency_key : str
+            A unique key for this change. Retry with the same key and body to get the same operation back.
+
+        version : int
+
+        specification : LoadBalancerSpec
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -349,7 +300,86 @@ class LoadBalancersClient:
 
         Returns
         -------
-        None
+        LoadBalancerOperation
+            Accepted.
+
+        Examples
+        --------
+        from ibee import (
+            Ibee,
+            LoadBalancerListener,
+            LoadBalancerSpec,
+            LoadBalancerTargetGroup,
+        )
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.load_balancers.update_load_balancer(
+            load_balancer_id="load_balancer_id",
+            idempotency_key="Idempotency-Key",
+            workspace_id="710995",
+            version=1,
+            specification=LoadBalancerSpec(
+                name="name",
+                region_id="region_id",
+                traffic_type="http",
+                listeners=[
+                    LoadBalancerListener(
+                        name="name",
+                        protocol="HTTP",
+                        port=1,
+                        target_group="target_group",
+                    )
+                ],
+                target_groups=[
+                    LoadBalancerTargetGroup(
+                        name="name",
+                        protocol="HTTP",
+                    )
+                ],
+            ),
+        )
+        """
+        _response = self._raw_client.update_load_balancer(
+            load_balancer_id,
+            idempotency_key=idempotency_key,
+            version=version,
+            specification=specification,
+            workspace_id=workspace_id,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def delete_load_balancer(
+        self,
+        load_balancer_id: str,
+        *,
+        idempotency_key: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> LoadBalancerOperation:
+        """
+        Deletes the load balancer. Answers 202 with an operation. Requires scope: load-balancer.write.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        idempotency_key : str
+            A unique key for this change. Retry with the same key and body to get the same operation back.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        LoadBalancerOperation
+            Accepted.
 
         Examples
         --------
@@ -360,145 +390,43 @@ class LoadBalancersClient:
         )
         client.load_balancers.delete_load_balancer(
             load_balancer_id="load_balancer_id",
+            idempotency_key="Idempotency-Key",
             workspace_id="710995",
         )
         """
         _response = self._raw_client.delete_load_balancer(
-            load_balancer_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    def update_l4load_balancer(
-        self,
-        load_balancer_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancer:
-        """
-        Changes an L4 load balancer's backends, routing, or TLS settings. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        load_balancer_id : str
-            Load balancer ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-            New display name.
-
-        backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
-            Replacement backend list.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        LoadBalancer
-            L4 load balancer updated successfully.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.load_balancers.update_l4load_balancer(
-            load_balancer_id="load_balancer_id",
-            workspace_id="710995",
-        )
-        """
-        _response = self._raw_client.update_l4load_balancer(
             load_balancer_id,
+            idempotency_key=idempotency_key,
             workspace_id=workspace_id,
-            name=name,
-            backends=backends,
-            routing=routing,
-            health_check=health_check,
-            policy=policy,
-            observability=observability,
-            tls=tls,
             request_options=request_options,
         )
         return _response.data
 
-    def update_l7load_balancer(
+    def get_load_balancer_operation(
         self,
-        load_balancer_id: str,
+        operation_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        custom_domain: typing.Optional[UpdateL7LoadBalancerRequestCustomDomain] = OMIT,
-        rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancer:
+    ) -> LoadBalancerOperation:
         """
-        Changes an L7 load balancer's backends, routing rules, TLS settings, or custom domain. Requires scope: load-balancer.write.
+        Returns one create, update or delete operation. Requires scope: load-balancer.read.
 
         Parameters
         ----------
-        load_balancer_id : str
-            Load balancer ID.
+        operation_id : str
+            The operation's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-            New display name.
-
-        backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
-            Replacement default backend list.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        custom_domain : typing.Optional[UpdateL7LoadBalancerRequestCustomDomain]
-            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-
-        rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
-            Replacement routing rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        LoadBalancer
-            L7 load balancer updated successfully.
+        LoadBalancerOperation
+            Success.
 
         Examples
         --------
@@ -507,41 +435,30 @@ class LoadBalancersClient:
         client = Ibee(
             token="YOUR_TOKEN",
         )
-        client.load_balancers.update_l7load_balancer(
-            load_balancer_id="load_balancer_id",
+        client.load_balancers.get_load_balancer_operation(
+            operation_id="operation_id",
             workspace_id="710995",
         )
         """
-        _response = self._raw_client.update_l7load_balancer(
-            load_balancer_id,
-            workspace_id=workspace_id,
-            name=name,
-            backends=backends,
-            routing=routing,
-            health_check=health_check,
-            policy=policy,
-            observability=observability,
-            tls=tls,
-            custom_domain=custom_domain,
-            rules=rules,
-            request_options=request_options,
+        _response = self._raw_client.get_load_balancer_operation(
+            operation_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
-    def get_load_balancer_status(
+    def get_load_balancer_metrics(
         self,
         load_balancer_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancerStatusResponse:
+    ) -> typing.Dict[str, typing.Any]:
         """
-        Returns a load balancer's provisioning status, endpoint URL, and any error conditions. Requires scope: load-balancer.read.
+        Returns current traffic and health metrics. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -551,8 +468,8 @@ class LoadBalancersClient:
 
         Returns
         -------
-        LoadBalancerStatusResponse
-            Load balancer status returned successfully.
+        typing.Dict[str, typing.Any]
+            Success.
 
         Examples
         --------
@@ -561,13 +478,60 @@ class LoadBalancersClient:
         client = Ibee(
             token="YOUR_TOKEN",
         )
-        client.load_balancers.get_load_balancer_status(
+        client.load_balancers.get_load_balancer_metrics(
             load_balancer_id="load_balancer_id",
             workspace_id="710995",
         )
         """
-        _response = self._raw_client.get_load_balancer_status(
+        _response = self._raw_client.get_load_balancer_metrics(
             load_balancer_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    def get_load_balancer_metrics_history(
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        window: typing.Optional[GetLoadBalancerMetricsHistoryRequestWindow] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.Dict[str, typing.Any]:
+        """
+        Returns metrics over a time window. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        window : typing.Optional[GetLoadBalancerMetricsHistoryRequestWindow]
+            Time window. Default 1h.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, typing.Any]
+            Success.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.load_balancers.get_load_balancer_metrics_history(
+            load_balancer_id="load_balancer_id",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.get_load_balancer_metrics_history(
+            load_balancer_id, workspace_id=workspace_id, window=window, request_options=request_options
         )
         return _response.data
 
@@ -587,49 +551,78 @@ class AsyncLoadBalancersClient:
         """
         return self._raw_client
 
-    async def list_load_balancers(
-        self,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        status: typing.Optional[LoadBalancerStatus] = None,
-        layer: typing.Optional[ListLoadBalancersRequestLayer] = None,
-        protocol: typing.Optional[LoadBalancerProtocol] = None,
-        limit: typing.Optional[int] = None,
-        skip: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[LoadBalancer]:
+    async def list_load_balancer_regions(
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
+    ) -> typing.List[typing.Dict[str, typing.Any]]:
         """
-        Lists the L4 and L7 load balancers in a workspace. Requires scope: load-balancer.read.
+        Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
-        status : typing.Optional[LoadBalancerStatus]
-            Return only load balancers in this status.
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
 
-        layer : typing.Optional[ListLoadBalancersRequestLayer]
-            Return only load balancers of this layer.
-            - `l4`
-            - `l7`
+        Returns
+        -------
+        typing.List[typing.Dict[str, typing.Any]]
+            Success.
 
-        protocol : typing.Optional[LoadBalancerProtocol]
-            Return only load balancers that accept this protocol.
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.load_balancers.list_load_balancer_regions(
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.list_load_balancer_regions(
+            workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def list_load_balancers(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        cursor: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> LoadBalancerPage:
+        """
+        Lists load balancers in the workspace, newest first. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        cursor : typing.Optional[str]
+            Cursor from the previous page (`next_cursor`).
 
         limit : typing.Optional[int]
-            Maximum number of items to return (1-500). Default 100.
-
-        skip : typing.Optional[int]
-            Number of items to skip before the first returned item. Default 0.
+            Page size (1-100). Default 50.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[LoadBalancer]
-            Load balancers returned successfully.
+        LoadBalancerPage
+            Success.
 
         Examples
         --------
@@ -651,71 +644,74 @@ class AsyncLoadBalancersClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.list_load_balancers(
-            workspace_id=workspace_id,
-            status=status,
-            layer=layer,
-            protocol=protocol,
-            limit=limit,
-            skip=skip,
-            request_options=request_options,
+            workspace_id=workspace_id, cursor=cursor, limit=limit, request_options=request_options
         )
         return _response.data
 
-    async def create_l4load_balancer(
+    async def create_load_balancer(
         self,
         *,
+        idempotency_key: str,
         name: str,
-        protocol: CreateL4LoadBalancerRequestProtocol,
-        backends: typing.Sequence[LoadBalancerBackend],
+        region_id: str,
+        traffic_type: LoadBalancerSpecTrafficType,
+        listeners: typing.Sequence[LoadBalancerListener],
+        target_groups: typing.Sequence[LoadBalancerTargetGroup],
         workspace_id: typing.Optional[str] = None,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
+        vpc_id: typing.Optional[str] = OMIT,
+        scope: typing.Optional[LoadBalancerSpecScope] = OMIT,
+        capacity_mode: typing.Optional[LoadBalancerSpecCapacityMode] = OMIT,
+        visibility: typing.Optional[LoadBalancerSpecVisibility] = OMIT,
+        node_count: typing.Optional[int] = OMIT,
+        logging: typing.Optional[LoadBalancerLogging] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancer:
+    ) -> LoadBalancerOperation:
         """
-        Creates a layer 4 (TCP/UDP) load balancer that spreads connections across backend VMs, with optional TLS. Requires scope: load-balancer.write.
+        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
 
         Parameters
         ----------
+        idempotency_key : str
+            A unique key for this change. Retry with the same key and body to get the same operation back.
+
         name : str
-            Display name of the load balancer.
 
-        protocol : CreateL4LoadBalancerRequestProtocol
-            - `tcp`
-            - `tls_passthrough`
+        region_id : str
 
-        backends : typing.Sequence[LoadBalancerBackend]
-            Backends to send traffic to.
+        traffic_type : LoadBalancerSpecTrafficType
+
+        listeners : typing.Sequence[LoadBalancerListener]
+
+        target_groups : typing.Sequence[LoadBalancerTargetGroup]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
-        routing : typing.Optional[LoadBalancerRouting]
+        vpc_id : typing.Optional[str]
 
-        health_check : typing.Optional[LoadBalancerHealthCheck]
+        scope : typing.Optional[LoadBalancerSpecScope]
 
-        policy : typing.Optional[LoadBalancerPolicy]
+        capacity_mode : typing.Optional[LoadBalancerSpecCapacityMode]
 
-        observability : typing.Optional[LoadBalancerObservability]
+        visibility : typing.Optional[LoadBalancerSpecVisibility]
 
-        tls : typing.Optional[LoadBalancerTls]
+        node_count : typing.Optional[int]
+
+        logging : typing.Optional[LoadBalancerLogging]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        LoadBalancer
-            L4 load balancer created successfully.
+        LoadBalancerOperation
+            Accepted.
 
         Examples
         --------
         import asyncio
 
-        from ibee import AsyncIbee, LoadBalancerBackend
+        from ibee import AsyncIbee, LoadBalancerListener, LoadBalancerTargetGroup
 
         client = AsyncIbee(
             token="YOUR_TOKEN",
@@ -723,14 +719,24 @@ class AsyncLoadBalancersClient:
 
 
         async def main() -> None:
-            await client.load_balancers.create_l4load_balancer(
+            await client.load_balancers.create_load_balancer(
+                idempotency_key="Idempotency-Key",
                 workspace_id="710995",
                 name="name",
-                protocol="tcp",
-                backends=[
-                    LoadBalancerBackend(
-                        target="target",
+                region_id="region_id",
+                traffic_type="http",
+                listeners=[
+                    LoadBalancerListener(
+                        name="name",
+                        protocol="HTTP",
                         port=1,
+                        target_group="target_group",
+                    )
+                ],
+                target_groups=[
+                    LoadBalancerTargetGroup(
+                        name="name",
+                        protocol="HTTP",
                     )
                 ],
             )
@@ -738,117 +744,20 @@ class AsyncLoadBalancersClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.create_l4load_balancer(
+        _response = await self._raw_client.create_load_balancer(
+            idempotency_key=idempotency_key,
             name=name,
-            protocol=protocol,
-            backends=backends,
+            region_id=region_id,
+            traffic_type=traffic_type,
+            listeners=listeners,
+            target_groups=target_groups,
             workspace_id=workspace_id,
-            routing=routing,
-            health_check=health_check,
-            policy=policy,
-            observability=observability,
-            tls=tls,
-            request_options=request_options,
-        )
-        return _response.data
-
-    async def create_l7load_balancer(
-        self,
-        *,
-        name: str,
-        protocol: CreateL7LoadBalancerRequestProtocol,
-        backends: typing.Sequence[LoadBalancerBackend],
-        workspace_id: typing.Optional[str] = None,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        custom_domain: typing.Optional[CreateL7LoadBalancerRequestCustomDomain] = OMIT,
-        rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancer:
-        """
-        Creates a layer 7 (HTTP/HTTPS) load balancer with routing rules, optional TLS, and an optional custom domain. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        name : str
-            Display name of the load balancer.
-
-        protocol : CreateL7LoadBalancerRequestProtocol
-            - `http`
-            - `https`
-
-        backends : typing.Sequence[LoadBalancerBackend]
-            Default backends for requests no rule matches.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        custom_domain : typing.Optional[CreateL7LoadBalancerRequestCustomDomain]
-            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-
-        rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
-            Path- and header-based routing rules.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        LoadBalancer
-            L7 load balancer created successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee, LoadBalancerBackend
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.load_balancers.create_l7load_balancer(
-                workspace_id="710995",
-                name="name",
-                protocol="http",
-                backends=[
-                    LoadBalancerBackend(
-                        target="target",
-                        port=1,
-                    )
-                ],
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.create_l7load_balancer(
-            name=name,
-            protocol=protocol,
-            backends=backends,
-            workspace_id=workspace_id,
-            routing=routing,
-            health_check=health_check,
-            policy=policy,
-            observability=observability,
-            tls=tls,
-            custom_domain=custom_domain,
-            rules=rules,
+            vpc_id=vpc_id,
+            scope=scope,
+            capacity_mode=capacity_mode,
+            visibility=visibility,
+            node_count=node_count,
+            logging=logging,
             request_options=request_options,
         )
         return _response.data
@@ -861,12 +770,12 @@ class AsyncLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancer:
         """
-        Returns a load balancer's configuration, including its backends, routing, and TLS settings. Requires scope: load-balancer.read.
+        Returns one load balancer with its specification, `observed_state` and `conditions`. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -877,7 +786,7 @@ class AsyncLoadBalancersClient:
         Returns
         -------
         LoadBalancer
-            Load balancer returned successfully.
+            Success.
 
         Examples
         --------
@@ -904,20 +813,30 @@ class AsyncLoadBalancersClient:
         )
         return _response.data
 
-    async def delete_load_balancer(
+    async def update_load_balancer(
         self,
         load_balancer_id: str,
         *,
+        idempotency_key: str,
+        version: int,
+        specification: LoadBalancerSpec,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> LoadBalancerOperation:
         """
-        Deletes a load balancer. The backend VMs are not deleted. Requires scope: load-balancer.write.
+        Replaces the whole specification. Send the current `version` from getLoadBalancer; a stale version answers 409. Load balancers made by a Kubernetes cluster can't be changed here. Requires scope: load-balancer.write.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
+
+        idempotency_key : str
+            A unique key for this change. Retry with the same key and body to get the same operation back.
+
+        version : int
+
+        specification : LoadBalancerSpec
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -927,7 +846,94 @@ class AsyncLoadBalancersClient:
 
         Returns
         -------
-        None
+        LoadBalancerOperation
+            Accepted.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import (
+            AsyncIbee,
+            LoadBalancerListener,
+            LoadBalancerSpec,
+            LoadBalancerTargetGroup,
+        )
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.load_balancers.update_load_balancer(
+                load_balancer_id="load_balancer_id",
+                idempotency_key="Idempotency-Key",
+                workspace_id="710995",
+                version=1,
+                specification=LoadBalancerSpec(
+                    name="name",
+                    region_id="region_id",
+                    traffic_type="http",
+                    listeners=[
+                        LoadBalancerListener(
+                            name="name",
+                            protocol="HTTP",
+                            port=1,
+                            target_group="target_group",
+                        )
+                    ],
+                    target_groups=[
+                        LoadBalancerTargetGroup(
+                            name="name",
+                            protocol="HTTP",
+                        )
+                    ],
+                ),
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.update_load_balancer(
+            load_balancer_id,
+            idempotency_key=idempotency_key,
+            version=version,
+            specification=specification,
+            workspace_id=workspace_id,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def delete_load_balancer(
+        self,
+        load_balancer_id: str,
+        *,
+        idempotency_key: str,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> LoadBalancerOperation:
+        """
+        Deletes the load balancer. Answers 202 with an operation. Requires scope: load-balancer.write.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        idempotency_key : str
+            A unique key for this change. Retry with the same key and body to get the same operation back.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        LoadBalancerOperation
+            Accepted.
 
         Examples
         --------
@@ -943,6 +949,7 @@ class AsyncLoadBalancersClient:
         async def main() -> None:
             await client.load_balancers.delete_load_balancer(
                 load_balancer_id="load_balancer_id",
+                idempotency_key="Idempotency-Key",
                 workspace_id="710995",
             )
 
@@ -950,149 +957,38 @@ class AsyncLoadBalancersClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.delete_load_balancer(
-            load_balancer_id, workspace_id=workspace_id, request_options=request_options
-        )
-        return _response.data
-
-    async def update_l4load_balancer(
-        self,
-        load_balancer_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancer:
-        """
-        Changes an L4 load balancer's backends, routing, or TLS settings. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        load_balancer_id : str
-            Load balancer ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-            New display name.
-
-        backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
-            Replacement backend list.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        LoadBalancer
-            L4 load balancer updated successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.load_balancers.update_l4load_balancer(
-                load_balancer_id="load_balancer_id",
-                workspace_id="710995",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.update_l4load_balancer(
             load_balancer_id,
+            idempotency_key=idempotency_key,
             workspace_id=workspace_id,
-            name=name,
-            backends=backends,
-            routing=routing,
-            health_check=health_check,
-            policy=policy,
-            observability=observability,
-            tls=tls,
             request_options=request_options,
         )
         return _response.data
 
-    async def update_l7load_balancer(
+    async def get_load_balancer_operation(
         self,
-        load_balancer_id: str,
+        operation_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        custom_domain: typing.Optional[UpdateL7LoadBalancerRequestCustomDomain] = OMIT,
-        rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancer:
+    ) -> LoadBalancerOperation:
         """
-        Changes an L7 load balancer's backends, routing rules, TLS settings, or custom domain. Requires scope: load-balancer.write.
+        Returns one create, update or delete operation. Requires scope: load-balancer.read.
 
         Parameters
         ----------
-        load_balancer_id : str
-            Load balancer ID.
+        operation_id : str
+            The operation's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-            New display name.
-
-        backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
-            Replacement default backend list.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        custom_domain : typing.Optional[UpdateL7LoadBalancerRequestCustomDomain]
-            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-
-        rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
-            Replacement routing rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        LoadBalancer
-            L7 load balancer updated successfully.
+        LoadBalancerOperation
+            Success.
 
         Examples
         --------
@@ -1106,44 +1002,33 @@ class AsyncLoadBalancersClient:
 
 
         async def main() -> None:
-            await client.load_balancers.update_l7load_balancer(
-                load_balancer_id="load_balancer_id",
+            await client.load_balancers.get_load_balancer_operation(
+                operation_id="operation_id",
                 workspace_id="710995",
             )
 
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.update_l7load_balancer(
-            load_balancer_id,
-            workspace_id=workspace_id,
-            name=name,
-            backends=backends,
-            routing=routing,
-            health_check=health_check,
-            policy=policy,
-            observability=observability,
-            tls=tls,
-            custom_domain=custom_domain,
-            rules=rules,
-            request_options=request_options,
+        _response = await self._raw_client.get_load_balancer_operation(
+            operation_id, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
-    async def get_load_balancer_status(
+    async def get_load_balancer_metrics(
         self,
         load_balancer_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancerStatusResponse:
+    ) -> typing.Dict[str, typing.Any]:
         """
-        Returns a load balancer's provisioning status, endpoint URL, and any error conditions. Requires scope: load-balancer.read.
+        Returns current traffic and health metrics. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -1153,8 +1038,8 @@ class AsyncLoadBalancersClient:
 
         Returns
         -------
-        LoadBalancerStatusResponse
-            Load balancer status returned successfully.
+        typing.Dict[str, typing.Any]
+            Success.
 
         Examples
         --------
@@ -1168,7 +1053,7 @@ class AsyncLoadBalancersClient:
 
 
         async def main() -> None:
-            await client.load_balancers.get_load_balancer_status(
+            await client.load_balancers.get_load_balancer_metrics(
                 load_balancer_id="load_balancer_id",
                 workspace_id="710995",
             )
@@ -1176,7 +1061,62 @@ class AsyncLoadBalancersClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.get_load_balancer_status(
+        _response = await self._raw_client.get_load_balancer_metrics(
             load_balancer_id, workspace_id=workspace_id, request_options=request_options
+        )
+        return _response.data
+
+    async def get_load_balancer_metrics_history(
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        window: typing.Optional[GetLoadBalancerMetricsHistoryRequestWindow] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.Dict[str, typing.Any]:
+        """
+        Returns metrics over a time window. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        window : typing.Optional[GetLoadBalancerMetricsHistoryRequestWindow]
+            Time window. Default 1h.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, typing.Any]
+            Success.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.load_balancers.get_load_balancer_metrics_history(
+                load_balancer_id="load_balancer_id",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_load_balancer_metrics_history(
+            load_balancer_id, workspace_id=workspace_id, window=window, request_options=request_options
         )
         return _response.data
