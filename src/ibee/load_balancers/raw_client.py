@@ -18,7 +18,6 @@ from ..errors.content_too_large_error import ContentTooLargeError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.gateway_timeout_error import GatewayTimeoutError
 from ..errors.internal_server_error import InternalServerError
-from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
 from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.service_unavailable_error import ServiceUnavailableError
@@ -27,21 +26,17 @@ from ..errors.unauthorized_error import UnauthorizedError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.error import Error
 from ..types.load_balancer import LoadBalancer
-from ..types.load_balancer_backend import LoadBalancerBackend
-from ..types.load_balancer_health_check import LoadBalancerHealthCheck
-from ..types.load_balancer_observability import LoadBalancerObservability
-from ..types.load_balancer_policy import LoadBalancerPolicy
-from ..types.load_balancer_protocol import LoadBalancerProtocol
-from ..types.load_balancer_routing import LoadBalancerRouting
-from ..types.load_balancer_rule import LoadBalancerRule
-from ..types.load_balancer_status import LoadBalancerStatus
-from ..types.load_balancer_status_response import LoadBalancerStatusResponse
-from ..types.load_balancer_tls import LoadBalancerTls
-from .types.create_l4load_balancer_request_protocol import CreateL4LoadBalancerRequestProtocol
-from .types.create_l7load_balancer_request_custom_domain import CreateL7LoadBalancerRequestCustomDomain
-from .types.create_l7load_balancer_request_protocol import CreateL7LoadBalancerRequestProtocol
-from .types.list_load_balancers_request_layer import ListLoadBalancersRequestLayer
-from .types.update_l7load_balancer_request_custom_domain import UpdateL7LoadBalancerRequestCustomDomain
+from ..types.load_balancer_listener import LoadBalancerListener
+from ..types.load_balancer_logging import LoadBalancerLogging
+from ..types.load_balancer_operation import LoadBalancerOperation
+from ..types.load_balancer_page import LoadBalancerPage
+from ..types.load_balancer_spec import LoadBalancerSpec
+from ..types.load_balancer_spec_capacity_mode import LoadBalancerSpecCapacityMode
+from ..types.load_balancer_spec_scope import LoadBalancerSpecScope
+from ..types.load_balancer_spec_traffic_type import LoadBalancerSpecTrafficType
+from ..types.load_balancer_spec_visibility import LoadBalancerSpecVisibility
+from ..types.load_balancer_target_group import LoadBalancerTargetGroup
+from .types.get_load_balancer_metrics_history_request_window import GetLoadBalancerMetricsHistoryRequestWindow
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -52,69 +47,197 @@ class RawLoadBalancersClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def list_load_balancers(
-        self,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        status: typing.Optional[LoadBalancerStatus] = None,
-        layer: typing.Optional[ListLoadBalancersRequestLayer] = None,
-        protocol: typing.Optional[LoadBalancerProtocol] = None,
-        limit: typing.Optional[int] = None,
-        skip: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.List[LoadBalancer]]:
+    def list_load_balancer_regions(
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[typing.List[typing.Dict[str, typing.Any]]]:
         """
-        Lists the L4 and L7 load balancers in a workspace. Requires scope: load-balancer.read.
+        Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
-        status : typing.Optional[LoadBalancerStatus]
-            Return only load balancers in this status.
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
 
-        layer : typing.Optional[ListLoadBalancersRequestLayer]
-            Return only load balancers of this layer.
-            - `l4`
-            - `l7`
+        Returns
+        -------
+        HttpResponse[typing.List[typing.Dict[str, typing.Any]]]
+            Success.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "networking/load-balancers/regions",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    typing.List[typing.Dict[str, typing.Any]],
+                    parse_obj_as(
+                        type_=typing.List[typing.Dict[str, typing.Any]],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-        protocol : typing.Optional[LoadBalancerProtocol]
-            Return only load balancers that accept this protocol.
+    def list_load_balancers(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        cursor: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[LoadBalancerPage]:
+        """
+        Lists load balancers in the workspace, newest first. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        cursor : typing.Optional[str]
+            Cursor from the previous page (`next_cursor`).
 
         limit : typing.Optional[int]
-            Maximum number of items to return (1-500). Default 100.
-
-        skip : typing.Optional[int]
-            Number of items to skip before the first returned item. Default 0.
+            Page size (1-100). Default 50.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[typing.List[LoadBalancer]]
-            Load balancers returned successfully.
+        HttpResponse[LoadBalancerPage]
+            Success.
         """
         _response = self._client_wrapper.httpx_client.request(
             "networking/load-balancers",
             method="GET",
             params={
                 "workspace_id": workspace_id,
-                "status": status,
-                "layer": layer,
-                "protocol": protocol,
+                "cursor": cursor,
                 "limit": limit,
-                "skip": skip,
             },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.List[LoadBalancer],
+                    LoadBalancerPage,
                     parse_obj_as(
-                        type_=typing.List[LoadBalancer],  # type: ignore
+                        type_=LoadBalancerPage,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -227,86 +350,93 @@ class RawLoadBalancersClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def create_l4load_balancer(
+    def create_load_balancer(
         self,
         *,
         name: str,
-        protocol: CreateL4LoadBalancerRequestProtocol,
-        backends: typing.Sequence[LoadBalancerBackend],
+        region_id: str,
+        traffic_type: LoadBalancerSpecTrafficType,
+        listeners: typing.Sequence[LoadBalancerListener],
+        target_groups: typing.Sequence[LoadBalancerTargetGroup],
         workspace_id: typing.Optional[str] = None,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
+        idempotency_key: typing.Optional[str] = None,
+        vpc_id: typing.Optional[str] = OMIT,
+        scope: typing.Optional[LoadBalancerSpecScope] = OMIT,
+        capacity_mode: typing.Optional[LoadBalancerSpecCapacityMode] = OMIT,
+        visibility: typing.Optional[LoadBalancerSpecVisibility] = OMIT,
+        node_count: typing.Optional[int] = OMIT,
+        logging: typing.Optional[LoadBalancerLogging] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[LoadBalancer]:
+    ) -> HttpResponse[LoadBalancerOperation]:
         """
-        Creates a layer 4 (TCP/UDP) load balancer that spreads connections across backend VMs, with optional TLS. Requires scope: load-balancer.write.
+        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
 
         Parameters
         ----------
         name : str
-            Display name of the load balancer.
 
-        protocol : CreateL4LoadBalancerRequestProtocol
-            - `tcp`
-            - `tls_passthrough`
+        region_id : str
 
-        backends : typing.Sequence[LoadBalancerBackend]
-            Backends to send traffic to.
+        traffic_type : LoadBalancerSpecTrafficType
+
+        listeners : typing.Sequence[LoadBalancerListener]
+
+        target_groups : typing.Sequence[LoadBalancerTargetGroup]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
-        routing : typing.Optional[LoadBalancerRouting]
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
-        health_check : typing.Optional[LoadBalancerHealthCheck]
+        vpc_id : typing.Optional[str]
 
-        policy : typing.Optional[LoadBalancerPolicy]
+        scope : typing.Optional[LoadBalancerSpecScope]
 
-        observability : typing.Optional[LoadBalancerObservability]
+        capacity_mode : typing.Optional[LoadBalancerSpecCapacityMode]
 
-        tls : typing.Optional[LoadBalancerTls]
+        visibility : typing.Optional[LoadBalancerSpecVisibility]
+
+        node_count : typing.Optional[int]
+
+        logging : typing.Optional[LoadBalancerLogging]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[LoadBalancer]
-            L4 load balancer created successfully.
+        HttpResponse[LoadBalancerOperation]
+            Accepted.
         """
         _response = self._client_wrapper.httpx_client.request(
-            "networking/load-balancers/l4",
+            "networking/load-balancers",
             method="POST",
             params={
                 "workspace_id": workspace_id,
             },
             json={
                 "name": name,
-                "protocol": protocol,
-                "backends": convert_and_respect_annotation_metadata(
-                    object_=backends, annotation=typing.Sequence[LoadBalancerBackend], direction="write"
+                "region_id": region_id,
+                "vpc_id": vpc_id,
+                "scope": scope,
+                "traffic_type": traffic_type,
+                "capacity_mode": capacity_mode,
+                "visibility": visibility,
+                "node_count": node_count,
+                "listeners": convert_and_respect_annotation_metadata(
+                    object_=listeners, annotation=typing.Sequence[LoadBalancerListener], direction="write"
                 ),
-                "routing": convert_and_respect_annotation_metadata(
-                    object_=routing, annotation=LoadBalancerRouting, direction="write"
+                "target_groups": convert_and_respect_annotation_metadata(
+                    object_=target_groups, annotation=typing.Sequence[LoadBalancerTargetGroup], direction="write"
                 ),
-                "health_check": convert_and_respect_annotation_metadata(
-                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
-                ),
-                "policy": convert_and_respect_annotation_metadata(
-                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
-                ),
-                "observability": convert_and_respect_annotation_metadata(
-                    object_=observability, annotation=LoadBalancerObservability, direction="write"
-                ),
-                "tls": convert_and_respect_annotation_metadata(
-                    object_=tls, annotation=LoadBalancerTls, direction="write"
+                "logging": convert_and_respect_annotation_metadata(
+                    object_=logging, annotation=LoadBalancerLogging, direction="write"
                 ),
             },
             headers={
                 "content-type": "application/json",
+                "Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
             },
             request_options=request_options,
             omit=OMIT,
@@ -314,9 +444,9 @@ class RawLoadBalancersClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    LoadBalancer,
+                    LoadBalancerOperation,
                     parse_obj_as(
-                        type_=LoadBalancer,  # type: ignore
+                        type_=LoadBalancerOperation,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -389,279 +519,6 @@ class RawLoadBalancersClient:
                 )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 429:
-                raise TooManyRequestsError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 502:
-                raise BadGatewayError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 504:
-                raise GatewayTimeoutError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def create_l7load_balancer(
-        self,
-        *,
-        name: str,
-        protocol: CreateL7LoadBalancerRequestProtocol,
-        backends: typing.Sequence[LoadBalancerBackend],
-        workspace_id: typing.Optional[str] = None,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        custom_domain: typing.Optional[CreateL7LoadBalancerRequestCustomDomain] = OMIT,
-        rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[LoadBalancer]:
-        """
-        Creates a layer 7 (HTTP/HTTPS) load balancer with routing rules, optional TLS, and an optional custom domain. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        name : str
-            Display name of the load balancer.
-
-        protocol : CreateL7LoadBalancerRequestProtocol
-            - `http`
-            - `https`
-
-        backends : typing.Sequence[LoadBalancerBackend]
-            Default backends for requests no rule matches.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        custom_domain : typing.Optional[CreateL7LoadBalancerRequestCustomDomain]
-            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-
-        rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
-            Path- and header-based routing rules.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[LoadBalancer]
-            L7 load balancer created successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "networking/load-balancers/l7",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "protocol": protocol,
-                "backends": convert_and_respect_annotation_metadata(
-                    object_=backends, annotation=typing.Sequence[LoadBalancerBackend], direction="write"
-                ),
-                "routing": convert_and_respect_annotation_metadata(
-                    object_=routing, annotation=LoadBalancerRouting, direction="write"
-                ),
-                "health_check": convert_and_respect_annotation_metadata(
-                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
-                ),
-                "policy": convert_and_respect_annotation_metadata(
-                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
-                ),
-                "observability": convert_and_respect_annotation_metadata(
-                    object_=observability, annotation=LoadBalancerObservability, direction="write"
-                ),
-                "tls": convert_and_respect_annotation_metadata(
-                    object_=tls, annotation=LoadBalancerTls, direction="write"
-                ),
-                "custom_domain": convert_and_respect_annotation_metadata(
-                    object_=custom_domain,
-                    annotation=typing.Optional[CreateL7LoadBalancerRequestCustomDomain],
-                    direction="write",
-                ),
-                "rules": convert_and_respect_annotation_metadata(
-                    object_=rules, annotation=typing.Sequence[LoadBalancerRule], direction="write"
-                ),
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    LoadBalancer,
-                    parse_obj_as(
-                        type_=LoadBalancer,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 413:
-                raise ContentTooLargeError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -743,12 +600,12 @@ class RawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancer]:
         """
-        Returns a load balancer's configuration, including its backends, routing, and TLS settings. Requires scope: load-balancer.read.
+        Returns one load balancer with its specification, `observed_state` and `conditions`. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -759,7 +616,7 @@ class RawLoadBalancersClient:
         Returns
         -------
         HttpResponse[LoadBalancer]
-            Load balancer returned successfully.
+            Success.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/load-balancers/{encode_path_param(load_balancer_id)}",
@@ -803,6 +660,212 @@ class RawLoadBalancersClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def update_load_balancer(
+        self,
+        load_balancer_id: str,
+        *,
+        version: int,
+        specification: LoadBalancerSpec,
+        workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[LoadBalancerOperation]:
+        """
+        Replaces the whole specification. Send the current `version` from getLoadBalancer; a stale version answers 409. Load balancers made by a Kubernetes cluster can't be changed here. Requires scope: load-balancer.write.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        version : int
+
+        specification : LoadBalancerSpec
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[LoadBalancerOperation]
+            Accepted.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"networking/load-balancers/{encode_path_param(load_balancer_id)}",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "version": version,
+                "specification": convert_and_respect_annotation_metadata(
+                    object_=specification, annotation=LoadBalancerSpec, direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+                "Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    LoadBalancerOperation,
+                    parse_obj_as(
+                        type_=LoadBalancerOperation,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -903,25 +966,30 @@ class RawLoadBalancersClient:
         load_balancer_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[LoadBalancerOperation]:
         """
-        Deletes a load balancer. The backend VMs are not deleted. Requires scope: load-balancer.write.
+        Deletes the load balancer. Answers 202 with an operation. Requires scope: load-balancer.write.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[LoadBalancerOperation]
+            Accepted.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/load-balancers/{encode_path_param(load_balancer_id)}",
@@ -929,244 +997,21 @@ class RawLoadBalancersClient:
             params={
                 "workspace_id": workspace_id,
             },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 413:
-                raise ContentTooLargeError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 429:
-                raise TooManyRequestsError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 502:
-                raise BadGatewayError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 504:
-                raise GatewayTimeoutError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def update_l4load_balancer(
-        self,
-        load_balancer_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[LoadBalancer]:
-        """
-        Changes an L4 load balancer's backends, routing, or TLS settings. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        load_balancer_id : str
-            Load balancer ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-            New display name.
-
-        backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
-            Replacement backend list.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[LoadBalancer]
-            L4 load balancer updated successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"networking/load-balancers/l4/{encode_path_param(load_balancer_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "backends": convert_and_respect_annotation_metadata(
-                    object_=backends, annotation=typing.Sequence[LoadBalancerBackend], direction="write"
-                ),
-                "routing": convert_and_respect_annotation_metadata(
-                    object_=routing, annotation=LoadBalancerRouting, direction="write"
-                ),
-                "health_check": convert_and_respect_annotation_metadata(
-                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
-                ),
-                "policy": convert_and_respect_annotation_metadata(
-                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
-                ),
-                "observability": convert_and_respect_annotation_metadata(
-                    object_=observability, annotation=LoadBalancerObservability, direction="write"
-                ),
-                "tls": convert_and_respect_annotation_metadata(
-                    object_=tls, annotation=LoadBalancerTls, direction="write"
-                ),
-            },
             headers={
-                "content-type": "application/json",
+                "Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
             },
             request_options=request_options,
-            omit=OMIT,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    LoadBalancer,
+                    LoadBalancerOperation,
                     parse_obj_as(
-                        type_=LoadBalancer,  # type: ignore
+                        type_=LoadBalancerOperation,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
                 return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -1233,17 +1078,6 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
             if _response.status_code == 429:
                 raise TooManyRequestsError(
                     headers=dict(_response.headers),
@@ -1308,280 +1142,20 @@ class RawLoadBalancersClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def update_l7load_balancer(
+    def get_load_balancer_operation(
         self,
-        load_balancer_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        custom_domain: typing.Optional[UpdateL7LoadBalancerRequestCustomDomain] = OMIT,
-        rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[LoadBalancer]:
-        """
-        Changes an L7 load balancer's backends, routing rules, TLS settings, or custom domain. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        load_balancer_id : str
-            Load balancer ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-            New display name.
-
-        backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
-            Replacement default backend list.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        custom_domain : typing.Optional[UpdateL7LoadBalancerRequestCustomDomain]
-            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-
-        rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
-            Replacement routing rules.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[LoadBalancer]
-            L7 load balancer updated successfully.
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"networking/load-balancers/l7/{encode_path_param(load_balancer_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "backends": convert_and_respect_annotation_metadata(
-                    object_=backends, annotation=typing.Sequence[LoadBalancerBackend], direction="write"
-                ),
-                "routing": convert_and_respect_annotation_metadata(
-                    object_=routing, annotation=LoadBalancerRouting, direction="write"
-                ),
-                "health_check": convert_and_respect_annotation_metadata(
-                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
-                ),
-                "policy": convert_and_respect_annotation_metadata(
-                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
-                ),
-                "observability": convert_and_respect_annotation_metadata(
-                    object_=observability, annotation=LoadBalancerObservability, direction="write"
-                ),
-                "tls": convert_and_respect_annotation_metadata(
-                    object_=tls, annotation=LoadBalancerTls, direction="write"
-                ),
-                "custom_domain": convert_and_respect_annotation_metadata(
-                    object_=custom_domain,
-                    annotation=typing.Optional[UpdateL7LoadBalancerRequestCustomDomain],
-                    direction="write",
-                ),
-                "rules": convert_and_respect_annotation_metadata(
-                    object_=rules, annotation=typing.Sequence[LoadBalancerRule], direction="write"
-                ),
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    LoadBalancer,
-                    parse_obj_as(
-                        type_=LoadBalancer,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 413:
-                raise ContentTooLargeError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 429:
-                raise TooManyRequestsError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 502:
-                raise BadGatewayError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 504:
-                raise GatewayTimeoutError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def get_load_balancer_status(
-        self,
-        load_balancer_id: str,
+        operation_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[LoadBalancerStatusResponse]:
+    ) -> HttpResponse[LoadBalancerOperation]:
         """
-        Returns a load balancer's provisioning status, endpoint URL, and any error conditions. Requires scope: load-balancer.read.
+        Returns one create, update or delete operation. Requires scope: load-balancer.read.
 
         Parameters
         ----------
-        load_balancer_id : str
-            Load balancer ID.
+        operation_id : str
+            The operation's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -1591,11 +1165,11 @@ class RawLoadBalancersClient:
 
         Returns
         -------
-        HttpResponse[LoadBalancerStatusResponse]
-            Load balancer status returned successfully.
+        HttpResponse[LoadBalancerOperation]
+            Success.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"networking/load-balancers/{encode_path_param(load_balancer_id)}/status",
+            f"networking/load-balancers/operations/{encode_path_param(operation_id)}",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -1605,9 +1179,340 @@ class RawLoadBalancersClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    LoadBalancerStatusResponse,
+                    LoadBalancerOperation,
                     parse_obj_as(
-                        type_=LoadBalancerStatusResponse,  # type: ignore
+                        type_=LoadBalancerOperation,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_load_balancer_metrics(
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[typing.Dict[str, typing.Any]]:
+        """
+        Returns current traffic and health metrics. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[typing.Dict[str, typing.Any]]
+            Success.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"networking/load-balancers/{encode_path_param(load_balancer_id)}/metrics",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    typing.Dict[str, typing.Any],
+                    parse_obj_as(
+                        type_=typing.Dict[str, typing.Any],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_load_balancer_metrics_history(
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        window: typing.Optional[GetLoadBalancerMetricsHistoryRequestWindow] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[typing.Dict[str, typing.Any]]:
+        """
+        Returns metrics over a time window. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        window : typing.Optional[GetLoadBalancerMetricsHistoryRequestWindow]
+            Time window. Default 1h.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[typing.Dict[str, typing.Any]]
+            Success.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"networking/load-balancers/{encode_path_param(load_balancer_id)}/metrics/history",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "window": window,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    typing.Dict[str, typing.Any],
+                    parse_obj_as(
+                        type_=typing.Dict[str, typing.Any],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1736,69 +1641,197 @@ class AsyncRawLoadBalancersClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def list_load_balancers(
-        self,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        status: typing.Optional[LoadBalancerStatus] = None,
-        layer: typing.Optional[ListLoadBalancersRequestLayer] = None,
-        protocol: typing.Optional[LoadBalancerProtocol] = None,
-        limit: typing.Optional[int] = None,
-        skip: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.List[LoadBalancer]]:
+    async def list_load_balancer_regions(
+        self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[typing.List[typing.Dict[str, typing.Any]]]:
         """
-        Lists the L4 and L7 load balancers in a workspace. Requires scope: load-balancer.read.
+        Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
-        status : typing.Optional[LoadBalancerStatus]
-            Return only load balancers in this status.
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
 
-        layer : typing.Optional[ListLoadBalancersRequestLayer]
-            Return only load balancers of this layer.
-            - `l4`
-            - `l7`
+        Returns
+        -------
+        AsyncHttpResponse[typing.List[typing.Dict[str, typing.Any]]]
+            Success.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "networking/load-balancers/regions",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    typing.List[typing.Dict[str, typing.Any]],
+                    parse_obj_as(
+                        type_=typing.List[typing.Dict[str, typing.Any]],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-        protocol : typing.Optional[LoadBalancerProtocol]
-            Return only load balancers that accept this protocol.
+    async def list_load_balancers(
+        self,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        cursor: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[LoadBalancerPage]:
+        """
+        Lists load balancers in the workspace, newest first. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        cursor : typing.Optional[str]
+            Cursor from the previous page (`next_cursor`).
 
         limit : typing.Optional[int]
-            Maximum number of items to return (1-500). Default 100.
-
-        skip : typing.Optional[int]
-            Number of items to skip before the first returned item. Default 0.
+            Page size (1-100). Default 50.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[typing.List[LoadBalancer]]
-            Load balancers returned successfully.
+        AsyncHttpResponse[LoadBalancerPage]
+            Success.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "networking/load-balancers",
             method="GET",
             params={
                 "workspace_id": workspace_id,
-                "status": status,
-                "layer": layer,
-                "protocol": protocol,
+                "cursor": cursor,
                 "limit": limit,
-                "skip": skip,
             },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.List[LoadBalancer],
+                    LoadBalancerPage,
                     parse_obj_as(
-                        type_=typing.List[LoadBalancer],  # type: ignore
+                        type_=LoadBalancerPage,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1911,86 +1944,93 @@ class AsyncRawLoadBalancersClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def create_l4load_balancer(
+    async def create_load_balancer(
         self,
         *,
         name: str,
-        protocol: CreateL4LoadBalancerRequestProtocol,
-        backends: typing.Sequence[LoadBalancerBackend],
+        region_id: str,
+        traffic_type: LoadBalancerSpecTrafficType,
+        listeners: typing.Sequence[LoadBalancerListener],
+        target_groups: typing.Sequence[LoadBalancerTargetGroup],
         workspace_id: typing.Optional[str] = None,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
+        idempotency_key: typing.Optional[str] = None,
+        vpc_id: typing.Optional[str] = OMIT,
+        scope: typing.Optional[LoadBalancerSpecScope] = OMIT,
+        capacity_mode: typing.Optional[LoadBalancerSpecCapacityMode] = OMIT,
+        visibility: typing.Optional[LoadBalancerSpecVisibility] = OMIT,
+        node_count: typing.Optional[int] = OMIT,
+        logging: typing.Optional[LoadBalancerLogging] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[LoadBalancer]:
+    ) -> AsyncHttpResponse[LoadBalancerOperation]:
         """
-        Creates a layer 4 (TCP/UDP) load balancer that spreads connections across backend VMs, with optional TLS. Requires scope: load-balancer.write.
+        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
 
         Parameters
         ----------
         name : str
-            Display name of the load balancer.
 
-        protocol : CreateL4LoadBalancerRequestProtocol
-            - `tcp`
-            - `tls_passthrough`
+        region_id : str
 
-        backends : typing.Sequence[LoadBalancerBackend]
-            Backends to send traffic to.
+        traffic_type : LoadBalancerSpecTrafficType
+
+        listeners : typing.Sequence[LoadBalancerListener]
+
+        target_groups : typing.Sequence[LoadBalancerTargetGroup]
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
 
-        routing : typing.Optional[LoadBalancerRouting]
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
-        health_check : typing.Optional[LoadBalancerHealthCheck]
+        vpc_id : typing.Optional[str]
 
-        policy : typing.Optional[LoadBalancerPolicy]
+        scope : typing.Optional[LoadBalancerSpecScope]
 
-        observability : typing.Optional[LoadBalancerObservability]
+        capacity_mode : typing.Optional[LoadBalancerSpecCapacityMode]
 
-        tls : typing.Optional[LoadBalancerTls]
+        visibility : typing.Optional[LoadBalancerSpecVisibility]
+
+        node_count : typing.Optional[int]
+
+        logging : typing.Optional[LoadBalancerLogging]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[LoadBalancer]
-            L4 load balancer created successfully.
+        AsyncHttpResponse[LoadBalancerOperation]
+            Accepted.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "networking/load-balancers/l4",
+            "networking/load-balancers",
             method="POST",
             params={
                 "workspace_id": workspace_id,
             },
             json={
                 "name": name,
-                "protocol": protocol,
-                "backends": convert_and_respect_annotation_metadata(
-                    object_=backends, annotation=typing.Sequence[LoadBalancerBackend], direction="write"
+                "region_id": region_id,
+                "vpc_id": vpc_id,
+                "scope": scope,
+                "traffic_type": traffic_type,
+                "capacity_mode": capacity_mode,
+                "visibility": visibility,
+                "node_count": node_count,
+                "listeners": convert_and_respect_annotation_metadata(
+                    object_=listeners, annotation=typing.Sequence[LoadBalancerListener], direction="write"
                 ),
-                "routing": convert_and_respect_annotation_metadata(
-                    object_=routing, annotation=LoadBalancerRouting, direction="write"
+                "target_groups": convert_and_respect_annotation_metadata(
+                    object_=target_groups, annotation=typing.Sequence[LoadBalancerTargetGroup], direction="write"
                 ),
-                "health_check": convert_and_respect_annotation_metadata(
-                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
-                ),
-                "policy": convert_and_respect_annotation_metadata(
-                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
-                ),
-                "observability": convert_and_respect_annotation_metadata(
-                    object_=observability, annotation=LoadBalancerObservability, direction="write"
-                ),
-                "tls": convert_and_respect_annotation_metadata(
-                    object_=tls, annotation=LoadBalancerTls, direction="write"
+                "logging": convert_and_respect_annotation_metadata(
+                    object_=logging, annotation=LoadBalancerLogging, direction="write"
                 ),
             },
             headers={
                 "content-type": "application/json",
+                "Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
             },
             request_options=request_options,
             omit=OMIT,
@@ -1998,9 +2038,9 @@ class AsyncRawLoadBalancersClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    LoadBalancer,
+                    LoadBalancerOperation,
                     parse_obj_as(
-                        type_=LoadBalancer,  # type: ignore
+                        type_=LoadBalancerOperation,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2073,279 +2113,6 @@ class AsyncRawLoadBalancersClient:
                 )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 429:
-                raise TooManyRequestsError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 502:
-                raise BadGatewayError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 504:
-                raise GatewayTimeoutError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def create_l7load_balancer(
-        self,
-        *,
-        name: str,
-        protocol: CreateL7LoadBalancerRequestProtocol,
-        backends: typing.Sequence[LoadBalancerBackend],
-        workspace_id: typing.Optional[str] = None,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        custom_domain: typing.Optional[CreateL7LoadBalancerRequestCustomDomain] = OMIT,
-        rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[LoadBalancer]:
-        """
-        Creates a layer 7 (HTTP/HTTPS) load balancer with routing rules, optional TLS, and an optional custom domain. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        name : str
-            Display name of the load balancer.
-
-        protocol : CreateL7LoadBalancerRequestProtocol
-            - `http`
-            - `https`
-
-        backends : typing.Sequence[LoadBalancerBackend]
-            Default backends for requests no rule matches.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        custom_domain : typing.Optional[CreateL7LoadBalancerRequestCustomDomain]
-            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-
-        rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
-            Path- and header-based routing rules.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[LoadBalancer]
-            L7 load balancer created successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "networking/load-balancers/l7",
-            method="POST",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "protocol": protocol,
-                "backends": convert_and_respect_annotation_metadata(
-                    object_=backends, annotation=typing.Sequence[LoadBalancerBackend], direction="write"
-                ),
-                "routing": convert_and_respect_annotation_metadata(
-                    object_=routing, annotation=LoadBalancerRouting, direction="write"
-                ),
-                "health_check": convert_and_respect_annotation_metadata(
-                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
-                ),
-                "policy": convert_and_respect_annotation_metadata(
-                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
-                ),
-                "observability": convert_and_respect_annotation_metadata(
-                    object_=observability, annotation=LoadBalancerObservability, direction="write"
-                ),
-                "tls": convert_and_respect_annotation_metadata(
-                    object_=tls, annotation=LoadBalancerTls, direction="write"
-                ),
-                "custom_domain": convert_and_respect_annotation_metadata(
-                    object_=custom_domain,
-                    annotation=typing.Optional[CreateL7LoadBalancerRequestCustomDomain],
-                    direction="write",
-                ),
-                "rules": convert_and_respect_annotation_metadata(
-                    object_=rules, annotation=typing.Sequence[LoadBalancerRule], direction="write"
-                ),
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    LoadBalancer,
-                    parse_obj_as(
-                        type_=LoadBalancer,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 413:
-                raise ContentTooLargeError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2427,12 +2194,12 @@ class AsyncRawLoadBalancersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancer]:
         """
-        Returns a load balancer's configuration, including its backends, routing, and TLS settings. Requires scope: load-balancer.read.
+        Returns one load balancer with its specification, `observed_state` and `conditions`. Requires scope: load-balancer.read.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -2443,7 +2210,7 @@ class AsyncRawLoadBalancersClient:
         Returns
         -------
         AsyncHttpResponse[LoadBalancer]
-            Load balancer returned successfully.
+            Success.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/load-balancers/{encode_path_param(load_balancer_id)}",
@@ -2487,6 +2254,212 @@ class AsyncRawLoadBalancersClient:
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def update_load_balancer(
+        self,
+        load_balancer_id: str,
+        *,
+        version: int,
+        specification: LoadBalancerSpec,
+        workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[LoadBalancerOperation]:
+        """
+        Replaces the whole specification. Send the current `version` from getLoadBalancer; a stale version answers 409. Load balancers made by a Kubernetes cluster can't be changed here. Requires scope: load-balancer.write.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        version : int
+
+        specification : LoadBalancerSpec
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[LoadBalancerOperation]
+            Accepted.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"networking/load-balancers/{encode_path_param(load_balancer_id)}",
+            method="PUT",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "version": version,
+                "specification": convert_and_respect_annotation_metadata(
+                    object_=specification, annotation=LoadBalancerSpec, direction="write"
+                ),
+            },
+            headers={
+                "content-type": "application/json",
+                "Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    LoadBalancerOperation,
+                    parse_obj_as(
+                        type_=LoadBalancerOperation,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2587,25 +2560,30 @@ class AsyncRawLoadBalancersClient:
         load_balancer_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[LoadBalancerOperation]:
         """
-        Deletes a load balancer. The backend VMs are not deleted. Requires scope: load-balancer.write.
+        Deletes the load balancer. Answers 202 with an operation. Requires scope: load-balancer.write.
 
         Parameters
         ----------
         load_balancer_id : str
-            Load balancer ID.
+            The load balancer's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[LoadBalancerOperation]
+            Accepted.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/load-balancers/{encode_path_param(load_balancer_id)}",
@@ -2613,244 +2591,21 @@ class AsyncRawLoadBalancersClient:
             params={
                 "workspace_id": workspace_id,
             },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 413:
-                raise ContentTooLargeError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 429:
-                raise TooManyRequestsError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 502:
-                raise BadGatewayError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 504:
-                raise GatewayTimeoutError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def update_l4load_balancer(
-        self,
-        load_balancer_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[LoadBalancer]:
-        """
-        Changes an L4 load balancer's backends, routing, or TLS settings. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        load_balancer_id : str
-            Load balancer ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-            New display name.
-
-        backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
-            Replacement backend list.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[LoadBalancer]
-            L4 load balancer updated successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"networking/load-balancers/l4/{encode_path_param(load_balancer_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "backends": convert_and_respect_annotation_metadata(
-                    object_=backends, annotation=typing.Sequence[LoadBalancerBackend], direction="write"
-                ),
-                "routing": convert_and_respect_annotation_metadata(
-                    object_=routing, annotation=LoadBalancerRouting, direction="write"
-                ),
-                "health_check": convert_and_respect_annotation_metadata(
-                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
-                ),
-                "policy": convert_and_respect_annotation_metadata(
-                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
-                ),
-                "observability": convert_and_respect_annotation_metadata(
-                    object_=observability, annotation=LoadBalancerObservability, direction="write"
-                ),
-                "tls": convert_and_respect_annotation_metadata(
-                    object_=tls, annotation=LoadBalancerTls, direction="write"
-                ),
-            },
             headers={
-                "content-type": "application/json",
+                "Idempotency-Key": str(idempotency_key) if idempotency_key is not None else None,
             },
             request_options=request_options,
-            omit=OMIT,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    LoadBalancer,
+                    LoadBalancerOperation,
                     parse_obj_as(
-                        type_=LoadBalancer,  # type: ignore
+                        type_=LoadBalancerOperation,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
                 return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -2917,17 +2672,6 @@ class AsyncRawLoadBalancersClient:
                         ),
                     ),
                 )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
             if _response.status_code == 429:
                 raise TooManyRequestsError(
                     headers=dict(_response.headers),
@@ -2992,280 +2736,20 @@ class AsyncRawLoadBalancersClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def update_l7load_balancer(
+    async def get_load_balancer_operation(
         self,
-        load_balancer_id: str,
-        *,
-        workspace_id: typing.Optional[str] = None,
-        name: typing.Optional[str] = OMIT,
-        backends: typing.Optional[typing.Sequence[LoadBalancerBackend]] = OMIT,
-        routing: typing.Optional[LoadBalancerRouting] = OMIT,
-        health_check: typing.Optional[LoadBalancerHealthCheck] = OMIT,
-        policy: typing.Optional[LoadBalancerPolicy] = OMIT,
-        observability: typing.Optional[LoadBalancerObservability] = OMIT,
-        tls: typing.Optional[LoadBalancerTls] = OMIT,
-        custom_domain: typing.Optional[UpdateL7LoadBalancerRequestCustomDomain] = OMIT,
-        rules: typing.Optional[typing.Sequence[LoadBalancerRule]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[LoadBalancer]:
-        """
-        Changes an L7 load balancer's backends, routing rules, TLS settings, or custom domain. Requires scope: load-balancer.write.
-
-        Parameters
-        ----------
-        load_balancer_id : str
-            Load balancer ID.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        name : typing.Optional[str]
-            New display name.
-
-        backends : typing.Optional[typing.Sequence[LoadBalancerBackend]]
-            Replacement default backend list.
-
-        routing : typing.Optional[LoadBalancerRouting]
-
-        health_check : typing.Optional[LoadBalancerHealthCheck]
-
-        policy : typing.Optional[LoadBalancerPolicy]
-
-        observability : typing.Optional[LoadBalancerObservability]
-
-        tls : typing.Optional[LoadBalancerTls]
-
-        custom_domain : typing.Optional[UpdateL7LoadBalancerRequestCustomDomain]
-            Custom hostname to serve. Point its DNS CNAME at the load balancer's endpoint host.
-
-        rules : typing.Optional[typing.Sequence[LoadBalancerRule]]
-            Replacement routing rules.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[LoadBalancer]
-            L7 load balancer updated successfully.
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"networking/load-balancers/l7/{encode_path_param(load_balancer_id)}",
-            method="PATCH",
-            params={
-                "workspace_id": workspace_id,
-            },
-            json={
-                "name": name,
-                "backends": convert_and_respect_annotation_metadata(
-                    object_=backends, annotation=typing.Sequence[LoadBalancerBackend], direction="write"
-                ),
-                "routing": convert_and_respect_annotation_metadata(
-                    object_=routing, annotation=LoadBalancerRouting, direction="write"
-                ),
-                "health_check": convert_and_respect_annotation_metadata(
-                    object_=health_check, annotation=LoadBalancerHealthCheck, direction="write"
-                ),
-                "policy": convert_and_respect_annotation_metadata(
-                    object_=policy, annotation=LoadBalancerPolicy, direction="write"
-                ),
-                "observability": convert_and_respect_annotation_metadata(
-                    object_=observability, annotation=LoadBalancerObservability, direction="write"
-                ),
-                "tls": convert_and_respect_annotation_metadata(
-                    object_=tls, annotation=LoadBalancerTls, direction="write"
-                ),
-                "custom_domain": convert_and_respect_annotation_metadata(
-                    object_=custom_domain,
-                    annotation=typing.Optional[UpdateL7LoadBalancerRequestCustomDomain],
-                    direction="write",
-                ),
-                "rules": convert_and_respect_annotation_metadata(
-                    object_=rules, annotation=typing.Sequence[LoadBalancerRule], direction="write"
-                ),
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    LoadBalancer,
-                    parse_obj_as(
-                        type_=LoadBalancer,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 401:
-                raise UnauthorizedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 403:
-                raise ForbiddenError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 409:
-                raise ConflictError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 413:
-                raise ContentTooLargeError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 423:
-                raise LockedError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 429:
-                raise TooManyRequestsError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 502:
-                raise BadGatewayError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 503:
-                raise ServiceUnavailableError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 504:
-                raise GatewayTimeoutError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def get_load_balancer_status(
-        self,
-        load_balancer_id: str,
+        operation_id: str,
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[LoadBalancerStatusResponse]:
+    ) -> AsyncHttpResponse[LoadBalancerOperation]:
         """
-        Returns a load balancer's provisioning status, endpoint URL, and any error conditions. Requires scope: load-balancer.read.
+        Returns one create, update or delete operation. Requires scope: load-balancer.read.
 
         Parameters
         ----------
-        load_balancer_id : str
-            Load balancer ID.
+        operation_id : str
+            The operation's ID.
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
@@ -3275,11 +2759,11 @@ class AsyncRawLoadBalancersClient:
 
         Returns
         -------
-        AsyncHttpResponse[LoadBalancerStatusResponse]
-            Load balancer status returned successfully.
+        AsyncHttpResponse[LoadBalancerOperation]
+            Success.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"networking/load-balancers/{encode_path_param(load_balancer_id)}/status",
+            f"networking/load-balancers/operations/{encode_path_param(operation_id)}",
             method="GET",
             params={
                 "workspace_id": workspace_id,
@@ -3289,9 +2773,340 @@ class AsyncRawLoadBalancersClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    LoadBalancerStatusResponse,
+                    LoadBalancerOperation,
                     parse_obj_as(
-                        type_=LoadBalancerStatusResponse,  # type: ignore
+                        type_=LoadBalancerOperation,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_load_balancer_metrics(
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[typing.Dict[str, typing.Any]]:
+        """
+        Returns current traffic and health metrics. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[typing.Dict[str, typing.Any]]
+            Success.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"networking/load-balancers/{encode_path_param(load_balancer_id)}/metrics",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    typing.Dict[str, typing.Any],
+                    parse_obj_as(
+                        type_=typing.Dict[str, typing.Any],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_load_balancer_metrics_history(
+        self,
+        load_balancer_id: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        window: typing.Optional[GetLoadBalancerMetricsHistoryRequestWindow] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[typing.Dict[str, typing.Any]]:
+        """
+        Returns metrics over a time window. Requires scope: load-balancer.read.
+
+        Parameters
+        ----------
+        load_balancer_id : str
+            The load balancer's ID.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        window : typing.Optional[GetLoadBalancerMetricsHistoryRequestWindow]
+            Time window. Default 1h.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[typing.Dict[str, typing.Any]]
+            Success.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"networking/load-balancers/{encode_path_param(load_balancer_id)}/metrics/history",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+                "window": window,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    typing.Dict[str, typing.Any],
+                    parse_obj_as(
+                        type_=typing.Dict[str, typing.Any],  # type: ignore
                         object_=_response.json(),
                     ),
                 )

@@ -4,17 +4,16 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .load_balancer_active_health_check import LoadBalancerActiveHealthCheck
-from .load_balancer_passive_health_check import LoadBalancerPassiveHealthCheck
+from .load_balancer_health_check_protocol import LoadBalancerHealthCheckProtocol
 
 
 class LoadBalancerHealthCheck(UniversalBaseModel):
-    """
-    Health checking for the backends.
-    """
-
-    active: typing.Optional[LoadBalancerActiveHealthCheck] = None
-    passive: typing.Optional[LoadBalancerPassiveHealthCheck] = None
+    protocol: typing.Optional[LoadBalancerHealthCheckProtocol] = None
+    path: typing.Optional[str] = None
+    interval_seconds: typing.Optional[int] = None
+    timeout_seconds: typing.Optional[int] = None
+    unhealthy_threshold: typing.Optional[int] = None
+    healthy_threshold: typing.Optional[int] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -20,10 +20,6 @@ if typing.TYPE_CHECKING:
     from .backup_run_recovery_point_type import BackupRunRecoveryPointType
     from .backup_run_trigger import BackupRunTrigger
     from .backup_status import BackupStatus
-    from .batch_create_secret_item import BatchCreateSecretItem
-    from .batch_create_secret_result import BatchCreateSecretResult
-    from .batch_create_secret_result_status import BatchCreateSecretResultStatus
-    from .batch_create_secrets_response import BatchCreateSecretsResponse
     from .billing_catalog_selection import BillingCatalogSelection
     from .billing_catalog_selection_product_id import BillingCatalogSelectionProductId
     from .billing_catalog_selection_sku_id import BillingCatalogSelectionSkuId
@@ -171,25 +167,25 @@ if typing.TYPE_CHECKING:
     from .gpu_vm_status import GpuVmStatus
     from .live_drift_summary import LiveDriftSummary
     from .load_balancer import LoadBalancer
-    from .load_balancer_active_health_check import LoadBalancerActiveHealthCheck
-    from .load_balancer_active_health_check_type import LoadBalancerActiveHealthCheckType
-    from .load_balancer_backend import LoadBalancerBackend
-    from .load_balancer_backend_type import LoadBalancerBackendType
-    from .load_balancer_endpoint import LoadBalancerEndpoint
+    from .load_balancer_ccm_owner import LoadBalancerCcmOwner
     from .load_balancer_health_check import LoadBalancerHealthCheck
-    from .load_balancer_layer import LoadBalancerLayer
-    from .load_balancer_observability import LoadBalancerObservability
-    from .load_balancer_passive_health_check import LoadBalancerPassiveHealthCheck
-    from .load_balancer_policy import LoadBalancerPolicy
-    from .load_balancer_protocol import LoadBalancerProtocol
-    from .load_balancer_retry_policy import LoadBalancerRetryPolicy
-    from .load_balancer_routing import LoadBalancerRouting
-    from .load_balancer_routing_algorithm import LoadBalancerRoutingAlgorithm
-    from .load_balancer_rule import LoadBalancerRule
-    from .load_balancer_status import LoadBalancerStatus
-    from .load_balancer_status_response import LoadBalancerStatusResponse
-    from .load_balancer_tls import LoadBalancerTls
-    from .load_balancer_tls_mode import LoadBalancerTlsMode
+    from .load_balancer_health_check_protocol import LoadBalancerHealthCheckProtocol
+    from .load_balancer_http_rule import LoadBalancerHttpRule
+    from .load_balancer_listener import LoadBalancerListener
+    from .load_balancer_listener_protocol import LoadBalancerListenerProtocol
+    from .load_balancer_logging import LoadBalancerLogging
+    from .load_balancer_operation import LoadBalancerOperation
+    from .load_balancer_page import LoadBalancerPage
+    from .load_balancer_spec import LoadBalancerSpec
+    from .load_balancer_spec_capacity_mode import LoadBalancerSpecCapacityMode
+    from .load_balancer_spec_scope import LoadBalancerSpecScope
+    from .load_balancer_spec_traffic_type import LoadBalancerSpecTrafficType
+    from .load_balancer_spec_visibility import LoadBalancerSpecVisibility
+    from .load_balancer_target import LoadBalancerTarget
+    from .load_balancer_target_group import LoadBalancerTargetGroup
+    from .load_balancer_target_group_algorithm import LoadBalancerTargetGroupAlgorithm
+    from .load_balancer_target_group_protocol import LoadBalancerTargetGroupProtocol
+    from .load_balancer_target_kind import LoadBalancerTargetKind
     from .manual_backup_run_request import ManualBackupRunRequest
     from .nat_gateway import NatGateway
     from .nat_port_forwarding_rule import NatPortForwardingRule
@@ -223,31 +219,13 @@ if typing.TYPE_CHECKING:
     from .s3credential_list import S3CredentialList
     from .s3credential_revoked import S3CredentialRevoked
     from .s3credential_status import S3CredentialStatus
-    from .secret import Secret
-    from .secret_identity import SecretIdentity
-    from .secret_identity_access import SecretIdentityAccess
-    from .secret_identity_access_auth_method import SecretIdentityAccessAuthMethod
-    from .secret_identity_action_status import SecretIdentityActionStatus
-    from .secret_identity_action_status_status import SecretIdentityActionStatusStatus
-    from .secret_identity_auth_method import SecretIdentityAuthMethod
-    from .secret_identity_list import SecretIdentityList
-    from .secret_identity_scope import SecretIdentityScope
-    from .secret_identity_scope_access_mode import SecretIdentityScopeAccessMode
-    from .secret_identity_scope_list import SecretIdentityScopeList
-    from .secret_identity_status import SecretIdentityStatus
-    from .secret_identity_token_policy_mode import SecretIdentityTokenPolicyMode
-    from .secret_lifecycle_status import SecretLifecycleStatus
-    from .secret_lifecycle_status_status import SecretLifecycleStatusStatus
-    from .secret_list import SecretList
-    from .secret_status import SecretStatus
-    from .secret_store import SecretStore
-    from .secret_store_list import SecretStoreList
-    from .secret_store_status import SecretStoreStatus
-    from .secret_value import SecretValue
-    from .secret_version import SecretVersion
-    from .secret_version_summary import SecretVersionSummary
-    from .secret_versions import SecretVersions
-    from .secret_versions_request import SecretVersionsRequest
+    from .secret_manager_json_value import SecretManagerJsonValue
+    from .secret_manager_namespace_availability import SecretManagerNamespaceAvailability
+    from .secret_manager_namespace_availability_reason import SecretManagerNamespaceAvailabilityReason
+    from .secret_manager_operation import SecretManagerOperation
+    from .secret_manager_operation_status import SecretManagerOperationStatus
+    from .secret_manager_version_command import SecretManagerVersionCommand
+    from .secret_manager_workspace import SecretManagerWorkspace
     from .snapshot_create_request import SnapshotCreateRequest
     from .snapshot_create_request_mode import SnapshotCreateRequestMode
     from .snapshot_delete_result import SnapshotDeleteResult
@@ -304,10 +282,6 @@ _dynamic_imports: typing.Dict[str, str] = {
     "BackupRunRecoveryPointType": ".backup_run_recovery_point_type",
     "BackupRunTrigger": ".backup_run_trigger",
     "BackupStatus": ".backup_status",
-    "BatchCreateSecretItem": ".batch_create_secret_item",
-    "BatchCreateSecretResult": ".batch_create_secret_result",
-    "BatchCreateSecretResultStatus": ".batch_create_secret_result_status",
-    "BatchCreateSecretsResponse": ".batch_create_secrets_response",
     "BillingCatalogSelection": ".billing_catalog_selection",
     "BillingCatalogSelectionProductId": ".billing_catalog_selection_product_id",
     "BillingCatalogSelectionSkuId": ".billing_catalog_selection_sku_id",
@@ -455,25 +429,25 @@ _dynamic_imports: typing.Dict[str, str] = {
     "GpuVmStatus": ".gpu_vm_status",
     "LiveDriftSummary": ".live_drift_summary",
     "LoadBalancer": ".load_balancer",
-    "LoadBalancerActiveHealthCheck": ".load_balancer_active_health_check",
-    "LoadBalancerActiveHealthCheckType": ".load_balancer_active_health_check_type",
-    "LoadBalancerBackend": ".load_balancer_backend",
-    "LoadBalancerBackendType": ".load_balancer_backend_type",
-    "LoadBalancerEndpoint": ".load_balancer_endpoint",
+    "LoadBalancerCcmOwner": ".load_balancer_ccm_owner",
     "LoadBalancerHealthCheck": ".load_balancer_health_check",
-    "LoadBalancerLayer": ".load_balancer_layer",
-    "LoadBalancerObservability": ".load_balancer_observability",
-    "LoadBalancerPassiveHealthCheck": ".load_balancer_passive_health_check",
-    "LoadBalancerPolicy": ".load_balancer_policy",
-    "LoadBalancerProtocol": ".load_balancer_protocol",
-    "LoadBalancerRetryPolicy": ".load_balancer_retry_policy",
-    "LoadBalancerRouting": ".load_balancer_routing",
-    "LoadBalancerRoutingAlgorithm": ".load_balancer_routing_algorithm",
-    "LoadBalancerRule": ".load_balancer_rule",
-    "LoadBalancerStatus": ".load_balancer_status",
-    "LoadBalancerStatusResponse": ".load_balancer_status_response",
-    "LoadBalancerTls": ".load_balancer_tls",
-    "LoadBalancerTlsMode": ".load_balancer_tls_mode",
+    "LoadBalancerHealthCheckProtocol": ".load_balancer_health_check_protocol",
+    "LoadBalancerHttpRule": ".load_balancer_http_rule",
+    "LoadBalancerListener": ".load_balancer_listener",
+    "LoadBalancerListenerProtocol": ".load_balancer_listener_protocol",
+    "LoadBalancerLogging": ".load_balancer_logging",
+    "LoadBalancerOperation": ".load_balancer_operation",
+    "LoadBalancerPage": ".load_balancer_page",
+    "LoadBalancerSpec": ".load_balancer_spec",
+    "LoadBalancerSpecCapacityMode": ".load_balancer_spec_capacity_mode",
+    "LoadBalancerSpecScope": ".load_balancer_spec_scope",
+    "LoadBalancerSpecTrafficType": ".load_balancer_spec_traffic_type",
+    "LoadBalancerSpecVisibility": ".load_balancer_spec_visibility",
+    "LoadBalancerTarget": ".load_balancer_target",
+    "LoadBalancerTargetGroup": ".load_balancer_target_group",
+    "LoadBalancerTargetGroupAlgorithm": ".load_balancer_target_group_algorithm",
+    "LoadBalancerTargetGroupProtocol": ".load_balancer_target_group_protocol",
+    "LoadBalancerTargetKind": ".load_balancer_target_kind",
     "ManualBackupRunRequest": ".manual_backup_run_request",
     "NatGateway": ".nat_gateway",
     "NatPortForwardingRule": ".nat_port_forwarding_rule",
@@ -507,31 +481,13 @@ _dynamic_imports: typing.Dict[str, str] = {
     "S3CredentialList": ".s3credential_list",
     "S3CredentialRevoked": ".s3credential_revoked",
     "S3CredentialStatus": ".s3credential_status",
-    "Secret": ".secret",
-    "SecretIdentity": ".secret_identity",
-    "SecretIdentityAccess": ".secret_identity_access",
-    "SecretIdentityAccessAuthMethod": ".secret_identity_access_auth_method",
-    "SecretIdentityActionStatus": ".secret_identity_action_status",
-    "SecretIdentityActionStatusStatus": ".secret_identity_action_status_status",
-    "SecretIdentityAuthMethod": ".secret_identity_auth_method",
-    "SecretIdentityList": ".secret_identity_list",
-    "SecretIdentityScope": ".secret_identity_scope",
-    "SecretIdentityScopeAccessMode": ".secret_identity_scope_access_mode",
-    "SecretIdentityScopeList": ".secret_identity_scope_list",
-    "SecretIdentityStatus": ".secret_identity_status",
-    "SecretIdentityTokenPolicyMode": ".secret_identity_token_policy_mode",
-    "SecretLifecycleStatus": ".secret_lifecycle_status",
-    "SecretLifecycleStatusStatus": ".secret_lifecycle_status_status",
-    "SecretList": ".secret_list",
-    "SecretStatus": ".secret_status",
-    "SecretStore": ".secret_store",
-    "SecretStoreList": ".secret_store_list",
-    "SecretStoreStatus": ".secret_store_status",
-    "SecretValue": ".secret_value",
-    "SecretVersion": ".secret_version",
-    "SecretVersionSummary": ".secret_version_summary",
-    "SecretVersions": ".secret_versions",
-    "SecretVersionsRequest": ".secret_versions_request",
+    "SecretManagerJsonValue": ".secret_manager_json_value",
+    "SecretManagerNamespaceAvailability": ".secret_manager_namespace_availability",
+    "SecretManagerNamespaceAvailabilityReason": ".secret_manager_namespace_availability_reason",
+    "SecretManagerOperation": ".secret_manager_operation",
+    "SecretManagerOperationStatus": ".secret_manager_operation_status",
+    "SecretManagerVersionCommand": ".secret_manager_version_command",
+    "SecretManagerWorkspace": ".secret_manager_workspace",
     "SnapshotCreateRequest": ".snapshot_create_request",
     "SnapshotCreateRequestMode": ".snapshot_create_request_mode",
     "SnapshotDeleteResult": ".snapshot_delete_result",
@@ -612,10 +568,6 @@ __all__ = [
     "BackupRunRecoveryPointType",
     "BackupRunTrigger",
     "BackupStatus",
-    "BatchCreateSecretItem",
-    "BatchCreateSecretResult",
-    "BatchCreateSecretResultStatus",
-    "BatchCreateSecretsResponse",
     "BillingCatalogSelection",
     "BillingCatalogSelectionProductId",
     "BillingCatalogSelectionSkuId",
@@ -763,25 +715,25 @@ __all__ = [
     "GpuVmStatus",
     "LiveDriftSummary",
     "LoadBalancer",
-    "LoadBalancerActiveHealthCheck",
-    "LoadBalancerActiveHealthCheckType",
-    "LoadBalancerBackend",
-    "LoadBalancerBackendType",
-    "LoadBalancerEndpoint",
+    "LoadBalancerCcmOwner",
     "LoadBalancerHealthCheck",
-    "LoadBalancerLayer",
-    "LoadBalancerObservability",
-    "LoadBalancerPassiveHealthCheck",
-    "LoadBalancerPolicy",
-    "LoadBalancerProtocol",
-    "LoadBalancerRetryPolicy",
-    "LoadBalancerRouting",
-    "LoadBalancerRoutingAlgorithm",
-    "LoadBalancerRule",
-    "LoadBalancerStatus",
-    "LoadBalancerStatusResponse",
-    "LoadBalancerTls",
-    "LoadBalancerTlsMode",
+    "LoadBalancerHealthCheckProtocol",
+    "LoadBalancerHttpRule",
+    "LoadBalancerListener",
+    "LoadBalancerListenerProtocol",
+    "LoadBalancerLogging",
+    "LoadBalancerOperation",
+    "LoadBalancerPage",
+    "LoadBalancerSpec",
+    "LoadBalancerSpecCapacityMode",
+    "LoadBalancerSpecScope",
+    "LoadBalancerSpecTrafficType",
+    "LoadBalancerSpecVisibility",
+    "LoadBalancerTarget",
+    "LoadBalancerTargetGroup",
+    "LoadBalancerTargetGroupAlgorithm",
+    "LoadBalancerTargetGroupProtocol",
+    "LoadBalancerTargetKind",
     "ManualBackupRunRequest",
     "NatGateway",
     "NatPortForwardingRule",
@@ -815,31 +767,13 @@ __all__ = [
     "S3CredentialList",
     "S3CredentialRevoked",
     "S3CredentialStatus",
-    "Secret",
-    "SecretIdentity",
-    "SecretIdentityAccess",
-    "SecretIdentityAccessAuthMethod",
-    "SecretIdentityActionStatus",
-    "SecretIdentityActionStatusStatus",
-    "SecretIdentityAuthMethod",
-    "SecretIdentityList",
-    "SecretIdentityScope",
-    "SecretIdentityScopeAccessMode",
-    "SecretIdentityScopeList",
-    "SecretIdentityStatus",
-    "SecretIdentityTokenPolicyMode",
-    "SecretLifecycleStatus",
-    "SecretLifecycleStatusStatus",
-    "SecretList",
-    "SecretStatus",
-    "SecretStore",
-    "SecretStoreList",
-    "SecretStoreStatus",
-    "SecretValue",
-    "SecretVersion",
-    "SecretVersionSummary",
-    "SecretVersions",
-    "SecretVersionsRequest",
+    "SecretManagerJsonValue",
+    "SecretManagerNamespaceAvailability",
+    "SecretManagerNamespaceAvailabilityReason",
+    "SecretManagerOperation",
+    "SecretManagerOperationStatus",
+    "SecretManagerVersionCommand",
+    "SecretManagerWorkspace",
     "SnapshotCreateRequest",
     "SnapshotCreateRequestMode",
     "SnapshotDeleteResult",

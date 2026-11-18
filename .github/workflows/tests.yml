@@ -39,7 +39,7 @@ jobs:
 
           client = Ibee(token="ibee_prod_key_dummy")
           for ns in (
-              "cloud_vms", "gpu_vms", "object_storage", "secret_store",
+              "cloud_vms", "gpu_vms", "object_storage", "secret_manager",
               "vpcs", "reserved_ips", "firewalls", "load_balancers",
               "container_registry", "billing",
           ):

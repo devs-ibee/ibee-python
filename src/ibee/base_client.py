@@ -21,7 +21,7 @@ if typing.TYPE_CHECKING:
     from .load_balancers.client import AsyncLoadBalancersClient, LoadBalancersClient
     from .object_storage.client import AsyncObjectStorageClient, ObjectStorageClient
     from .reserved_ips.client import AsyncReservedIpsClient, ReservedIpsClient
-    from .secret_store.client import AsyncSecretStoreClient, SecretStoreClient
+    from .secret_manager.client import AsyncSecretManagerClient, SecretManagerClient
     from .vpcs.client import AsyncVpcsClient, VpcsClient
 
 
@@ -109,7 +109,7 @@ class BaseIbee:
             max_stream_reconnection_attempts=max_stream_reconnection_attempts,
             logging=logging,
         )
-        self._secret_store: typing.Optional[SecretStoreClient] = None
+        self._secret_manager: typing.Optional[SecretManagerClient] = None
         self._object_storage: typing.Optional[ObjectStorageClient] = None
         self._vpcs: typing.Optional[VpcsClient] = None
         self._reserved_ips: typing.Optional[ReservedIpsClient] = None
@@ -124,12 +124,12 @@ class BaseIbee:
         self._container_registry: typing.Optional[ContainerRegistryClient] = None
 
     @property
-    def secret_store(self):
-        if self._secret_store is None:
-            from .secret_store.client import SecretStoreClient  # noqa: E402
+    def secret_manager(self):
+        if self._secret_manager is None:
+            from .secret_manager.client import SecretManagerClient  # noqa: E402
 
-            self._secret_store = SecretStoreClient(client_wrapper=self._client_wrapper)
-        return self._secret_store
+            self._secret_manager = SecretManagerClient(client_wrapper=self._client_wrapper)
+        return self._secret_manager
 
     @property
     def object_storage(self):
@@ -333,7 +333,7 @@ class AsyncBaseIbee:
             max_stream_reconnection_attempts=max_stream_reconnection_attempts,
             logging=logging,
         )
-        self._secret_store: typing.Optional[AsyncSecretStoreClient] = None
+        self._secret_manager: typing.Optional[AsyncSecretManagerClient] = None
         self._object_storage: typing.Optional[AsyncObjectStorageClient] = None
         self._vpcs: typing.Optional[AsyncVpcsClient] = None
         self._reserved_ips: typing.Optional[AsyncReservedIpsClient] = None
@@ -348,12 +348,12 @@ class AsyncBaseIbee:
         self._container_registry: typing.Optional[AsyncContainerRegistryClient] = None
 
     @property
-    def secret_store(self):
-        if self._secret_store is None:
-            from .secret_store.client import AsyncSecretStoreClient  # noqa: E402
+    def secret_manager(self):
+        if self._secret_manager is None:
+            from .secret_manager.client import AsyncSecretManagerClient  # noqa: E402
 
-            self._secret_store = AsyncSecretStoreClient(client_wrapper=self._client_wrapper)
-        return self._secret_store
+            self._secret_manager = AsyncSecretManagerClient(client_wrapper=self._client_wrapper)
+        return self._secret_manager
 
     @property
     def object_storage(self):
