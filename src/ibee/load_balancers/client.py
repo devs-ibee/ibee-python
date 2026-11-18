@@ -121,13 +121,13 @@ class LoadBalancersClient:
     def create_load_balancer(
         self,
         *,
-        idempotency_key: str,
         name: str,
         region_id: str,
         traffic_type: LoadBalancerSpecTrafficType,
         listeners: typing.Sequence[LoadBalancerListener],
         target_groups: typing.Sequence[LoadBalancerTargetGroup],
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         vpc_id: typing.Optional[str] = OMIT,
         scope: typing.Optional[LoadBalancerSpecScope] = OMIT,
         capacity_mode: typing.Optional[LoadBalancerSpecCapacityMode] = OMIT,
@@ -141,9 +141,6 @@ class LoadBalancersClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         name : str
 
         region_id : str
@@ -156,6 +153,9 @@ class LoadBalancersClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         vpc_id : typing.Optional[str]
 
@@ -185,7 +185,6 @@ class LoadBalancersClient:
             token="YOUR_TOKEN",
         )
         client.load_balancers.create_load_balancer(
-            idempotency_key="Idempotency-Key",
             workspace_id="710995",
             name="name",
             region_id="region_id",
@@ -207,13 +206,13 @@ class LoadBalancersClient:
         )
         """
         _response = self._raw_client.create_load_balancer(
-            idempotency_key=idempotency_key,
             name=name,
             region_id=region_id,
             traffic_type=traffic_type,
             listeners=listeners,
             target_groups=target_groups,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             vpc_id=vpc_id,
             scope=scope,
             capacity_mode=capacity_mode,
@@ -271,10 +270,10 @@ class LoadBalancersClient:
         self,
         load_balancer_id: str,
         *,
-        idempotency_key: str,
         version: int,
         specification: LoadBalancerSpec,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancerOperation:
         """
@@ -285,15 +284,15 @@ class LoadBalancersClient:
         load_balancer_id : str
             The load balancer's ID.
 
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         version : int
 
         specification : LoadBalancerSpec
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -317,7 +316,6 @@ class LoadBalancersClient:
         )
         client.load_balancers.update_load_balancer(
             load_balancer_id="load_balancer_id",
-            idempotency_key="Idempotency-Key",
             workspace_id="710995",
             version=1,
             specification=LoadBalancerSpec(
@@ -343,10 +341,10 @@ class LoadBalancersClient:
         """
         _response = self._raw_client.update_load_balancer(
             load_balancer_id,
-            idempotency_key=idempotency_key,
             version=version,
             specification=specification,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             request_options=request_options,
         )
         return _response.data
@@ -355,8 +353,8 @@ class LoadBalancersClient:
         self,
         load_balancer_id: str,
         *,
-        idempotency_key: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancerOperation:
         """
@@ -367,11 +365,11 @@ class LoadBalancersClient:
         load_balancer_id : str
             The load balancer's ID.
 
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -390,14 +388,13 @@ class LoadBalancersClient:
         )
         client.load_balancers.delete_load_balancer(
             load_balancer_id="load_balancer_id",
-            idempotency_key="Idempotency-Key",
             workspace_id="710995",
         )
         """
         _response = self._raw_client.delete_load_balancer(
             load_balancer_id,
-            idempotency_key=idempotency_key,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             request_options=request_options,
         )
         return _response.data
@@ -651,13 +648,13 @@ class AsyncLoadBalancersClient:
     async def create_load_balancer(
         self,
         *,
-        idempotency_key: str,
         name: str,
         region_id: str,
         traffic_type: LoadBalancerSpecTrafficType,
         listeners: typing.Sequence[LoadBalancerListener],
         target_groups: typing.Sequence[LoadBalancerTargetGroup],
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         vpc_id: typing.Optional[str] = OMIT,
         scope: typing.Optional[LoadBalancerSpecScope] = OMIT,
         capacity_mode: typing.Optional[LoadBalancerSpecCapacityMode] = OMIT,
@@ -671,9 +668,6 @@ class AsyncLoadBalancersClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         name : str
 
         region_id : str
@@ -686,6 +680,9 @@ class AsyncLoadBalancersClient:
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         vpc_id : typing.Optional[str]
 
@@ -720,7 +717,6 @@ class AsyncLoadBalancersClient:
 
         async def main() -> None:
             await client.load_balancers.create_load_balancer(
-                idempotency_key="Idempotency-Key",
                 workspace_id="710995",
                 name="name",
                 region_id="region_id",
@@ -745,13 +741,13 @@ class AsyncLoadBalancersClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.create_load_balancer(
-            idempotency_key=idempotency_key,
             name=name,
             region_id=region_id,
             traffic_type=traffic_type,
             listeners=listeners,
             target_groups=target_groups,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             vpc_id=vpc_id,
             scope=scope,
             capacity_mode=capacity_mode,
@@ -817,10 +813,10 @@ class AsyncLoadBalancersClient:
         self,
         load_balancer_id: str,
         *,
-        idempotency_key: str,
         version: int,
         specification: LoadBalancerSpec,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancerOperation:
         """
@@ -831,15 +827,15 @@ class AsyncLoadBalancersClient:
         load_balancer_id : str
             The load balancer's ID.
 
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         version : int
 
         specification : LoadBalancerSpec
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -868,7 +864,6 @@ class AsyncLoadBalancersClient:
         async def main() -> None:
             await client.load_balancers.update_load_balancer(
                 load_balancer_id="load_balancer_id",
-                idempotency_key="Idempotency-Key",
                 workspace_id="710995",
                 version=1,
                 specification=LoadBalancerSpec(
@@ -897,10 +892,10 @@ class AsyncLoadBalancersClient:
         """
         _response = await self._raw_client.update_load_balancer(
             load_balancer_id,
-            idempotency_key=idempotency_key,
             version=version,
             specification=specification,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             request_options=request_options,
         )
         return _response.data
@@ -909,8 +904,8 @@ class AsyncLoadBalancersClient:
         self,
         load_balancer_id: str,
         *,
-        idempotency_key: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancerOperation:
         """
@@ -921,11 +916,11 @@ class AsyncLoadBalancersClient:
         load_balancer_id : str
             The load balancer's ID.
 
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -949,7 +944,6 @@ class AsyncLoadBalancersClient:
         async def main() -> None:
             await client.load_balancers.delete_load_balancer(
                 load_balancer_id="load_balancer_id",
-                idempotency_key="Idempotency-Key",
                 workspace_id="710995",
             )
 
@@ -958,8 +952,8 @@ class AsyncLoadBalancersClient:
         """
         _response = await self._raw_client.delete_load_balancer(
             load_balancer_id,
-            idempotency_key=idempotency_key,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             request_options=request_options,
         )
         return _response.data

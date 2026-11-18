@@ -64,6 +64,21 @@ def test_key_is_generated_where_the_contract_has_the_header() -> None:
     uuid.UUID(rec.requests[0].headers["x-idempotency-key"])
 
 
+@pytest.mark.parametrize("call", [
+    lambda api: api.secret_manager.create_secret_manager_app_credential(name="app", access="read", folder="apps"),
+    lambda api: api.secret_manager.enable_secret_manager_workspace(namespace="team-a"),
+    lambda api: api.load_balancers.delete_load_balancer("lb-1"),
+])
+def test_idempotency_key_header_is_generated_for_secret_manager_and_load_balancers(call) -> None:
+    # These declare Idempotency-Key (not X-Idempotency-Key); the SDK fills it like the others.
+    rec = Recorder((202, {}))
+    try:
+        call(client(rec, workspace_id=WS))
+    except Exception:
+        pass  # the mock body does not parse; only the request matters
+    uuid.UUID(rec.requests[0].headers["idempotency-key"])
+
+
 def test_caller_key_is_sent_unchanged() -> None:
     rec = Recorder((202, ACCEPTED))
     api = client(rec, workspace_id=WS)

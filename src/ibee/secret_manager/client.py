@@ -67,9 +67,9 @@ class SecretManagerClient:
     def enable_secret_manager_workspace(
         self,
         *,
-        idempotency_key: str,
         namespace: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         max_versions: typing.Optional[int] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretManagerOperation:
@@ -78,13 +78,13 @@ class SecretManagerClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         namespace : str
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         max_versions : typing.Optional[int]
 
@@ -104,15 +104,14 @@ class SecretManagerClient:
             token="YOUR_TOKEN",
         )
         client.secret_manager.enable_secret_manager_workspace(
-            idempotency_key="Idempotency-Key",
             workspace_id="710995",
             namespace="namespace",
         )
         """
         _response = self._raw_client.enable_secret_manager_workspace(
-            idempotency_key=idempotency_key,
             namespace=namespace,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             max_versions=max_versions,
             request_options=request_options,
         )
@@ -726,9 +725,9 @@ class SecretManagerClient:
     def create_secret_manager_app_credential(
         self,
         *,
-        idempotency_key: str,
         name: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         access: typing.Optional[SecretManagerAppCredentialCreateAccess] = OMIT,
         folder: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -738,13 +737,13 @@ class SecretManagerClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         name : str
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         access : typing.Optional[SecretManagerAppCredentialCreateAccess]
 
@@ -766,15 +765,14 @@ class SecretManagerClient:
             token="YOUR_TOKEN",
         )
         client.secret_manager.create_secret_manager_app_credential(
-            idempotency_key="Idempotency-Key",
             workspace_id="710995",
             name="name",
         )
         """
         _response = self._raw_client.create_secret_manager_app_credential(
-            idempotency_key=idempotency_key,
             name=name,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             access=access,
             folder=folder,
             request_options=request_options,
@@ -972,9 +970,9 @@ class AsyncSecretManagerClient:
     async def enable_secret_manager_workspace(
         self,
         *,
-        idempotency_key: str,
         namespace: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         max_versions: typing.Optional[int] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretManagerOperation:
@@ -983,13 +981,13 @@ class AsyncSecretManagerClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         namespace : str
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         max_versions : typing.Optional[int]
 
@@ -1014,7 +1012,6 @@ class AsyncSecretManagerClient:
 
         async def main() -> None:
             await client.secret_manager.enable_secret_manager_workspace(
-                idempotency_key="Idempotency-Key",
                 workspace_id="710995",
                 namespace="namespace",
             )
@@ -1023,9 +1020,9 @@ class AsyncSecretManagerClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.enable_secret_manager_workspace(
-            idempotency_key=idempotency_key,
             namespace=namespace,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             max_versions=max_versions,
             request_options=request_options,
         )
@@ -1743,9 +1740,9 @@ class AsyncSecretManagerClient:
     async def create_secret_manager_app_credential(
         self,
         *,
-        idempotency_key: str,
         name: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         access: typing.Optional[SecretManagerAppCredentialCreateAccess] = OMIT,
         folder: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -1755,13 +1752,13 @@ class AsyncSecretManagerClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         name : str
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         access : typing.Optional[SecretManagerAppCredentialCreateAccess]
 
@@ -1788,7 +1785,6 @@ class AsyncSecretManagerClient:
 
         async def main() -> None:
             await client.secret_manager.create_secret_manager_app_credential(
-                idempotency_key="Idempotency-Key",
                 workspace_id="710995",
                 name="name",
             )
@@ -1797,9 +1793,9 @@ class AsyncSecretManagerClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.create_secret_manager_app_credential(
-            idempotency_key=idempotency_key,
             name=name,
             workspace_id=workspace_id,
+            idempotency_key=idempotency_key,
             access=access,
             folder=folder,
             request_options=request_options,

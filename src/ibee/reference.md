@@ -110,7 +110,6 @@ client = Ibee(
 
 client.secret_manager.enable_secret_manager_workspace(
     workspace_id="710995",
-    idempotency_key="Idempotency-Key",
     namespace="namespace",
 )
 
@@ -128,14 +127,6 @@ client.secret_manager.enable_secret_manager_workspace(
 <dl>
 <dd>
 
-**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
 **namespace:** `str` 
     
 </dd>
@@ -145,6 +136,14 @@ client.secret_manager.enable_secret_manager_workspace(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — A unique key for this change. Retry with the same key and body to get the same operation back.
     
 </dd>
 </dl>
@@ -1376,7 +1375,6 @@ client = Ibee(
 
 client.secret_manager.create_secret_manager_app_credential(
     workspace_id="710995",
-    idempotency_key="Idempotency-Key",
     name="name",
 )
 
@@ -1394,14 +1392,6 @@ client.secret_manager.create_secret_manager_app_credential(
 <dl>
 <dd>
 
-**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
 **name:** `str` 
     
 </dd>
@@ -1411,6 +1401,14 @@ client.secret_manager.create_secret_manager_app_credential(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — A unique key for this change. Retry with the same key and body to get the same operation back.
     
 </dd>
 </dl>
@@ -8200,7 +8198,6 @@ client = Ibee(
 
 client.load_balancers.create_load_balancer(
     workspace_id="710995",
-    idempotency_key="Idempotency-Key",
     name="name",
     region_id="region_id",
     traffic_type="http",
@@ -8234,14 +8231,6 @@ client.load_balancers.create_load_balancer(
 <dl>
 <dd>
 
-**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
 **request:** `LoadBalancerSpec` 
     
 </dd>
@@ -8251,6 +8240,14 @@ client.load_balancers.create_load_balancer(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — A unique key for this change. Retry with the same key and body to get the same operation back.
     
 </dd>
 </dl>
@@ -8390,7 +8387,6 @@ client = Ibee(
 client.load_balancers.update_load_balancer(
     load_balancer_id="load_balancer_id",
     workspace_id="710995",
-    idempotency_key="Idempotency-Key",
     version=1,
     specification=LoadBalancerSpec(
         name="name",
@@ -8435,14 +8431,6 @@ client.load_balancers.update_load_balancer(
 <dl>
 <dd>
 
-**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
 **version:** `int` 
     
 </dd>
@@ -8460,6 +8448,14 @@ client.load_balancers.update_load_balancer(
 <dd>
 
 **workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — A unique key for this change. Retry with the same key and body to get the same operation back.
     
 </dd>
 </dl>
@@ -8517,7 +8513,6 @@ client = Ibee(
 client.load_balancers.delete_load_balancer(
     load_balancer_id="load_balancer_id",
     workspace_id="710995",
-    idempotency_key="Idempotency-Key",
 )
 
 ```
@@ -8542,7 +8537,7 @@ client.load_balancers.delete_load_balancer(
 <dl>
 <dd>
 
-**idempotency_key:** `str` — A unique key for this change. Retry with the same key and body to get the same operation back.
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
     
 </dd>
 </dl>
@@ -8550,7 +8545,7 @@ client.load_balancers.delete_load_balancer(
 <dl>
 <dd>
 
-**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+**idempotency_key:** `typing.Optional[str]` — A unique key for this change. Retry with the same key and body to get the same operation back.
     
 </dd>
 </dl>

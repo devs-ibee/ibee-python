@@ -21,6 +21,9 @@
 - No method empties a whole bucket or registry: delete files with an S3 tool and
   images with `docker` or the repository and image deletes, then delete the bucket or
   registry. `delete_bucket` deletes an empty bucket (409 otherwise).
+- Secret Manager's enable and app-credential create and the load balancer create,
+  update and delete declare `Idempotency-Key`; it is optional in the methods and the
+  SDK sends a random key when none is given, as for every other keyed call.
 - Issuing a Secret Manager secret ID is never retried (each call replaces the previous
   secret ID); the Secret Store retry exception is gone with Secret Store.
 - Generate the SDK User-Agent with release version 0.9.0.

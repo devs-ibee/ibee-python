@@ -195,9 +195,9 @@ class RawSecretManagerClient:
     def enable_secret_manager_workspace(
         self,
         *,
-        idempotency_key: str,
         namespace: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         max_versions: typing.Optional[int] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretManagerOperation]:
@@ -206,13 +206,13 @@ class RawSecretManagerClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         namespace : str
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         max_versions : typing.Optional[int]
 
@@ -2501,9 +2501,9 @@ class RawSecretManagerClient:
     def create_secret_manager_app_credential(
         self,
         *,
-        idempotency_key: str,
         name: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         access: typing.Optional[SecretManagerAppCredentialCreateAccess] = OMIT,
         folder: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -2513,13 +2513,13 @@ class RawSecretManagerClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         name : str
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         access : typing.Optional[SecretManagerAppCredentialCreateAccess]
 
@@ -3344,9 +3344,9 @@ class AsyncRawSecretManagerClient:
     async def enable_secret_manager_workspace(
         self,
         *,
-        idempotency_key: str,
         namespace: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         max_versions: typing.Optional[int] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretManagerOperation]:
@@ -3355,13 +3355,13 @@ class AsyncRawSecretManagerClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         namespace : str
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         max_versions : typing.Optional[int]
 
@@ -5650,9 +5650,9 @@ class AsyncRawSecretManagerClient:
     async def create_secret_manager_app_credential(
         self,
         *,
-        idempotency_key: str,
         name: str,
         workspace_id: typing.Optional[str] = None,
+        idempotency_key: typing.Optional[str] = None,
         access: typing.Optional[SecretManagerAppCredentialCreateAccess] = OMIT,
         folder: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -5662,13 +5662,13 @@ class AsyncRawSecretManagerClient:
 
         Parameters
         ----------
-        idempotency_key : str
-            A unique key for this change. Retry with the same key and body to get the same operation back.
-
         name : str
 
         workspace_id : typing.Optional[str]
             The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        idempotency_key : typing.Optional[str]
+            A unique key for this change. Retry with the same key and body to get the same operation back.
 
         access : typing.Optional[SecretManagerAppCredentialCreateAccess]
 
