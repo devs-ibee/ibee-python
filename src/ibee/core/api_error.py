@@ -52,6 +52,17 @@ class ApiError(Exception):
         return _field(self.body, "billing_reason") or _field(self._detail, "reason")
 
     @property
+    def required_topup_minor(self) -> Optional[int]:
+        """With ``billing_reason`` ``initial_topup_required``: Billing's first top-up minimum, in minor units of ``billing_currency`` (50000 is Rs 500)."""
+        value = _field(self.body, "required_topup_minor")
+        return value if value is not None else _field(self._detail, "required_topup_minor")
+
+    @property
+    def billing_currency(self) -> Optional[str]:
+        """The wallet currency ``required_topup_minor`` is in, such as ``INR``."""
+        return _field(self.body, "billing_currency") or _field(self._detail, "billing_currency")
+
+    @property
     def message(self) -> Optional[str]:
         """The server's message: ``detail`` text, ``detail.message`` or ``message``. ``None`` when it sent none."""
         detail = self._detail
@@ -83,6 +94,8 @@ class ApiError(Exception):
             "status_code": self.status_code,
             "code": self.code,
             "billing_reason": self.billing_reason,
+            "required_topup_minor": self.required_topup_minor,
+            "billing_currency": self.billing_currency,
             "message": self.message,
             "admission_context_id": self.admission_context_id,
             "request_id": self.request_id,

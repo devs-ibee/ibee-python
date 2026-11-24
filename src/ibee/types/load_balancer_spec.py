@@ -4,9 +4,11 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .load_balancer_firewall import LoadBalancerFirewall
 from .load_balancer_listener import LoadBalancerListener
 from .load_balancer_logging import LoadBalancerLogging
 from .load_balancer_spec_capacity_mode import LoadBalancerSpecCapacityMode
+from .load_balancer_spec_managed_by import LoadBalancerSpecManagedBy
 from .load_balancer_spec_scope import LoadBalancerSpecScope
 from .load_balancer_spec_traffic_type import LoadBalancerSpecTrafficType
 from .load_balancer_spec_visibility import LoadBalancerSpecVisibility
@@ -25,6 +27,16 @@ class LoadBalancerSpec(UniversalBaseModel):
     listeners: typing.List[LoadBalancerListener]
     target_groups: typing.List[LoadBalancerTargetGroup]
     logging: typing.Optional[LoadBalancerLogging] = None
+    firewall: typing.Optional[LoadBalancerFirewall] = None
+    managed_by: typing.Optional[LoadBalancerSpecManagedBy] = pydantic.Field(default=None)
+    """
+    Who manages it. Send `portal` (or leave it out). `ccm` load balancers belong to a Kubernetes cluster and are read-only here.
+    """
+
+    owner: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Set only on load balancers a Kubernetes cluster made (`managed_by` `ccm`). Don't send it.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

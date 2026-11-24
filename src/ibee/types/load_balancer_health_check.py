@@ -12,8 +12,21 @@ class LoadBalancerHealthCheck(UniversalBaseModel):
     path: typing.Optional[str] = None
     interval_seconds: typing.Optional[int] = None
     timeout_seconds: typing.Optional[int] = None
-    unhealthy_threshold: typing.Optional[int] = None
+    unhealthy_threshold: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Failed checks before a target is taken out of service. Left out, it is 1 for an `HTTP` health check (the only value the current gateway supports for HTTP) and 3 for `TCP`.
+    """
+
     healthy_threshold: typing.Optional[int] = None
+    hostname: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    HTTP checks only. The Host header the check sends, for example `app.example.com`.
+    """
+
+    expected_statuses: typing.Optional[typing.List[int]] = pydantic.Field(default=None)
+    """
+    HTTP checks only. Response codes that count as healthy, each listed once.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

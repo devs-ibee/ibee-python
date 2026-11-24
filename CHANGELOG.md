@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.10.0
+
+- Update to public API contract 0.14.3: 222 operations.
+- Object Storage, one file at a time: `create_object_upload_link` (a presigned `PUT`
+  for one file of a given size and SHA-256, at most 80,000,000 bytes),
+  `create_object_download_link` and `get_object_metadata`.
+- New `client.upload_file(bucket, key, file)` (sync and async): computes the file's
+  size and SHA-256, gets an upload link and `PUT`s the file to it. The API token is not
+  sent to the S3 host; a refused upload raises `ApiError` with the S3 answer.
+- `ApiError.required_topup_minor` and `ApiError.billing_currency`: with
+  `billing_reason` `initial_topup_required`, Billing's first top-up minimum (50000 is
+  Rs 500) and its currency. Both are also in `str(error)` when present.
+- Secret Manager enable and registry create declare 402 (`PaymentRequiredError`);
+  load balancer create, update and delete declare 423 (`LockedError`).
+- `list_load_balancers(include_deleted=True)` also lists deleted load balancers.
+- Load balancers: `firewall` (`LoadBalancerFirewall`, `LoadBalancerFirewallRule`),
+  `managed_by` and `owner` on the specification, `proxy_protocol` on TCP target groups,
+  health-check `hostname` and `expected_statuses`, `conditions` typed as
+  `LoadBalancerConditions` (`addresses`, `configuration_ready`, `frontend_ready`,
+  `backend_ready`, `reason`), and regions typed as `LoadBalancerRegion` with
+  `capabilities.private_targets`. `unhealthy_threshold` has no default: left out, the
+  server uses 1 for HTTP and 3 for TCP.
+- `attach_cloud_vm_volume` / `attach_gpu_vm_volume` take `shared_access_confirmed`,
+  required as `True` with `mode="multi-writer"`.
+- Generate the SDK User-Agent with release version 0.10.0.
+
 ## 0.9.0
 
 - Update to public API contract 0.13.0: 219 operations, none paused.

@@ -5,12 +5,15 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.load_balancer import LoadBalancer
+from ..types.load_balancer_firewall import LoadBalancerFirewall
 from ..types.load_balancer_listener import LoadBalancerListener
 from ..types.load_balancer_logging import LoadBalancerLogging
 from ..types.load_balancer_operation import LoadBalancerOperation
 from ..types.load_balancer_page import LoadBalancerPage
+from ..types.load_balancer_region import LoadBalancerRegion
 from ..types.load_balancer_spec import LoadBalancerSpec
 from ..types.load_balancer_spec_capacity_mode import LoadBalancerSpecCapacityMode
+from ..types.load_balancer_spec_managed_by import LoadBalancerSpecManagedBy
 from ..types.load_balancer_spec_scope import LoadBalancerSpecScope
 from ..types.load_balancer_spec_traffic_type import LoadBalancerSpecTrafficType
 from ..types.load_balancer_spec_visibility import LoadBalancerSpecVisibility
@@ -39,9 +42,9 @@ class LoadBalancersClient:
 
     def list_load_balancer_regions(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[typing.Dict[str, typing.Any]]:
+    ) -> typing.List[LoadBalancerRegion]:
         """
-        Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
+        Lists the regions where you can create a load balancer, with what each one supports (`capabilities`). Requires scope: load-balancer.read.
 
         Parameters
         ----------
@@ -53,7 +56,7 @@ class LoadBalancersClient:
 
         Returns
         -------
-        typing.List[typing.Dict[str, typing.Any]]
+        typing.List[LoadBalancerRegion]
             Success.
 
         Examples
@@ -78,6 +81,7 @@ class LoadBalancersClient:
         workspace_id: typing.Optional[str] = None,
         cursor: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
+        include_deleted: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancerPage:
         """
@@ -93,6 +97,9 @@ class LoadBalancersClient:
 
         limit : typing.Optional[int]
             Page size (1-100). Default 50.
+
+        include_deleted : typing.Optional[bool]
+            Also list deleted load balancers (`observed_state` `deleted`). Left out or false, the list has only load balancers that still exist.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -114,7 +121,11 @@ class LoadBalancersClient:
         )
         """
         _response = self._raw_client.list_load_balancers(
-            workspace_id=workspace_id, cursor=cursor, limit=limit, request_options=request_options
+            workspace_id=workspace_id,
+            cursor=cursor,
+            limit=limit,
+            include_deleted=include_deleted,
+            request_options=request_options,
         )
         return _response.data
 
@@ -134,10 +145,13 @@ class LoadBalancersClient:
         visibility: typing.Optional[LoadBalancerSpecVisibility] = OMIT,
         node_count: typing.Optional[int] = OMIT,
         logging: typing.Optional[LoadBalancerLogging] = OMIT,
+        firewall: typing.Optional[LoadBalancerFirewall] = OMIT,
+        managed_by: typing.Optional[LoadBalancerSpecManagedBy] = OMIT,
+        owner: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancerOperation:
         """
-        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
+        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are checked before anything is reserved: a VM the region cannot reach (for example one without a public IP), or a private target in a region whose `capabilities.private_targets` is false (see listLoadBalancerRegions), answers 422 `target_not_usable`. Billed per node-hour; a Billing refusal is 402 `billing_denied` with `billing_reason`. Requires scope: load-balancer.write.
 
         Parameters
         ----------
@@ -168,6 +182,14 @@ class LoadBalancersClient:
         node_count : typing.Optional[int]
 
         logging : typing.Optional[LoadBalancerLogging]
+
+        firewall : typing.Optional[LoadBalancerFirewall]
+
+        managed_by : typing.Optional[LoadBalancerSpecManagedBy]
+            Who manages it. Send `portal` (or leave it out). `ccm` load balancers belong to a Kubernetes cluster and are read-only here.
+
+        owner : typing.Optional[typing.Dict[str, typing.Any]]
+            Set only on load balancers a Kubernetes cluster made (`managed_by` `ccm`). Don't send it.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -219,6 +241,9 @@ class LoadBalancersClient:
             visibility=visibility,
             node_count=node_count,
             logging=logging,
+            firewall=firewall,
+            managed_by=managed_by,
+            owner=owner,
             request_options=request_options,
         )
         return _response.data
@@ -550,9 +575,9 @@ class AsyncLoadBalancersClient:
 
     async def list_load_balancer_regions(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[typing.Dict[str, typing.Any]]:
+    ) -> typing.List[LoadBalancerRegion]:
         """
-        Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
+        Lists the regions where you can create a load balancer, with what each one supports (`capabilities`). Requires scope: load-balancer.read.
 
         Parameters
         ----------
@@ -564,7 +589,7 @@ class AsyncLoadBalancersClient:
 
         Returns
         -------
-        typing.List[typing.Dict[str, typing.Any]]
+        typing.List[LoadBalancerRegion]
             Success.
 
         Examples
@@ -597,6 +622,7 @@ class AsyncLoadBalancersClient:
         workspace_id: typing.Optional[str] = None,
         cursor: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
+        include_deleted: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancerPage:
         """
@@ -612,6 +638,9 @@ class AsyncLoadBalancersClient:
 
         limit : typing.Optional[int]
             Page size (1-100). Default 50.
+
+        include_deleted : typing.Optional[bool]
+            Also list deleted load balancers (`observed_state` `deleted`). Left out or false, the list has only load balancers that still exist.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -641,7 +670,11 @@ class AsyncLoadBalancersClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.list_load_balancers(
-            workspace_id=workspace_id, cursor=cursor, limit=limit, request_options=request_options
+            workspace_id=workspace_id,
+            cursor=cursor,
+            limit=limit,
+            include_deleted=include_deleted,
+            request_options=request_options,
         )
         return _response.data
 
@@ -661,10 +694,13 @@ class AsyncLoadBalancersClient:
         visibility: typing.Optional[LoadBalancerSpecVisibility] = OMIT,
         node_count: typing.Optional[int] = OMIT,
         logging: typing.Optional[LoadBalancerLogging] = OMIT,
+        firewall: typing.Optional[LoadBalancerFirewall] = OMIT,
+        managed_by: typing.Optional[LoadBalancerSpecManagedBy] = OMIT,
+        owner: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> LoadBalancerOperation:
         """
-        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
+        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are checked before anything is reserved: a VM the region cannot reach (for example one without a public IP), or a private target in a region whose `capabilities.private_targets` is false (see listLoadBalancerRegions), answers 422 `target_not_usable`. Billed per node-hour; a Billing refusal is 402 `billing_denied` with `billing_reason`. Requires scope: load-balancer.write.
 
         Parameters
         ----------
@@ -695,6 +731,14 @@ class AsyncLoadBalancersClient:
         node_count : typing.Optional[int]
 
         logging : typing.Optional[LoadBalancerLogging]
+
+        firewall : typing.Optional[LoadBalancerFirewall]
+
+        managed_by : typing.Optional[LoadBalancerSpecManagedBy]
+            Who manages it. Send `portal` (or leave it out). `ccm` load balancers belong to a Kubernetes cluster and are read-only here.
+
+        owner : typing.Optional[typing.Dict[str, typing.Any]]
+            Set only on load balancers a Kubernetes cluster made (`managed_by` `ccm`). Don't send it.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -754,6 +798,9 @@ class AsyncLoadBalancersClient:
             visibility=visibility,
             node_count=node_count,
             logging=logging,
+            firewall=firewall,
+            managed_by=managed_by,
+            owner=owner,
             request_options=request_options,
         )
         return _response.data

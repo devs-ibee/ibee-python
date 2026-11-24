@@ -5,6 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .load_balancer_conditions import LoadBalancerConditions
 from .load_balancer_spec import LoadBalancerSpec
 
 
@@ -26,7 +27,7 @@ class LoadBalancer(UniversalBaseModel):
     spec: LoadBalancerSpec
     desired_state: str
     observed_state: str
-    conditions: typing.Dict[str, typing.Any]
+    conditions: LoadBalancerConditions
     generation: int
     observed_generation: int
     version: int

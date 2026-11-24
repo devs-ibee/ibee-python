@@ -8,6 +8,7 @@ from .load_balancer_health_check import LoadBalancerHealthCheck
 from .load_balancer_target import LoadBalancerTarget
 from .load_balancer_target_group_algorithm import LoadBalancerTargetGroupAlgorithm
 from .load_balancer_target_group_protocol import LoadBalancerTargetGroupProtocol
+from .load_balancer_target_group_proxy_protocol import LoadBalancerTargetGroupProxyProtocol
 
 
 class LoadBalancerTargetGroup(UniversalBaseModel):
@@ -16,6 +17,10 @@ class LoadBalancerTargetGroup(UniversalBaseModel):
     algorithm: typing.Optional[LoadBalancerTargetGroupAlgorithm] = None
     targets: typing.Optional[typing.List[LoadBalancerTarget]] = None
     health_check: typing.Optional[LoadBalancerHealthCheck] = None
+    proxy_protocol: typing.Optional[LoadBalancerTargetGroupProxyProtocol] = pydantic.Field(default=None)
+    """
+    TCP target groups only. Sends the client's address to the targets with PROXY protocol v1 or v2.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

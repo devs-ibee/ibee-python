@@ -2381,6 +2381,7 @@ class RawGpuVmsClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         mode: typing.Optional[VmAttachVolumeRequestMode] = OMIT,
+        shared_access_confirmed: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OperationAccepted]:
         """
@@ -2405,7 +2406,16 @@ class RawGpuVmsClient:
 
         mode : typing.Optional[VmAttachVolumeRequestMode]
             - `single-writer`: only this VM may write to the volume (default).
-            - `multi-writer`: the volume may be attached to several VMs.
+            - `multi-writer`: shared raw block access from several VMs (up to 16, on at most two
+              compute hosts), in the same organization, workspace and site. Data volumes only, with
+              `delete_on_termination` off. Needs `shared_access_confirmed: true`. It is not a shared
+              file system: use cluster-aware software with its own locking and fencing, because
+              ordinary ext4, XFS or NTFS mounted on several VMs at once corrupts data.
+
+            Switching modes needs every VM detached first. Otherwise the operation fails.
+
+        shared_access_confirmed : typing.Optional[bool]
+            Required as `true` with `mode: multi-writer`. Confirms the guests run cluster-aware software with locking and fencing. Without it the attach operation fails.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2424,6 +2434,7 @@ class RawGpuVmsClient:
             json={
                 "volume_id": volume_id,
                 "mode": mode,
+                "shared_access_confirmed": shared_access_confirmed,
                 "billing_catalog": convert_and_respect_annotation_metadata(
                     object_=billing_catalog, annotation=BillingCatalogSelection, direction="write"
                 ),
@@ -9381,6 +9392,7 @@ class AsyncRawGpuVmsClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         mode: typing.Optional[VmAttachVolumeRequestMode] = OMIT,
+        shared_access_confirmed: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OperationAccepted]:
         """
@@ -9405,7 +9417,16 @@ class AsyncRawGpuVmsClient:
 
         mode : typing.Optional[VmAttachVolumeRequestMode]
             - `single-writer`: only this VM may write to the volume (default).
-            - `multi-writer`: the volume may be attached to several VMs.
+            - `multi-writer`: shared raw block access from several VMs (up to 16, on at most two
+              compute hosts), in the same organization, workspace and site. Data volumes only, with
+              `delete_on_termination` off. Needs `shared_access_confirmed: true`. It is not a shared
+              file system: use cluster-aware software with its own locking and fencing, because
+              ordinary ext4, XFS or NTFS mounted on several VMs at once corrupts data.
+
+            Switching modes needs every VM detached first. Otherwise the operation fails.
+
+        shared_access_confirmed : typing.Optional[bool]
+            Required as `true` with `mode: multi-writer`. Confirms the guests run cluster-aware software with locking and fencing. Without it the attach operation fails.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -9424,6 +9445,7 @@ class AsyncRawGpuVmsClient:
             json={
                 "volume_id": volume_id,
                 "mode": mode,
+                "shared_access_confirmed": shared_access_confirmed,
                 "billing_catalog": convert_and_respect_annotation_metadata(
                     object_=billing_catalog, annotation=BillingCatalogSelection, direction="write"
                 ),

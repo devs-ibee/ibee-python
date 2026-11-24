@@ -19,6 +19,9 @@ from ..types.bucket_notification_configuration import BucketNotificationConfigur
 from ..types.bucket_object_lock_configuration import BucketObjectLockConfiguration
 from ..types.default_retention import DefaultRetention
 from ..types.delete_response import DeleteResponse
+from ..types.object_download_link import ObjectDownloadLink
+from ..types.object_metadata import ObjectMetadata
+from ..types.object_upload_link import ObjectUploadLink
 from ..types.s3credential import S3Credential
 from ..types.s3credential_created import S3CredentialCreated
 from ..types.s3credential_list import S3CredentialList
@@ -27,6 +30,7 @@ from .raw_client import AsyncRawObjectStorageClient, RawObjectStorageClient
 from .types.create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
 from .types.create_s3credential_request_permission_type import CreateS3CredentialRequestPermissionType
 from .types.get_bucket_metrics_request_range import GetBucketMetricsRequestRange
+from .types.object_download_link_request_disposition import ObjectDownloadLinkRequestDisposition
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -809,7 +813,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomainConfig:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Read `cname_target` here before adding the first domain: `custom_domains` is empty until then. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -853,7 +857,7 @@ class ObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomain:
         """
-        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+        Adds a custom hostname that serves the bucket. Do it in this order: read `cname_target` from the list, create a CNAME record from your hostname to it at your DNS provider, then add the domain. The add is refused with 400 (`CNAME verification failed: …`, naming the target) until the record resolves, and the bucket must be public. Then check `status` on the list. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -984,6 +988,191 @@ class ObjectStorageClient:
         """
         _response = self._raw_client.get_bucket_metrics(
             bucket_name, workspace_id=workspace_id, range=range, request_options=request_options
+        )
+        return _response.data
+
+    def create_object_upload_link(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        size_bytes: int,
+        checksum_sha256: str,
+        workspace_id: typing.Optional[str] = None,
+        content_type: typing.Optional[str] = OMIT,
+        expires: typing.Optional[int] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ObjectUploadLink:
+        """
+        Returns a temporary link that uploads exactly one file to this key through the S3 gateway: the file whose size and SHA-256 you send. Send the file with a single HTTP `PUT` to `url`, with exactly the `headers` in the answer; the file never passes through this API. The link carries at most 80,000,000 bytes (larger files: an S3 tool, which uploads in parts) and replaces an object with the same key. It works for `expires_in` seconds (60 to 1,800; 900 when not given), and anyone holding it can use it until then, so treat it like a password. When the file arrives, an organization verified only by the Rs 1 payment that has used its free storage is refused with 403 `free_storage_limit_reached`, and 503 with `Retry-After` means the storage allowance could not be checked: retry later. Check the result with Get object metadata. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        size_bytes : int
+            The file's exact size in bytes; at most 80,000,000.
+
+        checksum_sha256 : str
+            The file's SHA-256, base64-encoded (44 characters), as `openssl dgst -sha256 -binary FILE | base64` prints it.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        content_type : typing.Optional[str]
+            The file's media type, such as `application/pdf`. Sent with the upload when given.
+
+        expires : typing.Optional[int]
+            Seconds the link works.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ObjectUploadLink
+            The upload link and the headers to send with the file.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.create_object_upload_link(
+            bucket_name="bucket_name",
+            object_path="object_path",
+            workspace_id="710995",
+            size_bytes=1048576,
+            checksum_sha256="n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=",
+            content_type="application/pdf",
+        )
+        """
+        _response = self._raw_client.create_object_upload_link(
+            bucket_name,
+            object_path,
+            size_bytes=size_bytes,
+            checksum_sha256=checksum_sha256,
+            workspace_id=workspace_id,
+            content_type=content_type,
+            expires=expires,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def create_object_download_link(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        expires: typing.Optional[int] = OMIT,
+        disposition: typing.Optional[ObjectDownloadLinkRequestDisposition] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ObjectDownloadLink:
+        """
+        Returns a temporary link that downloads one object through the S3 gateway with an HTTP `GET`. Anyone holding the link can download the object until it expires, so share it only with whom it is meant for. It works for `expires_in` seconds (60 to 1,800; 900 when not given). `disposition: attachment` makes a browser save the file instead of showing it. The link is made even when no object has this key; the download then answers 404. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        expires : typing.Optional[int]
+            Seconds the link works.
+
+        disposition : typing.Optional[ObjectDownloadLinkRequestDisposition]
+            `attachment` makes a browser save the file under its name; `inline` lets it show the file. Not set: the browser decides.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ObjectDownloadLink
+            The download link.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.create_object_download_link(
+            bucket_name="bucket_name",
+            object_path="object_path",
+            workspace_id="710995",
+            expires=600,
+            disposition="attachment",
+        )
+        """
+        _response = self._raw_client.create_object_download_link(
+            bucket_name,
+            object_path,
+            workspace_id=workspace_id,
+            expires=expires,
+            disposition=disposition,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def get_object_metadata(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ObjectMetadata:
+        """
+        Returns one object's size, SHA-256 (for a file uploaded whole with a checksum, as upload links always do), ETag, content type, last change and custom metadata without downloading it. Use it to confirm an upload made with a link: compare `size_bytes` and `checksum_sha256` with the file you sent. 404 when no object has this key. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ObjectMetadata
+            The object's metadata.
+
+        Examples
+        --------
+        from ibee import Ibee
+
+        client = Ibee(
+            token="YOUR_TOKEN",
+        )
+        client.object_storage.get_object_metadata(
+            bucket_name="bucket_name",
+            object_path="object_path",
+            workspace_id="710995",
+        )
+        """
+        _response = self._raw_client.get_object_metadata(
+            bucket_name, object_path, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 
@@ -2120,7 +2309,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomainConfig:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Read `cname_target` here before adding the first domain: `custom_domains` is empty until then. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -2172,7 +2361,7 @@ class AsyncObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BucketCustomDomain:
         """
-        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+        Adds a custom hostname that serves the bucket. Do it in this order: read `cname_target` from the list, create a CNAME record from your hostname to it at your DNS provider, then add the domain. The add is refused with 400 (`CNAME verification failed: …`, naming the target) until the record resolves, and the bucket must be public. Then check `status` on the list. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -2327,6 +2516,215 @@ class AsyncObjectStorageClient:
         """
         _response = await self._raw_client.get_bucket_metrics(
             bucket_name, workspace_id=workspace_id, range=range, request_options=request_options
+        )
+        return _response.data
+
+    async def create_object_upload_link(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        size_bytes: int,
+        checksum_sha256: str,
+        workspace_id: typing.Optional[str] = None,
+        content_type: typing.Optional[str] = OMIT,
+        expires: typing.Optional[int] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ObjectUploadLink:
+        """
+        Returns a temporary link that uploads exactly one file to this key through the S3 gateway: the file whose size and SHA-256 you send. Send the file with a single HTTP `PUT` to `url`, with exactly the `headers` in the answer; the file never passes through this API. The link carries at most 80,000,000 bytes (larger files: an S3 tool, which uploads in parts) and replaces an object with the same key. It works for `expires_in` seconds (60 to 1,800; 900 when not given), and anyone holding it can use it until then, so treat it like a password. When the file arrives, an organization verified only by the Rs 1 payment that has used its free storage is refused with 403 `free_storage_limit_reached`, and 503 with `Retry-After` means the storage allowance could not be checked: retry later. Check the result with Get object metadata. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        size_bytes : int
+            The file's exact size in bytes; at most 80,000,000.
+
+        checksum_sha256 : str
+            The file's SHA-256, base64-encoded (44 characters), as `openssl dgst -sha256 -binary FILE | base64` prints it.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        content_type : typing.Optional[str]
+            The file's media type, such as `application/pdf`. Sent with the upload when given.
+
+        expires : typing.Optional[int]
+            Seconds the link works.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ObjectUploadLink
+            The upload link and the headers to send with the file.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.create_object_upload_link(
+                bucket_name="bucket_name",
+                object_path="object_path",
+                workspace_id="710995",
+                size_bytes=1048576,
+                checksum_sha256="n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=",
+                content_type="application/pdf",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.create_object_upload_link(
+            bucket_name,
+            object_path,
+            size_bytes=size_bytes,
+            checksum_sha256=checksum_sha256,
+            workspace_id=workspace_id,
+            content_type=content_type,
+            expires=expires,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def create_object_download_link(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        expires: typing.Optional[int] = OMIT,
+        disposition: typing.Optional[ObjectDownloadLinkRequestDisposition] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ObjectDownloadLink:
+        """
+        Returns a temporary link that downloads one object through the S3 gateway with an HTTP `GET`. Anyone holding the link can download the object until it expires, so share it only with whom it is meant for. It works for `expires_in` seconds (60 to 1,800; 900 when not given). `disposition: attachment` makes a browser save the file instead of showing it. The link is made even when no object has this key; the download then answers 404. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        expires : typing.Optional[int]
+            Seconds the link works.
+
+        disposition : typing.Optional[ObjectDownloadLinkRequestDisposition]
+            `attachment` makes a browser save the file under its name; `inline` lets it show the file. Not set: the browser decides.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ObjectDownloadLink
+            The download link.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.create_object_download_link(
+                bucket_name="bucket_name",
+                object_path="object_path",
+                workspace_id="710995",
+                expires=600,
+                disposition="attachment",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.create_object_download_link(
+            bucket_name,
+            object_path,
+            workspace_id=workspace_id,
+            expires=expires,
+            disposition=disposition,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def get_object_metadata(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ObjectMetadata:
+        """
+        Returns one object's size, SHA-256 (for a file uploaded whole with a checksum, as upload links always do), ETag, content type, last change and custom metadata without downloading it. Use it to confirm an upload made with a link: compare `size_bytes` and `checksum_sha256` with the file you sent. 404 when no object has this key. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ObjectMetadata
+            The object's metadata.
+
+        Examples
+        --------
+        import asyncio
+
+        from ibee import AsyncIbee
+
+        client = AsyncIbee(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.object_storage.get_object_metadata(
+                bucket_name="bucket_name",
+                object_path="object_path",
+                workspace_id="710995",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_object_metadata(
+            bucket_name, object_path, workspace_id=workspace_id, request_options=request_options
         )
         return _response.data
 

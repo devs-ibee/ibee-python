@@ -168,6 +168,13 @@ if typing.TYPE_CHECKING:
     from .live_drift_summary import LiveDriftSummary
     from .load_balancer import LoadBalancer
     from .load_balancer_ccm_owner import LoadBalancerCcmOwner
+    from .load_balancer_conditions import LoadBalancerConditions
+    from .load_balancer_firewall import LoadBalancerFirewall
+    from .load_balancer_firewall_mode import LoadBalancerFirewallMode
+    from .load_balancer_firewall_rule import LoadBalancerFirewallRule
+    from .load_balancer_firewall_rule_action import LoadBalancerFirewallRuleAction
+    from .load_balancer_firewall_rule_address_family import LoadBalancerFirewallRuleAddressFamily
+    from .load_balancer_firewall_rule_protocol import LoadBalancerFirewallRuleProtocol
     from .load_balancer_health_check import LoadBalancerHealthCheck
     from .load_balancer_health_check_protocol import LoadBalancerHealthCheckProtocol
     from .load_balancer_http_rule import LoadBalancerHttpRule
@@ -176,8 +183,11 @@ if typing.TYPE_CHECKING:
     from .load_balancer_logging import LoadBalancerLogging
     from .load_balancer_operation import LoadBalancerOperation
     from .load_balancer_page import LoadBalancerPage
+    from .load_balancer_region import LoadBalancerRegion
+    from .load_balancer_region_capabilities import LoadBalancerRegionCapabilities
     from .load_balancer_spec import LoadBalancerSpec
     from .load_balancer_spec_capacity_mode import LoadBalancerSpecCapacityMode
+    from .load_balancer_spec_managed_by import LoadBalancerSpecManagedBy
     from .load_balancer_spec_scope import LoadBalancerSpecScope
     from .load_balancer_spec_traffic_type import LoadBalancerSpecTrafficType
     from .load_balancer_spec_visibility import LoadBalancerSpecVisibility
@@ -185,6 +195,7 @@ if typing.TYPE_CHECKING:
     from .load_balancer_target_group import LoadBalancerTargetGroup
     from .load_balancer_target_group_algorithm import LoadBalancerTargetGroupAlgorithm
     from .load_balancer_target_group_protocol import LoadBalancerTargetGroupProtocol
+    from .load_balancer_target_group_proxy_protocol import LoadBalancerTargetGroupProxyProtocol
     from .load_balancer_target_kind import LoadBalancerTargetKind
     from .manual_backup_run_request import ManualBackupRunRequest
     from .nat_gateway import NatGateway
@@ -194,6 +205,10 @@ if typing.TYPE_CHECKING:
     from .network_allocation_connectivity import NetworkAllocationConnectivity
     from .networking_resource_status import NetworkingResourceStatus
     from .networking_site import NetworkingSite
+    from .object_download_link import ObjectDownloadLink
+    from .object_metadata import ObjectMetadata
+    from .object_upload_link import ObjectUploadLink
+    from .object_upload_link_method import ObjectUploadLinkMethod
     from .operation_accepted import OperationAccepted
     from .operation_status import OperationStatus
     from .operation_status_action import OperationStatusAction
@@ -430,6 +445,13 @@ _dynamic_imports: typing.Dict[str, str] = {
     "LiveDriftSummary": ".live_drift_summary",
     "LoadBalancer": ".load_balancer",
     "LoadBalancerCcmOwner": ".load_balancer_ccm_owner",
+    "LoadBalancerConditions": ".load_balancer_conditions",
+    "LoadBalancerFirewall": ".load_balancer_firewall",
+    "LoadBalancerFirewallMode": ".load_balancer_firewall_mode",
+    "LoadBalancerFirewallRule": ".load_balancer_firewall_rule",
+    "LoadBalancerFirewallRuleAction": ".load_balancer_firewall_rule_action",
+    "LoadBalancerFirewallRuleAddressFamily": ".load_balancer_firewall_rule_address_family",
+    "LoadBalancerFirewallRuleProtocol": ".load_balancer_firewall_rule_protocol",
     "LoadBalancerHealthCheck": ".load_balancer_health_check",
     "LoadBalancerHealthCheckProtocol": ".load_balancer_health_check_protocol",
     "LoadBalancerHttpRule": ".load_balancer_http_rule",
@@ -438,8 +460,11 @@ _dynamic_imports: typing.Dict[str, str] = {
     "LoadBalancerLogging": ".load_balancer_logging",
     "LoadBalancerOperation": ".load_balancer_operation",
     "LoadBalancerPage": ".load_balancer_page",
+    "LoadBalancerRegion": ".load_balancer_region",
+    "LoadBalancerRegionCapabilities": ".load_balancer_region_capabilities",
     "LoadBalancerSpec": ".load_balancer_spec",
     "LoadBalancerSpecCapacityMode": ".load_balancer_spec_capacity_mode",
+    "LoadBalancerSpecManagedBy": ".load_balancer_spec_managed_by",
     "LoadBalancerSpecScope": ".load_balancer_spec_scope",
     "LoadBalancerSpecTrafficType": ".load_balancer_spec_traffic_type",
     "LoadBalancerSpecVisibility": ".load_balancer_spec_visibility",
@@ -447,6 +472,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "LoadBalancerTargetGroup": ".load_balancer_target_group",
     "LoadBalancerTargetGroupAlgorithm": ".load_balancer_target_group_algorithm",
     "LoadBalancerTargetGroupProtocol": ".load_balancer_target_group_protocol",
+    "LoadBalancerTargetGroupProxyProtocol": ".load_balancer_target_group_proxy_protocol",
     "LoadBalancerTargetKind": ".load_balancer_target_kind",
     "ManualBackupRunRequest": ".manual_backup_run_request",
     "NatGateway": ".nat_gateway",
@@ -456,6 +482,10 @@ _dynamic_imports: typing.Dict[str, str] = {
     "NetworkAllocationConnectivity": ".network_allocation_connectivity",
     "NetworkingResourceStatus": ".networking_resource_status",
     "NetworkingSite": ".networking_site",
+    "ObjectDownloadLink": ".object_download_link",
+    "ObjectMetadata": ".object_metadata",
+    "ObjectUploadLink": ".object_upload_link",
+    "ObjectUploadLinkMethod": ".object_upload_link_method",
     "OperationAccepted": ".operation_accepted",
     "OperationStatus": ".operation_status",
     "OperationStatusAction": ".operation_status_action",
@@ -716,6 +746,13 @@ __all__ = [
     "LiveDriftSummary",
     "LoadBalancer",
     "LoadBalancerCcmOwner",
+    "LoadBalancerConditions",
+    "LoadBalancerFirewall",
+    "LoadBalancerFirewallMode",
+    "LoadBalancerFirewallRule",
+    "LoadBalancerFirewallRuleAction",
+    "LoadBalancerFirewallRuleAddressFamily",
+    "LoadBalancerFirewallRuleProtocol",
     "LoadBalancerHealthCheck",
     "LoadBalancerHealthCheckProtocol",
     "LoadBalancerHttpRule",
@@ -724,8 +761,11 @@ __all__ = [
     "LoadBalancerLogging",
     "LoadBalancerOperation",
     "LoadBalancerPage",
+    "LoadBalancerRegion",
+    "LoadBalancerRegionCapabilities",
     "LoadBalancerSpec",
     "LoadBalancerSpecCapacityMode",
+    "LoadBalancerSpecManagedBy",
     "LoadBalancerSpecScope",
     "LoadBalancerSpecTrafficType",
     "LoadBalancerSpecVisibility",
@@ -733,6 +773,7 @@ __all__ = [
     "LoadBalancerTargetGroup",
     "LoadBalancerTargetGroupAlgorithm",
     "LoadBalancerTargetGroupProtocol",
+    "LoadBalancerTargetGroupProxyProtocol",
     "LoadBalancerTargetKind",
     "ManualBackupRunRequest",
     "NatGateway",
@@ -742,6 +783,10 @@ __all__ = [
     "NetworkAllocationConnectivity",
     "NetworkingResourceStatus",
     "NetworkingSite",
+    "ObjectDownloadLink",
+    "ObjectMetadata",
+    "ObjectUploadLink",
+    "ObjectUploadLinkMethod",
     "OperationAccepted",
     "OperationStatus",
     "OperationStatusAction",

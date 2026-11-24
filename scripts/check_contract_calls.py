@@ -3,7 +3,9 @@
 
 The SDK is the generated client: every operation is the generated method, sent as the
 caller passes it. The hand-written files (the .py files listed in src/ibee/.fernignore:
-configuration, transport and error fields) may not
+configuration, transport, error fields and the upload helper, which calls the generated
+``object_storage.create_object_upload_link`` on the client it is given and then PUTs
+the file to the link) may not
 
 * import a generated resource client (``from .<resource>.client`` or
   ``.raw_client``), so they cannot wrap, override or call an operation;

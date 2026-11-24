@@ -18,6 +18,7 @@ from ..errors.content_too_large_error import ContentTooLargeError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.gateway_timeout_error import GatewayTimeoutError
 from ..errors.internal_server_error import InternalServerError
+from ..errors.locked_error import LockedError
 from ..errors.not_found_error import NotFoundError
 from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.service_unavailable_error import ServiceUnavailableError
@@ -26,12 +27,15 @@ from ..errors.unauthorized_error import UnauthorizedError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.error import Error
 from ..types.load_balancer import LoadBalancer
+from ..types.load_balancer_firewall import LoadBalancerFirewall
 from ..types.load_balancer_listener import LoadBalancerListener
 from ..types.load_balancer_logging import LoadBalancerLogging
 from ..types.load_balancer_operation import LoadBalancerOperation
 from ..types.load_balancer_page import LoadBalancerPage
+from ..types.load_balancer_region import LoadBalancerRegion
 from ..types.load_balancer_spec import LoadBalancerSpec
 from ..types.load_balancer_spec_capacity_mode import LoadBalancerSpecCapacityMode
+from ..types.load_balancer_spec_managed_by import LoadBalancerSpecManagedBy
 from ..types.load_balancer_spec_scope import LoadBalancerSpecScope
 from ..types.load_balancer_spec_traffic_type import LoadBalancerSpecTrafficType
 from ..types.load_balancer_spec_visibility import LoadBalancerSpecVisibility
@@ -49,9 +53,9 @@ class RawLoadBalancersClient:
 
     def list_load_balancer_regions(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
-    ) -> HttpResponse[typing.List[typing.Dict[str, typing.Any]]]:
+    ) -> HttpResponse[typing.List[LoadBalancerRegion]]:
         """
-        Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
+        Lists the regions where you can create a load balancer, with what each one supports (`capabilities`). Requires scope: load-balancer.read.
 
         Parameters
         ----------
@@ -63,7 +67,7 @@ class RawLoadBalancersClient:
 
         Returns
         -------
-        HttpResponse[typing.List[typing.Dict[str, typing.Any]]]
+        HttpResponse[typing.List[LoadBalancerRegion]]
             Success.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -77,9 +81,9 @@ class RawLoadBalancersClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.List[typing.Dict[str, typing.Any]],
+                    typing.List[LoadBalancerRegion],
                     parse_obj_as(
-                        type_=typing.List[typing.Dict[str, typing.Any]],  # type: ignore
+                        type_=typing.List[LoadBalancerRegion],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -198,6 +202,7 @@ class RawLoadBalancersClient:
         workspace_id: typing.Optional[str] = None,
         cursor: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
+        include_deleted: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancerPage]:
         """
@@ -214,6 +219,9 @@ class RawLoadBalancersClient:
         limit : typing.Optional[int]
             Page size (1-100). Default 50.
 
+        include_deleted : typing.Optional[bool]
+            Also list deleted load balancers (`observed_state` `deleted`). Left out or false, the list has only load balancers that still exist.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -229,6 +237,7 @@ class RawLoadBalancersClient:
                 "workspace_id": workspace_id,
                 "cursor": cursor,
                 "limit": limit,
+                "include_deleted": include_deleted,
             },
             request_options=request_options,
         )
@@ -366,10 +375,13 @@ class RawLoadBalancersClient:
         visibility: typing.Optional[LoadBalancerSpecVisibility] = OMIT,
         node_count: typing.Optional[int] = OMIT,
         logging: typing.Optional[LoadBalancerLogging] = OMIT,
+        firewall: typing.Optional[LoadBalancerFirewall] = OMIT,
+        managed_by: typing.Optional[LoadBalancerSpecManagedBy] = OMIT,
+        owner: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[LoadBalancerOperation]:
         """
-        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
+        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are checked before anything is reserved: a VM the region cannot reach (for example one without a public IP), or a private target in a region whose `capabilities.private_targets` is false (see listLoadBalancerRegions), answers 422 `target_not_usable`. Billed per node-hour; a Billing refusal is 402 `billing_denied` with `billing_reason`. Requires scope: load-balancer.write.
 
         Parameters
         ----------
@@ -400,6 +412,14 @@ class RawLoadBalancersClient:
         node_count : typing.Optional[int]
 
         logging : typing.Optional[LoadBalancerLogging]
+
+        firewall : typing.Optional[LoadBalancerFirewall]
+
+        managed_by : typing.Optional[LoadBalancerSpecManagedBy]
+            Who manages it. Send `portal` (or leave it out). `ccm` load balancers belong to a Kubernetes cluster and are read-only here.
+
+        owner : typing.Optional[typing.Dict[str, typing.Any]]
+            Set only on load balancers a Kubernetes cluster made (`managed_by` `ccm`). Don't send it.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -433,6 +453,11 @@ class RawLoadBalancersClient:
                 "logging": convert_and_respect_annotation_metadata(
                     object_=logging, annotation=LoadBalancerLogging, direction="write"
                 ),
+                "firewall": convert_and_respect_annotation_metadata(
+                    object_=firewall, annotation=LoadBalancerFirewall, direction="write"
+                ),
+                "managed_by": managed_by,
+                "owner": owner,
             },
             headers={
                 "content-type": "application/json",
@@ -519,6 +544,17 @@ class RawLoadBalancersClient:
                 )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -897,6 +933,17 @@ class RawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 429:
                 raise TooManyRequestsError(
                     headers=dict(_response.headers),
@@ -1069,6 +1116,17 @@ class RawLoadBalancersClient:
                 )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -1643,9 +1701,9 @@ class AsyncRawLoadBalancersClient:
 
     async def list_load_balancer_regions(
         self, *, workspace_id: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
-    ) -> AsyncHttpResponse[typing.List[typing.Dict[str, typing.Any]]]:
+    ) -> AsyncHttpResponse[typing.List[LoadBalancerRegion]]:
         """
-        Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
+        Lists the regions where you can create a load balancer, with what each one supports (`capabilities`). Requires scope: load-balancer.read.
 
         Parameters
         ----------
@@ -1657,7 +1715,7 @@ class AsyncRawLoadBalancersClient:
 
         Returns
         -------
-        AsyncHttpResponse[typing.List[typing.Dict[str, typing.Any]]]
+        AsyncHttpResponse[typing.List[LoadBalancerRegion]]
             Success.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -1671,9 +1729,9 @@ class AsyncRawLoadBalancersClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.List[typing.Dict[str, typing.Any]],
+                    typing.List[LoadBalancerRegion],
                     parse_obj_as(
-                        type_=typing.List[typing.Dict[str, typing.Any]],  # type: ignore
+                        type_=typing.List[LoadBalancerRegion],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1792,6 +1850,7 @@ class AsyncRawLoadBalancersClient:
         workspace_id: typing.Optional[str] = None,
         cursor: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
+        include_deleted: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancerPage]:
         """
@@ -1808,6 +1867,9 @@ class AsyncRawLoadBalancersClient:
         limit : typing.Optional[int]
             Page size (1-100). Default 50.
 
+        include_deleted : typing.Optional[bool]
+            Also list deleted load balancers (`observed_state` `deleted`). Left out or false, the list has only load balancers that still exist.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -1823,6 +1885,7 @@ class AsyncRawLoadBalancersClient:
                 "workspace_id": workspace_id,
                 "cursor": cursor,
                 "limit": limit,
+                "include_deleted": include_deleted,
             },
             request_options=request_options,
         )
@@ -1960,10 +2023,13 @@ class AsyncRawLoadBalancersClient:
         visibility: typing.Optional[LoadBalancerSpecVisibility] = OMIT,
         node_count: typing.Optional[int] = OMIT,
         logging: typing.Optional[LoadBalancerLogging] = OMIT,
+        firewall: typing.Optional[LoadBalancerFirewall] = OMIT,
+        managed_by: typing.Optional[LoadBalancerSpecManagedBy] = OMIT,
+        owner: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[LoadBalancerOperation]:
         """
-        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
+        Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are checked before anything is reserved: a VM the region cannot reach (for example one without a public IP), or a private target in a region whose `capabilities.private_targets` is false (see listLoadBalancerRegions), answers 422 `target_not_usable`. Billed per node-hour; a Billing refusal is 402 `billing_denied` with `billing_reason`. Requires scope: load-balancer.write.
 
         Parameters
         ----------
@@ -1994,6 +2060,14 @@ class AsyncRawLoadBalancersClient:
         node_count : typing.Optional[int]
 
         logging : typing.Optional[LoadBalancerLogging]
+
+        firewall : typing.Optional[LoadBalancerFirewall]
+
+        managed_by : typing.Optional[LoadBalancerSpecManagedBy]
+            Who manages it. Send `portal` (or leave it out). `ccm` load balancers belong to a Kubernetes cluster and are read-only here.
+
+        owner : typing.Optional[typing.Dict[str, typing.Any]]
+            Set only on load balancers a Kubernetes cluster made (`managed_by` `ccm`). Don't send it.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2027,6 +2101,11 @@ class AsyncRawLoadBalancersClient:
                 "logging": convert_and_respect_annotation_metadata(
                     object_=logging, annotation=LoadBalancerLogging, direction="write"
                 ),
+                "firewall": convert_and_respect_annotation_metadata(
+                    object_=firewall, annotation=LoadBalancerFirewall, direction="write"
+                ),
+                "managed_by": managed_by,
+                "owner": owner,
             },
             headers={
                 "content-type": "application/json",
@@ -2113,6 +2192,17 @@ class AsyncRawLoadBalancersClient:
                 )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -2491,6 +2581,17 @@ class AsyncRawLoadBalancersClient:
                         ),
                     ),
                 )
+            if _response.status_code == 423:
+                raise LockedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 429:
                 raise TooManyRequestsError(
                     headers=dict(_response.headers),
@@ -2663,6 +2764,17 @@ class AsyncRawLoadBalancersClient:
                 )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 423:
+                raise LockedError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
