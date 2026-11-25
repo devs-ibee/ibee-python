@@ -10,11 +10,13 @@ if typing.TYPE_CHECKING:
         CreateS3CredentialRequestBucketScope,
         CreateS3CredentialRequestPermissionType,
         GetBucketMetricsRequestRange,
+        ObjectDownloadLinkRequestDisposition,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateS3CredentialRequestBucketScope": ".types",
     "CreateS3CredentialRequestPermissionType": ".types",
     "GetBucketMetricsRequestRange": ".types",
+    "ObjectDownloadLinkRequestDisposition": ".types",
 }
 
 
@@ -43,4 +45,5 @@ __all__ = [
     "CreateS3CredentialRequestBucketScope",
     "CreateS3CredentialRequestPermissionType",
     "GetBucketMetricsRequestRange",
+    "ObjectDownloadLinkRequestDisposition",
 ]

@@ -9,10 +9,12 @@ if typing.TYPE_CHECKING:
     from .create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
     from .create_s3credential_request_permission_type import CreateS3CredentialRequestPermissionType
     from .get_bucket_metrics_request_range import GetBucketMetricsRequestRange
+    from .object_download_link_request_disposition import ObjectDownloadLinkRequestDisposition
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateS3CredentialRequestBucketScope": ".create_s3credential_request_bucket_scope",
     "CreateS3CredentialRequestPermissionType": ".create_s3credential_request_permission_type",
     "GetBucketMetricsRequestRange": ".get_bucket_metrics_request_range",
+    "ObjectDownloadLinkRequestDisposition": ".object_download_link_request_disposition",
 }
 
 
@@ -41,4 +43,5 @@ __all__ = [
     "CreateS3CredentialRequestBucketScope",
     "CreateS3CredentialRequestPermissionType",
     "GetBucketMetricsRequestRange",
+    "ObjectDownloadLinkRequestDisposition",
 ]

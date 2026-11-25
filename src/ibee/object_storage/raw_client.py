@@ -41,6 +41,9 @@ from ..types.bucket_object_lock_configuration import BucketObjectLockConfigurati
 from ..types.default_retention import DefaultRetention
 from ..types.delete_response import DeleteResponse
 from ..types.error import Error
+from ..types.object_download_link import ObjectDownloadLink
+from ..types.object_metadata import ObjectMetadata
+from ..types.object_upload_link import ObjectUploadLink
 from ..types.s3credential import S3Credential
 from ..types.s3credential_created import S3CredentialCreated
 from ..types.s3credential_list import S3CredentialList
@@ -48,6 +51,7 @@ from ..types.s3credential_revoked import S3CredentialRevoked
 from .types.create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
 from .types.create_s3credential_request_permission_type import CreateS3CredentialRequestPermissionType
 from .types.get_bucket_metrics_request_range import GetBucketMetricsRequestRange
+from .types.object_download_link_request_disposition import ObjectDownloadLinkRequestDisposition
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -2905,7 +2909,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketCustomDomainConfig]:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Read `cname_target` here before adding the first domain: `custom_domains` is empty until then. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -3069,7 +3073,7 @@ class RawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[BucketCustomDomain]:
         """
-        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+        Adds a custom hostname that serves the bucket. Do it in this order: read `cname_target` from the list, create a CNAME record from your hostname to it at your DNS provider, then add the domain. The add is refused with 400 (`CNAME verification failed: …`, naming the target) until the record resolves, and the bucket must be public. Then check `status` on the list. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -3505,6 +3509,582 @@ class RawObjectStorageClient:
                     ),
                 )
                 return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def create_object_upload_link(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        size_bytes: int,
+        checksum_sha256: str,
+        workspace_id: typing.Optional[str] = None,
+        content_type: typing.Optional[str] = OMIT,
+        expires: typing.Optional[int] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[ObjectUploadLink]:
+        """
+        Returns a temporary link that uploads exactly one file to this key through the S3 gateway: the file whose size and SHA-256 you send. Send the file with a single HTTP `PUT` to `url`, with exactly the `headers` in the answer; the file never passes through this API. The link carries at most 80,000,000 bytes (larger files: an S3 tool, which uploads in parts) and replaces an object with the same key. It works for `expires_in` seconds (60 to 1,800; 900 when not given), and anyone holding it can use it until then, so treat it like a password. When the file arrives, an organization verified only by the Rs 1 payment that has used its free storage is refused with 403 `free_storage_limit_reached`, and 503 with `Retry-After` means the storage allowance could not be checked: retry later. Check the result with Get object metadata. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        size_bytes : int
+            The file's exact size in bytes; at most 80,000,000.
+
+        checksum_sha256 : str
+            The file's SHA-256, base64-encoded (44 characters), as `openssl dgst -sha256 -binary FILE | base64` prints it.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        content_type : typing.Optional[str]
+            The file's media type, such as `application/pdf`. Sent with the upload when given.
+
+        expires : typing.Optional[int]
+            Seconds the link works.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[ObjectUploadLink]
+            The upload link and the headers to send with the file.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/objects/{encode_path_param(object_path)}/upload-link",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "size_bytes": size_bytes,
+                "checksum_sha256": checksum_sha256,
+                "content_type": content_type,
+                "expires": expires,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ObjectUploadLink,
+                    parse_obj_as(
+                        type_=ObjectUploadLink,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def create_object_download_link(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        expires: typing.Optional[int] = OMIT,
+        disposition: typing.Optional[ObjectDownloadLinkRequestDisposition] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[ObjectDownloadLink]:
+        """
+        Returns a temporary link that downloads one object through the S3 gateway with an HTTP `GET`. Anyone holding the link can download the object until it expires, so share it only with whom it is meant for. It works for `expires_in` seconds (60 to 1,800; 900 when not given). `disposition: attachment` makes a browser save the file instead of showing it. The link is made even when no object has this key; the download then answers 404. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        expires : typing.Optional[int]
+            Seconds the link works.
+
+        disposition : typing.Optional[ObjectDownloadLinkRequestDisposition]
+            `attachment` makes a browser save the file under its name; `inline` lets it show the file. Not set: the browser decides.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[ObjectDownloadLink]
+            The download link.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/objects/{encode_path_param(object_path)}/download-link",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "expires": expires,
+                "disposition": disposition,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ObjectDownloadLink,
+                    parse_obj_as(
+                        type_=ObjectDownloadLink,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_object_metadata(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[ObjectMetadata]:
+        """
+        Returns one object's size, SHA-256 (for a file uploaded whole with a checksum, as upload links always do), ETag, content type, last change and custom metadata without downloading it. Use it to confirm an upload made with a link: compare `size_bytes` and `checksum_sha256` with the file you sent. 404 when no object has this key. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[ObjectMetadata]
+            The object's metadata.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/objects/{encode_path_param(object_path)}/metadata",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ObjectMetadata,
+                    parse_obj_as(
+                        type_=ObjectMetadata,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -7343,7 +7923,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketCustomDomainConfig]:
         """
-        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+        Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Read `cname_target` here before adding the first domain: `custom_domains` is empty until then. Requires scope: object-storage.read.
 
         Parameters
         ----------
@@ -7507,7 +8087,7 @@ class AsyncRawObjectStorageClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[BucketCustomDomain]:
         """
-        Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+        Adds a custom hostname that serves the bucket. Do it in this order: read `cname_target` from the list, create a CNAME record from your hostname to it at your DNS provider, then add the domain. The add is refused with 400 (`CNAME verification failed: …`, naming the target) until the record resolves, and the bucket must be public. Then check `status` on the list. Requires scope: object-storage.write.
 
         Parameters
         ----------
@@ -7943,6 +8523,582 @@ class AsyncRawObjectStorageClient:
                     ),
                 )
                 return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def create_object_upload_link(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        size_bytes: int,
+        checksum_sha256: str,
+        workspace_id: typing.Optional[str] = None,
+        content_type: typing.Optional[str] = OMIT,
+        expires: typing.Optional[int] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[ObjectUploadLink]:
+        """
+        Returns a temporary link that uploads exactly one file to this key through the S3 gateway: the file whose size and SHA-256 you send. Send the file with a single HTTP `PUT` to `url`, with exactly the `headers` in the answer; the file never passes through this API. The link carries at most 80,000,000 bytes (larger files: an S3 tool, which uploads in parts) and replaces an object with the same key. It works for `expires_in` seconds (60 to 1,800; 900 when not given), and anyone holding it can use it until then, so treat it like a password. When the file arrives, an organization verified only by the Rs 1 payment that has used its free storage is refused with 403 `free_storage_limit_reached`, and 503 with `Retry-After` means the storage allowance could not be checked: retry later. Check the result with Get object metadata. Requires scope: object-storage.write.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        size_bytes : int
+            The file's exact size in bytes; at most 80,000,000.
+
+        checksum_sha256 : str
+            The file's SHA-256, base64-encoded (44 characters), as `openssl dgst -sha256 -binary FILE | base64` prints it.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        content_type : typing.Optional[str]
+            The file's media type, such as `application/pdf`. Sent with the upload when given.
+
+        expires : typing.Optional[int]
+            Seconds the link works.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[ObjectUploadLink]
+            The upload link and the headers to send with the file.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/objects/{encode_path_param(object_path)}/upload-link",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "size_bytes": size_bytes,
+                "checksum_sha256": checksum_sha256,
+                "content_type": content_type,
+                "expires": expires,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ObjectUploadLink,
+                    parse_obj_as(
+                        type_=ObjectUploadLink,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def create_object_download_link(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        expires: typing.Optional[int] = OMIT,
+        disposition: typing.Optional[ObjectDownloadLinkRequestDisposition] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[ObjectDownloadLink]:
+        """
+        Returns a temporary link that downloads one object through the S3 gateway with an HTTP `GET`. Anyone holding the link can download the object until it expires, so share it only with whom it is meant for. It works for `expires_in` seconds (60 to 1,800; 900 when not given). `disposition: attachment` makes a browser save the file instead of showing it. The link is made even when no object has this key; the download then answers 404. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        expires : typing.Optional[int]
+            Seconds the link works.
+
+        disposition : typing.Optional[ObjectDownloadLinkRequestDisposition]
+            `attachment` makes a browser save the file under its name; `inline` lets it show the file. Not set: the browser decides.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[ObjectDownloadLink]
+            The download link.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/objects/{encode_path_param(object_path)}/download-link",
+            method="POST",
+            params={
+                "workspace_id": workspace_id,
+            },
+            json={
+                "expires": expires,
+                "disposition": disposition,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ObjectDownloadLink,
+                    parse_obj_as(
+                        type_=ObjectDownloadLink,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 429:
+                raise TooManyRequestsError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 502:
+                raise BadGatewayError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_object_metadata(
+        self,
+        bucket_name: str,
+        object_path: str,
+        *,
+        workspace_id: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[ObjectMetadata]:
+        """
+        Returns one object's size, SHA-256 (for a file uploaded whole with a checksum, as upload links always do), ETag, content type, last change and custom metadata without downloading it. Use it to confirm an upload made with a link: compare `size_bytes` and `checksum_sha256` with the file you sent. 404 when no object has this key. Requires scope: object-storage.read.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Logical bucket name.
+
+        object_path : str
+            The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\\` or a control character, is refused with 400.
+
+        workspace_id : typing.Optional[str]
+            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[ObjectMetadata]
+            The object's metadata.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"object-storage/buckets/{encode_path_param(bucket_name)}/objects/{encode_path_param(object_path)}/metadata",
+            method="GET",
+            params={
+                "workspace_id": workspace_id,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ObjectMetadata,
+                    parse_obj_as(
+                        type_=ObjectMetadata,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),

@@ -6,15 +6,16 @@ Secret Manager, Container Registry and the organization wallet.
 
 The API manages resources. Data stays on each product's own endpoint, with the
 clients that already exist for it: files over the S3 API
-(`<workspace>.blob.ibeestorage.com`, any S3 tool), container images with `docker`
-at `registry.ibee.ai`, and secret values with `bao` or `vault` at your Secret
-Manager endpoint.
+(`<workspace>.blob.ibeestorage.com`, any S3 tool, or one file at a time with an
+upload or download link), container images with `docker` at `registry.ibee.ai`, and
+secret values with `bao` or `vault` at your Secret Manager endpoint.
 
 The SDK is the client generated from the public API contract
 ([reference](https://ibee.ai/docs/api-reference)): every operation is one method,
 sync (`Ibee`) and async (`AsyncIbee`), and the request is sent as you pass it. The
 only hand-written code is configuration from the environment, safe retries,
-automatic idempotency keys and error fields that read the server's answer unchanged.
+automatic idempotency keys, error fields that read the server's answer unchanged, and
+`upload_file`, which sends one file with an upload link.
 The server decides everything else (prices, eligibility, limits, states): the SDK
 looks nothing up, fills in no defaults and validates no request.
 
@@ -115,6 +116,30 @@ A few calls to know:
 - `get_bucket_cors` raises `ibee.core.parse_error.ParsingError` while the server
   returns S3-cased keys (`AllowedOrigins`, ...); the response is on the error's `body`.
 
+### Upload and download one file
+
+`upload_file` computes the file's size and SHA-256, asks for an upload link
+(`create_object_upload_link`) and `PUT`s the file to it on the workspace's S3 host.
+The file never passes through the API and the API token is not sent with it. One link
+carries one whole file of at most 80,000,000 bytes (the server's limit, in the
+link's `max_bytes`); use an S3 tool for larger files.
+
+```python
+uploaded = client.upload_file("my-bucket", "docs/report.pdf", "report.pdf",
+                              content_type="application/pdf")
+meta = client.object_storage.get_object_metadata("my-bucket", "docs/report.pdf")
+assert meta.size_bytes == uploaded.size_bytes
+assert meta.checksum_sha256 == uploaded.checksum_sha256
+
+link = client.object_storage.create_object_download_link(
+    "my-bucket", "docs/report.pdf", expires=600, disposition="attachment")
+print(link.url)  # anyone holding it can download the file until it expires
+```
+
+A refused upload raises `ApiError` with the S3 gateway's answer (`status_code`, `body`).
+Object keys go into the path as you pass them, with plain `/` between segments;
+percent-encode other reserved characters (a space as `%20`).
+
 ### Container Registry
 
 ```python
@@ -154,7 +179,9 @@ try:
 except ApiError as error:
     print(error.status_code)           # 402
     print(error.code)                  # "billing_denied" (the gateway's error, or detail.code)
-    print(error.billing_reason)        # "resource_limit_reached"
+    print(error.billing_reason)        # "resource_limit_reached", "initial_topup_required", ...
+    print(error.required_topup_minor)  # with initial_topup_required: 50000 (minor units)
+    print(error.billing_currency)      # the currency of required_topup_minor, e.g. "INR"
     print(error.message)               # the server's message, or None when it sent none
     print(error.admission_context_id)  # billing admission context, when present
     print(error.request_id)            # the x-request-id response header

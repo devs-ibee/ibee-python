@@ -3127,7 +3127,7 @@ client.object_storage.delete_bucket_notifications(
 <dl>
 <dd>
 
-Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Answers 404 when the bucket has no custom domain. Requires scope: object-storage.read.
+Returns the bucket's custom domains with their status and the CNAME target to point them at, as the portal's Settings › Custom domains tab shows. Read `cname_target` here before adding the first domain: `custom_domains` is empty until then. Requires scope: object-storage.read.
 </dd>
 </dl>
 </dd>
@@ -3209,7 +3209,7 @@ client.object_storage.get_bucket_custom_domains(
 <dl>
 <dd>
 
-Adds a custom hostname that serves the bucket. Create the CNAME record shown in `cname_target`, then check `status` on the list. Requires scope: object-storage.write.
+Adds a custom hostname that serves the bucket. Do it in this order: read `cname_target` from the list, create a CNAME record from your hostname to it at your DNS provider, then add the domain. The add is refused with 400 (`CNAME verification failed: …`, naming the target) until the record resolves, and the bucket must be public. Then check `status` on the list. Requires scope: object-storage.write.
 </dd>
 </dl>
 </dd>
@@ -3450,6 +3450,332 @@ client.object_storage.get_bucket_metrics(
 <dd>
 
 **range:** `typing.Optional[GetBucketMetricsRequestRange]` — Time range. Default `24h`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">create_object_upload_link</a>(...) -> ObjectUploadLink</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns a temporary link that uploads exactly one file to this key through the S3 gateway: the file whose size and SHA-256 you send. Send the file with a single HTTP `PUT` to `url`, with exactly the `headers` in the answer; the file never passes through this API. The link carries at most 80,000,000 bytes (larger files: an S3 tool, which uploads in parts) and replaces an object with the same key. It works for `expires_in` seconds (60 to 1,800; 900 when not given), and anyone holding it can use it until then, so treat it like a password. When the file arrives, an organization verified only by the Rs 1 payment that has used its free storage is refused with 403 `free_storage_limit_reached`, and 503 with `Retry-After` means the storage allowance could not be checked: retry later. Check the result with Get object metadata. Requires scope: object-storage.write.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.create_object_upload_link(
+    bucket_name="bucket_name",
+    object_path="object_path",
+    workspace_id="710995",
+    size_bytes=1048576,
+    checksum_sha256="n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=",
+    content_type="application/pdf",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**object_path:** `str` — The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\` or a control character, is refused with 400.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**size_bytes:** `int` — The file's exact size in bytes; at most 80,000,000.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**checksum_sha256:** `str` — The file's SHA-256, base64-encoded (44 characters), as `openssl dgst -sha256 -binary FILE | base64` prints it.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**content_type:** `typing.Optional[str]` — The file's media type, such as `application/pdf`. Sent with the upload when given.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**expires:** `typing.Optional[int]` — Seconds the link works.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">create_object_download_link</a>(...) -> ObjectDownloadLink</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns a temporary link that downloads one object through the S3 gateway with an HTTP `GET`. Anyone holding the link can download the object until it expires, so share it only with whom it is meant for. It works for `expires_in` seconds (60 to 1,800; 900 when not given). `disposition: attachment` makes a browser save the file instead of showing it. The link is made even when no object has this key; the download then answers 404. Requires scope: object-storage.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.create_object_download_link(
+    bucket_name="bucket_name",
+    object_path="object_path",
+    workspace_id="710995",
+    expires=600,
+    disposition="attachment",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**object_path:** `str` — The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\` or a control character, is refused with 400.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**expires:** `typing.Optional[int]` — Seconds the link works.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**disposition:** `typing.Optional[ObjectDownloadLinkRequestDisposition]` — `attachment` makes a browser save the file under its name; `inline` lets it show the file. Not set: the browser decides.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">get_object_metadata</a>(...) -> ObjectMetadata</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Returns one object's size, SHA-256 (for a file uploaded whole with a checksum, as upload links always do), ETag, content type, last change and custom metadata without downloading it. Use it to confirm an upload made with a link: compare `size_bytes` and `checksum_sha256` with the file you sent. 404 when no object has this key. Requires scope: object-storage.read.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from ibee import Ibee
+from ibee.environment import IbeeEnvironment
+
+client = Ibee(
+    token="<token>",
+    environment=IbeeEnvironment.PRODUCTION,
+)
+
+client.object_storage.get_object_metadata(
+    bucket_name="bucket_name",
+    object_path="object_path",
+    workspace_id="710995",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**bucket_name:** `str` — Logical bucket name.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**object_path:** `str` — The object's key, such as `photos/2026/cat.jpg`, sent with plain `/` between segments; percent-encode other reserved characters in a segment (a space as `%20`). At most 1,024 bytes. A key with an empty, `.` or `..` segment, or with `?`, `#`, `%`, `\` or a control character, is refused with 400.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**workspace_id:** `typing.Optional[str]` — The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
     
 </dd>
 </dl>
@@ -7999,7 +8325,7 @@ client.firewalls.detach_firewall_group(
 </details>
 
 ## LoadBalancers
-<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">list_load_balancer_regions</a>(...) -> typing.List[typing.Dict[str, typing.Any]]</code></summary>
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">list_load_balancer_regions</a>(...) -> typing.List[LoadBalancerRegion]</code></summary>
 <dl>
 <dd>
 
@@ -8011,7 +8337,7 @@ client.firewalls.detach_firewall_group(
 <dl>
 <dd>
 
-Lists the regions where you can create a load balancer. Requires scope: load-balancer.read.
+Lists the regions where you can create a load balancer, with what each one supports (`capabilities`). Requires scope: load-balancer.read.
 </dd>
 </dl>
 </dd>
@@ -8149,6 +8475,14 @@ client.load_balancers.list_load_balancers(
 <dl>
 <dd>
 
+**include_deleted:** `typing.Optional[bool]` — Also list deleted load balancers (`observed_state` `deleted`). Left out or false, the list has only load balancers that still exist.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
     
 </dd>
@@ -8173,7 +8507,7 @@ client.load_balancers.list_load_balancers(
 <dl>
 <dd>
 
-Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are private addresses in the VPC. Billed per node-hour. Requires scope: load-balancer.write.
+Creates a load balancer from a full specification. Answers 202 with an operation to read with getLoadBalancerOperation. Targets are checked before anything is reserved: a VM the region cannot reach (for example one without a public IP), or a private target in a region whose `capabilities.private_targets` is false (see listLoadBalancerRegions), answers 422 `target_not_usable`. Billed per node-hour; a Billing refusal is 402 `billing_denied` with `billing_reason`. Requires scope: load-balancer.write.
 </dd>
 </dl>
 </dd>

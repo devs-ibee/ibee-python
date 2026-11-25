@@ -12,7 +12,9 @@ Configuration, first match wins:
 
 Requests then go through :mod:`ibee.transport` (workspace default, idempotency keys,
 safe retries, errors). Every method is the generated one: the request is sent as you
-pass it and the server's answer comes back unchanged.
+pass it and the server's answer comes back unchanged. The one addition is
+``upload_file`` (:mod:`ibee.uploads`): it computes a file's size and SHA-256, gets an
+upload link and ``PUT``s the file to it.
 """
 
 import os
@@ -22,6 +24,7 @@ from urllib.parse import urlsplit
 from .base_client import AsyncBaseIbee, BaseIbee
 from .environment import IbeeEnvironment
 from .transport import install
+from .uploads import FileInput, UploadedObject, upload_file, upload_file_async
 
 
 class IbeeValidationError(ValueError):
@@ -99,6 +102,27 @@ class Ibee(BaseIbee):
         super().__init__(base_url=url, token=_token(token), **kwargs)
         install(self._client_wrapper, workspace_id or os.environ.get("IBEE_WORKSPACE_ID"))
 
+    def upload_file(
+        self,
+        bucket_name: str,
+        object_path: str,
+        file: FileInput,
+        *,
+        content_type: typing.Optional[str] = None,
+        expires: typing.Optional[int] = None,
+        workspace_id: typing.Optional[str] = None,
+    ) -> UploadedObject:
+        """Upload one file (a path, bytes or an open binary file) with an upload link.
+
+        Computes the size and SHA-256, calls ``object_storage.create_object_upload_link``
+        and ``PUT``s the file to the link (the API token is not sent there). A refused
+        upload raises ``ApiError`` with the S3 gateway's answer. Confirm with
+        ``object_storage.get_object_metadata``.
+        """
+        return upload_file(
+            self, bucket_name, object_path, file, content_type=content_type, expires=expires, workspace_id=workspace_id
+        )
+
 
 class AsyncIbee(AsyncBaseIbee):
     """Async variant of :class:`Ibee` (also takes ``async_token``)."""
@@ -122,3 +146,18 @@ class AsyncIbee(AsyncBaseIbee):
             **kwargs,
         )
         install(self._client_wrapper, workspace_id or os.environ.get("IBEE_WORKSPACE_ID"))
+
+    async def upload_file(
+        self,
+        bucket_name: str,
+        object_path: str,
+        file: FileInput,
+        *,
+        content_type: typing.Optional[str] = None,
+        expires: typing.Optional[int] = None,
+        workspace_id: typing.Optional[str] = None,
+    ) -> UploadedObject:
+        """Async :meth:`Ibee.upload_file`."""
+        return await upload_file_async(
+            self, bucket_name, object_path, file, content_type=content_type, expires=expires, workspace_id=workspace_id
+        )

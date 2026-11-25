@@ -37,6 +37,16 @@ class Error(UniversalBaseModel):
     Billing's reason with `billing_denied`, passed through unchanged: for example `insufficient_balance`, `credit_limit_exceeded`, `initial_topup_required`, `resource_limit_reached` or `resource_usage_unavailable`.
     """
 
+    required_topup_minor: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    With `billing_reason` `initial_topup_required`: Billing's first top-up minimum in minor units of `billing_currency` (50000 is ₹500). Absent when Billing did not send one.
+    """
+
+    billing_currency: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The wallet currency `required_topup_minor` is in.
+    """
+
     billing_sku_code: typing.Optional[str] = pydantic.Field(default=None)
     """
     The SKU the billing admission checked, when there was one.
