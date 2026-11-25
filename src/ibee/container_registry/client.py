@@ -60,7 +60,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryNameAvailability:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
+        Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -104,7 +104,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -154,7 +154,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistry:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a registry with a storage plan (`billing_catalog.sku_code`).
+        Creates a registry with a storage plan (`billing_catalog.sku_code`).
         The registry service asks Billing whether the workspace may buy that
         plan and refuses with 403 `billing_resource_not_eligible` (and a
         `reason`) when it may not. Returns 201 when the registry is active, or
@@ -238,7 +238,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistry:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
+        Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -282,7 +282,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistry:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
+        Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -334,7 +334,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistry:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
+        Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -388,7 +388,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryReconcile:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
+        Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -431,7 +431,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryPackage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
+        Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -476,7 +476,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryPackageOperation:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Moves an active registry to a larger storage plan. Only larger quotas
+        Moves an active registry to a larger storage plan. Only larger quotas
         are accepted and only one change can be pending (409 otherwise). The
         registry service asks Billing first and refuses with 403
         `billing_resource_not_eligible` when the plan is not allowed. Send an
@@ -541,7 +541,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[ContainerRegistryAccessToken]:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
+        Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -592,7 +592,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryAccessTokenSecret:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a Docker login credential for the registry. The `username`
+        Creates a Docker login credential for the registry. The `username`
         and `secret` are returned once and cannot be read again. The registry
         must be active, and the registry service asks Billing whether the
         workspace may create credentials. Requires scope:
@@ -666,7 +666,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryAccessTokenSecret:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
+        Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -714,7 +714,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMessage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
+        Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -765,7 +765,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryRepositoryList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -828,7 +828,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMessage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
+        Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -882,7 +882,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryArtifactList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -943,7 +943,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMessage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
+        Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -1005,7 +1005,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMessage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
+        Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -1060,7 +1060,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistrySecuritySettingsStatus:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
+        Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1104,7 +1104,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistrySecuritySettingsStatus:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
+        Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -1153,7 +1153,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryVulnerabilitySummary:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
+        Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1204,7 +1204,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryVulnerabilityList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1290,7 +1290,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistrySbomList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1353,7 +1353,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistrySbom:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1412,62 +1412,6 @@ class ContainerRegistryClient:
         )
         return _response.data
 
-    def download_container_registry_sbom(
-        self,
-        registry_id: str,
-        artifact_digest: str,
-        *,
-        repository_name: str,
-        workspace_id: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Iterator[bytes]:
-        """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
-
-        Parameters
-        ----------
-        registry_id : str
-            Registry ID.
-
-        artifact_digest : str
-            Image digest, for example `sha256:4f3c...`.
-
-        repository_name : str
-            Repository name inside the registry, for example `api` or `team/api`.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration. You can pass in configuration such as `chunk_size`, and more to customize the request and response.
-
-        Returns
-        -------
-        typing.Iterator[bytes]
-            SBOM document.
-
-        Examples
-        --------
-        from ibee import Ibee
-
-        client = Ibee(
-            token="YOUR_TOKEN",
-        )
-        client.container_registry.download_container_registry_sbom(
-            registry_id="registry_id",
-            artifact_digest="artifact_digest",
-            repository_name="x",
-        )
-        """
-        with self._raw_client.download_container_registry_sbom(
-            registry_id,
-            artifact_digest,
-            repository_name=repository_name,
-            workspace_id=workspace_id,
-            request_options=request_options,
-        ) as r:
-            yield from r.data
-
     def get_container_registry_metrics(
         self,
         registry_id: str,
@@ -1477,7 +1421,7 @@ class ContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMetrics:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
+        Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1539,7 +1483,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryNameAvailability:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
+        Checks whether a registry name is free across IBEE. Names are global and never reassigned; unavailable names come with suggestions. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1591,7 +1535,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists the workspace's registries, newest first. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1649,7 +1593,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistry:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a registry with a storage plan (`billing_catalog.sku_code`).
+        Creates a registry with a storage plan (`billing_catalog.sku_code`).
         The registry service asks Billing whether the workspace may buy that
         plan and refuses with 403 `billing_resource_not_eligible` (and a
         `reason`) when it may not. Returns 201 when the registry is active, or
@@ -1741,7 +1685,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistry:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
+        Returns one registry, including its visibility, pull policy and provisioning state. A deleted registry is still returned, with `deleted_at` set. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -1793,7 +1737,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistry:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
+        Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -1853,7 +1797,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistry:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
+        Makes a registry private or public. Public requires `acknowledge_public_egress_charges: true`, because anonymous pull bandwidth is billed to the workspace. Returns 202 while the change is applied. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -1915,7 +1859,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryReconcile:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
+        Queues the registry's pending change (create, update, upgrade or delete) to run again, for example after `observed_state: ERROR`. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -1966,7 +1910,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryPackage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
+        Returns the registry's current storage plan, a pending upgrade if there is one, and the status of the change being applied. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2019,7 +1963,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryPackageOperation:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Moves an active registry to a larger storage plan. Only larger quotas
+        Moves an active registry to a larger storage plan. Only larger quotas
         are accepted and only one change can be pending (409 otherwise). The
         registry service asks Billing first and refuses with 403
         `billing_resource_not_eligible` when the plan is not allowed. Send an
@@ -2092,7 +2036,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[ContainerRegistryAccessToken]:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
+        Lists the access tokens that can use this registry, newest first. Secrets are never returned. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2151,7 +2095,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryAccessTokenSecret:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Creates a Docker login credential for the registry. The `username`
+        Creates a Docker login credential for the registry. The `username`
         and `secret` are returned once and cannot be read again. The registry
         must be active, and the registry service asks Billing whether the
         workspace may create credentials. Requires scope:
@@ -2233,7 +2177,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryAccessTokenSecret:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
+        Issues a new secret for an active token; the old secret stops working immediately. The new secret is returned once. Revoked or expired tokens return 409. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -2289,7 +2233,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMessage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
+        Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -2348,7 +2292,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryRepositoryList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists an active registry's repositories. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2419,7 +2363,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMessage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
+        Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -2481,7 +2425,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryArtifactList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists the images (artifacts) in one repository with their tags and scan overview. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2550,7 +2494,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMessage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
+        Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -2620,7 +2564,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMessage:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
+        Queues a new vulnerability scan of one image. Existing results stay visible until it completes. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -2683,7 +2627,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistrySecuritySettingsStatus:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
+        Returns the vulnerability pull policy. Scanning and SBOM generation always run on push. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2735,7 +2679,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistrySecuritySettingsStatus:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
+        Sets the vulnerability pull policy: `ALLOW`, or block pulls of images with findings at or above `CRITICAL`, `HIGH`, `MEDIUM` or `LOW`. Returns 202 while the change is applied. Requires scope: container-registry.write.
 
         Parameters
         ----------
@@ -2792,7 +2736,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryVulnerabilitySummary:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
+        Returns the number of vulnerability findings in an active registry, by severity. Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2851,7 +2795,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryVulnerabilityList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists vulnerability findings in an active registry, with optional filters. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -2945,7 +2889,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistrySbomList:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Lists the SBOMs of one repository, one per image digest. Paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -3016,7 +2960,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistrySbom:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
+        Returns one image's SBOM components and their relationships. `q` filters components by name, version, type, license, supplier or package URL. Components are paged with `page` and `page_size` (at most 100). Requires scope: container-registry.read.
 
         Parameters
         ----------
@@ -3083,71 +3027,6 @@ class AsyncContainerRegistryClient:
         )
         return _response.data
 
-    async def download_container_registry_sbom(
-        self,
-        registry_id: str,
-        artifact_digest: str,
-        *,
-        repository_name: str,
-        workspace_id: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.AsyncIterator[bytes]:
-        """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Downloads one image's full SBOM document as a JSON attachment (SPDX or CycloneDX). Requires scope: container-registry.read.
-
-        Parameters
-        ----------
-        registry_id : str
-            Registry ID.
-
-        artifact_digest : str
-            Image digest, for example `sha256:4f3c...`.
-
-        repository_name : str
-            Repository name inside the registry, for example `api` or `team/api`.
-
-        workspace_id : typing.Optional[str]
-            The positive numeric workspace ID to scope this request to. Zero, negative, and non-numeric values are rejected.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration. You can pass in configuration such as `chunk_size`, and more to customize the request and response.
-
-        Returns
-        -------
-        typing.AsyncIterator[bytes]
-            SBOM document.
-
-        Examples
-        --------
-        import asyncio
-
-        from ibee import AsyncIbee
-
-        client = AsyncIbee(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.container_registry.download_container_registry_sbom(
-                registry_id="registry_id",
-                artifact_digest="artifact_digest",
-                repository_name="x",
-            )
-
-
-        asyncio.run(main())
-        """
-        async with self._raw_client.download_container_registry_sbom(
-            registry_id,
-            artifact_digest,
-            repository_name=repository_name,
-            workspace_id=workspace_id,
-            request_options=request_options,
-        ) as r:
-            async for _chunk in r.data:
-                yield _chunk
-
     async def get_container_registry_metrics(
         self,
         registry_id: str,
@@ -3157,7 +3036,7 @@ class AsyncContainerRegistryClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContainerRegistryMetrics:
         """
-        Temporarily paused on the public API. This client method is retained for compatibility. An empty HTTP 404 means the public operation is paused; it does not prove the resource was deleted. Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
+        Returns storage use against the plan quota and outbound bandwidth over the last 24 hours, 7 days or 30 days. Bytes are decimal (1 GB = 1,000,000,000 bytes). Requires scope: container-registry.read.
 
         Parameters
         ----------

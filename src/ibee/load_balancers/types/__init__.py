@@ -6,17 +6,9 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .create_l4load_balancer_request_protocol import CreateL4LoadBalancerRequestProtocol
-    from .create_l7load_balancer_request_custom_domain import CreateL7LoadBalancerRequestCustomDomain
-    from .create_l7load_balancer_request_protocol import CreateL7LoadBalancerRequestProtocol
-    from .list_load_balancers_request_layer import ListLoadBalancersRequestLayer
-    from .update_l7load_balancer_request_custom_domain import UpdateL7LoadBalancerRequestCustomDomain
+    from .get_load_balancer_metrics_history_request_window import GetLoadBalancerMetricsHistoryRequestWindow
 _dynamic_imports: typing.Dict[str, str] = {
-    "CreateL4LoadBalancerRequestProtocol": ".create_l4load_balancer_request_protocol",
-    "CreateL7LoadBalancerRequestCustomDomain": ".create_l7load_balancer_request_custom_domain",
-    "CreateL7LoadBalancerRequestProtocol": ".create_l7load_balancer_request_protocol",
-    "ListLoadBalancersRequestLayer": ".list_load_balancers_request_layer",
-    "UpdateL7LoadBalancerRequestCustomDomain": ".update_l7load_balancer_request_custom_domain",
+    "GetLoadBalancerMetricsHistoryRequestWindow": ".get_load_balancer_metrics_history_request_window"
 }
 
 
@@ -41,10 +33,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = [
-    "CreateL4LoadBalancerRequestProtocol",
-    "CreateL7LoadBalancerRequestCustomDomain",
-    "CreateL7LoadBalancerRequestProtocol",
-    "ListLoadBalancersRequestLayer",
-    "UpdateL7LoadBalancerRequestCustomDomain",
-]
+__all__ = ["GetLoadBalancerMetricsHistoryRequestWindow"]

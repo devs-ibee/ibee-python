@@ -6,20 +6,8 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .types import (
-        CreateL4LoadBalancerRequestProtocol,
-        CreateL7LoadBalancerRequestCustomDomain,
-        CreateL7LoadBalancerRequestProtocol,
-        ListLoadBalancersRequestLayer,
-        UpdateL7LoadBalancerRequestCustomDomain,
-    )
-_dynamic_imports: typing.Dict[str, str] = {
-    "CreateL4LoadBalancerRequestProtocol": ".types",
-    "CreateL7LoadBalancerRequestCustomDomain": ".types",
-    "CreateL7LoadBalancerRequestProtocol": ".types",
-    "ListLoadBalancersRequestLayer": ".types",
-    "UpdateL7LoadBalancerRequestCustomDomain": ".types",
-}
+    from .types import GetLoadBalancerMetricsHistoryRequestWindow
+_dynamic_imports: typing.Dict[str, str] = {"GetLoadBalancerMetricsHistoryRequestWindow": ".types"}
 
 
 def __getattr__(attr_name: str) -> typing.Any:
@@ -43,10 +31,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = [
-    "CreateL4LoadBalancerRequestProtocol",
-    "CreateL7LoadBalancerRequestCustomDomain",
-    "CreateL7LoadBalancerRequestProtocol",
-    "ListLoadBalancersRequestLayer",
-    "UpdateL7LoadBalancerRequestCustomDomain",
-]
+__all__ = ["GetLoadBalancerMetricsHistoryRequestWindow"]

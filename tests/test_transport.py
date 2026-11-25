@@ -64,6 +64,21 @@ def test_key_is_generated_where_the_contract_has_the_header() -> None:
     uuid.UUID(rec.requests[0].headers["x-idempotency-key"])
 
 
+@pytest.mark.parametrize("call", [
+    lambda api: api.secret_manager.create_secret_manager_app_credential(name="app", access="read", folder="apps"),
+    lambda api: api.secret_manager.enable_secret_manager_workspace(namespace="team-a"),
+    lambda api: api.load_balancers.delete_load_balancer("lb-1"),
+])
+def test_idempotency_key_header_is_generated_for_secret_manager_and_load_balancers(call) -> None:
+    # These declare Idempotency-Key (not X-Idempotency-Key); the SDK fills it like the others.
+    rec = Recorder((202, {}))
+    try:
+        call(client(rec, workspace_id=WS))
+    except Exception:
+        pass  # the mock body does not parse; only the request matters
+    uuid.UUID(rec.requests[0].headers["idempotency-key"])
+
+
 def test_caller_key_is_sent_unchanged() -> None:
     rec = Recorder((202, ACCEPTED))
     api = client(rec, workspace_id=WS)
@@ -75,7 +90,7 @@ def test_caller_key_is_sent_unchanged() -> None:
 def test_routes_without_the_header_get_no_key() -> None:
     rec = Recorder((201, {}))
     try:
-        client(rec, workspace_id=WS).secret_store.create_secret_store(name="s")
+        client(rec, workspace_id=WS).secret_manager.issue_secret_manager_app_credential_secret_id("cred-1")
     except Exception:
         pass  # the mock body does not parse; only the request matters
     assert "x-idempotency-key" not in rec.requests[0].headers
@@ -141,7 +156,7 @@ def test_keyed_write_is_not_retried_on_502_or_504(status: int) -> None:
 def test_unkeyed_write_is_not_retried() -> None:
     rec = Recorder((503, {"detail": "busy"}))
     with pytest.raises(ServiceUnavailableError) as info:
-        client(rec, workspace_id=WS).secret_store.create_secret_store(name="s")
+        client(rec, workspace_id=WS).secret_manager.issue_secret_manager_app_credential_secret_id("cred-1")
     assert len(rec.requests) == 1
     assert info.value.idempotency_key is None
 
@@ -198,7 +213,7 @@ def test_connect_error_is_retried_for_any_request() -> None:
 def test_read_timeout_is_retried_only_for_keyed_writes() -> None:
     rec = Recorder(httpx.ReadTimeout("slow"), (201, {}))
     with pytest.raises(httpx.ReadTimeout):
-        client(rec, workspace_id=WS).secret_store.create_secret_store(name="s")
+        client(rec, workspace_id=WS).secret_manager.issue_secret_manager_app_credential_secret_id("cred-1")
     assert len(rec.requests) == 1
 
     rec = Recorder(httpx.ReadTimeout("slow"), (202, ACCEPTED))
@@ -213,38 +228,21 @@ def test_transport_error_carries_the_key() -> None:
     assert getattr(info.value, "idempotency_key") == "k-1"
 
 
-IDENTITY = {"id": "id-1", "organization_id": "o", "workspace_id": WS, "name": "app", "auth_method": "approle",
-            "status": "active", "token_policy_mode": "read_only", "created_at": "2026-10-19T00:00:00Z", "updated_at": "2026-10-19T00:00:00Z"}
-
-
-@pytest.mark.parametrize("failure", [(429, {"detail": "slow down"}), (503, {"detail": "busy"}), httpx.ConnectError("refused")])
-def test_identity_access_read_is_never_retried(failure: object) -> None:
-    # Each GET of an identity's access mints a new AppRole credential.
-    rec = Recorder(failure, (200, {"identity_id": "id-1", "auth_method": "approle", "role_id": "r", "secret_id": "s"}))
-    with pytest.raises((ApiError, httpx.ConnectError)):
-        client(rec, workspace_id=WS).secret_store.get_secret_identity_access("id-1")
+@pytest.mark.parametrize("failure", [(429, {"detail": "slow down"}), (503, {"detail": "busy"}), httpx.ReadTimeout("slow")])
+def test_secret_id_issue_is_never_retried(failure: object) -> None:
+    # Each call issues a new Secret Manager secret ID and replaces the previous one;
+    # the contract gives it no idempotency header, so it is an unkeyed write.
+    rec = Recorder(failure, (200, {"role_id": "r", "secret_id": "s"}))
+    with pytest.raises((ApiError, httpx.ReadTimeout)):
+        client(rec, workspace_id=WS).secret_manager.issue_secret_manager_app_credential_secret_id("cred-1")
     assert len(rec.requests) == 1
-    assert rec.requests[0].url.path.endswith("/secret-store/identities/id-1/access")
-
-
-def test_other_identity_reads_are_still_retried() -> None:
-    rec = Recorder((503, {"detail": "busy"}), (200, IDENTITY))
-    try:
-        client(rec, workspace_id=WS).secret_store.get_secret_identity("id-1")
-    except Exception:
-        pass  # only the request count matters
-    assert len(rec.requests) == 2
+    assert rec.requests[0].url.path.endswith("/secret-manager/app-credentials/cred-1/secret-id")
+    assert "x-idempotency-key" not in rec.requests[0].headers
 
 
 @pytest.mark.parametrize(
     ("method", "path", "never"),
     [
-        ("GET", "secret-store/identities/id-1/access", True),
-        ("GET", "/v1/secret-store/identities/id-1/access", True),
-        ("GET", "v2/secret-store/identities/id-1/access/", True),
-        ("HEAD", "secret-store/identities/id-1/access", True),
-        ("GET", "secret-store/identities/id-1", False),
-        ("GET", "secret-store/identities/id-1/access/other", False),
         ("POST", "compute/cloud-vms", True),
         ("POST", "compute/cloud-vms/vm-1/actions/start", False),
     ],

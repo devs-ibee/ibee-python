@@ -233,8 +233,9 @@ REMOVED = {
     "block_storage": ["attach_block_volume", "detach_block_volume"],
     "cdn": ["generate_cdn_url"],
     "vpcs": ["update_vpc_subnet"],
-    "secret_store": ["patch_secret_value", "update_secret_identity", "update_secret_identity_scope", "update_secret_store"],
-    "container_registry": ["empty_container_registry"],
+    "container_registry": ["empty_container_registry", "download_container_registry_sbom"],
+    "load_balancers": ["create_l4load_balancer", "create_l7load_balancer", "update_l4load_balancer",
+                       "update_l7load_balancer", "get_load_balancer_status"],
 }
 
 
@@ -244,6 +245,9 @@ def test_removed_operations_are_gone() -> None:
         for method in methods:
             assert not hasattr(getattr(ibee, namespace), method), f"{namespace}.{method}"
     assert not hasattr(ibee, "vm_console")
+    # Contract 0.11.0 replaced Secret Store with Secret Manager (no secret values in the API).
+    assert not hasattr(ibee, "secret_store")
+    assert not any("value" in m for m in dir(ibee.secret_manager) if not m.startswith("_"))
     # Contract 0.10.0 brings billing back with the wallet and top-ups only (no eligibility check).
     assert {m for m in dir(ibee.billing) if not m.startswith("_")} == {"get_billing_wallet", "create_billing_topup", "with_raw_response"}
 
