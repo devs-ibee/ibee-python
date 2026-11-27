@@ -6,9 +6,11 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .delete_load_balancer_response import DeleteLoadBalancerResponse
     from .get_load_balancer_metrics_history_request_window import GetLoadBalancerMetricsHistoryRequestWindow
 _dynamic_imports: typing.Dict[str, str] = {
-    "GetLoadBalancerMetricsHistoryRequestWindow": ".get_load_balancer_metrics_history_request_window"
+    "DeleteLoadBalancerResponse": ".delete_load_balancer_response",
+    "GetLoadBalancerMetricsHistoryRequestWindow": ".get_load_balancer_metrics_history_request_window",
 }
 
 
@@ -33,4 +35,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["GetLoadBalancerMetricsHistoryRequestWindow"]
+__all__ = ["DeleteLoadBalancerResponse", "GetLoadBalancerMetricsHistoryRequestWindow"]

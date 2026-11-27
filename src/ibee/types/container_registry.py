@@ -6,6 +6,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .container_registry_desired_state import ContainerRegistryDesiredState
+from .container_registry_job_status import ContainerRegistryJobStatus
 from .container_registry_observed_state import ContainerRegistryObservedState
 from .container_registry_registry_kind import ContainerRegistryRegistryKind
 from .container_registry_security_settings import ContainerRegistrySecuritySettings
@@ -60,6 +61,15 @@ class ContainerRegistry(UniversalBaseModel):
     observed_generation: int = pydantic.Field()
     """
     The last generation applied; equal to `generation` when settled.
+    """
+
+    reconciliation_status: typing.Optional[ContainerRegistryJobStatus] = pydantic.Field(default=None)
+    """
+    How the latest change is being applied. The registry is still updating while `generation` is greater than `observed_generation`; this field tells a slow update from a stopped one.
+    - `PENDING` or `PROCESSING`: the change is still being applied. Keep polling.
+    - `COMPLETE`: the last change was applied.
+    - `FAILED`: the service stopped retrying the latest change. The registry keeps serving with its previous settings. Retry with `POST /container-registry/registries/{registry_id}/reconcile`, or send the change again.
+    - `null`: no reconciliation record (rare, for example a very old registry).
     """
 
     created_at: dt.datetime = pydantic.Field()

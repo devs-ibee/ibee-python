@@ -7,10 +7,12 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .create_block_volume_request_volume_class import CreateBlockVolumeRequestVolumeClass
+    from .delete_block_volume_response import DeleteBlockVolumeResponse
     from .list_block_storage_plans_request_billing_interval import ListBlockStoragePlansRequestBillingInterval
     from .resize_block_volume_request_vm_state import ResizeBlockVolumeRequestVmState
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateBlockVolumeRequestVolumeClass": ".create_block_volume_request_volume_class",
+    "DeleteBlockVolumeResponse": ".delete_block_volume_response",
     "ListBlockStoragePlansRequestBillingInterval": ".list_block_storage_plans_request_billing_interval",
     "ResizeBlockVolumeRequestVmState": ".resize_block_volume_request_vm_state",
 }
@@ -39,6 +41,7 @@ def __dir__():
 
 __all__ = [
     "CreateBlockVolumeRequestVolumeClass",
+    "DeleteBlockVolumeResponse",
     "ListBlockStoragePlansRequestBillingInterval",
     "ResizeBlockVolumeRequestVmState",
 ]

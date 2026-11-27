@@ -3,11 +3,12 @@
 import typing
 
 import pydantic
-from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from ...core.pydantic_utilities import IS_PYDANTIC_V2
+from ...types.deletion_answer import DeletionAnswer
 from .delete_cloud_vm_backup_run_response_status import DeleteCloudVmBackupRunResponseStatus
 
 
-class DeleteCloudVmBackupRunResponse(UniversalBaseModel):
+class DeleteCloudVmBackupRunResponse(DeletionAnswer):
     status: DeleteCloudVmBackupRunResponseStatus
     run_id: str
     recovery_point_id: typing.Optional[str] = None

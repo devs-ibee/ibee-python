@@ -4,6 +4,7 @@ import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
+from ..types.delete_result import DeleteResult
 from ..types.reserved_ip import ReservedIp
 from .raw_client import AsyncRawReservedIpsClient, RawReservedIpsClient
 
@@ -229,7 +230,7 @@ class ReservedIpsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Releases a reserved public IPv4 address from your workspace. Requires scope: network.write.
 
@@ -246,7 +247,8 @@ class ReservedIpsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Reserved IP released successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -792,7 +794,7 @@ class AsyncReservedIpsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Releases a reserved public IPv4 address from your workspace. Requires scope: network.write.
 
@@ -809,7 +811,8 @@ class AsyncReservedIpsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Reserved IP released successfully. The answer names the resource and its final state.
 
         Examples
         --------

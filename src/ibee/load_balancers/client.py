@@ -19,6 +19,7 @@ from ..types.load_balancer_spec_traffic_type import LoadBalancerSpecTrafficType
 from ..types.load_balancer_spec_visibility import LoadBalancerSpecVisibility
 from ..types.load_balancer_target_group import LoadBalancerTargetGroup
 from .raw_client import AsyncRawLoadBalancersClient, RawLoadBalancersClient
+from .types.delete_load_balancer_response import DeleteLoadBalancerResponse
 from .types.get_load_balancer_metrics_history_request_window import GetLoadBalancerMetricsHistoryRequestWindow
 
 # this is used as the default value for optional parameters
@@ -381,7 +382,7 @@ class LoadBalancersClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancerOperation:
+    ) -> DeleteLoadBalancerResponse:
         """
         Deletes the load balancer. Answers 202 with an operation. Requires scope: load-balancer.write.
 
@@ -401,8 +402,8 @@ class LoadBalancersClient:
 
         Returns
         -------
-        LoadBalancerOperation
-            Accepted.
+        DeleteLoadBalancerResponse
+            Accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
 
         Examples
         --------
@@ -954,7 +955,7 @@ class AsyncLoadBalancersClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> LoadBalancerOperation:
+    ) -> DeleteLoadBalancerResponse:
         """
         Deletes the load balancer. Answers 202 with an operation. Requires scope: load-balancer.write.
 
@@ -974,8 +975,8 @@ class AsyncLoadBalancersClient:
 
         Returns
         -------
-        LoadBalancerOperation
-            Accepted.
+        DeleteLoadBalancerResponse
+            Accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
 
         Examples
         --------

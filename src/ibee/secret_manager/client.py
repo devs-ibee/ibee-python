@@ -8,6 +8,8 @@ from ..types.secret_manager_namespace_availability import SecretManagerNamespace
 from ..types.secret_manager_operation import SecretManagerOperation
 from ..types.secret_manager_workspace import SecretManagerWorkspace
 from .raw_client import AsyncRawSecretManagerClient, RawSecretManagerClient
+from .types.delete_secret_manager_secret_response import DeleteSecretManagerSecretResponse
+from .types.revoke_secret_manager_app_credential_response import RevokeSecretManagerAppCredentialResponse
 from .types.secret_manager_app_credential_create_access import SecretManagerAppCredentialCreateAccess
 
 # this is used as the default value for optional parameters
@@ -74,7 +76,7 @@ class SecretManagerClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretManagerOperation:
         """
-        Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (403 billing_denied). Requires scope: secret-manager.write.
+        Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (402 billing_denied, with billing_reason). Requires scope: secret-manager.write.
 
         Parameters
         ----------
@@ -462,7 +464,7 @@ class SecretManagerClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Dict[str, typing.Any]:
+    ) -> DeleteSecretManagerSecretResponse:
         """
         Deletes the secret and every version of it. This cannot be undone. Requires scope: secret-manager.write.
 
@@ -479,7 +481,7 @@ class SecretManagerClient:
 
         Returns
         -------
-        typing.Dict[str, typing.Any]
+        DeleteSecretManagerSecretResponse
             Success.
 
         Examples
@@ -828,7 +830,7 @@ class SecretManagerClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Dict[str, typing.Any]:
+    ) -> RevokeSecretManagerAppCredentialResponse:
         """
         Revokes the credential and its secret IDs. Needs workspace admin. Requires scope: secret-manager.write.
 
@@ -845,8 +847,8 @@ class SecretManagerClient:
 
         Returns
         -------
-        typing.Dict[str, typing.Any]
-            Accepted.
+        RevokeSecretManagerAppCredentialResponse
+            Accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
 
         Examples
         --------
@@ -977,7 +979,7 @@ class AsyncSecretManagerClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SecretManagerOperation:
         """
-        Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (403 billing_denied). Requires scope: secret-manager.write.
+        Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (402 billing_denied, with billing_reason). Requires scope: secret-manager.write.
 
         Parameters
         ----------
@@ -1429,7 +1431,7 @@ class AsyncSecretManagerClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Dict[str, typing.Any]:
+    ) -> DeleteSecretManagerSecretResponse:
         """
         Deletes the secret and every version of it. This cannot be undone. Requires scope: secret-manager.write.
 
@@ -1446,7 +1448,7 @@ class AsyncSecretManagerClient:
 
         Returns
         -------
-        typing.Dict[str, typing.Any]
+        DeleteSecretManagerSecretResponse
             Success.
 
         Examples
@@ -1859,7 +1861,7 @@ class AsyncSecretManagerClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Dict[str, typing.Any]:
+    ) -> RevokeSecretManagerAppCredentialResponse:
         """
         Revokes the credential and its secret IDs. Needs workspace admin. Requires scope: secret-manager.write.
 
@@ -1876,8 +1878,8 @@ class AsyncSecretManagerClient:
 
         Returns
         -------
-        typing.Dict[str, typing.Any]
-            Accepted.
+        RevokeSecretManagerAppCredentialResponse
+            Accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
 
         Examples
         --------

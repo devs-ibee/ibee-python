@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.11.0
+
+- Update to public API contract 0.15.0: every delete answers with a body.
+- The seven deletes that returned `None` (the API answered `204` with no body) now
+  return `DeleteResult` (`id`, `status`, `deletion`): `vpcs.delete_vpc`,
+  `vpcs.delete_vpc_subnet`, `vpcs.detach_vpc_node`, `vpcs.delete_nat_gateway`,
+  `vpcs.delete_nat_port_forwarding_rule`, `firewalls.delete_firewall_group` and
+  `reserved_ips.release_reserved_ip`.
+- Every other delete returns its own `Delete…Response` type: the same fields as before
+  plus `deletion` (`DeletionState`). `deletion.state` is `deleted`, `released`,
+  `detached` or `revoked` when the work is done, and `deleting` or `revoking` when it
+  continues in the background (VMs, backup runs, load balancers, registries, Secret
+  Manager app credentials). `deletion.check` is the read that answers 404 once the
+  resource is gone, `deletion.operation_id` the operation to follow, and
+  `deletion.site_code` the `X-Site-Code` to send with `check` (Secret Manager).
+  Code that only reads fields keeps working. Code that checks the exact class (for
+  example `isinstance(answer, OperationAccepted)`) needs the new type.
+- CDN distribution and custom domain deletes return `CdnDeleteResult` (they returned
+  `None`).
+- `ContainerRegistry.reconciliation_status` (`PENDING`, `PROCESSING`, `COMPLETE`,
+  `FAILED`): whether the latest registry change is still being applied, applied, or
+  stopped (retry with `reconcile_container_registry`).
+- Generate the SDK User-Agent with release version 0.11.0.
+
 ## 0.10.0
 
 - Update to public API contract 0.14.3: 222 operations.

@@ -83,8 +83,10 @@ def test_vm_list_is_one_request() -> None:
 
 
 def test_vm_delete_sends_no_public_ip_action_of_its_own() -> None:
-    rec = Recorder((202, ACCEPTED))
-    client(rec, workspace_id=WS).cloud_vms.delete_cloud_vm(VM, public_ip_action="reserve")
+    deleting = {**ACCEPTED, "deletion": {"resource_id": VM, "state": "deleting", "operation_id": ACCEPTED["operation_id"]}}
+    rec = Recorder((202, deleting))
+    answer = client(rec, workspace_id=WS).cloud_vms.delete_cloud_vm(VM, public_ip_action="reserve")
+    assert answer.deletion.state == "deleting" and answer.operation_id == ACCEPTED["operation_id"]
     assert _calls(rec) == [("DELETE", f"compute/cloud-vms/{VM}")]
     assert rec.body() == {"public_ip_action": "reserve"}
 
@@ -170,7 +172,8 @@ def test_block_storage_plan_usage_is_display_text() -> None:
 
 
 def test_s3_credential_revoke_and_delete() -> None:
-    rec = Recorder((200, {"success": True, "message": "revoked"}), (200, {"success": True, "message": "deleted"}))
+    rec = Recorder((200, {"success": True, "message": "revoked"}),
+                   (200, {"success": True, "message": "deleted", "deletion": {"resource_id": "AK1", "state": "deleted"}}))
     storage = client(rec, workspace_id=WS).object_storage
     storage.revoke_s3credential("AK1")
     storage.delete_s3credential("AK1")
@@ -204,12 +207,24 @@ def test_custom_domain_refusal_is_relayed_unchanged() -> None:
 def test_nat_gateway_public_ip_and_delete() -> None:
     nat = {"nat_gateway_id": "n1", "vpc_id": "v1", "site_id": "s1", "name": "n", "public_ip_id": "p2",
            "public_ip": "203.0.113.7", "status": "active"}
-    rec = Recorder((200, nat), (204, ""))
+    gone = {"id": "n1", "status": "deleted", "deletion": {"resource_id": "n1", "state": "deleted"}}
+    rec = Recorder((200, nat), (200, gone))
     vpcs = client(rec, workspace_id=WS).vpcs
     vpcs.update_nat_gateway_public_ip("v1", "n1", reserved_public_ip_id="p2")
-    vpcs.delete_nat_gateway("v1", "n1", public_ip_action="release")
+    assert vpcs.delete_nat_gateway("v1", "n1", public_ip_action="release").status == "deleted"
     assert _calls(rec) == [("PUT", "networking/vpcs/v1/nat-gateways/n1/public-ip"), ("DELETE", "networking/vpcs/v1/nat-gateways/n1")]
     assert [rec.body(0), rec.body(1)] == [{"reserved_public_ip_id": "p2"}, {"public_ip_action": "release"}]
+
+
+def test_deletes_answer_with_their_deletion_state() -> None:
+    """Contract 0.15.0: no delete answers 204; every one says whether the resource is gone."""
+    check = "GET /v1/networking/vpcs/v1?workspace_id=" + WS
+    rec = Recorder((200, {"id": "v1", "status": "deleted", "deletion": {"resource_id": "v1", "state": "deleted", "check": check}}),
+                   (200, {"id": "r1", "status": "released", "deletion": {"resource_id": "r1", "state": "released"}}))
+    api = client(rec, workspace_id=WS)
+    vpc = api.vpcs.delete_vpc("v1")
+    assert (vpc.id, vpc.status, vpc.deletion.state, vpc.deletion.check) == ("v1", "deleted", "deleted", check)
+    assert api.reserved_ips.release_reserved_ip("r1").deletion.state == "released"
 
 
 def test_reserved_ip_convert_and_attach_direct() -> None:

@@ -6,6 +6,7 @@ from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
 from ..types.create_nat_port_forwarding_rule_request_target_type import CreateNatPortForwardingRuleRequestTargetType
+from ..types.delete_result import DeleteResult
 from ..types.nat_gateway import NatGateway
 from ..types.nat_port_forwarding_rule import NatPortForwardingRule
 from ..types.network_allocation import NetworkAllocation
@@ -262,7 +263,7 @@ class VpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Deletes an empty VPC. Requires scope: network.write.
 
@@ -279,7 +280,8 @@ class VpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            VPC deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -526,7 +528,7 @@ class VpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Deletes a subnet from a VPC. Requires scope: network.write.
 
@@ -546,7 +548,8 @@ class VpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Subnet deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -691,7 +694,7 @@ class VpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Detaches a VM from a VPC. Requires scope: network.write.
 
@@ -711,7 +714,8 @@ class VpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Node detached successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -852,7 +856,7 @@ class VpcsClient:
         workspace_id: typing.Optional[str] = None,
         public_ip_action: typing.Optional[NatGatewayDeleteRequestPublicIpAction] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Deletes a NAT gateway from a VPC. VMs that relied on it lose outbound internet access. Requires scope: network.write.
 
@@ -878,7 +882,8 @@ class VpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            NAT gateway deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -1126,7 +1131,7 @@ class VpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Removes a port-forwarding rule from a NAT gateway. Requires scope: network.write.
 
@@ -1149,7 +1154,8 @@ class VpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Port-forwarding rule deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -1546,7 +1552,7 @@ class AsyncVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Deletes an empty VPC. Requires scope: network.write.
 
@@ -1563,7 +1569,8 @@ class AsyncVpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            VPC deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -1852,7 +1859,7 @@ class AsyncVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Deletes a subnet from a VPC. Requires scope: network.write.
 
@@ -1872,7 +1879,8 @@ class AsyncVpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Subnet deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -2043,7 +2051,7 @@ class AsyncVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Detaches a VM from a VPC. Requires scope: network.write.
 
@@ -2063,7 +2071,8 @@ class AsyncVpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Node detached successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -2228,7 +2237,7 @@ class AsyncVpcsClient:
         workspace_id: typing.Optional[str] = None,
         public_ip_action: typing.Optional[NatGatewayDeleteRequestPublicIpAction] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Deletes a NAT gateway from a VPC. VMs that relied on it lose outbound internet access. Requires scope: network.write.
 
@@ -2254,7 +2263,8 @@ class AsyncVpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            NAT gateway deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -2534,7 +2544,7 @@ class AsyncVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Removes a port-forwarding rule from a NAT gateway. Requires scope: network.write.
 
@@ -2557,7 +2567,8 @@ class AsyncVpcsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Port-forwarding rule deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------

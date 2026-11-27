@@ -26,6 +26,8 @@ from ..types.error import Error
 from ..types.secret_manager_namespace_availability import SecretManagerNamespaceAvailability
 from ..types.secret_manager_operation import SecretManagerOperation
 from ..types.secret_manager_workspace import SecretManagerWorkspace
+from .types.delete_secret_manager_secret_response import DeleteSecretManagerSecretResponse
+from .types.revoke_secret_manager_app_credential_response import RevokeSecretManagerAppCredentialResponse
 from .types.secret_manager_app_credential_create_access import SecretManagerAppCredentialCreateAccess
 from pydantic import ValidationError
 
@@ -203,7 +205,7 @@ class RawSecretManagerClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SecretManagerOperation]:
         """
-        Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (403 billing_denied). Requires scope: secret-manager.write.
+        Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (402 billing_denied, with billing_reason). Requires scope: secret-manager.write.
 
         Parameters
         ----------
@@ -1521,7 +1523,7 @@ class RawSecretManagerClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.Dict[str, typing.Any]]:
+    ) -> HttpResponse[DeleteSecretManagerSecretResponse]:
         """
         Deletes the secret and every version of it. This cannot be undone. Requires scope: secret-manager.write.
 
@@ -1538,7 +1540,7 @@ class RawSecretManagerClient:
 
         Returns
         -------
-        HttpResponse[typing.Dict[str, typing.Any]]
+        HttpResponse[DeleteSecretManagerSecretResponse]
             Success.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -1552,9 +1554,9 @@ class RawSecretManagerClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.Dict[str, typing.Any],
+                    DeleteSecretManagerSecretResponse,
                     parse_obj_as(
-                        type_=typing.Dict[str, typing.Any],  # type: ignore
+                        type_=DeleteSecretManagerSecretResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2861,7 +2863,7 @@ class RawSecretManagerClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.Dict[str, typing.Any]]:
+    ) -> HttpResponse[RevokeSecretManagerAppCredentialResponse]:
         """
         Revokes the credential and its secret IDs. Needs workspace admin. Requires scope: secret-manager.write.
 
@@ -2878,8 +2880,8 @@ class RawSecretManagerClient:
 
         Returns
         -------
-        HttpResponse[typing.Dict[str, typing.Any]]
-            Accepted.
+        HttpResponse[RevokeSecretManagerAppCredentialResponse]
+            Accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"secret-manager/app-credentials/{encode_path_param(credential_id)}",
@@ -2892,9 +2894,9 @@ class RawSecretManagerClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.Dict[str, typing.Any],
+                    RevokeSecretManagerAppCredentialResponse,
                     parse_obj_as(
-                        type_=typing.Dict[str, typing.Any],  # type: ignore
+                        type_=RevokeSecretManagerAppCredentialResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -3363,7 +3365,7 @@ class AsyncRawSecretManagerClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SecretManagerOperation]:
         """
-        Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (403 billing_denied). Requires scope: secret-manager.write.
+        Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (402 billing_denied, with billing_reason). Requires scope: secret-manager.write.
 
         Parameters
         ----------
@@ -4681,7 +4683,7 @@ class AsyncRawSecretManagerClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.Dict[str, typing.Any]]:
+    ) -> AsyncHttpResponse[DeleteSecretManagerSecretResponse]:
         """
         Deletes the secret and every version of it. This cannot be undone. Requires scope: secret-manager.write.
 
@@ -4698,7 +4700,7 @@ class AsyncRawSecretManagerClient:
 
         Returns
         -------
-        AsyncHttpResponse[typing.Dict[str, typing.Any]]
+        AsyncHttpResponse[DeleteSecretManagerSecretResponse]
             Success.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -4712,9 +4714,9 @@ class AsyncRawSecretManagerClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.Dict[str, typing.Any],
+                    DeleteSecretManagerSecretResponse,
                     parse_obj_as(
-                        type_=typing.Dict[str, typing.Any],  # type: ignore
+                        type_=DeleteSecretManagerSecretResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -6021,7 +6023,7 @@ class AsyncRawSecretManagerClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.Dict[str, typing.Any]]:
+    ) -> AsyncHttpResponse[RevokeSecretManagerAppCredentialResponse]:
         """
         Revokes the credential and its secret IDs. Needs workspace admin. Requires scope: secret-manager.write.
 
@@ -6038,8 +6040,8 @@ class AsyncRawSecretManagerClient:
 
         Returns
         -------
-        AsyncHttpResponse[typing.Dict[str, typing.Any]]
-            Accepted.
+        AsyncHttpResponse[RevokeSecretManagerAppCredentialResponse]
+            Accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"secret-manager/app-credentials/{encode_path_param(credential_id)}",
@@ -6052,9 +6054,9 @@ class AsyncRawSecretManagerClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.Dict[str, typing.Any],
+                    RevokeSecretManagerAppCredentialResponse,
                     parse_obj_as(
-                        type_=typing.Dict[str, typing.Any],  # type: ignore
+                        type_=RevokeSecretManagerAppCredentialResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

@@ -27,11 +27,15 @@ from ..types.container_registry_visibility import ContainerRegistryVisibility
 from ..types.container_registry_vulnerability_list import ContainerRegistryVulnerabilityList
 from ..types.container_registry_vulnerability_summary import ContainerRegistryVulnerabilitySummary
 from .raw_client import AsyncRawContainerRegistryClient, RawContainerRegistryClient
+from .types.delete_container_registry_artifact_response import DeleteContainerRegistryArtifactResponse
+from .types.delete_container_registry_repository_response import DeleteContainerRegistryRepositoryResponse
+from .types.delete_container_registry_response import DeleteContainerRegistryResponse
 from .types.get_container_registry_metrics_request_range import GetContainerRegistryMetricsRequestRange
 from .types.list_container_registry_repositories_request_sort import ListContainerRegistryRepositoriesRequestSort
 from .types.list_container_registry_vulnerabilities_request_severity import (
     ListContainerRegistryVulnerabilitiesRequestSeverity,
 )
+from .types.revoke_container_registry_access_token_response import RevokeContainerRegistryAccessTokenResponse
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -280,7 +284,7 @@ class ContainerRegistryClient:
         confirm_registry_name: str,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistry:
+    ) -> DeleteContainerRegistryResponse:
         """
         Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 
@@ -300,8 +304,8 @@ class ContainerRegistryClient:
 
         Returns
         -------
-        ContainerRegistry
-            Deletion accepted.
+        DeleteContainerRegistryResponse
+            Deletion accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
 
         Examples
         --------
@@ -712,7 +716,7 @@ class ContainerRegistryClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistryMessage:
+    ) -> RevokeContainerRegistryAccessTokenResponse:
         """
         Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 
@@ -732,7 +736,7 @@ class ContainerRegistryClient:
 
         Returns
         -------
-        ContainerRegistryMessage
+        RevokeContainerRegistryAccessTokenResponse
             Token revoked.
 
         Examples
@@ -826,7 +830,7 @@ class ContainerRegistryClient:
         confirm: bool,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistryMessage:
+    ) -> DeleteContainerRegistryRepositoryResponse:
         """
         Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 
@@ -849,7 +853,7 @@ class ContainerRegistryClient:
 
         Returns
         -------
-        ContainerRegistryMessage
+        DeleteContainerRegistryRepositoryResponse
             Repository deleted.
 
         Examples
@@ -941,7 +945,7 @@ class ContainerRegistryClient:
         confirm: bool,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistryMessage:
+    ) -> DeleteContainerRegistryArtifactResponse:
         """
         Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 
@@ -967,7 +971,7 @@ class ContainerRegistryClient:
 
         Returns
         -------
-        ContainerRegistryMessage
+        DeleteContainerRegistryArtifactResponse
             Artifact deleted.
 
         Examples
@@ -1735,7 +1739,7 @@ class AsyncContainerRegistryClient:
         confirm_registry_name: str,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistry:
+    ) -> DeleteContainerRegistryResponse:
         """
         Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 
@@ -1755,8 +1759,8 @@ class AsyncContainerRegistryClient:
 
         Returns
         -------
-        ContainerRegistry
-            Deletion accepted.
+        DeleteContainerRegistryResponse
+            Deletion accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
 
         Examples
         --------
@@ -2231,7 +2235,7 @@ class AsyncContainerRegistryClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistryMessage:
+    ) -> RevokeContainerRegistryAccessTokenResponse:
         """
         Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 
@@ -2251,7 +2255,7 @@ class AsyncContainerRegistryClient:
 
         Returns
         -------
-        ContainerRegistryMessage
+        RevokeContainerRegistryAccessTokenResponse
             Token revoked.
 
         Examples
@@ -2361,7 +2365,7 @@ class AsyncContainerRegistryClient:
         confirm: bool,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistryMessage:
+    ) -> DeleteContainerRegistryRepositoryResponse:
         """
         Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 
@@ -2384,7 +2388,7 @@ class AsyncContainerRegistryClient:
 
         Returns
         -------
-        ContainerRegistryMessage
+        DeleteContainerRegistryRepositoryResponse
             Repository deleted.
 
         Examples
@@ -2492,7 +2496,7 @@ class AsyncContainerRegistryClient:
         confirm: bool,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ContainerRegistryMessage:
+    ) -> DeleteContainerRegistryArtifactResponse:
         """
         Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 
@@ -2518,7 +2522,7 @@ class AsyncContainerRegistryClient:
 
         Returns
         -------
-        ContainerRegistryMessage
+        DeleteContainerRegistryArtifactResponse
             Artifact deleted.
 
         Examples

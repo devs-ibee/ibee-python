@@ -26,6 +26,7 @@ from ..errors.unauthorized_error import UnauthorizedError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.create_nat_port_forwarding_rule_request_protocol import CreateNatPortForwardingRuleRequestProtocol
 from ..types.create_nat_port_forwarding_rule_request_target_type import CreateNatPortForwardingRuleRequestTargetType
+from ..types.delete_result import DeleteResult
 from ..types.error import Error
 from ..types.nat_gateway import NatGateway
 from ..types.nat_port_forwarding_rule import NatPortForwardingRule
@@ -763,7 +764,7 @@ class RawVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[DeleteResult]:
         """
         Deletes an empty VPC. Requires scope: network.write.
 
@@ -780,7 +781,8 @@ class RawVpcsClient:
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[DeleteResult]
+            VPC deleted successfully. The answer names the resource and its final state.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}",
@@ -792,7 +794,14 @@ class RawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -1720,7 +1729,7 @@ class RawVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[DeleteResult]:
         """
         Deletes a subnet from a VPC. Requires scope: network.write.
 
@@ -1740,7 +1749,8 @@ class RawVpcsClient:
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[DeleteResult]
+            Subnet deleted successfully. The answer names the resource and its final state.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/subnets/{encode_path_param(subnet_id)}",
@@ -1752,7 +1762,14 @@ class RawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -2285,7 +2302,7 @@ class RawVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[DeleteResult]:
         """
         Detaches a VM from a VPC. Requires scope: network.write.
 
@@ -2305,7 +2322,8 @@ class RawVpcsClient:
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[DeleteResult]
+            Node detached successfully. The answer names the resource and its final state.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nodes/{encode_path_param(vm_id)}",
@@ -2317,7 +2335,14 @@ class RawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -2846,7 +2871,7 @@ class RawVpcsClient:
         workspace_id: typing.Optional[str] = None,
         public_ip_action: typing.Optional[NatGatewayDeleteRequestPublicIpAction] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[DeleteResult]:
         """
         Deletes a NAT gateway from a VPC. VMs that relied on it lose outbound internet access. Requires scope: network.write.
 
@@ -2872,7 +2897,8 @@ class RawVpcsClient:
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[DeleteResult]
+            NAT gateway deleted successfully. The answer names the resource and its final state.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways/{encode_path_param(nat_gateway_id)}",
@@ -2891,7 +2917,14 @@ class RawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -3670,7 +3703,7 @@ class RawVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[DeleteResult]:
         """
         Removes a port-forwarding rule from a NAT gateway. Requires scope: network.write.
 
@@ -3693,7 +3726,8 @@ class RawVpcsClient:
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[DeleteResult]
+            Port-forwarding rule deleted successfully. The answer names the resource and its final state.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways/{encode_path_param(nat_gateway_id)}/port-forwarding-rules/{encode_path_param(port_forwarding_rule_id)}",
@@ -3705,7 +3739,14 @@ class RawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -4811,7 +4852,7 @@ class AsyncRawVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[DeleteResult]:
         """
         Deletes an empty VPC. Requires scope: network.write.
 
@@ -4828,7 +4869,8 @@ class AsyncRawVpcsClient:
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[DeleteResult]
+            VPC deleted successfully. The answer names the resource and its final state.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}",
@@ -4840,7 +4882,14 @@ class AsyncRawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -5768,7 +5817,7 @@ class AsyncRawVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[DeleteResult]:
         """
         Deletes a subnet from a VPC. Requires scope: network.write.
 
@@ -5788,7 +5837,8 @@ class AsyncRawVpcsClient:
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[DeleteResult]
+            Subnet deleted successfully. The answer names the resource and its final state.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/subnets/{encode_path_param(subnet_id)}",
@@ -5800,7 +5850,14 @@ class AsyncRawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -6333,7 +6390,7 @@ class AsyncRawVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[DeleteResult]:
         """
         Detaches a VM from a VPC. Requires scope: network.write.
 
@@ -6353,7 +6410,8 @@ class AsyncRawVpcsClient:
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[DeleteResult]
+            Node detached successfully. The answer names the resource and its final state.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nodes/{encode_path_param(vm_id)}",
@@ -6365,7 +6423,14 @@ class AsyncRawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -6894,7 +6959,7 @@ class AsyncRawVpcsClient:
         workspace_id: typing.Optional[str] = None,
         public_ip_action: typing.Optional[NatGatewayDeleteRequestPublicIpAction] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[DeleteResult]:
         """
         Deletes a NAT gateway from a VPC. VMs that relied on it lose outbound internet access. Requires scope: network.write.
 
@@ -6920,7 +6985,8 @@ class AsyncRawVpcsClient:
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[DeleteResult]
+            NAT gateway deleted successfully. The answer names the resource and its final state.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways/{encode_path_param(nat_gateway_id)}",
@@ -6939,7 +7005,14 @@ class AsyncRawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -7718,7 +7791,7 @@ class AsyncRawVpcsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[DeleteResult]:
         """
         Removes a port-forwarding rule from a NAT gateway. Requires scope: network.write.
 
@@ -7741,7 +7814,8 @@ class AsyncRawVpcsClient:
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[DeleteResult]
+            Port-forwarding rule deleted successfully. The answer names the resource and its final state.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/vpcs/{encode_path_param(vpc_id)}/nat-gateways/{encode_path_param(nat_gateway_id)}/port-forwarding-rules/{encode_path_param(port_forwarding_rule_id)}",
@@ -7753,7 +7827,14 @@ class AsyncRawVpcsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),

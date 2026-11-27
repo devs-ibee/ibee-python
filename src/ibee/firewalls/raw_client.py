@@ -23,12 +23,15 @@ from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.too_many_requests_error import TooManyRequestsError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
+from ..types.delete_result import DeleteResult
 from ..types.error import Error
 from ..types.firewall_attachment import FirewallAttachment
 from ..types.firewall_group import FirewallGroup
 from ..types.firewall_rule_fields_action import FirewallRuleFieldsAction
 from ..types.firewall_rule_fields_direction import FirewallRuleFieldsDirection
 from ..types.firewall_rule_fields_protocol import FirewallRuleFieldsProtocol
+from .types.delete_firewall_rule_response import DeleteFirewallRuleResponse
+from .types.detach_firewall_group_response import DetachFirewallGroupResponse
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -578,7 +581,7 @@ class RawFirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[DeleteResult]:
         """
         Deletes a firewall group. Requires scope: firewall.write.
 
@@ -595,7 +598,8 @@ class RawFirewallsClient:
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[DeleteResult]
+            Firewall group deleted successfully. The answer names the resource and its final state.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/firewall-groups/{encode_path_param(firewall_group_id)}",
@@ -607,7 +611,14 @@ class RawFirewallsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -992,7 +1003,7 @@ class RawFirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[FirewallGroup]:
+    ) -> HttpResponse[DeleteFirewallRuleResponse]:
         """
         Removes a rule from a firewall group. Requires scope: firewall.write.
 
@@ -1012,7 +1023,7 @@ class RawFirewallsClient:
 
         Returns
         -------
-        HttpResponse[FirewallGroup]
+        HttpResponse[DeleteFirewallRuleResponse]
             Firewall rule deleted successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -1026,9 +1037,9 @@ class RawFirewallsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    FirewallGroup,
+                    DeleteFirewallRuleResponse,
                     parse_obj_as(
-                        type_=FirewallGroup,  # type: ignore
+                        type_=DeleteFirewallRuleResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1784,7 +1795,7 @@ class RawFirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[FirewallGroup]:
+    ) -> HttpResponse[DetachFirewallGroupResponse]:
         """
         Removes a firewall group from a VM. Its rules no longer apply to that VM. Requires scope: firewall.write.
 
@@ -1804,7 +1815,7 @@ class RawFirewallsClient:
 
         Returns
         -------
-        HttpResponse[FirewallGroup]
+        HttpResponse[DetachFirewallGroupResponse]
             VM detached successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -1818,9 +1829,9 @@ class RawFirewallsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    FirewallGroup,
+                    DetachFirewallGroupResponse,
                     parse_obj_as(
-                        type_=FirewallGroup,  # type: ignore
+                        type_=DetachFirewallGroupResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2499,7 +2510,7 @@ class AsyncRawFirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[DeleteResult]:
         """
         Deletes a firewall group. Requires scope: firewall.write.
 
@@ -2516,7 +2527,8 @@ class AsyncRawFirewallsClient:
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[DeleteResult]
+            Firewall group deleted successfully. The answer names the resource and its final state.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/firewall-groups/{encode_path_param(firewall_group_id)}",
@@ -2528,7 +2540,14 @@ class AsyncRawFirewallsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -2913,7 +2932,7 @@ class AsyncRawFirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[FirewallGroup]:
+    ) -> AsyncHttpResponse[DeleteFirewallRuleResponse]:
         """
         Removes a rule from a firewall group. Requires scope: firewall.write.
 
@@ -2933,7 +2952,7 @@ class AsyncRawFirewallsClient:
 
         Returns
         -------
-        AsyncHttpResponse[FirewallGroup]
+        AsyncHttpResponse[DeleteFirewallRuleResponse]
             Firewall rule deleted successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -2947,9 +2966,9 @@ class AsyncRawFirewallsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    FirewallGroup,
+                    DeleteFirewallRuleResponse,
                     parse_obj_as(
-                        type_=FirewallGroup,  # type: ignore
+                        type_=DeleteFirewallRuleResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -3705,7 +3724,7 @@ class AsyncRawFirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[FirewallGroup]:
+    ) -> AsyncHttpResponse[DetachFirewallGroupResponse]:
         """
         Removes a firewall group from a VM. Its rules no longer apply to that VM. Requires scope: firewall.write.
 
@@ -3725,7 +3744,7 @@ class AsyncRawFirewallsClient:
 
         Returns
         -------
-        AsyncHttpResponse[FirewallGroup]
+        AsyncHttpResponse[DetachFirewallGroupResponse]
             VM detached successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -3739,9 +3758,9 @@ class AsyncRawFirewallsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    FirewallGroup,
+                    DetachFirewallGroupResponse,
                     parse_obj_as(
-                        type_=FirewallGroup,  # type: ignore
+                        type_=DetachFirewallGroupResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

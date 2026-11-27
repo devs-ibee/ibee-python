@@ -8,6 +8,7 @@ from ..types.cdn_cache_purge import CdnCachePurge
 from ..types.cdn_custom_domain import CdnCustomDomain
 from ..types.cdn_custom_domain_list import CdnCustomDomainList
 from ..types.cdn_custom_domain_verification import CdnCustomDomainVerification
+from ..types.cdn_delete_result import CdnDeleteResult
 from ..types.cdn_distribution import CdnDistribution
 from ..types.cdn_distribution_list import CdnDistributionList
 from ..types.cdn_distribution_metrics import CdnDistributionMetrics
@@ -15,6 +16,7 @@ from ..types.cdn_website_config import CdnWebsiteConfig
 from .raw_client import AsyncRawCdnClient, RawCdnClient
 from .types.create_cdn_distribution_request_cache_policy import CreateCdnDistributionRequestCachePolicy
 from .types.create_cdn_distribution_request_origin_type import CreateCdnDistributionRequestOriginType
+from .types.delete_cdn_website_config_response import DeleteCdnWebsiteConfigResponse
 from .types.get_cdn_distribution_metrics_request_range import GetCdnDistributionMetricsRequestRange
 from .types.purge_cdn_cache_request_mode import PurgeCdnCacheRequestMode
 from .types.update_cdn_distribution_request_cache_policy import UpdateCdnDistributionRequestCachePolicy
@@ -186,7 +188,7 @@ class CdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> CdnDeleteResult:
         """
         Deletes a CDN distribution. Requires scope: cdn.write.
 
@@ -203,7 +205,8 @@ class CdnClient:
 
         Returns
         -------
-        None
+        CdnDeleteResult
+            Distribution deleted successfully.
 
         Examples
         --------
@@ -429,7 +432,7 @@ class CdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CdnWebsiteConfig:
+    ) -> DeleteCdnWebsiteConfigResponse:
         """
         Turns off static website hosting for a CDN distribution. Requires scope: cdn.write.
 
@@ -446,7 +449,7 @@ class CdnClient:
 
         Returns
         -------
-        CdnWebsiteConfig
+        DeleteCdnWebsiteConfigResponse
             Website configuration disabled successfully.
 
         Examples
@@ -612,7 +615,7 @@ class CdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> CdnDeleteResult:
         """
         Removes a custom domain from a CDN distribution. Requires scope: cdn.write.
 
@@ -632,7 +635,8 @@ class CdnClient:
 
         Returns
         -------
-        None
+        CdnDeleteResult
+            Custom domain removed successfully.
 
         Examples
         --------
@@ -970,7 +974,7 @@ class AsyncCdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> CdnDeleteResult:
         """
         Deletes a CDN distribution. Requires scope: cdn.write.
 
@@ -987,7 +991,8 @@ class AsyncCdnClient:
 
         Returns
         -------
-        None
+        CdnDeleteResult
+            Distribution deleted successfully.
 
         Examples
         --------
@@ -1253,7 +1258,7 @@ class AsyncCdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CdnWebsiteConfig:
+    ) -> DeleteCdnWebsiteConfigResponse:
         """
         Turns off static website hosting for a CDN distribution. Requires scope: cdn.write.
 
@@ -1270,7 +1275,7 @@ class AsyncCdnClient:
 
         Returns
         -------
-        CdnWebsiteConfig
+        DeleteCdnWebsiteConfigResponse
             Website configuration disabled successfully.
 
         Examples
@@ -1468,7 +1473,7 @@ class AsyncCdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> CdnDeleteResult:
         """
         Removes a custom domain from a CDN distribution. Requires scope: cdn.write.
 
@@ -1488,7 +1493,8 @@ class AsyncCdnClient:
 
         Returns
         -------
-        None
+        CdnDeleteResult
+            Custom domain removed successfully.
 
         Examples
         --------

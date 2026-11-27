@@ -28,6 +28,7 @@ from ..types.cdn_cache_purge import CdnCachePurge
 from ..types.cdn_custom_domain import CdnCustomDomain
 from ..types.cdn_custom_domain_list import CdnCustomDomainList
 from ..types.cdn_custom_domain_verification import CdnCustomDomainVerification
+from ..types.cdn_delete_result import CdnDeleteResult
 from ..types.cdn_distribution import CdnDistribution
 from ..types.cdn_distribution_list import CdnDistributionList
 from ..types.cdn_distribution_metrics import CdnDistributionMetrics
@@ -35,6 +36,7 @@ from ..types.cdn_website_config import CdnWebsiteConfig
 from ..types.error import Error
 from .types.create_cdn_distribution_request_cache_policy import CreateCdnDistributionRequestCachePolicy
 from .types.create_cdn_distribution_request_origin_type import CreateCdnDistributionRequestOriginType
+from .types.delete_cdn_website_config_response import DeleteCdnWebsiteConfigResponse
 from .types.get_cdn_distribution_metrics_request_range import GetCdnDistributionMetricsRequestRange
 from .types.purge_cdn_cache_request_mode import PurgeCdnCacheRequestMode
 from .types.update_cdn_distribution_request_cache_policy import UpdateCdnDistributionRequestCachePolicy
@@ -585,7 +587,7 @@ class RawCdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[CdnDeleteResult]:
         """
         Deletes a CDN distribution. Requires scope: cdn.write.
 
@@ -602,7 +604,8 @@ class RawCdnClient:
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[CdnDeleteResult]
+            Distribution deleted successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"cdn/distributions/{encode_path_param(distribution_id)}",
@@ -614,7 +617,14 @@ class RawCdnClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    CdnDeleteResult,
+                    parse_obj_as(
+                        type_=CdnDeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -1466,7 +1476,7 @@ class RawCdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[CdnWebsiteConfig]:
+    ) -> HttpResponse[DeleteCdnWebsiteConfigResponse]:
         """
         Turns off static website hosting for a CDN distribution. Requires scope: cdn.write.
 
@@ -1483,7 +1493,7 @@ class RawCdnClient:
 
         Returns
         -------
-        HttpResponse[CdnWebsiteConfig]
+        HttpResponse[DeleteCdnWebsiteConfigResponse]
             Website configuration disabled successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -1497,9 +1507,9 @@ class RawCdnClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    CdnWebsiteConfig,
+                    DeleteCdnWebsiteConfigResponse,
                     parse_obj_as(
-                        type_=CdnWebsiteConfig,  # type: ignore
+                        type_=DeleteCdnWebsiteConfigResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2189,7 +2199,7 @@ class RawCdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[CdnDeleteResult]:
         """
         Removes a custom domain from a CDN distribution. Requires scope: cdn.write.
 
@@ -2209,7 +2219,8 @@ class RawCdnClient:
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[CdnDeleteResult]
+            Custom domain removed successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"cdn/distributions/{encode_path_param(distribution_id)}/custom-domains/{encode_path_param(domain)}",
@@ -2221,7 +2232,14 @@ class RawCdnClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    CdnDeleteResult,
+                    parse_obj_as(
+                        type_=CdnDeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -3296,7 +3314,7 @@ class AsyncRawCdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[CdnDeleteResult]:
         """
         Deletes a CDN distribution. Requires scope: cdn.write.
 
@@ -3313,7 +3331,8 @@ class AsyncRawCdnClient:
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[CdnDeleteResult]
+            Distribution deleted successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"cdn/distributions/{encode_path_param(distribution_id)}",
@@ -3325,7 +3344,14 @@ class AsyncRawCdnClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    CdnDeleteResult,
+                    parse_obj_as(
+                        type_=CdnDeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -4177,7 +4203,7 @@ class AsyncRawCdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[CdnWebsiteConfig]:
+    ) -> AsyncHttpResponse[DeleteCdnWebsiteConfigResponse]:
         """
         Turns off static website hosting for a CDN distribution. Requires scope: cdn.write.
 
@@ -4194,7 +4220,7 @@ class AsyncRawCdnClient:
 
         Returns
         -------
-        AsyncHttpResponse[CdnWebsiteConfig]
+        AsyncHttpResponse[DeleteCdnWebsiteConfigResponse]
             Website configuration disabled successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -4208,9 +4234,9 @@ class AsyncRawCdnClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    CdnWebsiteConfig,
+                    DeleteCdnWebsiteConfigResponse,
                     parse_obj_as(
-                        type_=CdnWebsiteConfig,  # type: ignore
+                        type_=DeleteCdnWebsiteConfigResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -4900,7 +4926,7 @@ class AsyncRawCdnClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[CdnDeleteResult]:
         """
         Removes a custom domain from a CDN distribution. Requires scope: cdn.write.
 
@@ -4920,7 +4946,8 @@ class AsyncRawCdnClient:
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[CdnDeleteResult]
+            Custom domain removed successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"cdn/distributions/{encode_path_param(distribution_id)}/custom-domains/{encode_path_param(domain)}",
@@ -4932,7 +4959,14 @@ class AsyncRawCdnClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    CdnDeleteResult,
+                    parse_obj_as(
+                        type_=CdnDeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),

@@ -7,10 +7,10 @@ from ..core.request_options import RequestOptions
 from ..types.block_storage_plan_list import BlockStoragePlanList
 from ..types.block_volume import BlockVolume
 from ..types.block_volume_action import BlockVolumeAction
-from ..types.block_volume_delete import BlockVolumeDelete
 from ..types.block_volume_operation import BlockVolumeOperation
 from .raw_client import AsyncRawBlockStorageClient, RawBlockStorageClient
 from .types.create_block_volume_request_volume_class import CreateBlockVolumeRequestVolumeClass
+from .types.delete_block_volume_response import DeleteBlockVolumeResponse
 from .types.list_block_storage_plans_request_billing_interval import ListBlockStoragePlansRequestBillingInterval
 from .types.resize_block_volume_request_vm_state import ResizeBlockVolumeRequestVmState
 
@@ -261,7 +261,7 @@ class BlockStorageClient:
         workspace_id: typing.Optional[str] = None,
         force: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> BlockVolumeDelete:
+    ) -> DeleteBlockVolumeResponse:
         """
         Permanently deletes a block storage volume and its data. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`. Requires scope: block-storage.write.
 
@@ -281,7 +281,7 @@ class BlockStorageClient:
 
         Returns
         -------
-        BlockVolumeDelete
+        DeleteBlockVolumeResponse
             Volume deletion completed.
 
         Examples
@@ -691,7 +691,7 @@ class AsyncBlockStorageClient:
         workspace_id: typing.Optional[str] = None,
         force: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> BlockVolumeDelete:
+    ) -> DeleteBlockVolumeResponse:
         """
         Permanently deletes a block storage volume and its data. Asynchronous: the response carries the volume operation; poll `GET /block-storage/volumes/{volume_id}/operations` until its `status` is `succeeded` or `failed`. Requires scope: block-storage.write.
 
@@ -711,7 +711,7 @@ class AsyncBlockStorageClient:
 
         Returns
         -------
-        BlockVolumeDelete
+        DeleteBlockVolumeResponse
             Volume deletion completed.
 
         Examples

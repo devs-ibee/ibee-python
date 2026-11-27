@@ -11,6 +11,8 @@ if typing.TYPE_CHECKING:
     from .create_gpu_vm_request_vpc_attachment_mode import CreateGpuVmRequestVpcAttachmentMode
     from .delete_gpu_vm_backup_run_response import DeleteGpuVmBackupRunResponse
     from .delete_gpu_vm_backup_run_response_status import DeleteGpuVmBackupRunResponseStatus
+    from .delete_gpu_vm_response import DeleteGpuVmResponse
+    from .delete_gpu_vm_snapshot_response import DeleteGpuVmSnapshotResponse
     from .get_gpu_vm_metrics_timeseries_request_range import GetGpuVmMetricsTimeseriesRequestRange
     from .list_gpu_vms_request_sort_by import ListGpuVmsRequestSortBy
     from .list_gpu_vms_request_sort_direction import ListGpuVmsRequestSortDirection
@@ -20,6 +22,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "CreateGpuVmRequestVpcAttachmentMode": ".create_gpu_vm_request_vpc_attachment_mode",
     "DeleteGpuVmBackupRunResponse": ".delete_gpu_vm_backup_run_response",
     "DeleteGpuVmBackupRunResponseStatus": ".delete_gpu_vm_backup_run_response_status",
+    "DeleteGpuVmResponse": ".delete_gpu_vm_response",
+    "DeleteGpuVmSnapshotResponse": ".delete_gpu_vm_snapshot_response",
     "GetGpuVmMetricsTimeseriesRequestRange": ".get_gpu_vm_metrics_timeseries_request_range",
     "ListGpuVmsRequestSortBy": ".list_gpu_vms_request_sort_by",
     "ListGpuVmsRequestSortDirection": ".list_gpu_vms_request_sort_direction",
@@ -53,6 +57,8 @@ __all__ = [
     "CreateGpuVmRequestVpcAttachmentMode",
     "DeleteGpuVmBackupRunResponse",
     "DeleteGpuVmBackupRunResponseStatus",
+    "DeleteGpuVmResponse",
+    "DeleteGpuVmSnapshotResponse",
     "GetGpuVmMetricsTimeseriesRequestRange",
     "ListGpuVmsRequestSortBy",
     "ListGpuVmsRequestSortDirection",

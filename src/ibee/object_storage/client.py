@@ -9,7 +9,6 @@ from ..types.bucket_cors_configuration import BucketCorsConfiguration
 from ..types.bucket_cors_rule import BucketCorsRule
 from ..types.bucket_custom_domain import BucketCustomDomain
 from ..types.bucket_custom_domain_config import BucketCustomDomainConfig
-from ..types.bucket_custom_domain_removed import BucketCustomDomainRemoved
 from ..types.bucket_lifecycle_configuration import BucketLifecycleConfiguration
 from ..types.bucket_lifecycle_rule import BucketLifecycleRule
 from ..types.bucket_list import BucketList
@@ -29,8 +28,14 @@ from ..types.s3credential_revoked import S3CredentialRevoked
 from .raw_client import AsyncRawObjectStorageClient, RawObjectStorageClient
 from .types.create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
 from .types.create_s3credential_request_permission_type import CreateS3CredentialRequestPermissionType
+from .types.delete_bucket_cors_response import DeleteBucketCorsResponse
+from .types.delete_bucket_lifecycle_response import DeleteBucketLifecycleResponse
+from .types.delete_bucket_notifications_response import DeleteBucketNotificationsResponse
+from .types.delete_bucket_response import DeleteBucketResponse
+from .types.delete_s3credential_response import DeleteS3CredentialResponse
 from .types.get_bucket_metrics_request_range import GetBucketMetricsRequestRange
 from .types.object_download_link_request_disposition import ObjectDownloadLinkRequestDisposition
+from .types.remove_bucket_custom_domain_response import RemoveBucketCustomDomainResponse
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -218,7 +223,7 @@ class ObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
+    ) -> DeleteBucketResponse:
         """
         Deletes an empty bucket. A bucket that still holds files is refused with 409: delete its files first with an S3 tool. Files are managed over the S3 API at `<workspace>.blob.ibeestorage.com`, not through this API. Requires scope: object-storage.delete.
 
@@ -235,7 +240,7 @@ class ObjectStorageClient:
 
         Returns
         -------
-        DeleteResponse
+        DeleteBucketResponse
             Bucket deleted successfully.
 
         Examples
@@ -403,7 +408,7 @@ class ObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
+    ) -> DeleteBucketLifecycleResponse:
         """
         Removes every lifecycle rule from the bucket. Requires scope: object-storage.delete.
 
@@ -420,7 +425,7 @@ class ObjectStorageClient:
 
         Returns
         -------
-        DeleteResponse
+        DeleteBucketLifecycleResponse
             Delete bucket lifecycle rules succeeded.
 
         Examples
@@ -541,7 +546,7 @@ class ObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
+    ) -> DeleteBucketCorsResponse:
         """
         Removes every CORS rule from the bucket. Requires scope: object-storage.delete.
 
@@ -558,7 +563,7 @@ class ObjectStorageClient:
 
         Returns
         -------
-        DeleteResponse
+        DeleteBucketCorsResponse
             Delete bucket CORS rules succeeded.
 
         Examples
@@ -768,7 +773,7 @@ class ObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
+    ) -> DeleteBucketNotificationsResponse:
         """
         Removes every notification rule from the bucket. Requires scope: object-storage.delete.
 
@@ -785,7 +790,7 @@ class ObjectStorageClient:
 
         Returns
         -------
-        DeleteResponse
+        DeleteBucketNotificationsResponse
             Delete bucket event notifications succeeded.
 
         Examples
@@ -903,7 +908,7 @@ class ObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> BucketCustomDomainRemoved:
+    ) -> RemoveBucketCustomDomainResponse:
         """
         Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.delete.
 
@@ -923,7 +928,7 @@ class ObjectStorageClient:
 
         Returns
         -------
-        BucketCustomDomainRemoved
+        RemoveBucketCustomDomainResponse
             Remove a bucket custom domain succeeded.
 
         Examples
@@ -1321,7 +1326,7 @@ class ObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> S3CredentialRevoked:
+    ) -> DeleteS3CredentialResponse:
         """
         Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
@@ -1338,7 +1343,7 @@ class ObjectStorageClient:
 
         Returns
         -------
-        S3CredentialRevoked
+        DeleteS3CredentialResponse
             Credential revoked successfully.
 
         Examples
@@ -1610,7 +1615,7 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
+    ) -> DeleteBucketResponse:
         """
         Deletes an empty bucket. A bucket that still holds files is refused with 409: delete its files first with an S3 tool. Files are managed over the S3 API at `<workspace>.blob.ibeestorage.com`, not through this API. Requires scope: object-storage.delete.
 
@@ -1627,7 +1632,7 @@ class AsyncObjectStorageClient:
 
         Returns
         -------
-        DeleteResponse
+        DeleteBucketResponse
             Bucket deleted successfully.
 
         Examples
@@ -1827,7 +1832,7 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
+    ) -> DeleteBucketLifecycleResponse:
         """
         Removes every lifecycle rule from the bucket. Requires scope: object-storage.delete.
 
@@ -1844,7 +1849,7 @@ class AsyncObjectStorageClient:
 
         Returns
         -------
-        DeleteResponse
+        DeleteBucketLifecycleResponse
             Delete bucket lifecycle rules succeeded.
 
         Examples
@@ -1989,7 +1994,7 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
+    ) -> DeleteBucketCorsResponse:
         """
         Removes every CORS rule from the bucket. Requires scope: object-storage.delete.
 
@@ -2006,7 +2011,7 @@ class AsyncObjectStorageClient:
 
         Returns
         -------
-        DeleteResponse
+        DeleteBucketCorsResponse
             Delete bucket CORS rules succeeded.
 
         Examples
@@ -2256,7 +2261,7 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DeleteResponse:
+    ) -> DeleteBucketNotificationsResponse:
         """
         Removes every notification rule from the bucket. Requires scope: object-storage.delete.
 
@@ -2273,7 +2278,7 @@ class AsyncObjectStorageClient:
 
         Returns
         -------
-        DeleteResponse
+        DeleteBucketNotificationsResponse
             Delete bucket event notifications succeeded.
 
         Examples
@@ -2415,7 +2420,7 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> BucketCustomDomainRemoved:
+    ) -> RemoveBucketCustomDomainResponse:
         """
         Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.delete.
 
@@ -2435,7 +2440,7 @@ class AsyncObjectStorageClient:
 
         Returns
         -------
-        BucketCustomDomainRemoved
+        RemoveBucketCustomDomainResponse
             Remove a bucket custom domain succeeded.
 
         Examples
@@ -2899,7 +2904,7 @@ class AsyncObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> S3CredentialRevoked:
+    ) -> DeleteS3CredentialResponse:
         """
         Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
@@ -2916,7 +2921,7 @@ class AsyncObjectStorageClient:
 
         Returns
         -------
-        S3CredentialRevoked
+        DeleteS3CredentialResponse
             Credential revoked successfully.
 
         Examples

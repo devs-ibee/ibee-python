@@ -9,14 +9,26 @@ if typing.TYPE_CHECKING:
     from .types import (
         CreateS3CredentialRequestBucketScope,
         CreateS3CredentialRequestPermissionType,
+        DeleteBucketCorsResponse,
+        DeleteBucketLifecycleResponse,
+        DeleteBucketNotificationsResponse,
+        DeleteBucketResponse,
+        DeleteS3CredentialResponse,
         GetBucketMetricsRequestRange,
         ObjectDownloadLinkRequestDisposition,
+        RemoveBucketCustomDomainResponse,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateS3CredentialRequestBucketScope": ".types",
     "CreateS3CredentialRequestPermissionType": ".types",
+    "DeleteBucketCorsResponse": ".types",
+    "DeleteBucketLifecycleResponse": ".types",
+    "DeleteBucketNotificationsResponse": ".types",
+    "DeleteBucketResponse": ".types",
+    "DeleteS3CredentialResponse": ".types",
     "GetBucketMetricsRequestRange": ".types",
     "ObjectDownloadLinkRequestDisposition": ".types",
+    "RemoveBucketCustomDomainResponse": ".types",
 }
 
 
@@ -44,6 +56,12 @@ def __dir__():
 __all__ = [
     "CreateS3CredentialRequestBucketScope",
     "CreateS3CredentialRequestPermissionType",
+    "DeleteBucketCorsResponse",
+    "DeleteBucketLifecycleResponse",
+    "DeleteBucketNotificationsResponse",
+    "DeleteBucketResponse",
+    "DeleteS3CredentialResponse",
     "GetBucketMetricsRequestRange",
     "ObjectDownloadLinkRequestDisposition",
+    "RemoveBucketCustomDomainResponse",
 ]

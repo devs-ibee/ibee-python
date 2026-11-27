@@ -39,7 +39,6 @@ from ..types.operation_status import OperationStatus
 from ..types.recovery_restore import RecoveryRestore
 from ..types.recovery_restore_request_target_mode import RecoveryRestoreRequestTargetMode
 from ..types.snapshot_create_request_mode import SnapshotCreateRequestMode
-from ..types.snapshot_delete_result import SnapshotDeleteResult
 from ..types.snapshot_restore_request_network_connectivity import SnapshotRestoreRequestNetworkConnectivity
 from ..types.snapshot_set import SnapshotSet
 from ..types.snapshot_set_list import SnapshotSetList
@@ -56,6 +55,8 @@ from .types.create_cloud_vm_request_network_connectivity import CreateCloudVmReq
 from .types.create_cloud_vm_request_os_type import CreateCloudVmRequestOsType
 from .types.create_cloud_vm_request_vpc_attachment_mode import CreateCloudVmRequestVpcAttachmentMode
 from .types.delete_cloud_vm_backup_run_response import DeleteCloudVmBackupRunResponse
+from .types.delete_cloud_vm_response import DeleteCloudVmResponse
+from .types.delete_cloud_vm_snapshot_response import DeleteCloudVmSnapshotResponse
 from .types.get_cloud_vm_metrics_timeseries_request_range import GetCloudVmMetricsTimeseriesRequestRange
 from .types.list_cloud_vms_request_sort_by import ListCloudVmsRequestSortBy
 from .types.list_cloud_vms_request_sort_direction import ListCloudVmsRequestSortDirection
@@ -720,7 +721,7 @@ class RawCloudVmsClient:
         reserved_ip_label: typing.Optional[str] = OMIT,
         reserved_ip_billing_catalog: typing.Optional[VmDeleteRequestReservedIpBillingCatalog] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[OperationAccepted]:
+    ) -> HttpResponse[DeleteCloudVmResponse]:
         """
         Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. If the VM's IP is already a Reserved IP, send no body: `release` and `reserve` are both refused with 400. The IP stays in the workspace and keeps billing until you release it from Reserved IPs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
@@ -749,8 +750,8 @@ class RawCloudVmsClient:
 
         Returns
         -------
-        HttpResponse[OperationAccepted]
-            VM deletion accepted.
+        HttpResponse[DeleteCloudVmResponse]
+            VM deletion accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"compute/cloud-vms/{encode_path_param(vm_id)}",
@@ -777,9 +778,9 @@ class RawCloudVmsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    OperationAccepted,
+                    DeleteCloudVmResponse,
                     parse_obj_as(
-                        type_=OperationAccepted,  # type: ignore
+                        type_=DeleteCloudVmResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -4413,7 +4414,7 @@ class RawCloudVmsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[SnapshotDeleteResult]:
+    ) -> HttpResponse[DeleteCloudVmSnapshotResponse]:
         """
         Deletes a cloud VM snapshot set when no restore is running. Requires scope: vm.write.
 
@@ -4430,7 +4431,7 @@ class RawCloudVmsClient:
 
         Returns
         -------
-        HttpResponse[SnapshotDeleteResult]
+        HttpResponse[DeleteCloudVmSnapshotResponse]
             Snapshot deleted successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -4444,9 +4445,9 @@ class RawCloudVmsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    SnapshotDeleteResult,
+                    DeleteCloudVmSnapshotResponse,
                     parse_obj_as(
-                        type_=SnapshotDeleteResult,  # type: ignore
+                        type_=DeleteCloudVmSnapshotResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -6567,7 +6568,7 @@ class RawCloudVmsClient:
         Returns
         -------
         HttpResponse[DeleteCloudVmBackupRunResponse]
-            Deletion accepted. GET returns status deleting until cleanup completes, then 404.
+            Deletion accepted. GET returns status deleting until cleanup completes, then 404. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"compute/cloud-vm-backups/runs/{encode_path_param(run_id)}",
@@ -7894,7 +7895,7 @@ class AsyncRawCloudVmsClient:
         reserved_ip_label: typing.Optional[str] = OMIT,
         reserved_ip_billing_catalog: typing.Optional[VmDeleteRequestReservedIpBillingCatalog] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[OperationAccepted]:
+    ) -> AsyncHttpResponse[DeleteCloudVmResponse]:
         """
         Deletes a cloud VM. Returns an operation you can poll for status. A VM with an automatically assigned public IP needs `public_ip_action` in the body. If the VM's IP is already a Reserved IP, send no body: `release` and `reserve` are both refused with 400. The IP stays in the workspace and keeps billing until you release it from Reserved IPs. Asynchronous: the response carries `operation_id`; poll `GET /compute/operations/{operation_id}` until `status` is `succeeded`, `failed`, `cancelled` or `timed_out`. If your client times out, read the status; never resubmit the request. Requires scope: vm.write.
 
@@ -7923,8 +7924,8 @@ class AsyncRawCloudVmsClient:
 
         Returns
         -------
-        AsyncHttpResponse[OperationAccepted]
-            VM deletion accepted.
+        AsyncHttpResponse[DeleteCloudVmResponse]
+            VM deletion accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"compute/cloud-vms/{encode_path_param(vm_id)}",
@@ -7951,9 +7952,9 @@ class AsyncRawCloudVmsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    OperationAccepted,
+                    DeleteCloudVmResponse,
                     parse_obj_as(
-                        type_=OperationAccepted,  # type: ignore
+                        type_=DeleteCloudVmResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -11587,7 +11588,7 @@ class AsyncRawCloudVmsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[SnapshotDeleteResult]:
+    ) -> AsyncHttpResponse[DeleteCloudVmSnapshotResponse]:
         """
         Deletes a cloud VM snapshot set when no restore is running. Requires scope: vm.write.
 
@@ -11604,7 +11605,7 @@ class AsyncRawCloudVmsClient:
 
         Returns
         -------
-        AsyncHttpResponse[SnapshotDeleteResult]
+        AsyncHttpResponse[DeleteCloudVmSnapshotResponse]
             Snapshot deleted successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -11618,9 +11619,9 @@ class AsyncRawCloudVmsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    SnapshotDeleteResult,
+                    DeleteCloudVmSnapshotResponse,
                     parse_obj_as(
-                        type_=SnapshotDeleteResult,  # type: ignore
+                        type_=DeleteCloudVmSnapshotResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -13741,7 +13742,7 @@ class AsyncRawCloudVmsClient:
         Returns
         -------
         AsyncHttpResponse[DeleteCloudVmBackupRunResponse]
-            Deletion accepted. GET returns status deleting until cleanup completes, then 404.
+            Deletion accepted. GET returns status deleting until cleanup completes, then 404. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"compute/cloud-vm-backups/runs/{encode_path_param(run_id)}",
