@@ -3,11 +3,12 @@
 import typing
 
 import pydantic
-from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from ...core.pydantic_utilities import IS_PYDANTIC_V2
+from ...types.deletion_answer import DeletionAnswer
 from .delete_gpu_vm_backup_run_response_status import DeleteGpuVmBackupRunResponseStatus
 
 
-class DeleteGpuVmBackupRunResponse(UniversalBaseModel):
+class DeleteGpuVmBackupRunResponse(DeletionAnswer):
     status: DeleteGpuVmBackupRunResponseStatus
     run_id: str
     recovery_point_id: typing.Optional[str] = None

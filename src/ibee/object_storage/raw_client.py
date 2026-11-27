@@ -30,7 +30,6 @@ from ..types.bucket_cors_configuration import BucketCorsConfiguration
 from ..types.bucket_cors_rule import BucketCorsRule
 from ..types.bucket_custom_domain import BucketCustomDomain
 from ..types.bucket_custom_domain_config import BucketCustomDomainConfig
-from ..types.bucket_custom_domain_removed import BucketCustomDomainRemoved
 from ..types.bucket_lifecycle_configuration import BucketLifecycleConfiguration
 from ..types.bucket_lifecycle_rule import BucketLifecycleRule
 from ..types.bucket_list import BucketList
@@ -50,8 +49,14 @@ from ..types.s3credential_list import S3CredentialList
 from ..types.s3credential_revoked import S3CredentialRevoked
 from .types.create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
 from .types.create_s3credential_request_permission_type import CreateS3CredentialRequestPermissionType
+from .types.delete_bucket_cors_response import DeleteBucketCorsResponse
+from .types.delete_bucket_lifecycle_response import DeleteBucketLifecycleResponse
+from .types.delete_bucket_notifications_response import DeleteBucketNotificationsResponse
+from .types.delete_bucket_response import DeleteBucketResponse
+from .types.delete_s3credential_response import DeleteS3CredentialResponse
 from .types.get_bucket_metrics_request_range import GetBucketMetricsRequestRange
 from .types.object_download_link_request_disposition import ObjectDownloadLinkRequestDisposition
+from .types.remove_bucket_custom_domain_response import RemoveBucketCustomDomainResponse
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -607,7 +612,7 @@ class RawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[DeleteResponse]:
+    ) -> HttpResponse[DeleteBucketResponse]:
         """
         Deletes an empty bucket. A bucket that still holds files is refused with 409: delete its files first with an S3 tool. Files are managed over the S3 API at `<workspace>.blob.ibeestorage.com`, not through this API. Requires scope: object-storage.delete.
 
@@ -624,7 +629,7 @@ class RawObjectStorageClient:
 
         Returns
         -------
-        HttpResponse[DeleteResponse]
+        HttpResponse[DeleteBucketResponse]
             Bucket deleted successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -638,9 +643,9 @@ class RawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DeleteResponse,
+                    DeleteBucketResponse,
                     parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
+                        type_=DeleteBucketResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1326,7 +1331,7 @@ class RawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[DeleteResponse]:
+    ) -> HttpResponse[DeleteBucketLifecycleResponse]:
         """
         Removes every lifecycle rule from the bucket. Requires scope: object-storage.delete.
 
@@ -1343,7 +1348,7 @@ class RawObjectStorageClient:
 
         Returns
         -------
-        HttpResponse[DeleteResponse]
+        HttpResponse[DeleteBucketLifecycleResponse]
             Delete bucket lifecycle rules succeeded.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -1357,9 +1362,9 @@ class RawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DeleteResponse,
+                    DeleteBucketLifecycleResponse,
                     parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
+                        type_=DeleteBucketLifecycleResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1849,7 +1854,7 @@ class RawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[DeleteResponse]:
+    ) -> HttpResponse[DeleteBucketCorsResponse]:
         """
         Removes every CORS rule from the bucket. Requires scope: object-storage.delete.
 
@@ -1866,7 +1871,7 @@ class RawObjectStorageClient:
 
         Returns
         -------
-        HttpResponse[DeleteResponse]
+        HttpResponse[DeleteBucketCorsResponse]
             Delete bucket CORS rules succeeded.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -1880,9 +1885,9 @@ class RawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DeleteResponse,
+                    DeleteBucketCorsResponse,
                     parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
+                        type_=DeleteBucketCorsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2733,7 +2738,7 @@ class RawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[DeleteResponse]:
+    ) -> HttpResponse[DeleteBucketNotificationsResponse]:
         """
         Removes every notification rule from the bucket. Requires scope: object-storage.delete.
 
@@ -2750,7 +2755,7 @@ class RawObjectStorageClient:
 
         Returns
         -------
-        HttpResponse[DeleteResponse]
+        HttpResponse[DeleteBucketNotificationsResponse]
             Delete bucket event notifications succeeded.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -2764,9 +2769,9 @@ class RawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DeleteResponse,
+                    DeleteBucketNotificationsResponse,
                     parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
+                        type_=DeleteBucketNotificationsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -3278,7 +3283,7 @@ class RawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[BucketCustomDomainRemoved]:
+    ) -> HttpResponse[RemoveBucketCustomDomainResponse]:
         """
         Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.delete.
 
@@ -3298,7 +3303,7 @@ class RawObjectStorageClient:
 
         Returns
         -------
-        HttpResponse[BucketCustomDomainRemoved]
+        HttpResponse[RemoveBucketCustomDomainResponse]
             Remove a bucket custom domain succeeded.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -3312,9 +3317,9 @@ class RawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    BucketCustomDomainRemoved,
+                    RemoveBucketCustomDomainResponse,
                     parse_obj_as(
-                        type_=BucketCustomDomainRemoved,  # type: ignore
+                        type_=RemoveBucketCustomDomainResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -4729,7 +4734,7 @@ class RawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[S3CredentialRevoked]:
+    ) -> HttpResponse[DeleteS3CredentialResponse]:
         """
         Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
@@ -4746,7 +4751,7 @@ class RawObjectStorageClient:
 
         Returns
         -------
-        HttpResponse[S3CredentialRevoked]
+        HttpResponse[DeleteS3CredentialResponse]
             Credential revoked successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -4760,9 +4765,9 @@ class RawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    S3CredentialRevoked,
+                    DeleteS3CredentialResponse,
                     parse_obj_as(
-                        type_=S3CredentialRevoked,  # type: ignore
+                        type_=DeleteS3CredentialResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -5621,7 +5626,7 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[DeleteResponse]:
+    ) -> AsyncHttpResponse[DeleteBucketResponse]:
         """
         Deletes an empty bucket. A bucket that still holds files is refused with 409: delete its files first with an S3 tool. Files are managed over the S3 API at `<workspace>.blob.ibeestorage.com`, not through this API. Requires scope: object-storage.delete.
 
@@ -5638,7 +5643,7 @@ class AsyncRawObjectStorageClient:
 
         Returns
         -------
-        AsyncHttpResponse[DeleteResponse]
+        AsyncHttpResponse[DeleteBucketResponse]
             Bucket deleted successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -5652,9 +5657,9 @@ class AsyncRawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DeleteResponse,
+                    DeleteBucketResponse,
                     parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
+                        type_=DeleteBucketResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -6340,7 +6345,7 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[DeleteResponse]:
+    ) -> AsyncHttpResponse[DeleteBucketLifecycleResponse]:
         """
         Removes every lifecycle rule from the bucket. Requires scope: object-storage.delete.
 
@@ -6357,7 +6362,7 @@ class AsyncRawObjectStorageClient:
 
         Returns
         -------
-        AsyncHttpResponse[DeleteResponse]
+        AsyncHttpResponse[DeleteBucketLifecycleResponse]
             Delete bucket lifecycle rules succeeded.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -6371,9 +6376,9 @@ class AsyncRawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DeleteResponse,
+                    DeleteBucketLifecycleResponse,
                     parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
+                        type_=DeleteBucketLifecycleResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -6863,7 +6868,7 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[DeleteResponse]:
+    ) -> AsyncHttpResponse[DeleteBucketCorsResponse]:
         """
         Removes every CORS rule from the bucket. Requires scope: object-storage.delete.
 
@@ -6880,7 +6885,7 @@ class AsyncRawObjectStorageClient:
 
         Returns
         -------
-        AsyncHttpResponse[DeleteResponse]
+        AsyncHttpResponse[DeleteBucketCorsResponse]
             Delete bucket CORS rules succeeded.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -6894,9 +6899,9 @@ class AsyncRawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DeleteResponse,
+                    DeleteBucketCorsResponse,
                     parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
+                        type_=DeleteBucketCorsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -7747,7 +7752,7 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[DeleteResponse]:
+    ) -> AsyncHttpResponse[DeleteBucketNotificationsResponse]:
         """
         Removes every notification rule from the bucket. Requires scope: object-storage.delete.
 
@@ -7764,7 +7769,7 @@ class AsyncRawObjectStorageClient:
 
         Returns
         -------
-        AsyncHttpResponse[DeleteResponse]
+        AsyncHttpResponse[DeleteBucketNotificationsResponse]
             Delete bucket event notifications succeeded.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -7778,9 +7783,9 @@ class AsyncRawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DeleteResponse,
+                    DeleteBucketNotificationsResponse,
                     parse_obj_as(
-                        type_=DeleteResponse,  # type: ignore
+                        type_=DeleteBucketNotificationsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -8292,7 +8297,7 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[BucketCustomDomainRemoved]:
+    ) -> AsyncHttpResponse[RemoveBucketCustomDomainResponse]:
         """
         Removes a custom hostname from the bucket. Answers 400 when the bucket has no custom domain. Requires scope: object-storage.delete.
 
@@ -8312,7 +8317,7 @@ class AsyncRawObjectStorageClient:
 
         Returns
         -------
-        AsyncHttpResponse[BucketCustomDomainRemoved]
+        AsyncHttpResponse[RemoveBucketCustomDomainResponse]
             Remove a bucket custom domain succeeded.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -8326,9 +8331,9 @@ class AsyncRawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    BucketCustomDomainRemoved,
+                    RemoveBucketCustomDomainResponse,
                     parse_obj_as(
-                        type_=BucketCustomDomainRemoved,  # type: ignore
+                        type_=RemoveBucketCustomDomainResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -9743,7 +9748,7 @@ class AsyncRawObjectStorageClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[S3CredentialRevoked]:
+    ) -> AsyncHttpResponse[DeleteS3CredentialResponse]:
         """
         Deletes a credential record permanently. Revoke it first with POST /object-storage/credentials/{access_key_id}/revoke; the portal deletes revoked credentials only. Requires scope: object-storage.write.
 
@@ -9760,7 +9765,7 @@ class AsyncRawObjectStorageClient:
 
         Returns
         -------
-        AsyncHttpResponse[S3CredentialRevoked]
+        AsyncHttpResponse[DeleteS3CredentialResponse]
             Credential revoked successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -9774,9 +9779,9 @@ class AsyncRawObjectStorageClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    S3CredentialRevoked,
+                    DeleteS3CredentialResponse,
                     parse_obj_as(
-                        type_=S3CredentialRevoked,  # type: ignore
+                        type_=DeleteS3CredentialResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

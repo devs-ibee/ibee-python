@@ -40,6 +40,7 @@ from ..types.load_balancer_spec_scope import LoadBalancerSpecScope
 from ..types.load_balancer_spec_traffic_type import LoadBalancerSpecTrafficType
 from ..types.load_balancer_spec_visibility import LoadBalancerSpecVisibility
 from ..types.load_balancer_target_group import LoadBalancerTargetGroup
+from .types.delete_load_balancer_response import DeleteLoadBalancerResponse
 from .types.get_load_balancer_metrics_history_request_window import GetLoadBalancerMetricsHistoryRequestWindow
 from pydantic import ValidationError
 
@@ -1015,7 +1016,7 @@ class RawLoadBalancersClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[LoadBalancerOperation]:
+    ) -> HttpResponse[DeleteLoadBalancerResponse]:
         """
         Deletes the load balancer. Answers 202 with an operation. Requires scope: load-balancer.write.
 
@@ -1035,8 +1036,8 @@ class RawLoadBalancersClient:
 
         Returns
         -------
-        HttpResponse[LoadBalancerOperation]
-            Accepted.
+        HttpResponse[DeleteLoadBalancerResponse]
+            Accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/load-balancers/{encode_path_param(load_balancer_id)}",
@@ -1052,9 +1053,9 @@ class RawLoadBalancersClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    LoadBalancerOperation,
+                    DeleteLoadBalancerResponse,
                     parse_obj_as(
-                        type_=LoadBalancerOperation,  # type: ignore
+                        type_=DeleteLoadBalancerResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2663,7 +2664,7 @@ class AsyncRawLoadBalancersClient:
         workspace_id: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[LoadBalancerOperation]:
+    ) -> AsyncHttpResponse[DeleteLoadBalancerResponse]:
         """
         Deletes the load balancer. Answers 202 with an operation. Requires scope: load-balancer.write.
 
@@ -2683,8 +2684,8 @@ class AsyncRawLoadBalancersClient:
 
         Returns
         -------
-        AsyncHttpResponse[LoadBalancerOperation]
-            Accepted.
+        AsyncHttpResponse[DeleteLoadBalancerResponse]
+            Accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/load-balancers/{encode_path_param(load_balancer_id)}",
@@ -2700,9 +2701,9 @@ class AsyncRawLoadBalancersClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    LoadBalancerOperation,
+                    DeleteLoadBalancerResponse,
                     parse_obj_as(
-                        type_=LoadBalancerOperation,  # type: ignore
+                        type_=DeleteLoadBalancerResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

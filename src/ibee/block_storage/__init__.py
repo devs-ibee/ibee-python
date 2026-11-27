@@ -8,11 +8,13 @@ from importlib import import_module
 if typing.TYPE_CHECKING:
     from .types import (
         CreateBlockVolumeRequestVolumeClass,
+        DeleteBlockVolumeResponse,
         ListBlockStoragePlansRequestBillingInterval,
         ResizeBlockVolumeRequestVmState,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateBlockVolumeRequestVolumeClass": ".types",
+    "DeleteBlockVolumeResponse": ".types",
     "ListBlockStoragePlansRequestBillingInterval": ".types",
     "ResizeBlockVolumeRequestVmState": ".types",
 }
@@ -41,6 +43,7 @@ def __dir__():
 
 __all__ = [
     "CreateBlockVolumeRequestVolumeClass",
+    "DeleteBlockVolumeResponse",
     "ListBlockStoragePlansRequestBillingInterval",
     "ResizeBlockVolumeRequestVmState",
 ]

@@ -69,6 +69,8 @@ if typing.TYPE_CHECKING:
     from .cdn_custom_domain_status import CdnCustomDomainStatus
     from .cdn_custom_domain_verification import CdnCustomDomainVerification
     from .cdn_custom_domain_verification_status import CdnCustomDomainVerificationStatus
+    from .cdn_delete_result import CdnDeleteResult
+    from .cdn_delete_result_status import CdnDeleteResultStatus
     from .cdn_distribution import CdnDistribution
     from .cdn_distribution_list import CdnDistributionList
     from .cdn_distribution_metrics import CdnDistributionMetrics
@@ -154,6 +156,11 @@ if typing.TYPE_CHECKING:
     from .default_retention import DefaultRetention
     from .default_retention_mode import DefaultRetentionMode
     from .delete_response import DeleteResponse
+    from .delete_result import DeleteResult
+    from .delete_result_status import DeleteResultStatus
+    from .deletion_answer import DeletionAnswer
+    from .deletion_state import DeletionState
+    from .deletion_state_state import DeletionStateState
     from .error import Error
     from .error_detail import ErrorDetail
     from .firewall_attachment import FirewallAttachment
@@ -346,6 +353,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "CdnCustomDomainStatus": ".cdn_custom_domain_status",
     "CdnCustomDomainVerification": ".cdn_custom_domain_verification",
     "CdnCustomDomainVerificationStatus": ".cdn_custom_domain_verification_status",
+    "CdnDeleteResult": ".cdn_delete_result",
+    "CdnDeleteResultStatus": ".cdn_delete_result_status",
     "CdnDistribution": ".cdn_distribution",
     "CdnDistributionList": ".cdn_distribution_list",
     "CdnDistributionMetrics": ".cdn_distribution_metrics",
@@ -431,6 +440,11 @@ _dynamic_imports: typing.Dict[str, str] = {
     "DefaultRetention": ".default_retention",
     "DefaultRetentionMode": ".default_retention_mode",
     "DeleteResponse": ".delete_response",
+    "DeleteResult": ".delete_result",
+    "DeleteResultStatus": ".delete_result_status",
+    "DeletionAnswer": ".deletion_answer",
+    "DeletionState": ".deletion_state",
+    "DeletionStateState": ".deletion_state_state",
     "Error": ".error",
     "ErrorDetail": ".error_detail",
     "FirewallAttachment": ".firewall_attachment",
@@ -647,6 +661,8 @@ __all__ = [
     "CdnCustomDomainStatus",
     "CdnCustomDomainVerification",
     "CdnCustomDomainVerificationStatus",
+    "CdnDeleteResult",
+    "CdnDeleteResultStatus",
     "CdnDistribution",
     "CdnDistributionList",
     "CdnDistributionMetrics",
@@ -732,6 +748,11 @@ __all__ = [
     "DefaultRetention",
     "DefaultRetentionMode",
     "DeleteResponse",
+    "DeleteResult",
+    "DeleteResultStatus",
+    "DeletionAnswer",
+    "DeletionState",
+    "DeletionStateState",
     "Error",
     "ErrorDetail",
     "FirewallAttachment",

@@ -9,7 +9,7 @@ from .block_volume_delete_status import BlockVolumeDeleteStatus
 
 class BlockVolumeDelete(UniversalBaseModel):
     """
-    Confirmation that a volume delete was started.
+    Confirmation that the volume is deleted. The delete finishes before it answers; `operation_id` is the finished delete operation.
     """
 
     status: BlockVolumeDeleteStatus = pydantic.Field()
@@ -24,7 +24,7 @@ class BlockVolumeDelete(UniversalBaseModel):
 
     operation_id: str = pydantic.Field()
     """
-    ID of the delete operation.
+    ID of the finished delete operation.
     """
 
     if IS_PYDANTIC_V2:

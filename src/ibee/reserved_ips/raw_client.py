@@ -24,6 +24,7 @@ from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..errors.too_many_requests_error import TooManyRequestsError
 from ..errors.unauthorized_error import UnauthorizedError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
+from ..types.delete_result import DeleteResult
 from ..types.error import Error
 from ..types.reserved_ip import ReservedIp
 from pydantic import ValidationError
@@ -778,7 +779,7 @@ class RawReservedIpsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[None]:
+    ) -> HttpResponse[DeleteResult]:
         """
         Releases a reserved public IPv4 address from your workspace. Requires scope: network.write.
 
@@ -795,7 +796,8 @@ class RawReservedIpsClient:
 
         Returns
         -------
-        HttpResponse[None]
+        HttpResponse[DeleteResult]
+            Reserved IP released successfully. The answer names the resource and its final state.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"networking/reserved-ips/{encode_path_param(reserved_ip_id)}",
@@ -807,7 +809,14 @@ class RawReservedIpsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return HttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),
@@ -2706,7 +2715,7 @@ class AsyncRawReservedIpsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[None]:
+    ) -> AsyncHttpResponse[DeleteResult]:
         """
         Releases a reserved public IPv4 address from your workspace. Requires scope: network.write.
 
@@ -2723,7 +2732,8 @@ class AsyncRawReservedIpsClient:
 
         Returns
         -------
-        AsyncHttpResponse[None]
+        AsyncHttpResponse[DeleteResult]
+            Reserved IP released successfully. The answer names the resource and its final state.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"networking/reserved-ips/{encode_path_param(reserved_ip_id)}",
@@ -2735,7 +2745,14 @@ class AsyncRawReservedIpsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return AsyncHttpResponse(response=_response, data=None)
+                _data = typing.cast(
+                    DeleteResult,
+                    parse_obj_as(
+                        type_=DeleteResult,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 401:
                 raise UnauthorizedError(
                     headers=dict(_response.headers),

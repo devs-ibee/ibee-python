@@ -85,7 +85,7 @@ client.secret_manager.get_secret_manager_workspace(
 <dl>
 <dd>
 
-Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (403 billing_denied). Requires scope: secret-manager.write.
+Enables Secret Manager for the workspace. Answers 202 with an operation to read with getSecretManagerOperation. Billing can refuse it (402 billing_denied, with billing_reason). Requires scope: secret-manager.write.
 </dd>
 </dl>
 </dd>
@@ -814,7 +814,7 @@ client.secret_manager.update_secret_manager_secret_metadata(
 </dl>
 </details>
 
-<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">delete_secret_manager_secret</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">delete_secret_manager_secret</a>(...) -> DeleteSecretManagerSecretResponse</code></summary>
 <dl>
 <dd>
 
@@ -1526,7 +1526,7 @@ client.secret_manager.get_secret_manager_app_credential(
 </dl>
 </details>
 
-<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">revoke_secret_manager_app_credential</a>(...) -> typing.Dict[str, typing.Any]</code></summary>
+<details><summary><code>client.secret_manager.<a href="src/ibee/secret_manager/client.py">revoke_secret_manager_app_credential</a>(...) -> RevokeSecretManagerAppCredentialResponse</code></summary>
 <dl>
 <dd>
 
@@ -1986,7 +1986,7 @@ client.object_storage.get_bucket(
 </dl>
 </details>
 
-<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket</a>(...) -> DeleteResponse</code></summary>
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket</a>(...) -> DeleteBucketResponse</code></summary>
 <dl>
 <dd>
 
@@ -2336,7 +2336,7 @@ client.object_storage.set_bucket_lifecycle(
 </dl>
 </details>
 
-<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket_lifecycle</a>(...) -> DeleteResponse</code></summary>
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket_lifecycle</a>(...) -> DeleteBucketLifecycleResponse</code></summary>
 <dl>
 <dd>
 
@@ -2600,7 +2600,7 @@ client.object_storage.set_bucket_cors(
 </dl>
 </details>
 
-<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket_cors</a>(...) -> DeleteResponse</code></summary>
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket_cors</a>(...) -> DeleteBucketCorsResponse</code></summary>
 <dl>
 <dd>
 
@@ -3033,7 +3033,7 @@ client.object_storage.set_bucket_notifications(
 </dl>
 </details>
 
-<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket_notifications</a>(...) -> DeleteResponse</code></summary>
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_bucket_notifications</a>(...) -> DeleteBucketNotificationsResponse</code></summary>
 <dl>
 <dd>
 
@@ -3288,7 +3288,7 @@ client.object_storage.add_bucket_custom_domain(
 </dl>
 </details>
 
-<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">remove_bucket_custom_domain</a>(...) -> BucketCustomDomainRemoved</code></summary>
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">remove_bucket_custom_domain</a>(...) -> RemoveBucketCustomDomainResponse</code></summary>
 <dl>
 <dd>
 
@@ -4063,7 +4063,7 @@ client.object_storage.get_s3credential(
 </dl>
 </details>
 
-<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_s3credential</a>(...) -> S3CredentialRevoked</code></summary>
+<details><summary><code>client.object_storage.<a href="src/ibee/object_storage/client.py">delete_s3credential</a>(...) -> DeleteS3CredentialResponse</code></summary>
 <dl>
 <dd>
 
@@ -4634,7 +4634,7 @@ client.vpcs.get_vpc(
 </dl>
 </details>
 
-<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">delete_vpc</a>(...)</code></summary>
+<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">delete_vpc</a>(...) -> DeleteResult</code></summary>
 <dl>
 <dd>
 
@@ -5125,7 +5125,7 @@ client.vpcs.get_vpc_subnet(
 </dl>
 </details>
 
-<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">delete_vpc_subnet</a>(...)</code></summary>
+<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">delete_vpc_subnet</a>(...) -> DeleteResult</code></summary>
 <dl>
 <dd>
 
@@ -5429,7 +5429,7 @@ Default `private`.
 </dl>
 </details>
 
-<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">detach_vpc_node</a>(...)</code></summary>
+<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">detach_vpc_node</a>(...) -> DeleteResult</code></summary>
 <dl>
 <dd>
 
@@ -5723,7 +5723,7 @@ Retry key for this create. Send the same key and the same body on every retry. T
 </dl>
 </details>
 
-<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">delete_nat_gateway</a>(...)</code></summary>
+<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">delete_nat_gateway</a>(...) -> DeleteResult</code></summary>
 <dl>
 <dd>
 
@@ -6136,7 +6136,7 @@ Retry key for this create. Send the same key and the same body on every retry. T
 </dl>
 </details>
 
-<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">delete_nat_port_forwarding_rule</a>(...)</code></summary>
+<details><summary><code>client.vpcs.<a href="src/ibee/vpcs/client.py">delete_nat_port_forwarding_rule</a>(...) -> DeleteResult</code></summary>
 <dl>
 <dd>
 
@@ -6779,7 +6779,7 @@ client.reserved_ips.get_reserved_ip(
 </dl>
 </details>
 
-<details><summary><code>client.reserved_ips.<a href="src/ibee/reserved_ips/client.py">release_reserved_ip</a>(...)</code></summary>
+<details><summary><code>client.reserved_ips.<a href="src/ibee/reserved_ips/client.py">release_reserved_ip</a>(...) -> DeleteResult</code></summary>
 <dl>
 <dd>
 
@@ -7607,7 +7607,7 @@ client.firewalls.get_firewall_group(
 </dl>
 </details>
 
-<details><summary><code>client.firewalls.<a href="src/ibee/firewalls/client.py">delete_firewall_group</a>(...)</code></summary>
+<details><summary><code>client.firewalls.<a href="src/ibee/firewalls/client.py">delete_firewall_group</a>(...) -> DeleteResult</code></summary>
 <dl>
 <dd>
 
@@ -7779,7 +7779,7 @@ client.firewalls.create_firewall_rule(
 </dl>
 </details>
 
-<details><summary><code>client.firewalls.<a href="src/ibee/firewalls/client.py">delete_firewall_rule</a>(...) -> FirewallGroup</code></summary>
+<details><summary><code>client.firewalls.<a href="src/ibee/firewalls/client.py">delete_firewall_rule</a>(...) -> DeleteFirewallRuleResponse</code></summary>
 <dl>
 <dd>
 
@@ -8233,7 +8233,7 @@ client.firewalls.attach_firewall_group(
 </dl>
 </details>
 
-<details><summary><code>client.firewalls.<a href="src/ibee/firewalls/client.py">detach_firewall_group</a>(...) -> FirewallGroup</code></summary>
+<details><summary><code>client.firewalls.<a href="src/ibee/firewalls/client.py">detach_firewall_group</a>(...) -> DetachFirewallGroupResponse</code></summary>
 <dl>
 <dd>
 
@@ -8809,7 +8809,7 @@ client.load_balancers.update_load_balancer(
 </dl>
 </details>
 
-<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">delete_load_balancer</a>(...) -> LoadBalancerOperation</code></summary>
+<details><summary><code>client.load_balancers.<a href="src/ibee/load_balancers/client.py">delete_load_balancer</a>(...) -> DeleteLoadBalancerResponse</code></summary>
 <dl>
 <dd>
 
@@ -10271,7 +10271,7 @@ client.cloud_vms.get_cloud_vm(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">delete_cloud_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">delete_cloud_vm</a>(...) -> DeleteCloudVmResponse</code></summary>
 <dl>
 <dd>
 
@@ -12005,7 +12005,7 @@ client.cloud_vms.get_cloud_vm_snapshot(
 </dl>
 </details>
 
-<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">delete_cloud_vm_snapshot</a>(...) -> SnapshotDeleteResult</code></summary>
+<details><summary><code>client.cloud_vms.<a href="src/ibee/cloud_vms/client.py">delete_cloud_vm_snapshot</a>(...) -> DeleteCloudVmSnapshotResponse</code></summary>
 <dl>
 <dd>
 
@@ -13793,7 +13793,7 @@ client.gpu_vms.get_gpu_vm(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">delete_gpu_vm</a>(...) -> OperationAccepted</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">delete_gpu_vm</a>(...) -> DeleteGpuVmResponse</code></summary>
 <dl>
 <dd>
 
@@ -15527,7 +15527,7 @@ client.gpu_vms.get_gpu_vm_snapshot(
 </dl>
 </details>
 
-<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">delete_gpu_vm_snapshot</a>(...) -> SnapshotDeleteResult</code></summary>
+<details><summary><code>client.gpu_vms.<a href="src/ibee/gpu_vms/client.py">delete_gpu_vm_snapshot</a>(...) -> DeleteGpuVmSnapshotResponse</code></summary>
 <dl>
 <dd>
 
@@ -17184,7 +17184,7 @@ client.block_storage.get_block_volume(
 </dl>
 </details>
 
-<details><summary><code>client.block_storage.<a href="src/ibee/block_storage/client.py">delete_block_volume</a>(...) -> BlockVolumeDelete</code></summary>
+<details><summary><code>client.block_storage.<a href="src/ibee/block_storage/client.py">delete_block_volume</a>(...) -> DeleteBlockVolumeResponse</code></summary>
 <dl>
 <dd>
 
@@ -17748,7 +17748,7 @@ client.cdn.get_cdn_distribution(
 </dl>
 </details>
 
-<details><summary><code>client.cdn.<a href="src/ibee/cdn/client.py">delete_cdn_distribution</a>(...)</code></summary>
+<details><summary><code>client.cdn.<a href="src/ibee/cdn/client.py">delete_cdn_distribution</a>(...) -> CdnDeleteResult</code></summary>
 <dl>
 <dd>
 
@@ -18204,7 +18204,7 @@ client.cdn.update_cdn_website_config(
 </dl>
 </details>
 
-<details><summary><code>client.cdn.<a href="src/ibee/cdn/client.py">delete_cdn_website_config</a>(...) -> CdnWebsiteConfig</code></summary>
+<details><summary><code>client.cdn.<a href="src/ibee/cdn/client.py">delete_cdn_website_config</a>(...) -> DeleteCdnWebsiteConfigResponse</code></summary>
 <dl>
 <dd>
 
@@ -18550,7 +18550,7 @@ client.cdn.get_cdn_custom_domain(
 </dl>
 </details>
 
-<details><summary><code>client.cdn.<a href="src/ibee/cdn/client.py">delete_cdn_custom_domain</a>(...)</code></summary>
+<details><summary><code>client.cdn.<a href="src/ibee/cdn/client.py">delete_cdn_custom_domain</a>(...) -> CdnDeleteResult</code></summary>
 <dl>
 <dd>
 
@@ -19263,7 +19263,7 @@ client.container_registry.get_container_registry(
 </dl>
 </details>
 
-<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">delete_container_registry</a>(...) -> ContainerRegistry</code></summary>
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">delete_container_registry</a>(...) -> DeleteContainerRegistryResponse</code></summary>
 <dl>
 <dd>
 
@@ -20041,7 +20041,7 @@ client.container_registry.rotate_container_registry_access_token(
 </dl>
 </details>
 
-<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">revoke_container_registry_access_token</a>(...) -> ContainerRegistryMessage</code></summary>
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">revoke_container_registry_access_token</a>(...) -> RevokeContainerRegistryAccessTokenResponse</code></summary>
 <dl>
 <dd>
 
@@ -20246,7 +20246,7 @@ client.container_registry.list_container_registry_repositories(
 </dl>
 </details>
 
-<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">delete_container_registry_repository</a>(...) -> ContainerRegistryMessage</code></summary>
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">delete_container_registry_repository</a>(...) -> DeleteContainerRegistryRepositoryResponse</code></summary>
 <dl>
 <dd>
 
@@ -20453,7 +20453,7 @@ client.container_registry.list_container_registry_artifacts(
 </dl>
 </details>
 
-<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">delete_container_registry_artifact</a>(...) -> ContainerRegistryMessage</code></summary>
+<details><summary><code>client.container_registry.<a href="src/ibee/container_registry/client.py">delete_container_registry_artifact</a>(...) -> DeleteContainerRegistryArtifactResponse</code></summary>
 <dl>
 <dd>
 

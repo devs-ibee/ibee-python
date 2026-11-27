@@ -4,12 +4,15 @@ import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
+from ..types.delete_result import DeleteResult
 from ..types.firewall_attachment import FirewallAttachment
 from ..types.firewall_group import FirewallGroup
 from ..types.firewall_rule_fields_action import FirewallRuleFieldsAction
 from ..types.firewall_rule_fields_direction import FirewallRuleFieldsDirection
 from ..types.firewall_rule_fields_protocol import FirewallRuleFieldsProtocol
 from .raw_client import AsyncRawFirewallsClient, RawFirewallsClient
+from .types.delete_firewall_rule_response import DeleteFirewallRuleResponse
+from .types.detach_firewall_group_response import DetachFirewallGroupResponse
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -190,7 +193,7 @@ class FirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Deletes a firewall group. Requires scope: firewall.write.
 
@@ -207,7 +210,8 @@ class FirewallsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Firewall group deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -323,7 +327,7 @@ class FirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> FirewallGroup:
+    ) -> DeleteFirewallRuleResponse:
         """
         Removes a rule from a firewall group. Requires scope: firewall.write.
 
@@ -343,7 +347,7 @@ class FirewallsClient:
 
         Returns
         -------
-        FirewallGroup
+        DeleteFirewallRuleResponse
             Firewall rule deleted successfully.
 
         Examples
@@ -571,7 +575,7 @@ class FirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> FirewallGroup:
+    ) -> DetachFirewallGroupResponse:
         """
         Removes a firewall group from a VM. Its rules no longer apply to that VM. Requires scope: firewall.write.
 
@@ -591,7 +595,7 @@ class FirewallsClient:
 
         Returns
         -------
-        FirewallGroup
+        DetachFirewallGroupResponse
             VM detached successfully.
 
         Examples
@@ -812,7 +816,7 @@ class AsyncFirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
+    ) -> DeleteResult:
         """
         Deletes a firewall group. Requires scope: firewall.write.
 
@@ -829,7 +833,8 @@ class AsyncFirewallsClient:
 
         Returns
         -------
-        None
+        DeleteResult
+            Firewall group deleted successfully. The answer names the resource and its final state.
 
         Examples
         --------
@@ -961,7 +966,7 @@ class AsyncFirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> FirewallGroup:
+    ) -> DeleteFirewallRuleResponse:
         """
         Removes a rule from a firewall group. Requires scope: firewall.write.
 
@@ -981,7 +986,7 @@ class AsyncFirewallsClient:
 
         Returns
         -------
-        FirewallGroup
+        DeleteFirewallRuleResponse
             Firewall rule deleted successfully.
 
         Examples
@@ -1241,7 +1246,7 @@ class AsyncFirewallsClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> FirewallGroup:
+    ) -> DetachFirewallGroupResponse:
         """
         Removes a firewall group from a VM. Its rules no longer apply to that VM. Requires scope: firewall.write.
 
@@ -1261,7 +1266,7 @@ class AsyncFirewallsClient:
 
         Returns
         -------
-        FirewallGroup
+        DetachFirewallGroupResponse
             VM detached successfully.
 
         Examples

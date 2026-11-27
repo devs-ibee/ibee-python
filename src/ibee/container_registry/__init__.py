@@ -7,14 +7,22 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .types import (
+        DeleteContainerRegistryArtifactResponse,
+        DeleteContainerRegistryRepositoryResponse,
+        DeleteContainerRegistryResponse,
         GetContainerRegistryMetricsRequestRange,
         ListContainerRegistryRepositoriesRequestSort,
         ListContainerRegistryVulnerabilitiesRequestSeverity,
+        RevokeContainerRegistryAccessTokenResponse,
     )
 _dynamic_imports: typing.Dict[str, str] = {
+    "DeleteContainerRegistryArtifactResponse": ".types",
+    "DeleteContainerRegistryRepositoryResponse": ".types",
+    "DeleteContainerRegistryResponse": ".types",
     "GetContainerRegistryMetricsRequestRange": ".types",
     "ListContainerRegistryRepositoriesRequestSort": ".types",
     "ListContainerRegistryVulnerabilitiesRequestSeverity": ".types",
+    "RevokeContainerRegistryAccessTokenResponse": ".types",
 }
 
 
@@ -40,7 +48,11 @@ def __dir__():
 
 
 __all__ = [
+    "DeleteContainerRegistryArtifactResponse",
+    "DeleteContainerRegistryRepositoryResponse",
+    "DeleteContainerRegistryResponse",
     "GetContainerRegistryMetricsRequestRange",
     "ListContainerRegistryRepositoriesRequestSort",
     "ListContainerRegistryVulnerabilitiesRequestSeverity",
+    "RevokeContainerRegistryAccessTokenResponse",
 ]

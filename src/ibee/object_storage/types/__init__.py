@@ -8,13 +8,25 @@ from importlib import import_module
 if typing.TYPE_CHECKING:
     from .create_s3credential_request_bucket_scope import CreateS3CredentialRequestBucketScope
     from .create_s3credential_request_permission_type import CreateS3CredentialRequestPermissionType
+    from .delete_bucket_cors_response import DeleteBucketCorsResponse
+    from .delete_bucket_lifecycle_response import DeleteBucketLifecycleResponse
+    from .delete_bucket_notifications_response import DeleteBucketNotificationsResponse
+    from .delete_bucket_response import DeleteBucketResponse
+    from .delete_s3credential_response import DeleteS3CredentialResponse
     from .get_bucket_metrics_request_range import GetBucketMetricsRequestRange
     from .object_download_link_request_disposition import ObjectDownloadLinkRequestDisposition
+    from .remove_bucket_custom_domain_response import RemoveBucketCustomDomainResponse
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateS3CredentialRequestBucketScope": ".create_s3credential_request_bucket_scope",
     "CreateS3CredentialRequestPermissionType": ".create_s3credential_request_permission_type",
+    "DeleteBucketCorsResponse": ".delete_bucket_cors_response",
+    "DeleteBucketLifecycleResponse": ".delete_bucket_lifecycle_response",
+    "DeleteBucketNotificationsResponse": ".delete_bucket_notifications_response",
+    "DeleteBucketResponse": ".delete_bucket_response",
+    "DeleteS3CredentialResponse": ".delete_s3credential_response",
     "GetBucketMetricsRequestRange": ".get_bucket_metrics_request_range",
     "ObjectDownloadLinkRequestDisposition": ".object_download_link_request_disposition",
+    "RemoveBucketCustomDomainResponse": ".remove_bucket_custom_domain_response",
 }
 
 
@@ -42,6 +54,12 @@ def __dir__():
 __all__ = [
     "CreateS3CredentialRequestBucketScope",
     "CreateS3CredentialRequestPermissionType",
+    "DeleteBucketCorsResponse",
+    "DeleteBucketLifecycleResponse",
+    "DeleteBucketNotificationsResponse",
+    "DeleteBucketResponse",
+    "DeleteS3CredentialResponse",
     "GetBucketMetricsRequestRange",
     "ObjectDownloadLinkRequestDisposition",
+    "RemoveBucketCustomDomainResponse",
 ]

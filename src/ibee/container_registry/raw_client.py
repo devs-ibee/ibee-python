@@ -47,11 +47,15 @@ from ..types.container_registry_visibility import ContainerRegistryVisibility
 from ..types.container_registry_vulnerability_list import ContainerRegistryVulnerabilityList
 from ..types.container_registry_vulnerability_summary import ContainerRegistryVulnerabilitySummary
 from ..types.error import Error
+from .types.delete_container_registry_artifact_response import DeleteContainerRegistryArtifactResponse
+from .types.delete_container_registry_repository_response import DeleteContainerRegistryRepositoryResponse
+from .types.delete_container_registry_response import DeleteContainerRegistryResponse
 from .types.get_container_registry_metrics_request_range import GetContainerRegistryMetricsRequestRange
 from .types.list_container_registry_repositories_request_sort import ListContainerRegistryRepositoriesRequestSort
 from .types.list_container_registry_vulnerabilities_request_severity import (
     ListContainerRegistryVulnerabilitiesRequestSeverity,
 )
+from .types.revoke_container_registry_access_token_response import RevokeContainerRegistryAccessTokenResponse
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -770,7 +774,7 @@ class RawContainerRegistryClient:
         confirm_registry_name: str,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[ContainerRegistry]:
+    ) -> HttpResponse[DeleteContainerRegistryResponse]:
         """
         Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 
@@ -790,8 +794,8 @@ class RawContainerRegistryClient:
 
         Returns
         -------
-        HttpResponse[ContainerRegistry]
-            Deletion accepted.
+        HttpResponse[DeleteContainerRegistryResponse]
+            Deletion accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"container-registry/registries/{encode_path_param(registry_id)}",
@@ -805,9 +809,9 @@ class RawContainerRegistryClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ContainerRegistry,
+                    DeleteContainerRegistryResponse,
                     parse_obj_as(
-                        type_=ContainerRegistry,  # type: ignore
+                        type_=DeleteContainerRegistryResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2242,7 +2246,7 @@ class RawContainerRegistryClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[ContainerRegistryMessage]:
+    ) -> HttpResponse[RevokeContainerRegistryAccessTokenResponse]:
         """
         Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 
@@ -2262,7 +2266,7 @@ class RawContainerRegistryClient:
 
         Returns
         -------
-        HttpResponse[ContainerRegistryMessage]
+        HttpResponse[RevokeContainerRegistryAccessTokenResponse]
             Token revoked.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -2276,9 +2280,9 @@ class RawContainerRegistryClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ContainerRegistryMessage,
+                    RevokeContainerRegistryAccessTokenResponse,
                     parse_obj_as(
-                        type_=ContainerRegistryMessage,  # type: ignore
+                        type_=RevokeContainerRegistryAccessTokenResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2604,7 +2608,7 @@ class RawContainerRegistryClient:
         confirm: bool,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[ContainerRegistryMessage]:
+    ) -> HttpResponse[DeleteContainerRegistryRepositoryResponse]:
         """
         Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 
@@ -2627,7 +2631,7 @@ class RawContainerRegistryClient:
 
         Returns
         -------
-        HttpResponse[ContainerRegistryMessage]
+        HttpResponse[DeleteContainerRegistryRepositoryResponse]
             Repository deleted.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -2642,9 +2646,9 @@ class RawContainerRegistryClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ContainerRegistryMessage,
+                    DeleteContainerRegistryRepositoryResponse,
                     parse_obj_as(
-                        type_=ContainerRegistryMessage,  # type: ignore
+                        type_=DeleteContainerRegistryRepositoryResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -2988,7 +2992,7 @@ class RawContainerRegistryClient:
         confirm: bool,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[ContainerRegistryMessage]:
+    ) -> HttpResponse[DeleteContainerRegistryArtifactResponse]:
         """
         Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 
@@ -3014,7 +3018,7 @@ class RawContainerRegistryClient:
 
         Returns
         -------
-        HttpResponse[ContainerRegistryMessage]
+        HttpResponse[DeleteContainerRegistryArtifactResponse]
             Artifact deleted.
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -3030,9 +3034,9 @@ class RawContainerRegistryClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ContainerRegistryMessage,
+                    DeleteContainerRegistryArtifactResponse,
                     parse_obj_as(
-                        type_=ContainerRegistryMessage,  # type: ignore
+                        type_=DeleteContainerRegistryArtifactResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -5381,7 +5385,7 @@ class AsyncRawContainerRegistryClient:
         confirm_registry_name: str,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[ContainerRegistry]:
+    ) -> AsyncHttpResponse[DeleteContainerRegistryResponse]:
         """
         Starts deleting a registry; returns 202 with `observed_state: DELETING`. The registry must be empty: 409 with `detail.code: registry_not_empty` otherwise (see Empty registry). The name is never reused. Asynchronous: `observed_state` moves through `DELETING` to `DELETED`; poll `GET /container-registry/registries/{registry_id}` until it answers 404 or `DELETED`. Requires scope: container-registry.write.
 
@@ -5401,8 +5405,8 @@ class AsyncRawContainerRegistryClient:
 
         Returns
         -------
-        AsyncHttpResponse[ContainerRegistry]
-            Deletion accepted.
+        AsyncHttpResponse[DeleteContainerRegistryResponse]
+            Deletion accepted. The `deletion` object says the deletion has started (`state` ends in `-ing`) and `check` names the read that answers 404 once it is gone.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"container-registry/registries/{encode_path_param(registry_id)}",
@@ -5416,9 +5420,9 @@ class AsyncRawContainerRegistryClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ContainerRegistry,
+                    DeleteContainerRegistryResponse,
                     parse_obj_as(
-                        type_=ContainerRegistry,  # type: ignore
+                        type_=DeleteContainerRegistryResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -6853,7 +6857,7 @@ class AsyncRawContainerRegistryClient:
         *,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[ContainerRegistryMessage]:
+    ) -> AsyncHttpResponse[RevokeContainerRegistryAccessTokenResponse]:
         """
         Revokes a token immediately. Revoking an already revoked token succeeds. Requires scope: container-registry.write.
 
@@ -6873,7 +6877,7 @@ class AsyncRawContainerRegistryClient:
 
         Returns
         -------
-        AsyncHttpResponse[ContainerRegistryMessage]
+        AsyncHttpResponse[RevokeContainerRegistryAccessTokenResponse]
             Token revoked.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -6887,9 +6891,9 @@ class AsyncRawContainerRegistryClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ContainerRegistryMessage,
+                    RevokeContainerRegistryAccessTokenResponse,
                     parse_obj_as(
-                        type_=ContainerRegistryMessage,  # type: ignore
+                        type_=RevokeContainerRegistryAccessTokenResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -7215,7 +7219,7 @@ class AsyncRawContainerRegistryClient:
         confirm: bool,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[ContainerRegistryMessage]:
+    ) -> AsyncHttpResponse[DeleteContainerRegistryRepositoryResponse]:
         """
         Permanently deletes a repository and all of its images. Requires `confirm=true`. Deleting a repository that does not exist answers 200. Requires scope: container-registry.write.
 
@@ -7238,7 +7242,7 @@ class AsyncRawContainerRegistryClient:
 
         Returns
         -------
-        AsyncHttpResponse[ContainerRegistryMessage]
+        AsyncHttpResponse[DeleteContainerRegistryRepositoryResponse]
             Repository deleted.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -7253,9 +7257,9 @@ class AsyncRawContainerRegistryClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ContainerRegistryMessage,
+                    DeleteContainerRegistryRepositoryResponse,
                     parse_obj_as(
-                        type_=ContainerRegistryMessage,  # type: ignore
+                        type_=DeleteContainerRegistryRepositoryResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -7599,7 +7603,7 @@ class AsyncRawContainerRegistryClient:
         confirm: bool,
         workspace_id: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[ContainerRegistryMessage]:
+    ) -> AsyncHttpResponse[DeleteContainerRegistryArtifactResponse]:
         """
         Permanently deletes one image and every tag that points to it. Requires `confirm=true`. Deleting an artifact that does not exist answers 200. Requires scope: container-registry.write.
 
@@ -7625,7 +7629,7 @@ class AsyncRawContainerRegistryClient:
 
         Returns
         -------
-        AsyncHttpResponse[ContainerRegistryMessage]
+        AsyncHttpResponse[DeleteContainerRegistryArtifactResponse]
             Artifact deleted.
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -7641,9 +7645,9 @@ class AsyncRawContainerRegistryClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ContainerRegistryMessage,
+                    DeleteContainerRegistryArtifactResponse,
                     parse_obj_as(
-                        type_=ContainerRegistryMessage,  # type: ignore
+                        type_=DeleteContainerRegistryArtifactResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

@@ -6,9 +6,13 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .delete_secret_manager_secret_response import DeleteSecretManagerSecretResponse
+    from .revoke_secret_manager_app_credential_response import RevokeSecretManagerAppCredentialResponse
     from .secret_manager_app_credential_create_access import SecretManagerAppCredentialCreateAccess
 _dynamic_imports: typing.Dict[str, str] = {
-    "SecretManagerAppCredentialCreateAccess": ".secret_manager_app_credential_create_access"
+    "DeleteSecretManagerSecretResponse": ".delete_secret_manager_secret_response",
+    "RevokeSecretManagerAppCredentialResponse": ".revoke_secret_manager_app_credential_response",
+    "SecretManagerAppCredentialCreateAccess": ".secret_manager_app_credential_create_access",
 }
 
 
@@ -33,4 +37,8 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["SecretManagerAppCredentialCreateAccess"]
+__all__ = [
+    "DeleteSecretManagerSecretResponse",
+    "RevokeSecretManagerAppCredentialResponse",
+    "SecretManagerAppCredentialCreateAccess",
+]

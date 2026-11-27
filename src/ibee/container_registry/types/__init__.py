@@ -6,15 +6,23 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .delete_container_registry_artifact_response import DeleteContainerRegistryArtifactResponse
+    from .delete_container_registry_repository_response import DeleteContainerRegistryRepositoryResponse
+    from .delete_container_registry_response import DeleteContainerRegistryResponse
     from .get_container_registry_metrics_request_range import GetContainerRegistryMetricsRequestRange
     from .list_container_registry_repositories_request_sort import ListContainerRegistryRepositoriesRequestSort
     from .list_container_registry_vulnerabilities_request_severity import (
         ListContainerRegistryVulnerabilitiesRequestSeverity,
     )
+    from .revoke_container_registry_access_token_response import RevokeContainerRegistryAccessTokenResponse
 _dynamic_imports: typing.Dict[str, str] = {
+    "DeleteContainerRegistryArtifactResponse": ".delete_container_registry_artifact_response",
+    "DeleteContainerRegistryRepositoryResponse": ".delete_container_registry_repository_response",
+    "DeleteContainerRegistryResponse": ".delete_container_registry_response",
     "GetContainerRegistryMetricsRequestRange": ".get_container_registry_metrics_request_range",
     "ListContainerRegistryRepositoriesRequestSort": ".list_container_registry_repositories_request_sort",
     "ListContainerRegistryVulnerabilitiesRequestSeverity": ".list_container_registry_vulnerabilities_request_severity",
+    "RevokeContainerRegistryAccessTokenResponse": ".revoke_container_registry_access_token_response",
 }
 
 
@@ -40,7 +48,11 @@ def __dir__():
 
 
 __all__ = [
+    "DeleteContainerRegistryArtifactResponse",
+    "DeleteContainerRegistryRepositoryResponse",
+    "DeleteContainerRegistryResponse",
     "GetContainerRegistryMetricsRequestRange",
     "ListContainerRegistryRepositoriesRequestSort",
     "ListContainerRegistryVulnerabilitiesRequestSeverity",
+    "RevokeContainerRegistryAccessTokenResponse",
 ]
